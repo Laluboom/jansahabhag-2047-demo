@@ -1,6 +1,6 @@
 # Project map
 
-JanSahabhag 2047 is a frontend-only civic participation demo with fictional personas and local records. Tasks 01–04 are integrated on `autobuild`. Task 05 is verified on unmerged `agy/j-20261009-154211-yd8l`. See [paused.md](../paused.md) for the final handback.
+JanSahabhag 2047 is a frontend-only civic participation demo with fictional personas and local records. Tasks 01–05 are integrated on `autobuild`. See [paused.md](../paused.md) for the completed Autobuild history.
 
 ```text
 jansahabhag_2027/
@@ -12,7 +12,7 @@ jansahabhag_2027/
 ├── TODO.md                   Final merge and future choices
 ├── docs/                     Architecture, service, dependency and feature maps
 ├── src/
-│   ├── app/                  App boot and lazy route map on Task 05 branch
+│   ├── app/                  App boot and lazy route map
 │   ├── components/           Shared shell and UI controls
 │   ├── data/seed/            Canonical fictional database
 │   ├── features/             Route screens by product area
@@ -22,8 +22,8 @@ jansahabhag_2027/
 │   ├── types/                Domain and screen contracts
 │   └── utils/                Formatting, class and ID helpers
 ├── tests/                    Vitest and Testing Library tests
-├── e2e/                      Playwright tests on Task 05 branch
-├── playwright.config.ts      Browser test setup on Task 05 branch
+├── e2e/                      Playwright browser tests
+├── playwright.config.ts      Browser test setup
 └── .subagy/                  Ignored plans, job logs and isolated worktrees
 ```
 

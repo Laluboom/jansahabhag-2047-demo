@@ -1,6 +1,6 @@
 # Feature index and verified status
 
-Tasks 01–04 are merged in `autobuild`. Task 05 is complete and independently verified on unmerged branch `agy/j-20261009-154211-yd8l`. The descriptions below include that final branch; merge commands are in [paused.md](../paused.md). Every route listed in `README.md` has a router entry and passed the Task 05 browser route smoke test.
+Tasks 01–05 are merged in `autobuild`. Every route listed in `README.md` has a router entry and passed the Task 05 browser route smoke test. [paused.md](../paused.md) records the completed job and merge history.
 
 | Area | Routes | Behavior |
 | --- | --- | --- |
@@ -19,4 +19,4 @@ Tasks 01–04 are merged in `autobuild`. Task 05 is complete and independently v
 
 ## Verification
 
-`npm run build`, `npm run test -- --run` (89 tests) and `npm run test:e2e` (six Chromium tests) passed independently on Task 05's branch. Playwright includes the complete Aarav-to-Passport journey, all README routes, invalid-record fallbacks, refresh persistence, mobile assembly/admin smoke, persona/notification/reset checks. Lazy route loading keeps the final production chunks below the earlier 500 kB warning threshold. The interface remains a browser demo; production services and deployment are outside this implementation.
+`npm run build`, `npm run test -- --run` (89 tests) and `npm run test:e2e` (six Chromium tests) passed independently on Task 05's branch and again on merged `autobuild`. Playwright includes the complete Aarav-to-Passport journey, all README routes, invalid-record fallbacks, refresh persistence, mobile assembly/admin smoke, persona/notification/reset checks. Lazy route loading keeps the final production chunks below the earlier 500 kB warning threshold. The interface remains a browser demo; production services and deployment are outside this implementation.

@@ -6,7 +6,7 @@
 
 ## Current handoff
 
-The previous user-requested pause has ended. [paused.md](paused.md) records the completed Autobuild jobs and the verified final Task 05 branch `agy/j-20261009-154211-yd8l`. Tasks 01–04 are merged into `autobuild`; Task 05 is intentionally unmerged for the Autobuild handback. The last Gemini five-hour quota was 6.4%, so do not dispatch another sub-agy job without a fresh quota check and the requested method's 20% threshold.
+The previous user-requested pause has ended. [paused.md](paused.md) records the completed Autobuild jobs. Tasks 01–05 are merged into `autobuild`, and the integrated build, unit suite and browser suite passed. The last Gemini five-hour quota check showed 98.9% after reset; check it again before any future sub-agy dispatch and follow the requested method's 20% threshold.
 
 ## Working rules
 
@@ -16,5 +16,5 @@ The previous user-requested pause has ended. [paused.md](paused.md) records the 
 - Use fictional data only. Persona switching, frontend role checks, verification, moderation, AI, video, external delivery and national metrics are demo or preview behavior, not production services.
 - Preserve participant isolation and have teacher review update the same submission the participant sees.
 - Browser storage key: `jansahbhag_demo_v1`. Update schema version and migration/reset behavior when changing persisted data shape. Reset must clone canonical seed.
-- Verify with `npm run build`, `npm run test -- --run` and, on the Task 05 branch or after integration, `npm run test:e2e`. Vitest excludes `.subagy/**`.
+- Verify with `npm run build`, `npm run test -- --run` and `npm run test:e2e`. Vitest excludes `.subagy/**`.
 - Build on `autobuild` or an isolated task branch, not specification-only `main`. Review a sub-agy diff and rerun acceptance independently. Preserve ignored job records until no longer needed.

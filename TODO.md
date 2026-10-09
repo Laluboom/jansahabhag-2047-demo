@@ -2,9 +2,8 @@
 
 ## Final integration
 
-- [x] Merge and verify Tasks 01–04 in `autobuild`.
-- [x] Build and independently verify Task 05 on `agy/j-20261009-154211-yd8l`: 89 unit/UI tests, six Chromium Playwright tests, and production build.
-- [ ] Merge the verified Task 05 branch into `autobuild` if adopting the final result. Use the commands in [paused.md](paused.md), then rerun all three checks on the integration branch.
+- [x] Merge and verify Tasks 01–05 in `autobuild`.
+- [x] Rerun production build, 89 unit/UI tests and six Chromium Playwright tests after the Task 05 merge.
 
 ## Demo acceptance covered
 
@@ -17,5 +16,5 @@
 
 - [ ] Choose a host, project and credentials if deployment is wanted. No deployment target is configured.
 - [ ] Review dependency audit findings and choose supported updates deliberately; no force upgrade was applied.
-- [ ] Clean the 219 ESLint warnings reported on the verified Task 05 branch; `npm run lint` exits successfully with no errors.
+- [ ] Clean the 219 ESLint warnings reported during the final review; `npm run lint` exits successfully with no errors.
 - [ ] Before use with real participants, replace demo persona switching with real authentication and server-enforced authorization, and replace local persistence and simulated verification, messaging, AI, sessions, moderation and analytics with backed services.

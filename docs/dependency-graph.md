@@ -18,4 +18,4 @@ tests → repository, seed, persistence, screen components
 e2e → built app via Playwright and local Vite preview server
 ```
 
-`src/services/repository.ts` is the API replacement seam. `src/data/seed/` initializes and resets persistence; screens use repository methods as their live data source. `src/stores/` holds persona and presentation state, not authoritative domain records. Task 05 adds lazy route imports and Playwright files on its verified branch; no server is added.
+`src/services/repository.ts` is the API replacement seam. `src/data/seed/` initializes and resets persistence; screens use repository methods as their live data source. `src/stores/` holds persona and presentation state, not authoritative domain records. The integrated router uses lazy imports and Playwright checks the built demo; no server is added.

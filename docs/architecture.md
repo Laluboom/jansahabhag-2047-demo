@@ -2,7 +2,7 @@
 
 ## Purpose and state
 
-JanSahabhag 2047 is a browser-only demo of a connected civic journey with fictional data. Tasks 01–04 are merged into `autobuild`; final route loading, missing-record behavior and browser verification are complete on unmerged Task 05 branch `agy/j-20261009-154211-yd8l`. [paused.md](../paused.md) is the current integration handback.
+JanSahabhag 2047 is a browser-only demo of a connected civic journey with fictional data. Tasks 01–05 are merged into `autobuild`, including lazy route loading, missing-record behavior and browser verification. [paused.md](../paused.md) records the completed integration history.
 
 ## Layers and data flow
 
@@ -38,4 +38,4 @@ The repository owns status transitions and related Activity, Notification, Civic
 
 Local record changes, notifications, programme/content edits, moderation transitions, derived analytics and credits work within the browser. Identity, verification authority, scripted assembly peers, video, AI, national metrics, stakeholder delivery and multilingual tooling are simulated or labelled Demo Preview. Dissent and unresolved questions stay visible in deliberation. Civic Credits describe activity, not civic worth.
 
-Task 05 passed an independent production build, 89 Vitest unit/UI tests and six Chromium Playwright tests. The browser suite covers the end-to-end Aarav journey, specific Passport/ledger links, all README routes with seeded IDs, missing records, refresh persistence, mobile assembly/admin smoke, persona/notification/reset behavior. A host and deployment credentials have not been selected. Production authentication, authorization, data services and audit controls would require a separate project.
+The integrated branch passed a production build, 89 Vitest unit/UI tests and six Chromium Playwright tests. The browser suite covers the end-to-end Aarav journey, specific Passport/ledger links, all README routes with seeded IDs, missing records, refresh persistence, mobile assembly/admin smoke, persona/notification/reset behavior. A host and deployment credentials have not been selected. Production authentication, authorization, data services and audit controls would require a separate project.

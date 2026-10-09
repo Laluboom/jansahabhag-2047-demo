@@ -4,7 +4,7 @@
 
 This repository is a frontend-first interactive demo of a fictional civic learning and participation platform. `README.md` defines product scope and manual acceptance; `IMPLEMENTATION_PLAN.md` defines domain flows and delivery order. The user requested the sub-agy Autobuild method. The earlier quota pause is resolved; [paused.md](paused.md) is the current handoff.
 
-`autobuild` contains Tasks 01–04: foundation, learning/assignment and teacher review, Youth Assembly/proposition/reflection/Passport, and supporting participant/admin/preview modules. The final Task 05 audit and Playwright suite is complete and verified on unmerged branch `agy/j-20261009-154211-yd8l`. `main` remains a specification-only base. See [docs/features.md](docs/features.md) for route status.
+`autobuild` contains Tasks 01–05: foundation, learning/assignment and teacher review, Youth Assembly/proposition/reflection/Passport, supporting participant/admin/preview modules, and the final audit and Playwright suite. Task 05 was merged as `ca9a188` and all checks passed again on the integrated branch. `main` remains a specification-only base. See [docs/features.md](docs/features.md) for route status.
 
 The central story is Aarav Sharma, a 17-year-old at Navchetna Public School in Jaipur, working through “My Community, My Future” on safer pedestrian crossings near schools. His path connects learning, a field assignment, teacher verification, evidence-backed assembly deliberation, proposition, reflection and Civic Passport. Seeded personas expose participant, teacher, facilitator, institution, programme and platform perspectives. All data is fictional.
 
@@ -30,6 +30,6 @@ Community posts, RSVP, notifications, moderation transitions, programme/content 
 
 ## Run and verify
 
-`npm ci` installs dependencies; `npm run dev` starts local development. `npm run build` type-checks and builds `dist/`; `npm run test -- --run` runs Vitest once. On the verified Task 05 branch, `npm run test:e2e` starts the preview server and runs six Chromium Playwright tests. It needs a local browser binary and permission to start a local server. The final branch passed build, 89 unit/UI tests and six browser tests. `vite.config.ts` excludes `.subagy/**` so nested worktrees are not tested twice.
+`npm ci` installs dependencies; `npm run dev` starts local development. `npm run build` type-checks and builds `dist/`; `npm run test -- --run` runs Vitest once. `npm run test:e2e` starts the preview server and runs six Chromium Playwright tests. It needs a local browser binary and permission to start a local server. The integrated `autobuild` branch passed build, 89 unit/UI tests and six browser tests. `vite.config.ts` excludes `.subagy/**` so nested worktrees are not tested twice.
 
-Sub-agy plans, logs and worktrees live in ignored `.subagy/`. Independently rerun acceptance and inspect a job's diff before integration. The verified Task 05 branch is intentionally unmerged under the Autobuild handback method; [paused.md](paused.md) gives its command. No production deployment is configured. The README mentions possible hosts, but no destination or credentials were supplied.
+Sub-agy plans, logs and worktrees live in ignored `.subagy/`. Independently rerun acceptance and inspect a job's diff before integration. All five tasks are now integrated; [paused.md](paused.md) records the job and merge history. No production deployment is configured. The README mentions possible hosts, but no destination or credentials were supplied.
