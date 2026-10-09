@@ -1,6 +1,7 @@
 .subagy/
 node_modules/
 dist/
+.vercel/
 coverage/
 playwright-report/
 test-results/
