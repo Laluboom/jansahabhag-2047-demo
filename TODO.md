@@ -14,7 +14,7 @@
 
 ## Future choices
 
-- [ ] Choose a host, project and credentials if deployment is wanted. No deployment target is configured.
+- [x] Publish the public GitHub repository and deploy the Vercel project at https://jansahabhag2027.vercel.app.
 - [ ] Review dependency audit findings and choose supported updates deliberately; no force upgrade was applied.
 - [ ] Clean the 219 ESLint warnings reported during the final review; `npm run lint` exits successfully with no errors.
 - [ ] Before use with real participants, replace demo persona switching with real authentication and server-enforced authorization, and replace local persistence and simulated verification, messaging, AI, sessions, moderation and analytics with backed services.

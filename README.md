@@ -2,6 +2,10 @@
 
 A frontend-first interactive demo of **JanSahabhag 2047**, designed to demonstrate the full product vision with a polished participant journey, realistic mock data, local persistence, and selected administrative views.
 
+**Live demo:** [jansahabhag2027.vercel.app](https://jansahabhag2027.vercel.app)
+
+**Source:** [Laluboom/jansahabhag-2047-demo](https://github.com/Laluboom/jansahabhag-2047-demo)
+
 This is **not** a production implementation. It intentionally simulates backend, authentication, AI, verification, moderation, and real-time behaviour so the product can be reviewed, demonstrated, and manually tested before production infrastructure is built.
 
 ---
@@ -779,12 +783,14 @@ The demo is ready when:
 
 ## 20. Getting started
 
-Once the project repository exists:
-
 ```bash
-npm install
+npm ci
 npm run dev
 ```
+
+The deployed demo is a client-rendered React/Vite application. Vercel serves the static build in `dist`; `vercel.json` sends direct links to `index.html` so React Router can handle them. There is no backend or database in this demo. State is stored in each browser's `localStorage`, so progress does not sync between browsers or people. Demo personas do not provide production authentication or access control.
+
+The Vercel project is `lalubooms-projects/jansahabhag_2027` and is connected to the public GitHub repository. Pushes to the repository's `autobuild` default branch trigger new deployments. To check a local production build, run `npm run build`.
 
 Recommended scripts:
 

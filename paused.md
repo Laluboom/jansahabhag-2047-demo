@@ -30,7 +30,7 @@ The repaired golden path asserts newly created lesson, assignment, evidence, ass
 
 Gemini five-hour quota reset and showed **98.9% remaining** at the resumed check. No further sub-agy dispatch was needed. The exact current `git diff main..autobuild --stat` is saved in ignored `.subagy/handoff-stat.txt` and includes all five tasks.
 
-No deployment destination or credentials were provided, so there is no hosted URL. The app is a frontend demo with fictional local data. Persona switching and role checks are not production authentication or authorization. AI, video, national metrics, external stakeholder delivery and multilingual capability are simulated or preview surfaces. Dependency audit findings from `npm ci` were not remediated through an unreviewed force upgrade.
+The demo was subsequently published as the public repository https://github.com/Laluboom/jansahabhag-2047-demo and deployed to https://jansahabhag2027.vercel.app in Vercel project `lalubooms-projects/jansahabhag_2027`. The GitHub repository is connected to Vercel for subsequent deployments. `vercel.json` handles direct SPA routes. The app remains a frontend demo with fictional local data. Persona switching and role checks are not production authentication or authorization. AI, video, national metrics, external stakeholder delivery and multilingual capability are simulated or preview surfaces. Dependency audit findings from `npm ci` were not remediated through an unreviewed force upgrade.
 
 `npm run lint` exits successfully with zero errors but reports 219 warnings, mostly unused imports/variables and explicit `any` types. These are parked for cleanup and do not block the verified build or browser journey.
 
