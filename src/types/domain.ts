@@ -244,6 +244,8 @@ export interface Event {
   meetingUrl?: string;
   organizerId: string;
   attendeeUserIds: string[];
+  checkedInUserIds?: string[];
+  rsvpMap?: Record<string, 'attending' | 'maybe' | 'declined'>;
   capacity: number;
   status: EventStatus;
   schemaVersion: number;
@@ -415,6 +417,14 @@ export interface ProjectMilestone {
   completedAt?: string;
 }
 
+export interface ProjectNote {
+  id: string;
+  authorId: string;
+  authorName: string;
+  text: string;
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
   programmeId: string;
@@ -426,6 +436,7 @@ export interface Project {
   milestones: ProjectMilestone[];
   evidenceIds: string[];
   outcomesSummary?: string;
+  notes?: ProjectNote[];
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -553,6 +564,7 @@ export interface CommunityPost {
   content: string;
   tags: string[];
   likesCount: number;
+  likedByUserIds?: string[];
   replies: PostReply[];
   isPinned: boolean;
   schemaVersion: number;
@@ -573,6 +585,28 @@ export interface ModerationCase {
   reviewerId?: string;
   notes?: string;
   resolutionDetails?: string;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CivicIssueSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type CivicIssueStatus = 'reported' | 'audited' | 'in_deliberation' | 'charter_drafted' | 'resolved';
+
+export interface CivicIssue {
+  id: string;
+  title: string;
+  location: string;
+  ward: string;
+  coordinates?: { lat: number; lng: number };
+  category: string;
+  severity: CivicIssueSeverity;
+  status: CivicIssueStatus;
+  description: string;
+  reportsCount: number;
+  upvotedByUserIds?: string[];
+  evidenceIds: string[];
+  assemblyId?: string;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -605,4 +639,5 @@ export interface DemoDatabase {
   communityGroups: CommunityGroup[];
   communityPosts: CommunityPost[];
   moderationCases: ModerationCase[];
+  civicIssues?: CivicIssue[];
 }

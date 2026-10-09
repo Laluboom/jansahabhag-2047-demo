@@ -22,6 +22,7 @@ import {
   CommunityGroup,
   CommunityPost,
   ModerationCase,
+  CivicIssue,
 } from '../types/domain';
 import {
   DashboardData,
@@ -47,10 +48,14 @@ export interface DemoRepository {
   getInstitution(id: string): Promise<Institution | null>;
   getProgrammes(): Promise<Programme[]>;
   getProgramme(id: string): Promise<Programme | null>;
+  createProgramme(programme: Omit<Programme, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Programme>;
+  updateProgramme(programmeId: string, updates: Partial<Programme>): Promise<Programme>;
 
   // Learning
   getCourses(userId?: string): Promise<Course[]>;
   getCourse(courseId: string): Promise<Course | null>;
+  createCourse(course: Omit<Course, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Course>;
+  updateCourse(courseId: string, updates: Partial<Course>): Promise<Course>;
   getLessons(courseId: string): Promise<Lesson[]>;
   getLesson(lessonId: string): Promise<Lesson | null>;
   getEnrolment(userId: string, courseId: string): Promise<Enrolment | null>;
@@ -104,12 +109,22 @@ export interface DemoRepository {
   getProjects(programmeId?: string): Promise<Project[]>;
   getProject(projectId: string): Promise<Project | null>;
   completeProjectMilestone(projectId: string, milestoneId: string, userId: string): Promise<Project>;
+  addProjectNote(projectId: string, note: { authorId: string; text: string }): Promise<Project>;
+  addProjectEvidence(projectId: string, evidenceId: string): Promise<Project>;
+  createProject(project: Omit<Project, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Project>;
+  updateProject(projectId: string, updates: Partial<Project>): Promise<Project>;
 
   // Events & Sessions
   getEvents(): Promise<Event[]>;
   getEvent(eventId: string): Promise<Event | null>;
   getSession(sessionId: string): Promise<Session | null>;
-  rsvpEvent(eventId: string, userId: string): Promise<Event>;
+  getSessionByEvent(eventId: string): Promise<Session | null>;
+  rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined'): Promise<Event>;
+  checkInEvent(eventId: string, userId: string): Promise<{ event: Event; activity?: Activity }>;
+
+  // Activities
+  getActivities(userId?: string): Promise<Activity[]>;
+  addActivity(activity: Omit<Activity, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Activity>;
 
   // Reflections
   getReflections(userId?: string): Promise<Reflection[]>;
@@ -128,9 +143,18 @@ export interface DemoRepository {
   // Community
   getCommunityGroups(): Promise<CommunityGroup[]>;
   getCommunityGroup(groupId: string): Promise<CommunityGroup | null>;
+  joinCommunityGroup(groupId: string, userId: string): Promise<CommunityGroup>;
+  leaveCommunityGroup(groupId: string, userId: string): Promise<CommunityGroup>;
   getCommunityPosts(groupId: string): Promise<CommunityPost[]>;
   addCommunityPost(post: { groupId: string; authorId: string; title: string; content: string; tags: string[] }): Promise<CommunityPost>;
   addCommunityReply(postId: string, authorId: string, text: string): Promise<CommunityPost>;
+  likeCommunityPost(postId: string, userId: string): Promise<CommunityPost>;
+
+  // Civic Issues Map
+  getCivicIssues(): Promise<CivicIssue[]>;
+  getCivicIssue(issueId: string): Promise<CivicIssue | null>;
+  upvoteCivicIssue(issueId: string, userId: string): Promise<CivicIssue>;
+  reportCivicIssue(issue: Omit<CivicIssue, 'id' | 'reportsCount' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<CivicIssue>;
 
   // Moderation
   getModerationCases(): Promise<ModerationCase[]>;

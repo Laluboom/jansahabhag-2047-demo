@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { CommunityGroup } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { MessageSquare, Users, ArrowRight } from 'lucide-react';
+import {
+  MessageSquare,
+  Users,
+  ArrowRight,
+  Sparkles,
+  Lock,
+  Globe,
+  Plus,
+  CheckCircle2,
+} from 'lucide-react';
 
 export const CommunityPage: React.FC = () => {
+  const { currentUser } = useAuthStore();
+  const { refreshKey } = useAppRefreshStore();
+
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,7 +37,7 @@ export const CommunityPage: React.FC = () => {
       }
     }
     load();
-  }, []);
+  }, [refreshKey]);
 
   if (isLoading) {
     return (
@@ -38,46 +51,61 @@ export const CommunityPage: React.FC = () => {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
-          <MessageSquare className="w-6 h-6 text-civic-indigo-600" />
+          <MessageSquare className="w-7 h-7 text-civic-indigo-600" />
           <span>Community Circles & Peer Forums</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Local peer coordination spaces for sharing field tips, mapping coordination, and cohort reflections.
+          Local peer coordination spaces for sharing field audit tips, mapping methodology, and cohort reflections.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {groups.map((grp) => (
-          <Card key={grp.id} hoverable className="p-5 border-slate-200 flex flex-col justify-between">
-            <div className="space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-civic-teal-700 bg-civic-teal-50 px-2 py-0.5 rounded border border-civic-teal-200">
-                {grp.category}
-              </span>
+        {groups.map((grp) => {
+          const isMember = currentUser ? grp.memberUserIds.includes(currentUser.id) : false;
 
-              <CardTitle className="text-base font-bold text-slate-900 font-heading">
-                {grp.name}
-              </CardTitle>
+          return (
+            <Card
+              key={grp.id}
+              hoverable
+              className="p-5 border-slate-200 flex flex-col justify-between bg-white shadow-sm hover:shadow-md transition-all space-y-4"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-civic-teal-700 bg-civic-teal-50 px-2.5 py-0.5 rounded border border-civic-teal-200">
+                    {grp.category}
+                  </span>
+                  {isMember && (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Member
+                    </span>
+                  )}
+                </div>
 
-              <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
-                {grp.description}
-              </p>
-            </div>
+                <CardTitle className="text-base font-bold text-slate-900 font-heading">
+                  {grp.name}
+                </CardTitle>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-500 flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                {grp.memberUserIds.length} Members
-              </span>
+                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
+                  {grp.description}
+                </p>
+              </div>
 
-              <Link to={`/community/groups/${grp.id}`}>
-                <Button size="sm" variant="outline">
-                  <span>Open Forum</span>
-                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        ))}
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-500 flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{grp.memberUserIds.length} Members</span>
+                </span>
+
+                <Link to={`/community/groups/${grp.id}`}>
+                  <Button size="sm" variant="outline" className="text-xs">
+                    <span>Open Forum</span>
+                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

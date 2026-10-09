@@ -18,6 +18,7 @@ import { seedPassportEntries } from './passport';
 import { seedNotifications } from './notifications';
 import { seedCommunityGroups, seedCommunityPosts } from './community';
 import { seedModerationCases } from './moderation';
+import { seedCivicIssues } from './issues';
 
 export const CURRENT_SCHEMA_VERSION = 1;
 
@@ -48,6 +49,7 @@ export const seedDatabase: DemoDatabase = {
   communityGroups: seedCommunityGroups,
   communityPosts: seedCommunityPosts,
   moderationCases: seedModerationCases,
+  civicIssues: seedCivicIssues,
 };
 
 export function getFreshSeedDatabase(): DemoDatabase {
