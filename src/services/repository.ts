@@ -77,9 +77,26 @@ export interface DemoRepository {
   getAssembly(assemblyId: string): Promise<Assembly | null>;
   getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]>;
   getUserAssemblyRole(assemblyId: string, userId: string): Promise<AssemblyRole | null>;
+  joinAssembly(assemblyId: string, userId: string): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
   getContributions(assemblyId: string): Promise<Contribution[]>;
   addAssemblyContribution(input: AssemblyContributionInput): Promise<Contribution>;
   getProposition(propositionId: string): Promise<Proposition | null>;
+  updateProposition(input: {
+    propositionId: string;
+    updatedBy: string;
+    changesSummary?: string;
+    question?: string;
+    problem?: string;
+    insight?: string;
+    proposition?: string;
+    enablers?: string[];
+    risks?: string[];
+    nextStep?: string;
+    unresolvedQuestions?: string[];
+    evidenceIds?: string[];
+    dissent?: import('../types/domain').DissentRecord[];
+    supportProfile?: import('../types/domain').SupportProfile;
+  }): Promise<Proposition>;
   finaliseProposition(input: PropositionFinalisationInput): Promise<Proposition>;
   updateAssemblyStage(assemblyId: string, stage: import('../types/domain').AssemblyStage): Promise<Assembly>;
 
