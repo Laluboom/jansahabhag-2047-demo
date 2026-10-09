@@ -1,5 +1,14 @@
 export * from './domain';
 
+export interface DashboardNextStep {
+  type: 'lesson' | 'assignment' | 'assembly' | 'revision';
+  title: string;
+  description: string;
+  targetRoute: string;
+  badgeText: string;
+  rewardText?: string;
+}
+
 export interface DashboardData {
   user: import('./domain').User;
   activeEnrolments: import('./domain').Enrolment[];
@@ -13,14 +22,17 @@ export interface DashboardData {
     breakdown: Record<import('./domain').CreditDimension, number>;
   };
   passportEntriesCount: number;
+  nextStep?: DashboardNextStep;
 }
 
 export interface AssignmentSubmissionInput {
   assignmentId: string;
   userId: string;
   content: string;
-  evidenceIds: string[];
+  evidenceIds?: string[];
+  status?: 'draft' | 'submitted';
 }
+
 
 export interface SubmissionReviewInput {
   submissionId: string;

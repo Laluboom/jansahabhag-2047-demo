@@ -46,22 +46,37 @@ export class LocalDemoRepository implements DemoRepository {
     PersistenceService.saveDatabase(db);
   }
 
+  private calculateUserCredits(db: DemoDatabase, userId: string): number {
+    return db.credits
+      .filter((c) => c.userId === userId)
+      .reduce((sum, c) => sum + c.amount, 0);
+  }
+
   // Users & Personas
   async getCurrentUser(): Promise<User> {
     const db = this.getDb();
     const user = db.users.find((u) => u.id === db.activeUserId) || db.users[0];
-    return JSON.parse(JSON.stringify(user));
+    const cloned = JSON.parse(JSON.stringify(user));
+    cloned.totalCredits = this.calculateUserCredits(db, cloned.id);
+    return cloned;
   }
 
   async getUsers(): Promise<User[]> {
     const db = this.getDb();
-    return JSON.parse(JSON.stringify(db.users));
+    return db.users.map((u) => {
+      const cloned = JSON.parse(JSON.stringify(u));
+      cloned.totalCredits = this.calculateUserCredits(db, cloned.id);
+      return cloned;
+    });
   }
 
   async getUser(userId: string): Promise<User | null> {
     const db = this.getDb();
     const user = db.users.find((u) => u.id === userId);
-    return user ? JSON.parse(JSON.stringify(user)) : null;
+    if (!user) return null;
+    const cloned = JSON.parse(JSON.stringify(user));
+    cloned.totalCredits = this.calculateUserCredits(db, cloned.id);
+    return cloned;
   }
 
   async switchUser(userId: string): Promise<User> {
@@ -71,6 +86,7 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error(`User with id ${userId} not found`);
     }
     db.activeUserId = userId;
+    user.totalCredits = this.calculateUserCredits(db, user.id);
     this.saveDb(db);
     return JSON.parse(JSON.stringify(user));
   }
@@ -79,21 +95,28 @@ export class LocalDemoRepository implements DemoRepository {
   async getDashboard(userId: string): Promise<DashboardData> {
     const db = this.getDb();
     const user = db.users.find((u) => u.id === userId) || db.users[0];
+    const clonedUser = JSON.parse(JSON.stringify(user));
+    const userCredits = this.calculateUserCredits(db, userId);
+    clonedUser.totalCredits = userCredits;
+
     const enrolments = db.enrolments.filter((e) => e.userId === userId);
     const activities = db.activities
       .filter((a) => a.userId === userId)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const events = db.events.filter((e) => e.attendeeUserIds.includes(userId) || e.organizerId === userId);
     const assemblies = db.assemblies.filter((a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId);
-    const submissions = db.submissions.filter((s) => s.userId === userId);
-    const submittedAsgIds = submissions.map((s) => s.assignmentId);
-    const pendingAssignments = db.assignments.filter((a) => !submittedAsgIds.includes(a.id));
+    const userSubmissions = db.submissions.filter((s) => s.userId === userId);
+
+    const activeSubmissions = userSubmissions.filter((s) => s.status === 'submitted' || s.status === 'verified' || s.status === 'under_review');
+    const activeSubmittedAsgIds = activeSubmissions.map((s) => s.assignmentId);
+    const pendingAssignments = db.assignments.filter((a) => !activeSubmittedAsgIds.includes(a.id));
+
     const notifications = db.notifications
       .filter((n) => n.userId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const credits = db.credits.filter((c) => c.userId === userId);
-    const totalCredits = credits.reduce((sum, c) => sum + c.amount, 0);
+    const totalCredits = userCredits;
 
     const breakdown: Record<CreditDimension, number> = {
       Learning: 0,
@@ -111,8 +134,87 @@ export class LocalDemoRepository implements DemoRepository {
 
     const passportEntries = db.passportEntries.filter((p) => p.userId === userId);
 
+    // Compute intelligent connected next step
+    let nextStep: import('../types').DashboardNextStep | undefined;
+
+    // 1. Revision requested
+    const revisionSub = userSubmissions.find((s) => s.status === 'revision_requested');
+    if (revisionSub) {
+      const asg = db.assignments.find((a) => a.id === revisionSub.assignmentId);
+      nextStep = {
+        type: 'revision',
+        title: `Revise: ${asg?.title || 'Field Assignment'}`,
+        description: revisionSub.teacherFeedback || 'Mentor requested updates on your observation report.',
+        targetRoute: `/assignments/${revisionSub.assignmentId}/submit`,
+        badgeText: 'Action Required',
+        rewardText: 'Resubmit for Review',
+      };
+    }
+
+    // 2. Draft assignment
+    if (!nextStep) {
+      const draftSub = userSubmissions.find((s) => s.status === 'draft');
+      if (draftSub) {
+        const asg = db.assignments.find((a) => a.id === draftSub.assignmentId);
+        nextStep = {
+          type: 'assignment',
+          title: `Resume Draft: ${asg?.title || 'Assignment'}`,
+          description: 'Continue editing and attach field observation evidence.',
+          targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
+          badgeText: 'Draft in Progress',
+          rewardText: '+10 Credits on Submit',
+        };
+      }
+    }
+
+    // 3. In-progress course next lesson
+    if (!nextStep) {
+      const inProgressEnrolment = enrolments.find((e) => e.status === 'in_progress');
+      if (inProgressEnrolment) {
+        const course = db.courses.find((c) => c.id === inProgressEnrolment.courseId);
+        const courseLessons = db.lessons.filter((l) => l.courseId === inProgressEnrolment.courseId).sort((a, b) => a.order - b.order);
+        const nextLesson = courseLessons.find((l) => !inProgressEnrolment.completedLessonIds.includes(l.id));
+        if (nextLesson && course) {
+          nextStep = {
+            type: 'lesson',
+            title: `Continue Lesson: ${nextLesson.title}`,
+            description: nextLesson.contentSummary || course.description,
+            targetRoute: `/learn/${course.id}/lesson/${nextLesson.id}`,
+            badgeText: `${course.code} &bull; Next Lesson`,
+            rewardText: '+5 Learning Credits',
+          };
+        }
+      }
+    }
+
+    // 4. Pending unsubmitted assignment
+    if (!nextStep && pendingAssignments.length > 0) {
+      const firstPending = pendingAssignments[0];
+      nextStep = {
+        type: 'assignment',
+        title: `Field Task: ${firstPending.title}`,
+        description: firstPending.prompt,
+        targetRoute: `/assignments/${firstPending.id}`,
+        badgeText: 'Field Assignment',
+        rewardText: `+${firstPending.creditsReward} Credits`,
+      };
+    }
+
+    // 5. Active Assembly
+    if (!nextStep && assemblies.length > 0) {
+      const firstAssembly = assemblies[0];
+      nextStep = {
+        type: 'assembly',
+        title: `Youth Deliberation: ${firstAssembly.title}`,
+        description: firstAssembly.question,
+        targetRoute: `/assemblies/${firstAssembly.id}`,
+        badgeText: `Stage: ${firstAssembly.currentStage.replace('_', ' ')}`,
+        rewardText: 'Deliberation Chamber',
+      };
+    }
+
     return {
-      user: JSON.parse(JSON.stringify(user)),
+      user: clonedUser,
       activeEnrolments: JSON.parse(JSON.stringify(enrolments)),
       recentActivities: JSON.parse(JSON.stringify(activities.slice(0, 8))),
       upcomingEvents: JSON.parse(JSON.stringify(events)),
@@ -124,6 +226,7 @@ export class LocalDemoRepository implements DemoRepository {
         breakdown,
       },
       passportEntriesCount: passportEntries.length,
+      nextStep,
     };
   }
 
@@ -217,6 +320,7 @@ export class LocalDemoRepository implements DemoRepository {
     const lesson = db.lessons.find((l) => l.id === lessonId);
     if (!lesson) throw new Error(`Lesson ${lessonId} not found`);
 
+    const course = db.courses.find((c) => c.id === lesson.courseId);
     let enrolment = db.enrolments.find((e) => e.userId === userId && e.courseId === lesson.courseId);
     const now = new Date().toISOString();
 
@@ -245,7 +349,8 @@ export class LocalDemoRepository implements DemoRepository {
       const totalCount = courseLessons.length || 1;
       enrolment.progressPercent = Math.round((enrolment.completedLessonIds.length / totalCount) * 100);
 
-      if (enrolment.progressPercent >= 100) {
+      const newlyCompleted = enrolment.progressPercent >= 100;
+      if (newlyCompleted) {
         enrolment.status = 'completed';
         enrolment.completedAt = now;
       } else {
@@ -253,40 +358,107 @@ export class LocalDemoRepository implements DemoRepository {
       }
       enrolment.updatedAt = now;
 
-      // Create credit transaction for lesson
-      creditTx = {
-        id: generateId('tx'),
-        userId,
-        dimension: 'Learning',
-        amount: 5,
-        sourceType: 'lesson',
-        sourceId: lessonId,
-        status: 'Verified',
-        reason: `Completed lesson: ${lesson.title}`,
-        createdAt: now,
-        schemaVersion: 1,
-      };
-      db.credits.push(creditTx);
+      // Create credit transaction for lesson (idempotent)
+      const existingTx = db.credits.find(
+        (c) => c.userId === userId && c.sourceType === 'lesson' && c.sourceId === lessonId
+      );
+      if (!existingTx) {
+        creditTx = {
+          id: generateId('tx'),
+          userId,
+          dimension: 'Learning',
+          amount: 5,
+          sourceType: 'lesson',
+          sourceId: lessonId,
+          status: 'Verified',
+          reason: `Completed lesson: ${lesson.title}`,
+          createdAt: now,
+          schemaVersion: 1,
+        };
+        db.credits.push(creditTx);
+      }
 
-      // Create activity record
-      db.activities.push({
-        id: generateId('act'),
+      // Create activity record (idempotent)
+      const existingAct = db.activities.find(
+        (a) => a.userId === userId && a.type === 'lesson_completed' && a.referenceId === lessonId
+      );
+      if (!existingAct) {
+        db.activities.push({
+          id: generateId('act'),
+          userId,
+          type: 'lesson_completed',
+          title: `Completed Lesson: ${lesson.title}`,
+          description: `Progress in ${course?.title || lesson.courseId} reached ${enrolment.progressPercent}%`,
+          referenceId: lessonId,
+          referenceType: 'lesson',
+          timestamp: now,
+          schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      // Create Passport Entry (idempotent)
+      const existingPass = db.passportEntries.find(
+        (p) => p.userId === userId && p.sourceReferenceId === lessonId
+      );
+      if (!existingPass) {
+        db.passportEntries.push({
+          id: generateId('pass'),
+          userId,
+          category: 'learning',
+          title: `Completed: ${lesson.title}`,
+          subtitle: course?.title || 'Civic Academy Lesson',
+          date: now.split('T')[0],
+          creditsAwarded: 5,
+          evidenceIds: [],
+          sourceReferenceId: lessonId,
+          sourceReferenceType: 'lesson',
+          isVerified: true,
+          schemaVersion: 1,
+        });
+      }
+
+      // If course is newly completed, create achievement passport entry
+      if (newlyCompleted) {
+        const existingCoursePass = db.passportEntries.find(
+          (p) => p.userId === userId && p.sourceReferenceId === lesson.courseId && p.category === 'achievement'
+        );
+        if (!existingCoursePass) {
+          db.passportEntries.push({
+            id: generateId('pass'),
+            userId,
+            category: 'achievement',
+            title: `Course Mastered: ${course?.title || 'Civic Track'}`,
+            subtitle: `Completed all ${totalCount} lessons in ${course?.code || 'curriculum'}`,
+            date: now.split('T')[0],
+            creditsAwarded: 0,
+            evidenceIds: [],
+            sourceReferenceId: lesson.courseId,
+            sourceReferenceType: 'course',
+            isVerified: true,
+            schemaVersion: 1,
+          });
+        }
+      }
+
+      // Notification
+      db.notifications.push({
+        id: generateId('notif'),
         userId,
-        type: 'lesson_completed',
-        title: `Completed Lesson: ${lesson.title}`,
-        description: `Progress in ${lesson.courseId} reached ${enrolment.progressPercent}%`,
-        referenceId: lessonId,
-        referenceType: 'lesson',
-        timestamp: now,
-        schemaVersion: 1,
+        title: 'Lesson Completed!',
+        message: `You completed "${lesson.title}" and earned 5 Learning Credits.`,
+        type: 'credit',
+        isRead: false,
+        targetRoute: `/passport/credits`,
         createdAt: now,
-        updatedAt: now,
+        schemaVersion: 1,
       });
 
       // Update user total credits
       const user = db.users.find((u) => u.id === userId);
       if (user) {
-        user.totalCredits += 5;
+        user.totalCredits = this.calculateUserCredits(db, userId);
         user.updatedAt = now;
       }
 
@@ -326,9 +498,47 @@ export class LocalDemoRepository implements DemoRepository {
     return sub ? JSON.parse(JSON.stringify(sub)) : null;
   }
 
-  async submitAssignment(input: AssignmentSubmissionInput): Promise<Submission> {
+  async saveAssignmentDraft(input: AssignmentSubmissionInput): Promise<Submission> {
     const db = this.getDb();
     const now = new Date().toISOString();
+    const existing = db.submissions.find(
+      (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
+    );
+
+    let submission: Submission;
+    if (existing) {
+      existing.content = input.content;
+      existing.evidenceIds = input.evidenceIds || [];
+      existing.status = 'draft';
+      existing.updatedAt = now;
+      submission = existing;
+    } else {
+      submission = {
+        id: generateId('sub'),
+        assignmentId: input.assignmentId,
+        userId: input.userId,
+        content: input.content,
+        evidenceIds: input.evidenceIds || [],
+        status: 'draft',
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.submissions.push(submission);
+    }
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(submission));
+  }
+
+  async submitAssignment(input: AssignmentSubmissionInput): Promise<Submission> {
+    if (input.status === 'draft') {
+      return this.saveAssignmentDraft(input);
+    }
+
+    const db = this.getDb();
+    const now = new Date().toISOString();
+    const asg = db.assignments.find((a) => a.id === input.assignmentId);
     const existing = db.submissions.find(
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
@@ -337,7 +547,7 @@ export class LocalDemoRepository implements DemoRepository {
 
     if (existing) {
       existing.content = input.content;
-      existing.evidenceIds = input.evidenceIds;
+      existing.evidenceIds = input.evidenceIds || [];
       existing.status = 'submitted';
       existing.submittedAt = now;
       existing.updatedAt = now;
@@ -348,7 +558,7 @@ export class LocalDemoRepository implements DemoRepository {
         assignmentId: input.assignmentId,
         userId: input.userId,
         content: input.content,
-        evidenceIds: input.evidenceIds,
+        evidenceIds: input.evidenceIds || [],
         status: 'submitted',
         submittedAt: now,
         schemaVersion: 1,
@@ -358,33 +568,67 @@ export class LocalDemoRepository implements DemoRepository {
       db.submissions.push(submission);
     }
 
-    // Activity
-    const asg = db.assignments.find((a) => a.id === input.assignmentId);
-    db.activities.push({
-      id: generateId('act'),
-      userId: input.userId,
-      type: 'assignment_submitted',
-      title: `Submitted Assignment: ${asg?.title || input.assignmentId}`,
-      description: 'Submission queued for mentor review.',
-      referenceId: submission.id,
-      referenceType: 'submission',
-      timestamp: now,
-      schemaVersion: 1,
-      createdAt: now,
-      updatedAt: now,
-    });
+    // Submission credit: +10 once per submission, idempotent on retries
+    const existingCredit = db.credits.find(
+      (c) => c.userId === input.userId && c.sourceType === 'assignment' && c.sourceId === input.assignmentId
+    );
+    if (!existingCredit) {
+      db.credits.push({
+        id: generateId('tx'),
+        userId: input.userId,
+        dimension: 'Civic Action',
+        amount: 10,
+        sourceType: 'assignment',
+        sourceId: input.assignmentId,
+        status: 'Verified',
+        reason: `Submitted assignment: ${asg?.title || input.assignmentId}`,
+        createdAt: now,
+        schemaVersion: 1,
+      });
+
+      const user = db.users.find((u) => u.id === input.userId);
+      if (user) {
+        user.totalCredits = this.calculateUserCredits(db, input.userId);
+        user.updatedAt = now;
+      }
+    }
+
+    // Activity (idempotent on resubmission)
+    const existingActivity = db.activities.find(
+      (a) => a.userId === input.userId && a.type === 'assignment_submitted' && (a.referenceId === submission.id || a.referenceId === input.assignmentId)
+    );
+    if (existingActivity) {
+      existingActivity.timestamp = now;
+      existingActivity.updatedAt = now;
+      existingActivity.title = `Submitted Assignment: ${asg?.title || input.assignmentId}`;
+    } else {
+      db.activities.push({
+        id: generateId('act'),
+        userId: input.userId,
+        type: 'assignment_submitted',
+        title: `Submitted Assignment: ${asg?.title || input.assignmentId}`,
+        description: 'Submission queued for mentor review.',
+        referenceId: submission.id,
+        referenceType: 'submission',
+        timestamp: now,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     // Notify teacher
+    const user = db.users.find((u) => u.id === input.userId);
     const teachers = db.users.filter((u) => u.role === 'teacher');
     teachers.forEach((t) => {
       db.notifications.push({
         id: generateId('notif'),
         userId: t.id,
         title: 'New Assignment Submission',
-        message: `Submission received for ${asg?.title || 'an assignment'}.`,
+        message: `${user?.name || 'A student'} submitted "${asg?.title || 'an assignment'}".`,
         type: 'assignment',
         isRead: false,
-        targetRoute: `/assignments/${input.assignmentId}`,
+        targetRoute: `/assignments/${input.assignmentId}?submissionId=${submission.id}`,
         createdAt: now,
         schemaVersion: 1,
       });
@@ -410,44 +654,81 @@ export class LocalDemoRepository implements DemoRepository {
     const asg = db.assignments.find((a) => a.id === submission.assignmentId);
 
     if (input.status === 'verified') {
-      const reward = asg?.creditsReward || 10;
+      // 1. Mark attached evidence verified and award +5 Observation credit per evidence (idempotently)
+      submission.evidenceIds.forEach((eid) => {
+        const ev = db.evidence.find((e) => e.id === eid);
+        if (ev) {
+          ev.verificationStatus = 'verified';
+          ev.updatedAt = now;
 
-      // Credit transaction
-      db.credits.push({
-        id: generateId('tx'),
-        userId: submission.userId,
-        dimension: 'Observation',
-        amount: reward,
-        sourceType: 'assignment',
-        sourceId: submission.assignmentId,
-        status: 'Verified',
-        reason: `Verified assignment: ${asg?.title || submission.assignmentId}`,
-        createdAt: now,
-        schemaVersion: 1,
+          const existingEvCredit = db.credits.find(
+            (c) => c.userId === submission.userId && c.sourceType === 'evidence' && c.sourceId === eid
+          );
+          if (!existingEvCredit) {
+            db.credits.push({
+              id: generateId('tx'),
+              userId: submission.userId,
+              dimension: 'Observation',
+              amount: 5,
+              sourceType: 'evidence',
+              sourceId: eid,
+              status: 'Verified',
+              reason: `Verified field evidence: ${ev.title}`,
+              createdAt: now,
+              schemaVersion: 1,
+            });
+          }
+        }
       });
+
+      // Fallback if no evidence attached: award observation credit for assignment verification
+      if (submission.evidenceIds.length === 0) {
+        const existingObsCredit = db.credits.find(
+          (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId && c.dimension === 'Observation'
+        );
+        if (!existingObsCredit) {
+          db.credits.push({
+            id: generateId('tx'),
+            userId: submission.userId,
+            dimension: 'Observation',
+            amount: 5,
+            sourceType: 'assignment',
+            sourceId: submission.assignmentId,
+            status: 'Verified',
+            reason: `Verified assignment fieldwork: ${asg?.title || submission.assignmentId}`,
+            createdAt: now,
+            schemaVersion: 1,
+          });
+        }
+      }
+
+      // 2. Traceable Passport Entry (idempotent)
+      const existingPassport = db.passportEntries.find(
+        (p) => p.userId === submission.userId && p.sourceReferenceId === submission.id
+      );
+      if (!existingPassport) {
+        db.passportEntries.push({
+          id: generateId('pass'),
+          userId: submission.userId,
+          category: 'contribution',
+          title: `Verified: ${asg?.title || 'Field Assignment'}`,
+          subtitle: `Reviewed and verified by teacher`,
+          date: now.split('T')[0],
+          creditsAwarded: submission.evidenceIds.length > 0 ? submission.evidenceIds.length * 5 : 5,
+          evidenceIds: submission.evidenceIds,
+          sourceReferenceId: submission.id,
+          sourceReferenceType: 'submission',
+          isVerified: true,
+          schemaVersion: 1,
+        });
+      }
 
       // Update user credits
       const user = db.users.find((u) => u.id === submission.userId);
       if (user) {
-        user.totalCredits += reward;
+        user.totalCredits = this.calculateUserCredits(db, submission.userId);
         user.updatedAt = now;
       }
-
-      // Passport entry
-      db.passportEntries.push({
-        id: generateId('pass'),
-        userId: submission.userId,
-        category: 'contribution',
-        title: `Verified: ${asg?.title || 'Field Assignment'}`,
-        subtitle: `Reviewed and verified by teacher`,
-        date: now.split('T')[0],
-        creditsAwarded: reward,
-        evidenceIds: submission.evidenceIds,
-        sourceReferenceId: submission.id,
-        sourceReferenceType: 'submission',
-        isVerified: true,
-        schemaVersion: 1,
-      });
     }
 
     // Notify participant
@@ -455,7 +736,7 @@ export class LocalDemoRepository implements DemoRepository {
       id: generateId('notif'),
       userId: submission.userId,
       title: input.status === 'verified' ? 'Assignment Verified!' : 'Revision Requested on Assignment',
-      message: input.teacherFeedback.slice(0, 100),
+      message: input.teacherFeedback ? input.teacherFeedback.slice(0, 100) : (input.status === 'verified' ? 'Your assignment was verified.' : 'Please revise your assignment.'),
       type: 'review',
       isRead: false,
       targetRoute: `/assignments/${submission.assignmentId}`,
@@ -466,6 +747,7 @@ export class LocalDemoRepository implements DemoRepository {
     this.saveDb(db);
     return JSON.parse(JSON.stringify(submission));
   }
+
 
   // Evidence
   async getEvidenceList(options?: {
