@@ -1,0 +1,193 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
+import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
+import { demoRepository } from '../../services/demoRepository';
+import { Lesson, Course, Enrolment, Assignment } from '../../types/domain';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { StatusChip } from '../../components/ui/StatusChip';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  FileCheck2,
+  Sparkles,
+  BookOpen,
+  Award,
+} from 'lucide-react';
+
+export const LessonPage: React.FC = () => {
+  const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
+  const { currentUser } = useAuthStore();
+  const { refreshKey, triggerRefresh } = useAppRefreshStore();
+  const navigate = useNavigate();
+
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [enrolment, setEnrolment] = useState<Enrolment | null>(null);
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionSuccess, setCompletionSuccess] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      if (!courseId || !lessonId || !currentUser) return;
+      try {
+        const [l, c, enr] = await Promise.all([
+          demoRepository.getLesson(lessonId),
+          demoRepository.getCourse(courseId),
+          demoRepository.getEnrolment(currentUser.id, courseId),
+        ]);
+        setLesson(l);
+        setCourse(c);
+        setEnrolment(enr);
+
+        if (l?.assignmentId) {
+          const asg = await demoRepository.getAssignment(l.assignmentId);
+          setAssignment(asg);
+        }
+      } catch (err) {
+        console.error('Failed to load lesson', err);
+      }
+    }
+    load();
+  }, [courseId, lessonId, currentUser, refreshKey]);
+
+  const handleCompleteLesson = async () => {
+    if (!currentUser || !lessonId) return;
+    setIsCompleting(true);
+    try {
+      await demoRepository.completeLesson(currentUser.id, lessonId);
+      setCompletionSuccess(true);
+      triggerRefresh();
+    } catch (err) {
+      console.error('Failed to complete lesson', err);
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  if (!lesson || !course) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
+      </div>
+    );
+  }
+
+  const isCompleted = enrolment?.completedLessonIds.includes(lesson.id) || completionSuccess;
+
+  return (
+    <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Back to course breadcrumb */}
+      <div className="flex items-center justify-between">
+        <Link
+          to={`/learn/${course.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to {course.title}</span>
+        </Link>
+        {isCompleted && <StatusChip status="completed" />}
+      </div>
+
+      {/* Lesson Header Card */}
+      <Card className="border-slate-200 p-6 sm:p-8 space-y-3">
+        <span className="text-xs font-semibold text-civic-indigo-600 uppercase tracking-wider">
+          Lesson {lesson.order} &bull; {lesson.estimatedMinutes} Minutes
+        </span>
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
+          {lesson.title}
+        </h1>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          {lesson.contentSummary}
+        </p>
+
+        {/* Learning Objectives */}
+        {lesson.learningObjectives.length > 0 && (
+          <div className="mt-4 p-4 rounded-xl bg-civic-indigo-50/60 border border-civic-indigo-100 space-y-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-civic-indigo-900 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Learning Objectives
+            </h3>
+            <ul className="space-y-1.5 text-xs text-slate-700">
+              {lesson.learningObjectives.map((obj, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-civic-indigo-600 mt-0.5 shrink-0" />
+                  <span>{obj}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Card>
+
+      {/* Lesson Reading Sections */}
+      <div className="space-y-6">
+        {lesson.sections.map((section) => (
+          <Card key={section.id} className="border-slate-200 p-6 sm:p-8 space-y-4">
+            <h2 className="text-lg font-bold font-heading text-slate-900">
+              {section.title}
+            </h2>
+            <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+              {section.body}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Action Footer: Mark Complete + Linked Assignment */}
+      <Card className="border-slate-200 p-6 bg-slate-50 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-bold font-heading text-slate-900">
+              {isCompleted ? 'Lesson Completed!' : 'Finished Reading the Lesson?'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {isCompleted
+                ? 'Your progress has been recorded and 5 Civic Credits added.'
+                : 'Mark as complete to update your course progress and earn Civic Credits.'}
+            </p>
+          </div>
+
+          {!isCompleted ? (
+            <Button
+              variant="primary"
+              size="md"
+              isLoading={isCompleting}
+              onClick={handleCompleteLesson}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              <span>Mark Lesson Complete (+5 Credits)</span>
+            </Button>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Completed & Verified</span>
+            </div>
+          )}
+        </div>
+
+        {/* Linked Assignment Callout */}
+        {assignment && (
+          <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200">
+            <div className="space-y-0.5">
+              <span className="text-[10px] uppercase font-bold text-civic-saffron-800 tracking-wider">
+                Hands-on Field Practice
+              </span>
+              <h4 className="text-sm font-bold text-slate-900">{assignment.title}</h4>
+              <p className="text-xs text-slate-600 line-clamp-1">{assignment.prompt}</p>
+            </div>
+            <Link to={`/assignments/${assignment.id}`}>
+              <Button size="sm" variant="saffron" className="shrink-0">
+                <FileCheck2 className="w-4 h-4 mr-1" />
+                <span>Go to Assignment (+{assignment.creditsReward} Credits)</span>
+              </Button>
+            </Link>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
