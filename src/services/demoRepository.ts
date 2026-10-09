@@ -104,7 +104,9 @@ export class LocalDemoRepository implements DemoRepository {
       .filter((a) => a.userId === userId)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const events = db.events.filter((e) => e.attendeeUserIds.includes(userId) || e.organizerId === userId);
-    const assemblies = db.assemblies.filter((a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId);
+    const assemblies = db.assemblies.filter(
+      (a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId || a.status === 'deliberating' || a.status === 'active'
+    );
     const userSubmissions = db.submissions.filter((s) => s.userId === userId);
 
     const activeSubmissions = userSubmissions.filter((s) => s.status === 'submitted' || s.status === 'verified' || s.status === 'under_review');
@@ -204,13 +206,14 @@ export class LocalDemoRepository implements DemoRepository {
     // 5. Active Assembly
     if (!nextStep && assemblies.length > 0) {
       const firstAssembly = assemblies[0];
+      const isJoined = firstAssembly.participantUserIds.includes(userId);
       nextStep = {
         type: 'assembly',
         title: `Youth Deliberation: ${firstAssembly.title}`,
         description: firstAssembly.question,
         targetRoute: `/assemblies/${firstAssembly.id}`,
-        badgeText: `Stage: ${firstAssembly.currentStage.replace('_', ' ')}`,
-        rewardText: 'Deliberation Chamber',
+        badgeText: isJoined ? `Stage: ${firstAssembly.currentStage.replace('_', ' ')}` : 'Assembly Chamber',
+        rewardText: isJoined ? 'Deliberation Chamber' : '+10 Credits on Join',
       };
     }
 
@@ -834,6 +837,151 @@ export class LocalDemoRepository implements DemoRepository {
     return role ? JSON.parse(JSON.stringify(role)) : null;
   }
 
+  async joinAssembly(
+    assemblyId: string,
+    userId: string
+  ): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    const user = db.users.find((u) => u.id === userId);
+    const now = new Date().toISOString();
+
+    // Check or assign role
+    let role = db.assemblyRoles.find((r) => r.assemblyId === assemblyId && r.userId === userId);
+    if (!role) {
+      const defaultRoleTypes: import('../types/domain').AssemblyRoleType[] = [
+        'Questioner',
+        'Evidence Analyst',
+        'Civic Advocate',
+        'Synthesiser',
+        'Community Voice',
+        'Rapporteur',
+      ];
+      const assignedRoleName =
+        defaultRoleTypes[
+          db.assemblyRoles.filter((r) => r.assemblyId === assemblyId).length % defaultRoleTypes.length
+        ];
+      role = {
+        id: generateId('role'),
+        assemblyId,
+        userId,
+        roleName: assignedRoleName,
+        responsibilities: [
+          'Examine proposed solutions for unaddressed risks and implementation bottlenecks',
+          'Formulate constructive inquiry prompts that test data assumptions',
+          'Ensure vulnerable user groups are considered in the final proposition',
+        ],
+        badgeIcon: 'HelpCircle',
+        promptSuggestions: [
+          'What specific traffic calming measures will physically force vehicles to slow down?',
+          'How will we ensure the raised crosswalk does not cause drainage waterlogging?',
+          'What is the maintenance timeline if safety lights malfunction?',
+        ],
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.assemblyRoles.push(role);
+    }
+
+    let creditTx: CreditTransaction | undefined;
+    const isAlreadyParticipant = assembly.participantUserIds.includes(userId);
+
+    if (!isAlreadyParticipant) {
+      assembly.participantUserIds.push(userId);
+      assembly.updatedAt = now;
+
+      // Award +10 Deliberation credit (idempotent)
+      const existingCredit = db.credits.find(
+        (c) => c.userId === userId && c.sourceType === 'assembly' && c.sourceId === assemblyId
+      );
+      if (!existingCredit) {
+        creditTx = {
+          id: generateId('tx'),
+          userId,
+          dimension: 'Deliberation',
+          amount: 10,
+          sourceType: 'assembly',
+          sourceId: assemblyId,
+          status: 'Verified',
+          reason: `Joined Youth Assembly: ${assembly.title}`,
+          createdAt: now,
+          schemaVersion: 1,
+        };
+        db.credits.push(creditTx);
+
+        if (user) {
+          user.totalCredits = this.calculateUserCredits(db, userId);
+          user.updatedAt = now;
+        }
+      }
+
+      // Create Activity entry (idempotent)
+      const existingActivity = db.activities.find(
+        (a) => a.userId === userId && a.type === 'assembly_joined' && a.referenceId === assemblyId
+      );
+      if (!existingActivity) {
+        db.activities.push({
+          id: generateId('act'),
+          userId,
+          type: 'assembly_joined',
+          title: `Joined Youth Assembly: ${assembly.title}`,
+          description: `Admitted as ${role.roleName} in the deliberative chamber.`,
+          referenceId: assemblyId,
+          referenceType: 'assembly',
+          timestamp: now,
+          schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      // Create Passport Entry (idempotent)
+      const existingPassport = db.passportEntries.find(
+        (p) => p.userId === userId && p.sourceReferenceId === assemblyId && p.category === 'deliberation'
+      );
+      if (!existingPassport) {
+        db.passportEntries.push({
+          id: generateId('pass'),
+          userId,
+          category: 'deliberation',
+          title: `Appointed Assembly ${role.roleName}`,
+          subtitle: assembly.title,
+          date: now.split('T')[0],
+          creditsAwarded: 10,
+          evidenceIds: assembly.evidenceIds.slice(0, 2),
+          sourceReferenceId: assemblyId,
+          sourceReferenceType: 'assembly',
+          isVerified: true,
+          schemaVersion: 1,
+        });
+      }
+
+      // Create Notification
+      db.notifications.push({
+        id: generateId('notif'),
+        userId,
+        title: 'Admitted to Youth Assembly',
+        message: `You joined "${assembly.title}" as ${role.roleName} and earned 10 Deliberation Credits.`,
+        type: 'assembly',
+        isRead: false,
+        targetRoute: `/assemblies/${assemblyId}`,
+        createdAt: now,
+        schemaVersion: 1,
+      });
+
+      this.saveDb(db);
+    }
+
+    return {
+      assembly: JSON.parse(JSON.stringify(assembly)),
+      role: JSON.parse(JSON.stringify(role)),
+      creditTransaction: creditTx ? JSON.parse(JSON.stringify(creditTx)) : undefined,
+    };
+  }
+
   async getContributions(assemblyId: string): Promise<Contribution[]> {
     const db = this.getDb();
     const contribs = db.contributions
@@ -845,16 +993,30 @@ export class LocalDemoRepository implements DemoRepository {
   async addAssemblyContribution(input: AssemblyContributionInput): Promise<Contribution> {
     const db = this.getDb();
     const user = db.users.find((u) => u.id === input.userId);
-    const now = new Date().toISOString();
+    if (!user) throw new Error(`User ${input.userId} not found`);
 
+    const trimmedText = (input.text || '').trim();
+    if (!trimmedText || trimmedText.length < 5) {
+      throw new Error('Contribution must contain substantive content (at least 5 characters).');
+    }
+
+    const assembly = db.assemblies.find((a) => a.id === input.assemblyId);
+    if (!assembly) throw new Error(`Assembly ${input.assemblyId} not found`);
+
+    // Ensure user is marked as participant if contributing
+    if (!assembly.participantUserIds.includes(input.userId)) {
+      assembly.participantUserIds.push(input.userId);
+    }
+
+    const now = new Date().toISOString();
     const newContrib: Contribution = {
       id: generateId('contrib'),
       assemblyId: input.assemblyId,
       userId: input.userId,
-      userName: user?.name || 'Assembly Member',
+      userName: user.name,
       stage: input.stage,
       type: input.type,
-      text: input.text,
+      text: trimmedText,
       evidenceIds: input.evidenceIds || [],
       supportCount: 1,
       dissentCount: 0,
@@ -866,8 +1028,8 @@ export class LocalDemoRepository implements DemoRepository {
 
     db.contributions.push(newContrib);
 
-    // Credit transaction for contribution
-    db.credits.push({
+    // Credit transaction for substantive contribution (+5 Deliberation once per unique contribution)
+    const creditTx: CreditTransaction = {
       id: generateId('tx'),
       userId: input.userId,
       dimension: 'Deliberation',
@@ -875,30 +1037,45 @@ export class LocalDemoRepository implements DemoRepository {
       sourceType: 'contribution',
       sourceId: newContrib.id,
       status: 'Verified',
-      reason: `Added substantive contribution to assembly: ${input.type}`,
+      reason: `Added substantive contribution (${input.type}): ${trimmedText.slice(0, 50)}`,
       createdAt: now,
       schemaVersion: 1,
-    });
+    };
+    db.credits.push(creditTx);
 
-    // Update user credits
-    if (user) {
-      user.totalCredits += 5;
-      user.updatedAt = now;
-    }
+    // Update user total credits
+    user.totalCredits = this.calculateUserCredits(db, input.userId);
+    user.updatedAt = now;
 
     // Activity
     db.activities.push({
       id: generateId('act'),
       userId: input.userId,
       type: 'contribution_added',
-      title: 'Added Assembly Contribution',
-      description: input.text.slice(0, 90),
+      title: `Added Assembly Contribution (${input.type.replace('_', ' ')})`,
+      description: trimmedText.slice(0, 90),
       referenceId: newContrib.id,
       referenceType: 'contribution',
       timestamp: now,
       schemaVersion: 1,
       createdAt: now,
       updatedAt: now,
+    });
+
+    // Passport entry for substantive contribution
+    db.passportEntries.push({
+      id: generateId('pass'),
+      userId: input.userId,
+      category: 'deliberation',
+      title: `Substantive Contribution: ${input.type.replace('_', ' ')}`,
+      subtitle: trimmedText.slice(0, 75),
+      date: now.split('T')[0],
+      creditsAwarded: 5,
+      evidenceIds: input.evidenceIds || [],
+      sourceReferenceId: newContrib.id,
+      sourceReferenceType: 'contribution',
+      isVerified: true,
+      schemaVersion: 1,
     });
 
     this.saveDb(db);
@@ -911,10 +1088,67 @@ export class LocalDemoRepository implements DemoRepository {
     return prop ? JSON.parse(JSON.stringify(prop)) : null;
   }
 
+  async updateProposition(input: {
+    propositionId: string;
+    updatedBy: string;
+    changesSummary?: string;
+    question?: string;
+    problem?: string;
+    insight?: string;
+    proposition?: string;
+    enablers?: string[];
+    risks?: string[];
+    nextStep?: string;
+    unresolvedQuestions?: string[];
+    evidenceIds?: string[];
+    dissent?: import('../types/domain').DissentRecord[];
+    supportProfile?: import('../types/domain').SupportProfile;
+  }): Promise<Proposition> {
+    const db = this.getDb();
+    const prop = db.propositions.find((p) => p.id === input.propositionId);
+    if (!prop) throw new Error(`Proposition ${input.propositionId} not found`);
+
+    const now = new Date().toISOString();
+    if (input.question !== undefined) prop.question = input.question;
+    if (input.problem !== undefined) prop.problem = input.problem;
+    if (input.insight !== undefined) prop.insight = input.insight;
+    if (input.proposition !== undefined) prop.proposition = input.proposition;
+    if (input.enablers !== undefined) prop.enablers = input.enablers;
+    if (input.risks !== undefined) prop.risks = input.risks;
+    if (input.nextStep !== undefined) prop.nextStep = input.nextStep;
+    if (input.unresolvedQuestions !== undefined) prop.unresolvedQuestions = input.unresolvedQuestions;
+    if (input.evidenceIds !== undefined) prop.evidenceIds = input.evidenceIds;
+    if (input.dissent !== undefined) prop.dissent = input.dissent;
+    if (input.supportProfile !== undefined) prop.supportProfile = input.supportProfile;
+
+    prop.version += 1;
+    prop.revisions.push({
+      version: prop.version,
+      updatedBy: input.updatedBy,
+      changesSummary: input.changesSummary || `Updated proposition draft (v${prop.version})`,
+      timestamp: now,
+    });
+    prop.updatedAt = now;
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(prop));
+  }
+
   async finaliseProposition(input: PropositionFinalisationInput): Promise<Proposition> {
     const db = this.getDb();
     const proposition = db.propositions.find((p) => p.id === input.propositionId);
     if (!proposition) throw new Error(`Proposition ${input.propositionId} not found`);
+
+    const assembly = db.assemblies.find((a) => a.id === input.assemblyId);
+
+    // Prevent duplicate finalisation
+    const isAlreadyFinalised =
+      (assembly?.currentStage === 'outcome' && assembly?.status === 'concluded') ||
+      Boolean(proposition.revisions.some((r) => r.changesSummary?.toLowerCase().includes('final outcome resolved')));
+
+    if (isAlreadyFinalised) {
+      throw new Error('Proposition has already been finalised and cannot be finalised again.');
+    }
 
     const now = new Date().toISOString();
     proposition.outcome = input.outcome;
@@ -924,17 +1158,74 @@ export class LocalDemoRepository implements DemoRepository {
     proposition.revisions.push({
       version: proposition.version,
       updatedBy: input.updatedBy,
-      changesSummary: input.changesSummary || `Finalised outcome to ${input.outcome}`,
+      changesSummary: input.changesSummary || `Final outcome resolved to ${input.outcome} by ${input.updatedBy}`,
       timestamp: now,
     });
     proposition.updatedAt = now;
 
-    // Advance assembly stage to outcome or concluded
-    const assembly = db.assemblies.find((a) => a.id === input.assemblyId);
+    // Advance assembly stage to outcome and status to concluded
     if (assembly) {
       assembly.currentStage = 'outcome';
       assembly.status = 'concluded';
       assembly.updatedAt = now;
+
+      // Notify all assembly participants & add resolution passport entry
+      assembly.participantUserIds.forEach((uid) => {
+        db.notifications.push({
+          id: generateId('notif'),
+          userId: uid,
+          title: 'Assembly Proposition Finalised',
+          message: `Proposition "${proposition.question.slice(0, 50)}" finalised with outcome ${input.outcome}.`,
+          type: 'assembly',
+          isRead: false,
+          targetRoute: `/propositions/${proposition.id}`,
+          createdAt: now,
+          schemaVersion: 1,
+        });
+
+        const existingPass = db.passportEntries.find(
+          (p) => p.userId === uid && p.sourceReferenceId === proposition.id && p.category === 'deliberation'
+        );
+        if (!existingPass) {
+          db.passportEntries.push({
+            id: generateId('pass'),
+            userId: uid,
+            category: 'deliberation',
+            title: `Assembly Resolution: ${input.outcome}`,
+            subtitle: proposition.question,
+            date: now.split('T')[0],
+            creditsAwarded: 0,
+            evidenceIds: proposition.evidenceIds.slice(0, 2),
+            sourceReferenceId: proposition.id,
+            sourceReferenceType: 'proposition',
+            isVerified: true,
+            schemaVersion: 1,
+          });
+        }
+      });
+    }
+
+    // Activity
+    const currentUser = db.users.find((u) => u.name === input.updatedBy || u.id === input.updatedBy);
+    const userId = currentUser ? currentUser.id : (assembly?.facilitatorId || db.activeUserId);
+
+    const existingAct = db.activities.find(
+      (a) => a.userId === userId && a.type === 'proposition_voted' && a.referenceId === proposition.id
+    );
+    if (!existingAct) {
+      db.activities.push({
+        id: generateId('act'),
+        userId,
+        type: 'proposition_voted',
+        title: `Finalised Proposition: ${input.outcome}`,
+        description: proposition.question,
+        referenceId: proposition.id,
+        referenceType: 'proposition',
+        timestamp: now,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
 
     this.saveDb(db);
@@ -1055,7 +1346,7 @@ export class LocalDemoRepository implements DemoRepository {
     };
     db.reflections.push(newRefl);
 
-    // Credit
+    // Credit transaction (+5 Reflection)
     db.credits.push({
       id: generateId('tx'),
       userId: reflection.userId,
@@ -1064,16 +1355,63 @@ export class LocalDemoRepository implements DemoRepository {
       sourceType: 'reflection',
       sourceId: newRefl.id,
       status: 'Verified',
-      reason: 'Shared reflective essay on civic learning',
+      reason: `Civic reflection: ${reflection.prompt.slice(0, 50)}`,
       createdAt: now,
       schemaVersion: 1,
     });
 
     const user = db.users.find((u) => u.id === reflection.userId);
     if (user) {
-      user.totalCredits += 5;
+      user.totalCredits = this.calculateUserCredits(db, reflection.userId);
       user.updatedAt = now;
     }
+
+    // Activity
+    db.activities.push({
+      id: generateId('act'),
+      userId: reflection.userId,
+      type: 'reflection_shared',
+      title: 'Completed Civic & Ethical Reflection',
+      description: reflection.text.slice(0, 90),
+      referenceId: newRefl.id,
+      referenceType: 'reflection',
+      timestamp: now,
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Passport Entry
+    db.passportEntries.push({
+      id: generateId('pass'),
+      userId: reflection.userId,
+      category: 'reflection',
+      title: `Civic Reflection: ${reflection.prompt.slice(0, 45)}`,
+      subtitle:
+        reflection.valuesHighlighted.length > 0
+          ? `Values: ${reflection.valuesHighlighted.join(', ')}`
+          : 'Deliberation & Civic Ethics Reflection',
+      date: now.split('T')[0],
+      creditsAwarded: 5,
+      evidenceIds: [],
+      sourceReferenceId: newRefl.id,
+      sourceReferenceType: 'reflection',
+      isVerified: true,
+      schemaVersion: 1,
+    });
+
+    // Notification
+    db.notifications.push({
+      id: generateId('notif'),
+      userId: reflection.userId,
+      title: 'Reflection Recorded',
+      message: 'You shared a reflection and earned 5 Reflection Credits in your Passport.',
+      type: 'credit',
+      isRead: false,
+      targetRoute: '/passport',
+      createdAt: now,
+      schemaVersion: 1,
+    });
 
     this.saveDb(db);
     return JSON.parse(JSON.stringify(newRefl));

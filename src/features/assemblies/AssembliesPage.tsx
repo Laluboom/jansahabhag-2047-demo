@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
@@ -7,13 +7,29 @@ import { Assembly, AssemblyRole } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
-import { Vote, Users, Calendar, ArrowRight, HelpCircle, MapPin, Sparkles } from 'lucide-react';
+import { ThreadMotif } from '../../components/layout/ThreadMotif';
+import {
+  Vote,
+  Users,
+  Calendar,
+  ArrowRight,
+  HelpCircle,
+  MapPin,
+  Sparkles,
+  CheckCircle2,
+  Layers,
+  FileCheck2,
+} from 'lucide-react';
 
 export const AssembliesPage: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { refreshKey } = useAppRefreshStore();
+  const { refreshKey, triggerRefresh } = useAppRefreshStore();
+  const navigate = useNavigate();
+
   const [assemblies, setAssemblies] = useState<Assembly[]>([]);
   const [roles, setRoles] = useState<Record<string, AssemblyRole>>({});
+  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'concluded'>('all');
+  const [joiningId, setJoiningId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +40,7 @@ export const AssembliesPage: React.FC = () => {
         const list = await demoRepository.getAssemblies();
         setAssemblies(list);
 
-        // Fetch user roles
+        // Fetch user roles for all assemblies
         const rolesMap: Record<string, AssemblyRole> = {};
         for (const asm of list) {
           const r = await demoRepository.getUserAssemblyRole(asm.id, currentUser.id);
@@ -40,6 +56,20 @@ export const AssembliesPage: React.FC = () => {
     load();
   }, [currentUser, refreshKey]);
 
+  const handleJoin = async (asmId: string) => {
+    if (!currentUser) return;
+    setJoiningId(asmId);
+    try {
+      await demoRepository.joinAssembly(asmId, currentUser.id);
+      triggerRefresh();
+      navigate(`/assemblies/${asmId}/session`);
+    } catch (err) {
+      console.error('Failed to join assembly', err);
+    } finally {
+      setJoiningId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -48,32 +78,72 @@ export const AssembliesPage: React.FC = () => {
     );
   }
 
+  const filteredAssemblies = assemblies.filter((asm) => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return asm.status === 'deliberating' || asm.status === 'active';
+    if (filter === 'upcoming') return asm.status === 'upcoming';
+    if (filter === 'concluded') return asm.status === 'concluded';
+    return true;
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* Evidence to Action Thread Indicator */}
+      <ThreadMotif currentStage="deliberate" />
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-civic-teal-700 uppercase tracking-wider mb-1">
+            <Vote className="w-4 h-4" />
+            <span>Deliberative Democracy Chambers</span>
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
             Youth Deliberative Assemblies
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Non-adversarial democratic chambers synthesizing field evidence into actionable civic propositions.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+            Non-adversarial democratic chambers synthesizing field observations and expert evidence into binding civic propositions for municipal authorities.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-civic-teal-50 px-3.5 py-2 rounded-xl border border-civic-teal-200 text-xs text-civic-teal-900 shrink-0">
+          <Sparkles className="w-4 h-4 text-civic-teal-600" />
+          <span>Earn <strong>+10 Credits</strong> on Joining & <strong>+5</strong> per Contribution</span>
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+        {(['all', 'active', 'upcoming', 'concluded'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setFilter(tab)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+              filter === tab
+                ? 'bg-civic-indigo-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            {tab === 'active' ? 'Active Deliberations' : tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Assembly Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {assemblies.map((asm) => {
+        {filteredAssemblies.map((asm) => {
           const userRole = roles[asm.id];
+          const isJoined = currentUser ? asm.participantUserIds.includes(currentUser.id) : false;
 
           return (
             <Card
               key={asm.id}
               hoverable
-              className="flex flex-col justify-between border-slate-200"
+              className="flex flex-col justify-between border-slate-200 bg-white"
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-700 bg-civic-teal-50 px-2.5 py-0.5 rounded-full border border-civic-teal-200">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-800 bg-civic-teal-50 px-2.5 py-0.5 rounded-full border border-civic-teal-200">
                     Stage: {asm.currentStage.replace('_', ' ')}
                   </span>
                   <StatusChip status={asm.status} />
@@ -96,13 +166,23 @@ export const AssembliesPage: React.FC = () => {
                   <p className="italic text-slate-600">"{asm.question}"</p>
                 </div>
 
-                {userRole && (
+                {isJoined && userRole ? (
                   <div className="p-3 rounded-lg bg-civic-indigo-50 border border-civic-indigo-200 text-xs flex items-center justify-between">
                     <span className="text-slate-700">
                       Your Assigned Role: <strong className="text-civic-indigo-900">{userRole.roleName}</strong>
                     </span>
-                    <span className="text-[11px] text-civic-indigo-700 font-semibold underline">
-                      View Prompts
+                    <span className="text-[11px] text-civic-indigo-700 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-civic-indigo-600" />
+                      Admitted Delegate
+                    </span>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs flex items-center justify-between">
+                    <span className="text-emerald-900 font-medium">
+                      Open for Participation &bull; Role assigned upon joining
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                      +10 Credits
                     </span>
                   </div>
                 )}
@@ -112,7 +192,7 @@ export const AssembliesPage: React.FC = () => {
                 <div className="flex items-center gap-4 text-xs text-slate-500">
                   <span className="flex items-center gap-1">
                     <Users className="w-3.5 h-3.5" />
-                    {asm.participantUserIds.length} Members
+                    {asm.participantUserIds.length} Deliberators
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
@@ -120,12 +200,33 @@ export const AssembliesPage: React.FC = () => {
                   </span>
                 </div>
 
-                <Link to={`/assemblies/${asm.id}`}>
-                  <Button size="sm" variant="teal">
-                    <span>Enter Assembly Chamber</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to={`/assemblies/${asm.id}`}>
+                    <Button size="sm" variant="outline">
+                      <span>Overview</span>
+                    </Button>
+                  </Link>
+
+                  {isJoined ? (
+                    <Link to={`/assemblies/${asm.id}/session`}>
+                      <Button size="sm" variant="teal">
+                        <Vote className="w-3.5 h-3.5 mr-1" />
+                        <span>Enter Workspace</span>
+                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      isLoading={joiningId === asm.id}
+                      onClick={() => handleJoin(asm.id)}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 mr-1" />
+                      <span>Join Assembly (+10)</span>
+                    </Button>
+                  )}
+                </div>
               </div>
             </Card>
           );
@@ -134,3 +235,4 @@ export const AssembliesPage: React.FC = () => {
     </div>
   );
 };
+

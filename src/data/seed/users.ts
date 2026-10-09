@@ -14,7 +14,7 @@ export const seedUsers: User[] = [
     age: 17,
     location: 'Mansarovar, Jaipur, Rajasthan',
     badgeCount: 5,
-    totalCredits: 65,
+    totalCredits: 40,
     schemaVersion: 1,
     createdAt: '2026-09-01T08:30:00Z',
     updatedAt: '2026-10-08T15:45:00Z',
