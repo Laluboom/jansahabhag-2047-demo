@@ -1,35 +1,21 @@
-# Remaining work
+# Remaining work and handback
 
-The active Autobuild goal is paused by the user. [paused.md](paused.md) contains the exact checkpoint and resume commands. Do not start these items until the user resumes.
+## Final integration
 
-## Integration
+- [x] Merge and verify Tasks 01–04 in `autobuild`.
+- [x] Build and independently verify Task 05 on `agy/j-20261009-154211-yd8l`: 89 unit/UI tests, six Chromium Playwright tests, and production build.
+- [ ] Merge the verified Task 05 branch into `autobuild` if adopting the final result. Use the commands in [paused.md](paused.md), then rerun all three checks on the integration branch.
 
-- [ ] On resume, check clean `autobuild` status and sub-agy quota. Merge verified Task 03 branch `agy/j-20261009-105912-x1o2` only when needed as Task 04's dependency; rerun build and unit suite.
-- [ ] Dispatch, verify and integrate `.subagy/plans/04-support-admin-previews.md` after Task 03 is integrated.
-- [ ] Dispatch and verify `.subagy/plans/05-polish-golden-path.md` after Task 04. Review its branch and full test results before final handback.
+## Demo acceptance covered
 
-## Task 04: supporting and administration
+- [x] Aarav learning, draft, mock evidence, exact teacher review, assembly contribution, proposition revision/finalisation, reflection, Passport history and ledger transactions.
+- [x] README route smoke, seeded dynamic IDs, missing-record states, refresh persistence, persona switch, notification navigation, reset and mobile assembly/admin smoke.
+- [x] Project milestone repeat-safe credit and Passport linkage; local programme/content/moderation transitions; clearly labelled previews.
+- [x] Route code splitting reduced production chunks below Vite's 500 kB warning threshold.
 
-- [ ] Make project milestones repeat-safe and create traceable Civic Action/Passport updates.
-- [ ] Finish event/calendar/attendance, project note/evidence and local community interactions.
-- [ ] Make institution, programme, content and moderation actions update the shared local database; ensure derived analytics reflect those changes.
-- [ ] Deepen preview pages and label every simulated or disabled action.
+## Future choices
 
-## Task 05: final acceptance
-
-- [ ] Add and run Playwright golden path from Aarav learning through teacher verification, assembly, proposition, reflection and Passport.
-- [ ] Check all specified routes, refresh persistence, persona isolation, reset, notifications and repeat-safe credit transactions.
-- [ ] Review mobile/tablet assembly and admin layouts, keyboard/focus, labels, contrast, reduced motion, loading/empty/error states.
-- [ ] Assess the Vite large-chunk warning and split routes if warranted.
-- [ ] Review `npm ci` audit findings and choose supported dependency updates deliberately.
-
-## Production-readiness
-
-- [ ] Select a deployment destination and credentials if deployment is requested. No hosting target is configured now.
-- [ ] Replace demo persona switching with real authentication and server-enforced authorization only in a future production phase.
-- [ ] Replace local persistence, simulated verification, messaging, AI, sessions, moderation and analytics with backed services before using real participant information.
-
-## Documentation
-
-- [ ] After Tasks 03–05 are integrated, refresh `REPO_CONTEXT.md`, `docs/features.md`, `docs/service-map.md` and `paused.md` status statements; remove the pause banner only after the goal is actually resumed/completed.
-- [ ] Add deployment runbook and E2E run instructions when a host and Playwright test are available.
+- [ ] Choose a host, project and credentials if deployment is wanted. No deployment target is configured.
+- [ ] Review dependency audit findings and choose supported updates deliberately; no force upgrade was applied.
+- [ ] Clean the 219 ESLint warnings reported on the verified Task 05 branch; `npm run lint` exits successfully with no errors.
+- [ ] Before use with real participants, replace demo persona switching with real authentication and server-enforced authorization, and replace local persistence and simulated verification, messaging, AI, sessions, moderation and analytics with backed services.

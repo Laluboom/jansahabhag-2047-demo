@@ -1,42 +1,42 @@
+# Project map
+
+JanSahabhag 2047 is a frontend-only civic participation demo with fictional personas and local records. Tasks 01–04 are integrated on `autobuild`. Task 05 is verified on unmerged `agy/j-20261009-154211-yd8l`. See [paused.md](../paused.md) for the final handback.
+
 ```text
 jansahabhag_2027/
-├── README.md                 Product demo specification
-├── IMPLEMENTATION_PLAN.md    Intended architecture and delivery sequence
-├── paused.md                 Current Autobuild checkpoint and resume steps
+├── README.md                 Product scope and manual acceptance
+├── IMPLEMENTATION_PLAN.md    Domain flows and delivery sequence
+├── paused.md                 Current Autobuild handback and job history
 ├── REPO_CONTEXT.md           AI session orientation
 ├── AI_INSTRUCTIONS.md        Repository working rules
-├── TODO.md                   Remaining implementation work
+├── TODO.md                   Final merge and future choices
 ├── docs/                     Architecture, service, dependency and feature maps
 ├── src/
-│   ├── app/                  App boot and route map
+│   ├── app/                  App boot and lazy route map on Task 05 branch
 │   ├── components/           Shared shell and UI controls
 │   ├── data/seed/            Canonical fictional database
 │   ├── features/             Route screens by product area
-│   ├── services/             Repository, persistence and migration boundary
+│   ├── services/             Repository, persistence and migrations
 │   ├── stores/               Persona and UI refresh state
 │   ├── styles/               Tailwind entry and global styles
-│   ├── types/                Typed domain and screen contracts
+│   ├── types/                Domain and screen contracts
 │   └── utils/                Formatting, class and ID helpers
-├── tests/                   Vitest and React Testing Library tests
-└── .subagy/                 Ignored plans, job logs and isolated worktrees
+├── tests/                    Vitest and Testing Library tests
+├── e2e/                      Playwright tests on Task 05 branch
+├── playwright.config.ts      Browser test setup on Task 05 branch
+└── .subagy/                  Ignored plans, job logs and isolated worktrees
 ```
 
-# Project map
+## Entry points and commands
 
-JanSahabhag 2047 is a frontend-first civic participation demo. It lets a fictional participant learn, submit evidence, receive teacher review, join deliberation, create a proposition and accumulate a Civic Passport. Admin and future-module surfaces expose the wider product vision. The actual root checkout is paused after the foundation and learning/review tasks; a verified unmerged branch adds the complete assembly/Passport journey. See [paused.md](../paused.md) before making changes.
+One Vite/React/TypeScript package. `index.html` loads `src/main.tsx`, which renders `src/app/App.tsx`. `src/app/router.tsx` maps every README path. There is no API server, Docker entrypoint or monorepo package. `npm run dev` serves local development; `npm run build` type-checks and writes `dist/`; `npm run preview` serves it; `npm run test -- --run` runs unit/UI checks; `npm run test:e2e` runs Chromium browser checks on Task 05.
 
-## Packages and entry points
+## Dependencies and integration boundary
 
-This is one Vite/React/TypeScript package. `index.html` loads `src/main.tsx`, which renders `src/app/App.tsx`; `src/app/router.tsx` maps URL paths to feature screens. There is no API server, Docker entrypoint or monorepo package. `package.json` defines `npm run dev`, `npm run build`, `npm run preview`, `npm run test -- --run`, `npm run test:e2e`, and `npm run lint`. The E2E script is reserved for Task 05 and has no golden-path test yet.
+React Router handles navigation; Zustand holds persona and UI state; React Hook Form and Zod validate assignment forms; Tailwind and Lucide provide the visual system; Recharts supports analytics. Vitest, Testing Library and Playwright verify behavior. There is no live auth provider, API, AI service, database, video, messaging system or stakeholder delivery. Analytics combines derived local values with labelled seeded national previews.
 
-## Dependencies and integrations
-
-React Router handles navigation; Zustand holds current persona and UI state; React Hook Form and Zod validate assignment forms; Tailwind and Lucide provide the visual system; Recharts supports analytics; Vitest and React Testing Library cover local behavior. Playwright is listed as a dev dependency. No live authentication provider, API, AI service, database, video, messaging system or external stakeholder delivery exists. Analytics combines local record calculations with seeded demo metrics.
-
-## Data and persistence
-
-`src/data/seed/index.ts` composes fictional typed records. `src/services/repository.ts` defines the async domain boundary, implemented by `src/services/demoRepository.ts`. `src/services/persistence.ts` reads and writes versioned browser `localStorage` key `jansahbhag_demo_v1`; `src/services/migrations.ts` resets incompatible data to a fresh seed. A memory fallback is used when browser storage is unavailable. The UI should call repository methods rather than use `localStorage` or seed arrays directly. Reset Demo Data clones the canonical seed.
+`src/services/repository.ts` defines the asynchronous domain boundary; `src/services/demoRepository.ts` implements it against `src/services/persistence.ts` and `localStorage` key `jansahbhag_demo_v1`. `src/data/seed/index.ts` assembles fictional records. Reset clones the seed; incompatible data passes through migrations. UI screens should call repository methods rather than read storage or seed arrays.
 
 ## Build and deployment
 
-Run `npm ci`, then `npm run dev` for local development. `npm run build` type-checks and writes `dist/`. `npm run preview` serves that output. The Vite build currently emits a bundle-size warning. No production host, deployment config or credentials have been selected. `README.md` suggests Vercel or Netlify, but neither is connected.
+Task 05's independent production build passed. Lazy route loading reduced the largest chunks to about 428 kB and 405 kB. No production host, project or credentials have been selected. The README suggests possible hosts, but neither is connected.

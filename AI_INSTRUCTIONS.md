@@ -1,26 +1,20 @@
-When working in this repository:
+# Repository instructions for future sessions
 
-1. Read /docs/architecture.md first.
-2. Read /docs/service-map.md second.
-3. Search symbols / grep before opening files.
-4. Read only directly relevant files.
-5. Avoid opening unrelated directories.
-6. Explain reasoning before making large structural changes.
-7. Prefer extending existing patterns over introducing new ones.
-8. Do not introduce new frameworks or libraries without justification.
+1. Read [docs/architecture.md](docs/architecture.md), then [docs/service-map.md](docs/service-map.md).
+2. Search symbols before opening files; read the relevant route, repository action, type and test.
+3. Explain reasoning before large structural changes and extend existing patterns where practical.
 
 ## Current handoff
 
-Read `/paused.md` before implementation. The user explicitly paused the active Autobuild goal. **Do not resume dispatch, merge the pending Task 03 branch, or mark the goal complete without a later user request to resume.** `autobuild` has Tasks 01–02; verified Task 03 is on unmerged `agy/j-20261009-105912-x1o2`; Tasks 04–05 have only plans in `.subagy/plans/`.
+The previous user-requested pause has ended. [paused.md](paused.md) records the completed Autobuild jobs and the verified final Task 05 branch `agy/j-20261009-154211-yd8l`. Tasks 01–04 are merged into `autobuild`; Task 05 is intentionally unmerged for the Autobuild handback. The last Gemini five-hour quota was 6.4%, so do not dispatch another sub-agy job without a fresh quota check and the requested method's 20% threshold.
 
-## Repository rules
+## Working rules
 
-- Treat `README.md` and `IMPLEMENTATION_PLAN.md` as product/architecture specifications. `/home/lalu/Softwares/sub-agy/AUTOBUILD-PROMPT.md` describes the requested orchestration method; it is not tracked in this repository. The user's current instruction to pause controls the next action.
-- Keep feature screens behind `DemoRepository` (`src/services/repository.ts`); do not access `localStorage` or import canonical seed data in UI code. Extend `LocalDemoRepository` and typed domain contracts when a new action is required.
-- Preserve a traceable source ID from evidence, submission, assembly, proposition or project to Passport/credit records. Derive credit totals from transactions, and make repeatable actions idempotent.
-- Use fictional demo data only. This is not production authentication, verification, moderation, AI or real-time collaboration. Mark simulated and preview capabilities clearly.
-- Preserve persona isolation in participant views and use the same underlying submission for teacher review. Frontend role checks do not constitute production security.
-- The browser storage key is `jansahbhag_demo_v1`; update `CURRENT_SCHEMA_VERSION` and migration/reset behavior when the data shape changes. `Reset Demo Data` must restore a fresh canonical clone.
-- Use `npm ci`, `npm run build`, and `npm run test -- --run` for baseline verification. Vitest excludes `.subagy/**` to avoid duplicate worktree tests. `npm run test:e2e` is planned but has no golden-path test yet.
-- Build in `autobuild` or sub-agy worktrees, never `main`. Review job diff and independently rerun acceptance in its worktree. Check root `git status --porcelain` before integrating. `.subagy/` is ignored; preserve it as the job record.
-- `npm run build` currently emits a bundle-size warning; Task 05 should assess code splitting. Avoid treating a job's self-reported tests or “no warnings” claim as independent evidence.
+- Treat `README.md` and `IMPLEMENTATION_PLAN.md` as product specifications. The user chose `/home/lalu/Softwares/sub-agy/AUTOBUILD-PROMPT.md` as the implementation method; its local path may not be present in future sessions, but the ignored `.subagy/plans/` and job records remain.
+- Keep feature screens behind `DemoRepository` in `src/services/repository.ts`. Do not access localStorage or canonical seed arrays as live UI data.
+- Preserve traceable source IDs from evidence, submissions, assemblies, propositions or projects to Passport and credit records. Derive totals from transactions and make repeatable awards idempotent.
+- Use fictional data only. Persona switching, frontend role checks, verification, moderation, AI, video, external delivery and national metrics are demo or preview behavior, not production services.
+- Preserve participant isolation and have teacher review update the same submission the participant sees.
+- Browser storage key: `jansahbhag_demo_v1`. Update schema version and migration/reset behavior when changing persisted data shape. Reset must clone canonical seed.
+- Verify with `npm run build`, `npm run test -- --run` and, on the Task 05 branch or after integration, `npm run test:e2e`. Vitest excludes `.subagy/**`.
+- Build on `autobuild` or an isolated task branch, not specification-only `main`. Review a sub-agy diff and rerun acceptance independently. Preserve ignored job records until no longer needed.

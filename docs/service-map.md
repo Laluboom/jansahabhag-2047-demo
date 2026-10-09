@@ -1,79 +1,19 @@
 # Service and subsystem map
 
-**Service: App boot and routing**
-Purpose: Initialize active persona, mount React, resolve routes and fallback errors.
-Key Files: `src/main.tsx`, `src/app/App.tsx`, `src/app/router.tsx`, `src/features/errors/`.
-Dependencies: Zustand auth store, React Router, feature screens.
-Used By: Every browser route.
+| Subsystem | Key files | Responsibility and consumers |
+| --- | --- | --- |
+| App boot and routing | `src/main.tsx`, `src/app/App.tsx`, `src/app/router.tsx`, `src/features/errors/` | Initialize persona, lazy-load routes on Task 05, render fallback errors. Used by every route. |
+| Responsive shell | `src/components/layout/`, `src/components/ui/`, `src/styles/index.css` | Desktop/sidebar and mobile navigation, persona control, notifications and reset. Used by app routes. |
+| Persona and UI state | `src/stores/authStore.ts`, `src/stores/useAppRefreshStore.ts` | Selected fictional user, language presentation and view invalidation. Domain records remain in the repository. |
+| Domain contracts | `src/types/domain.ts`, `src/types/index.ts`, `src/services/repository.ts` | Stable entities, status unions, action inputs and async repository seam. |
+| Local repository | `src/services/demoRepository.ts` | Shared record transitions, progress, ledger totals, Activity/Notification/Passport links. Used by participant, teacher, admin and analytics screens. |
+| Persistence and migrations | `src/services/persistence.ts`, `src/services/migrations.ts` | Seed/load/save/reset versioned database at `jansahbhag_demo_v1`; memory fallback. |
+| Canonical seed | `src/data/seed/index.ts` and sibling domain files | Deterministic fictional scenario for first load/reset and tests. |
+| Learning and teacher review | `src/features/dashboard/`, `learning/`, `assignments/`, `notifications/` | Course progress, field assignments, mock evidence, teacher review and notifications. |
+| Deliberation and Passport | `src/features/assemblies/`, `propositions/`, `passport/` | Assembly roles/stages, contributions, proposition support/dissent/finalisation, reflection, credit and history views. |
+| Civic action and community | `src/features/activities/`, `projects/`, `events/`, `community/`, `issues/` | Milestones, RSVP, local posts/comments and labelled issues preview. |
+| Institution, administration and analytics | `src/features/institutions/`, `administration/`, `moderation/`, `analytics/` | Shared-data programme/content changes, moderation and local/seeded metrics. |
+| Vision previews | `src/features/previews/` | Parliament, labs, stakeholders and Studio Demo Preview surfaces with disclosed simulation. |
+| Verification | `tests/`, `e2e/`, `vite.config.ts`, `playwright.config.ts` | Vitest/Testing Library and six Chromium browser checks; nested `.subagy/**` excluded from Vitest. Task 05 branch contains E2E files until merged. |
 
-**Service: Responsive app shell**
-Purpose: Desktop/sidebar and mobile navigation, persona indicator, utilities, demo reset and shared UI vocabulary.
-Key Files: `src/components/layout/`, `src/components/ui/`, `src/styles/index.css`, `tailwind.config.js`.
-Dependencies: Auth store, repository for persona/notification/reset data, React Router.
-Used By: All routes under `AppShell`.
-
-**Service: Persona and UI state**
-Purpose: Keep current fictional user, loading status, demo language selection and a view-refresh signal.
-Key Files: `src/stores/authStore.ts`, `src/stores/useAppRefreshStore.ts`.
-Dependencies: Demo repository, Zustand.
-Used By: App boot, navigation and feature screens. This is not the authoritative domain database.
-
-**Service: Domain contracts**
-Purpose: Stable typed entities, state unions, input types and Passport/Dashboard view contracts.
-Key Files: `src/types/domain.ts`, `src/types/index.ts`, `src/services/repository.ts`.
-Dependencies: None within the app.
-Used By: Repository, seed, stores and screens. The repository interface is the future HTTP API seam.
-
-**Service: Local demo repository**
-Purpose: Load shared records, apply domain transitions, derive progress/credits, create linked activities, notifications and Passport metadata.
-Key Files: `src/services/demoRepository.ts`.
-Dependencies: Repository/types, persistence adapter, seed-backed database.
-Used By: Learning, assignments, teacher review, assembly, Passport, projects, events, community, admin and analytics screens. Task 03's branch extends its assembly/proposition/reflection actions.
-
-**Service: Persistence and migrations**
-Purpose: Seed, load, save, reset and version the local database.
-Key Files: `src/services/persistence.ts`, `src/services/migrations.ts`.
-Dependencies: Typed `DemoDatabase`, canonical seed.
-Used By: Local demo repository. Browser key: `jansahbhag_demo_v1`; memory fallback when storage fails.
-
-**Service: Canonical seed**
-Purpose: Deterministic fictional scenario and varied entity states for all personas.
-Key Files: `src/data/seed/index.ts` and its domain-specific sibling files.
-Dependencies: Domain types.
-Used By: Persistence first load/reset, test fixtures through reset. Main story: Aarav at Navchetna Public School, Jaipur, working on pedestrian safety.
-
-**Service: Participant learning and assignment journey**
-Purpose: Dashboard next step, course/lesson progress, field assignment draft/submission, teacher review and notification links.
-Key Files: `src/features/dashboard/`, `src/features/learning/`, `src/features/assignments/`, `src/features/notifications/`.
-Dependencies: Repository, auth store, shared UI; assignment form uses React Hook Form and Zod.
-Used By: Aarav and Meera participant personas; Kavita teacher persona.
-
-**Service: Deliberation and Passport**
-Purpose: Assembly roles/stages, evidence-backed contributions, structured propositions, reflections, credit ledger and civic history.
-Key Files: `src/features/assemblies/`, `src/features/propositions/`, `src/features/passport/`, `src/services/demoRepository.ts`.
-Dependencies: Repository, auth store, evidence/credit/passport entities.
-Used By: Participant and facilitator personas. The complete join/editor/reflection implementation is verified only on unmerged `agy/j-20261009-105912-x1o2`.
-
-**Service: Supporting civic action and local community**
-Purpose: Show activities, projects, events/RSVP, community groups/posts and issues preview.
-Key Files: `src/features/activities/`, `events/`, `projects/`, `community/`, `issues/`.
-Dependencies: Repository, auth store, shared UI.
-Used By: Participant and programme views. Task 04 must finish milestone idempotence, Passport linkage and breadth of interactions.
-
-**Service: Institution, administration and analytics**
-Purpose: Shared-data oversight, programmes/content views, moderation state, institution participants and derived/seeded metrics.
-Key Files: `src/features/institutions/`, `administration/`, `moderation/`, `analytics/`.
-Dependencies: Repository, persona state, Recharts where charts are used.
-Used By: Ananya, Dev and Demo Administrator. Task 04 must add local admin state changes rather than static views alone.
-
-**Service: Product vision previews**
-Purpose: Explain future parliament, idea/research/policy labs, stakeholder and Studio surfaces without suggesting live integrations.
-Key Files: `src/features/previews/`, `src/features/issues/`.
-Dependencies: Shared UI and seeded content.
-Used By: All personas; labelled Demo Preview. Task 04 deepens design and control behavior.
-
-**Service: Verification**
-Purpose: Protect core local contracts and screen rendering.
-Key Files: `tests/`, `vite.config.ts`, `package.json`; future `e2e/` and `playwright.config.*`.
-Dependencies: Vitest, Testing Library, Playwright dependency.
-Used By: Autobuild acceptance. Current Vitest config excludes `.subagy/**` so nested worktrees are not tested twice.
+The repository interface is the API replacement seam. Features depend on that contract and typed entities; seed data initializes persistence and does not serve as live screen state. See [docs/architecture.md](architecture.md) for data flow and simulation boundaries.
