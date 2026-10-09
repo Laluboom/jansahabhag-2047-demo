@@ -120,7 +120,7 @@ export const PassportPage: React.FC = () => {
         <h2 className="text-base font-bold font-heading text-slate-900 mb-3">
           Civic Credit Dimensions
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {dimensions.map(([dim, amount]) => (
             <Card key={dim} className="p-4 border-slate-200 text-center">
               <span className="text-xs font-semibold text-slate-500 uppercase block truncate">

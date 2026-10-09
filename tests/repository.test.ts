@@ -122,9 +122,23 @@ describe('DemoRepository Domain Service Implementation', () => {
 
       expect(submission.status).toBe('submitted');
 
-      // Credits should increase by 10 for assignment submission
-      const updatedCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      // Credits should increase by 10 for assignment submission with Contribution dimension
+      const credits = await repository.getCredits('user_aarav');
+      const updatedCredits = credits.reduce((s, c) => s + c.amount, 0);
       expect(updatedCredits).toBe(initialCredits + 10);
+
+      const subCredit = credits.find((c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03');
+      expect(subCredit).toBeDefined();
+      expect(subCredit?.dimension).toBe('Contribution');
+      expect(subCredit?.amount).toBe(10);
+
+      // Check dashboard credit breakdown has Contribution
+      const dashboard = await repository.getDashboard('user_aarav');
+      expect(dashboard.creditSummary.breakdown.Contribution).toBeGreaterThanOrEqual(10);
+
+      // Check passport creditsByDimension has Contribution
+      const passport = await repository.getPassport('user_aarav');
+      expect(passport.creditsByDimension.Contribution).toBeGreaterThanOrEqual(10);
 
       // Check teacher notification
       const teacherNotifs = await repository.getNotifications('user_kavita');
@@ -155,6 +169,106 @@ describe('DemoRepository Domain Service Implementation', () => {
       });
       const creditsAfterSecond = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
       expect(creditsAfterSecond).toBe(creditsAfterFirst);
+    });
+
+    it('enforces valid repository transitions and prevents invalid mutations', async () => {
+      // 1. Participant saves a draft
+      const draft = await repository.saveAssignmentDraft({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Draft content for testing transitions.',
+      });
+      expect(draft.status).toBe('draft');
+
+      // 2. Teacher cannot review a draft submission
+      await expect(
+        repository.reviewSubmission({
+          submissionId: draft.id,
+          reviewerId: 'user_kavita',
+          status: 'verified',
+          teacherFeedback: 'Premature review attempt',
+        })
+      ).rejects.toThrow(/Cannot review a draft submission/i);
+
+      // 3. Participant submits the draft
+      const submitted = await repository.submitAssignment({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Submitted content with required fieldwork details.',
+        evidenceIds: ['ev_aarav_traffic_count_01'],
+      });
+      expect(submitted.status).toBe('submitted');
+
+      // 4. Teacher requests revision
+      const revised = await repository.reviewSubmission({
+        submissionId: submitted.id,
+        reviewerId: 'user_kavita',
+        status: 'revision_requested',
+        teacherFeedback: 'Please expand on junior student responses.',
+      });
+      expect(revised.status).toBe('revision_requested');
+
+      // 5. Revision requested can be edited back to draft or resubmitted
+      const redraft = await repository.saveAssignmentDraft({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Editing after revision request into draft.',
+      });
+      expect(redraft.status).toBe('draft');
+
+      const resubmitted = await repository.submitAssignment({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Final revised and expanded submission content.',
+        evidenceIds: ['ev_aarav_traffic_count_01'],
+      });
+      expect(resubmitted.status).toBe('submitted');
+
+      // 6. Teacher verifies the submission
+      const verified = await repository.reviewSubmission({
+        submissionId: submitted.id,
+        reviewerId: 'user_kavita',
+        status: 'verified',
+        teacherFeedback: 'Well done! Fully verified.',
+        score: 25,
+      });
+      expect(verified.status).toBe('verified');
+
+      // 7. Verified submission cannot be mutated by saveAssignmentDraft or submitAssignment
+      await expect(
+        repository.saveAssignmentDraft({
+          assignmentId: 'asg_obs_03',
+          userId: 'user_aarav',
+          content: 'Attempt to modify verified submission into draft',
+        })
+      ).rejects.toThrow(/Cannot modify submission with status 'verified'/i);
+
+      await expect(
+        repository.submitAssignment({
+          assignmentId: 'asg_obs_03',
+          userId: 'user_aarav',
+          content: 'Attempt to resubmit already verified submission',
+        })
+      ).rejects.toThrow(/Cannot modify submission with status 'verified'/i);
+
+      // 8. Verified submission cannot be reverted to revision_requested by teacher
+      await expect(
+        repository.reviewSubmission({
+          submissionId: submitted.id,
+          reviewerId: 'user_kavita',
+          status: 'revision_requested',
+          teacherFeedback: 'Attempt to revert verified state',
+        })
+      ).rejects.toThrow(/Cannot change status of an already verified submission/i);
+
+      // 9. Repeated verification call on already verified submission is idempotent
+      const duplicateReview = await repository.reviewSubmission({
+        submissionId: submitted.id,
+        reviewerId: 'user_kavita',
+        status: 'verified',
+        teacherFeedback: 'Duplicate review check',
+      });
+      expect(duplicateReview.status).toBe('verified');
     });
 
     it('full revision and verification cycle: submission -> revision request -> resubmit -> verify', async () => {
@@ -292,7 +406,13 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(dashboard.nextStep?.title).toContain('Resume Draft');
       expect(dashboard.nextStep?.targetRoute).toBe('/assignments/asg_obs_03/submit');
 
-      // 3. If teacher requests revision, nextStep elevates to Action Required revision
+      // 3. Participant submits, and teacher requests revision -> nextStep elevates to Action Required revision
+      await repository.submitAssignment({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Work in progress draft submitted for review.',
+        evidenceIds: ['ev_aarav_traffic_count_01'],
+      });
       const sub = (await repository.getSubmissions('user_aarav', 'asg_obs_03'))[0];
       await repository.reviewSubmission({
         submissionId: sub.id,

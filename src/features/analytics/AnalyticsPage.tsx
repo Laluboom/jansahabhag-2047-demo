@@ -49,6 +49,7 @@ export const AnalyticsPage: React.FC = () => {
     Observation: 0,
     Deliberation: 0,
     Reflection: 0,
+    Contribution: 0,
     'Civic Action': 0,
   };
 
@@ -63,7 +64,7 @@ export const AnalyticsPage: React.FC = () => {
     credits: value,
   }));
 
-  const COLORS = ['#6366f1', '#14b8a6', '#f97316', '#8b5cf6', '#ec4899'];
+  const COLORS = ['#6366f1', '#14b8a6', '#f97316', '#8b5cf6', '#3b82f6', '#ec4899'];
 
   // Enrolment status counts
   const enrolmentData = [

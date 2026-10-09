@@ -123,6 +123,7 @@ export class LocalDemoRepository implements DemoRepository {
       Observation: 0,
       Deliberation: 0,
       Reflection: 0,
+      Contribution: 0,
       'Civic Action': 0,
     };
 
@@ -505,6 +506,10 @@ export class LocalDemoRepository implements DemoRepository {
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
 
+    if (existing && (existing.status === 'verified' || existing.status === 'under_review')) {
+      throw new Error(`Cannot modify submission with status '${existing.status}'`);
+    }
+
     let submission: Submission;
     if (existing) {
       existing.content = input.content;
@@ -543,6 +548,10 @@ export class LocalDemoRepository implements DemoRepository {
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
 
+    if (existing && (existing.status === 'verified' || existing.status === 'under_review')) {
+      throw new Error(`Cannot modify submission with status '${existing.status}'`);
+    }
+
     let submission: Submission;
 
     if (existing) {
@@ -568,7 +577,7 @@ export class LocalDemoRepository implements DemoRepository {
       db.submissions.push(submission);
     }
 
-    // Submission credit: +10 once per submission, idempotent on retries
+    // Submission credit: +10 Contribution once per submission, idempotent on retries
     const existingCredit = db.credits.find(
       (c) => c.userId === input.userId && c.sourceType === 'assignment' && c.sourceId === input.assignmentId
     );
@@ -576,7 +585,7 @@ export class LocalDemoRepository implements DemoRepository {
       db.credits.push({
         id: generateId('tx'),
         userId: input.userId,
-        dimension: 'Civic Action',
+        dimension: 'Contribution',
         amount: 10,
         sourceType: 'assignment',
         sourceId: input.assignmentId,
@@ -642,6 +651,18 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const submission = db.submissions.find((s) => s.id === input.submissionId);
     if (!submission) throw new Error(`Submission ${input.submissionId} not found`);
+
+    if (submission.status === 'draft') {
+      throw new Error('Cannot review a draft submission');
+    }
+
+    if (submission.status === 'verified') {
+      if (input.status === 'verified') {
+        // Idempotent retry for already verified submission
+        return JSON.parse(JSON.stringify(submission));
+      }
+      throw new Error('Cannot change status of an already verified submission');
+    }
 
     const now = new Date().toISOString();
     submission.status = input.status;
@@ -1071,6 +1092,7 @@ export class LocalDemoRepository implements DemoRepository {
       Observation: 0,
       Deliberation: 0,
       Reflection: 0,
+      Contribution: 0,
       'Civic Action': 0,
     };
     credits.forEach((c) => {
