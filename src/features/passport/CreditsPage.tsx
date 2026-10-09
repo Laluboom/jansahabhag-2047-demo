@@ -69,7 +69,7 @@ export const CreditsPage: React.FC = () => {
           Transparent Activity Award Rules
         </span>
         <p>
-          Complete lesson (+5 Learning) &bull; Submit field audit (+10 Observation) &bull; Assembly participation (+15 Deliberation) &bull; Substantive inquiry (+5 Deliberation) &bull; Reflection (+5 Reflection) &bull; Project milestone (+10 Civic Action).
+          Complete lesson (+5 Learning) &bull; Assignment submission (+10 Contribution) &bull; Verified field evidence (+5 Observation) &bull; Assembly participation (+15 Deliberation) &bull; Substantive inquiry (+5 Deliberation) &bull; Reflection (+5 Reflection) &bull; Project milestone (+10 Civic Action).
         </p>
       </Card>
 

@@ -63,6 +63,7 @@ export interface DemoRepository {
   getAssignment(assignmentId: string): Promise<Assignment | null>;
   getSubmissions(userId?: string, assignmentId?: string): Promise<Submission[]>;
   getSubmission(submissionId: string): Promise<Submission | null>;
+  saveAssignmentDraft(input: AssignmentSubmissionInput): Promise<Submission>;
   submitAssignment(input: AssignmentSubmissionInput): Promise<Submission>;
   reviewSubmission(input: SubmissionReviewInput): Promise<Submission>;
 

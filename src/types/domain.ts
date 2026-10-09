@@ -452,6 +452,7 @@ export type CreditDimension =
   | 'Observation'
   | 'Deliberation'
   | 'Reflection'
+  | 'Contribution'
   | 'Civic Action';
 
 export type CreditSourceType =

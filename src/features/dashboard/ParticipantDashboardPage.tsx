@@ -178,8 +178,41 @@ export const ParticipantDashboardPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Connected Next Step Hero Card */}
+      {data.nextStep && (
+        <Card className="border-civic-indigo-200 bg-gradient-to-r from-civic-indigo-50/70 via-white to-civic-saffron-50/40 p-5 sm:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-civic-indigo-600 text-white font-mono">
+                  {data.nextStep.badgeText}
+                </span>
+                {data.nextStep.rewardText && (
+                  <span className="text-xs font-semibold text-civic-saffron-700 bg-civic-saffron-100/70 px-2 py-0.5 rounded-full border border-civic-saffron-200">
+                    {data.nextStep.rewardText}
+                  </span>
+                )}
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold font-heading text-slate-900">
+                {data.nextStep.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl line-clamp-2">
+                {data.nextStep.description}
+              </p>
+            </div>
+            <Link to={data.nextStep.targetRoute} className="shrink-0">
+              <Button size="md" variant="primary" className="shadow-xs">
+                <span>Continue Action</span>
+                <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
       {/* Main Grid: Learning in Progress + Youth Assembly Status */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* Left 2 Cols: Active Learning & Assignment */}
         <div className="lg:col-span-2 space-y-6">
           {/* Active Course Card */}
