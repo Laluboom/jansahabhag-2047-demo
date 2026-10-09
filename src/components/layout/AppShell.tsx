@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { DesktopSidebar } from './DesktopSidebar';
 import { TopUtilityBar } from './TopUtilityBar';
@@ -35,7 +35,15 @@ export const AppShell: React.FC = () => {
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-150">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading page content">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 

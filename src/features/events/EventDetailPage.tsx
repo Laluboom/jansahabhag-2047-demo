@@ -101,10 +101,40 @@ export const EventDetailPage: React.FC = () => {
     }
   };
 
-  if (isLoading || !event) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading event details">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto py-4">
+        <Link
+          to="/events"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Events</span>
+        </Link>
+        <Card className="p-8 text-center space-y-4 border-slate-200">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <Calendar className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold font-heading text-slate-900">Event Not Found</h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            The requested civic event or assembly session "{id}" could not be found.
+          </p>
+          <div className="pt-2">
+            <Link to="/events">
+              <Button size="sm" variant="primary">
+                View All Events
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }
