@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
@@ -61,6 +61,8 @@ const STAGES: { stage: AssemblyStage; label: string; number: number; desc: strin
 
 export const AssemblySessionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const stageFromUrl = searchParams.get('stage') as AssemblyStage | null;
   const { currentUser } = useAuthStore();
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
   const navigate = useNavigate();
@@ -74,8 +76,20 @@ export const AssemblySessionPage: React.FC = () => {
   const [proposition, setProposition] = useState<Proposition | null>(null);
   const [reflections, setReflections] = useState<Reflection[]>([]);
 
-  // Stage state (default to assembly currentStage or current step)
-  const [activeStage, setActiveStage] = useState<AssemblyStage>('deliberation');
+  // Stage state (URL query param -> assembly.currentStage -> default deliberation)
+  const [activeStage, setActiveStage] = useState<AssemblyStage>(stageFromUrl || 'deliberation');
+
+  const handleSetStage = (stage: AssemblyStage) => {
+    setActiveStage(stage);
+    setSearchParams({ stage }, { replace: true });
+  };
+
+  // Sync if URL stage changes
+  useEffect(() => {
+    if (stageFromUrl && stageFromUrl !== activeStage) {
+      setActiveStage(stageFromUrl);
+    }
+  }, [stageFromUrl]);
 
   // Contribution Form State
   const [newContribText, setNewContribText] = useState('');
@@ -115,7 +129,7 @@ export const AssemblySessionPage: React.FC = () => {
   useEffect(() => {
     async function load() {
       if (!id || !currentUser) return;
-      setIsLoading(true);
+      if (!assembly) setIsLoading(true);
       try {
         const [asm, r, roles, contribs, allUsers, refls] = await Promise.all([
           demoRepository.getAssembly(id),
@@ -133,7 +147,9 @@ export const AssemblySessionPage: React.FC = () => {
         setReflections(refls.filter((refl) => refl.contextId === id));
 
         if (asm) {
-          setActiveStage(asm.currentStage);
+          if (!stageFromUrl && !activeStage) {
+            setActiveStage(asm.currentStage);
+          }
           const pUsers = allUsers.filter((u) => asm.participantUserIds.includes(u.id));
           setParticipants(pUsers);
 
@@ -148,7 +164,7 @@ export const AssemblySessionPage: React.FC = () => {
             const prop = await demoRepository.getProposition(asm.propositionId);
             setProposition(prop);
             if (prop) {
-              setAmendedPropositionText(prop.proposition);
+              setAmendedPropositionText((prev) => prev || prop.proposition);
               setSelectedOutcome(prop.outcome);
             }
           }
@@ -162,13 +178,15 @@ export const AssemblySessionPage: React.FC = () => {
     load();
   }, [id, currentUser, refreshKey]);
 
+  const effectiveStage = activeStage;
+
   // Stage Stepping
-  const currentStageIndex = STAGES.findIndex((s) => s.stage === activeStage);
+  const currentStageIndex = STAGES.findIndex((s) => s.stage === effectiveStage);
 
   const goToNextStage = async () => {
     if (currentStageIndex < STAGES.length - 1) {
       const next = STAGES[currentStageIndex + 1].stage;
-      setActiveStage(next);
+      handleSetStage(next);
       if (id && assembly && currentUser?.role === 'facilitator') {
         await demoRepository.updateAssemblyStage(id, next);
       }
@@ -177,13 +195,13 @@ export const AssemblySessionPage: React.FC = () => {
 
   const goToPrevStage = () => {
     if (currentStageIndex > 0) {
-      setActiveStage(STAGES[currentStageIndex - 1].stage);
+      handleSetStage(STAGES[currentStageIndex - 1].stage);
     }
   };
 
   // Add Contribution
-  const handleAddContribution = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddContribution = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!id || !currentUser || !newContribText.trim()) return;
 
     setIsSubmittingContrib(true);
@@ -192,7 +210,7 @@ export const AssemblySessionPage: React.FC = () => {
       await demoRepository.addAssemblyContribution({
         assemblyId: id,
         userId: currentUser.id,
-        stage: activeStage,
+        stage: effectiveStage,
         type: contribType,
         text: newContribText.trim(),
         evidenceIds: selectedEvidenceIds,
@@ -212,8 +230,8 @@ export const AssemblySessionPage: React.FC = () => {
   };
 
   // Submit Proposition Revision
-  const handleSubmitRevision = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitRevision = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!proposition || !currentUser || !amendedPropositionText.trim()) return;
 
     setIsSubmittingRevision(true);
@@ -238,8 +256,8 @@ export const AssemblySessionPage: React.FC = () => {
   };
 
   // Submit Dissent Record
-  const handleAddDissent = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddDissent = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!proposition || !currentUser || !dissentReason.trim()) return;
 
     setIsSubmittingDissent(true);
@@ -328,10 +346,40 @@ export const AssemblySessionPage: React.FC = () => {
     }
   };
 
-  if (isLoading || !assembly) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading assembly deliberative chamber">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!assembly) {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto py-4">
+        <Link
+          to="/assemblies"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Assemblies</span>
+        </Link>
+        <Card className="p-8 text-center space-y-4 border-slate-200">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <Vote className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold font-heading text-slate-900">Assembly Session Not Found</h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            The requested youth assembly deliberative session "{id}" does not exist.
+          </p>
+          <div className="pt-2">
+            <Link to="/assemblies">
+              <Button size="sm" variant="primary">
+                View All Youth Assemblies
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -403,13 +451,14 @@ export const AssemblySessionPage: React.FC = () => {
 
             <div className="space-y-1">
               {STAGES.map((st) => {
-                const isCurrent = activeStage === st.stage;
+                const isCurrent = effectiveStage === st.stage;
                 const isPassed = currentStageIndex > STAGES.findIndex((s) => s.stage === st.stage);
 
                 return (
                   <button
                     key={st.stage}
-                    onClick={() => setActiveStage(st.stage)}
+                    type="button"
+                    onClick={() => handleSetStage(st.stage)}
                     className={`w-full text-left flex items-center justify-between p-2 rounded-lg text-xs transition-all ${
                       isCurrent
                         ? 'bg-civic-teal-600 text-white font-bold shadow-xs'
@@ -487,7 +536,7 @@ export const AssemblySessionPage: React.FC = () => {
               </div>
 
               {/* STAGE 1: ORIENTATION */}
-              {activeStage === 'orientation' && (
+              {effectiveStage === 'orientation' && (
                 <div className="space-y-4 pt-4 text-xs text-slate-700">
                   <div className="p-4 rounded-xl bg-civic-indigo-50 border border-civic-indigo-200 space-y-2">
                     <h3 className="text-sm font-bold text-civic-indigo-950 flex items-center gap-1.5 font-heading">
@@ -521,7 +570,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 2: QUESTION */}
-              {activeStage === 'question' && (
+              {effectiveStage === 'question' && (
                 <div className="space-y-4 pt-4 text-xs text-slate-700">
                   <div className="p-4 rounded-xl bg-civic-teal-50 border border-civic-teal-200 space-y-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-civic-teal-800">
@@ -550,7 +599,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 3: EVIDENCE REVIEW */}
-              {activeStage === 'evidence_review' && (
+              {effectiveStage === 'evidence_review' && (
                 <div className="space-y-3 pt-4 text-xs">
                   <p className="text-slate-600">
                     Review and verify all field audits submitted by student researchers before drafting proposals:
@@ -577,7 +626,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 4: DELIBERATION STREAM & FORM */}
-              {activeStage === 'deliberation' && (
+              {effectiveStage === 'deliberation' && (
                 <div className="space-y-4 pt-4">
                   {/* Contribution Stream */}
                   <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
@@ -634,7 +683,13 @@ export const AssemblySessionPage: React.FC = () => {
                   )}
 
                   {/* Add Contribution Form */}
-                  <form onSubmit={handleAddContribution} className="pt-3 border-t border-slate-100 space-y-3">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleAddContribution(e);
+                    }}
+                    className="pt-3 border-t border-slate-100 space-y-3"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <label className="text-xs font-bold text-slate-800 font-heading">
                         Add Substantive Deliberation Contribution
@@ -668,7 +723,8 @@ export const AssemblySessionPage: React.FC = () => {
                       <Button
                         size="sm"
                         variant="teal"
-                        type="submit"
+                        type="button"
+                        onClick={handleAddContribution}
                         isLoading={isSubmittingContrib}
                         disabled={newContribText.trim().length < 5}
                       >
@@ -681,7 +737,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 5: PROPOSITION DRAFT */}
-              {activeStage === 'proposition_draft' && proposition && (
+              {effectiveStage === 'proposition_draft' && proposition && (
                 <div className="space-y-4 pt-4 text-xs text-slate-800">
                   <div className="p-4 rounded-xl bg-civic-teal-50/40 border border-civic-teal-200 space-y-2">
                     <div className="flex items-center justify-between">
@@ -716,7 +772,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 6: REVISION & AMENDMENTS */}
-              {activeStage === 'revision' && proposition && (
+              {effectiveStage === 'revision' && proposition && (
                 <div className="space-y-4 pt-4 text-xs">
                   {revisionSuccessMsg && (
                     <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2">
@@ -725,7 +781,13 @@ export const AssemblySessionPage: React.FC = () => {
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmitRevision} className="space-y-3">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSubmitRevision(e);
+                    }}
+                    className="space-y-3"
+                  >
                     <div>
                       <label className="text-xs font-bold text-slate-800 block mb-1">
                         Edit / Amend Proposed Action Specifications (v{proposition.version + 1}):
@@ -751,7 +813,13 @@ export const AssemblySessionPage: React.FC = () => {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button size="sm" variant="primary" type="submit" isLoading={isSubmittingRevision}>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        type="button"
+                        onClick={handleSubmitRevision}
+                        isLoading={isSubmittingRevision}
+                      >
                         <span>Submit Revision (v{proposition.version + 1})</span>
                         <ArrowRight className="w-3.5 h-3.5 ml-1" />
                       </Button>
@@ -779,7 +847,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 7: SUPPORT & DISSENT */}
-              {activeStage === 'support_dissent' && proposition && (
+              {effectiveStage === 'support_dissent' && proposition && (
                 <div className="space-y-4 pt-4 text-xs">
                   {/* Support Profile */}
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-3 gap-2 text-center">
@@ -814,7 +882,13 @@ export const AssemblySessionPage: React.FC = () => {
                   </div>
 
                   {/* Add Dissent Record Form */}
-                  <form onSubmit={handleAddDissent} className="pt-3 border-t border-slate-100 space-y-2.5">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleAddDissent(e);
+                    }}
+                    className="pt-3 border-t border-slate-100 space-y-2.5"
+                  >
                     <span className="text-xs font-bold text-slate-800 block">Record Formal Dissent / Minority Viewpoint:</span>
                     <Input
                       placeholder="Reason for dissent or remaining concern..."
@@ -828,7 +902,13 @@ export const AssemblySessionPage: React.FC = () => {
                       onChange={(e) => setDissentAmendment(e.target.value)}
                     />
                     <div className="flex justify-end">
-                      <Button size="sm" variant="outline" type="submit" isLoading={isSubmittingDissent}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={handleAddDissent}
+                        isLoading={isSubmittingDissent}
+                      >
                         <span>Record Dissent</span>
                       </Button>
                     </div>
@@ -837,7 +917,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 8: OUTCOME FINALISATION */}
-              {activeStage === 'outcome' && proposition && (
+              {effectiveStage === 'outcome' && proposition && (
                 <div className="space-y-4 pt-4 text-xs text-slate-700">
                   {isFinalised ? (
                     <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
@@ -882,6 +962,7 @@ export const AssemblySessionPage: React.FC = () => {
                         <Button
                           size="md"
                           variant="primary"
+                          type="button"
                           isLoading={isFinalisingOutcome}
                           onClick={handleFinaliseOutcome}
                         >
@@ -895,7 +976,7 @@ export const AssemblySessionPage: React.FC = () => {
               )}
 
               {/* STAGE 9: REFLECTION */}
-              {activeStage === 'reflection' && (
+              {effectiveStage === 'reflection' && (
                 <div className="space-y-4 pt-4 text-xs">
                   {reflectionSuccess ? (
                     <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 text-emerald-900">
@@ -914,7 +995,13 @@ export const AssemblySessionPage: React.FC = () => {
                       </Link>
                     </div>
                   ) : (
-                    <form onSubmit={handleSubmitReflection} className="space-y-3">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSubmitReflection(e);
+                      }}
+                      className="space-y-3"
+                    >
                       <div className="p-3 rounded-lg bg-civic-indigo-50/70 border border-civic-indigo-200 text-slate-800 space-y-1">
                         <strong className="text-civic-indigo-950 block">Reflective Prompt:</strong>
                         <p className="italic">
@@ -971,7 +1058,13 @@ export const AssemblySessionPage: React.FC = () => {
                         <span className="text-[11px] text-slate-500">
                           Earns +5 Reflection Credits in Passport
                         </span>
-                        <Button size="sm" variant="teal" type="submit" isLoading={isSubmittingReflection}>
+                        <Button
+                          size="sm"
+                          variant="teal"
+                          type="button"
+                          onClick={handleSubmitReflection}
+                          isLoading={isSubmittingReflection}
+                        >
                           <span>Submit Reflection (+5)</span>
                           <ArrowRight className="w-3.5 h-3.5 ml-1" />
                         </Button>

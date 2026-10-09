@@ -1,79 +1,92 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { ErrorBoundary } from '../features/errors/ErrorBoundary';
 
-// Features
-import { DemoLoginPage } from '../features/auth-demo/DemoLoginPage';
-import { WelcomePage } from '../features/welcome/WelcomePage';
-import { OnboardingPage } from '../features/onboarding/OnboardingPage';
-import { ParticipantDashboardPage } from '../features/dashboard/ParticipantDashboardPage';
-import { ProfilePage } from '../features/profile/ProfilePage';
-import { NotificationsPage } from '../features/notifications/NotificationsPage';
+// Route Loading Fallback
+const PageLoadingFallback: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading page content">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
+  </div>
+);
 
-import { CoursesPage } from '../features/learning/CoursesPage';
-import { CourseDetailPage } from '../features/learning/CourseDetailPage';
-import { LessonPage } from '../features/learning/LessonPage';
+// Lazy Loaded Feature Pages
+const DemoLoginPage = lazy(() => import('../features/auth-demo/DemoLoginPage').then((m) => ({ default: m.DemoLoginPage })));
+const WelcomePage = lazy(() => import('../features/welcome/WelcomePage').then((m) => ({ default: m.WelcomePage })));
+const OnboardingPage = lazy(() => import('../features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })));
+const ParticipantDashboardPage = lazy(() => import('../features/dashboard/ParticipantDashboardPage').then((m) => ({ default: m.ParticipantDashboardPage })));
+const ProfilePage = lazy(() => import('../features/profile/ProfilePage').then((m) => ({ default: m.ProfilePage })));
+const NotificationsPage = lazy(() => import('../features/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })));
 
-import { AssignmentsPage } from '../features/assignments/AssignmentsPage';
-import { AssignmentDetailPage } from '../features/assignments/AssignmentDetailPage';
-import { SubmitAssignmentPage } from '../features/assignments/SubmitAssignmentPage';
+const CoursesPage = lazy(() => import('../features/learning/CoursesPage').then((m) => ({ default: m.CoursesPage })));
+const CourseDetailPage = lazy(() => import('../features/learning/CourseDetailPage').then((m) => ({ default: m.CourseDetailPage })));
+const LessonPage = lazy(() => import('../features/learning/LessonPage').then((m) => ({ default: m.LessonPage })));
 
-import { ActivitiesPage } from '../features/activities/ActivitiesPage';
-import { EventsPage } from '../features/events/EventsPage';
-import { EventDetailPage } from '../features/events/EventDetailPage';
+const AssignmentsPage = lazy(() => import('../features/assignments/AssignmentsPage').then((m) => ({ default: m.AssignmentsPage })));
+const AssignmentDetailPage = lazy(() => import('../features/assignments/AssignmentDetailPage').then((m) => ({ default: m.AssignmentDetailPage })));
+const SubmitAssignmentPage = lazy(() => import('../features/assignments/SubmitAssignmentPage').then((m) => ({ default: m.SubmitAssignmentPage })));
 
-import { CommunityPage } from '../features/community/CommunityPage';
-import { CommunityGroupDetailPage } from '../features/community/CommunityGroupDetailPage';
+const ActivitiesPage = lazy(() => import('../features/activities/ActivitiesPage').then((m) => ({ default: m.ActivitiesPage })));
+const EventsPage = lazy(() => import('../features/events/EventsPage').then((m) => ({ default: m.EventsPage })));
+const EventDetailPage = lazy(() => import('../features/events/EventDetailPage').then((m) => ({ default: m.EventDetailPage })));
 
-import { AssembliesPage } from '../features/assemblies/AssembliesPage';
-import { AssemblyDetailPage } from '../features/assemblies/AssemblyDetailPage';
-import { AssemblySessionPage } from '../features/assemblies/AssemblySessionPage';
+const CommunityPage = lazy(() => import('../features/community/CommunityPage').then((m) => ({ default: m.CommunityPage })));
+const CommunityGroupDetailPage = lazy(() => import('../features/community/CommunityGroupDetailPage').then((m) => ({ default: m.CommunityGroupDetailPage })));
 
-import { PropositionDetailPage } from '../features/propositions/PropositionDetailPage';
-import { PropositionRevisionsPage } from '../features/propositions/PropositionRevisionsPage';
+const AssembliesPage = lazy(() => import('../features/assemblies/AssembliesPage').then((m) => ({ default: m.AssembliesPage })));
+const AssemblyDetailPage = lazy(() => import('../features/assemblies/AssemblyDetailPage').then((m) => ({ default: m.AssemblyDetailPage })));
+const AssemblySessionPage = lazy(() => import('../features/assemblies/AssemblySessionPage').then((m) => ({ default: m.AssemblySessionPage })));
 
-import { ProjectsPage } from '../features/projects/ProjectsPage';
-import { ProjectDetailPage } from '../features/projects/ProjectDetailPage';
+const PropositionDetailPage = lazy(() => import('../features/propositions/PropositionDetailPage').then((m) => ({ default: m.PropositionDetailPage })));
+const PropositionRevisionsPage = lazy(() => import('../features/propositions/PropositionRevisionsPage').then((m) => ({ default: m.PropositionRevisionsPage })));
 
-import { CivicIssuesPage } from '../features/issues/CivicIssuesPage';
-import { IssueDetailPage } from '../features/issues/IssueDetailPage';
+const ProjectsPage = lazy(() => import('../features/projects/ProjectsPage').then((m) => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => import('../features/projects/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })));
 
-import { PassportPage } from '../features/passport/PassportPage';
-import { CreditsPage } from '../features/passport/CreditsPage';
-import { EvidencePage } from '../features/passport/EvidencePage';
-import { AchievementsPage } from '../features/passport/AchievementsPage';
+const CivicIssuesPage = lazy(() => import('../features/issues/CivicIssuesPage').then((m) => ({ default: m.CivicIssuesPage })));
+const IssueDetailPage = lazy(() => import('../features/issues/IssueDetailPage').then((m) => ({ default: m.IssueDetailPage })));
 
-import { IdeaLabPage } from '../features/previews/IdeaLabPage';
-import { ResearchLabPage } from '../features/previews/ResearchLabPage';
-import { PolicyLabPage } from '../features/previews/PolicyLabPage';
-import { ParliamentPage } from '../features/previews/ParliamentPage';
-import { StakeholdersPage } from '../features/previews/StakeholdersPage';
-import { StudioPage } from '../features/previews/StudioPage';
+const PassportPage = lazy(() => import('../features/passport/PassportPage').then((m) => ({ default: m.PassportPage })));
+const CreditsPage = lazy(() => import('../features/passport/CreditsPage').then((m) => ({ default: m.CreditsPage })));
+const EvidencePage = lazy(() => import('../features/passport/EvidencePage').then((m) => ({ default: m.EvidencePage })));
+const AchievementsPage = lazy(() => import('../features/passport/AchievementsPage').then((m) => ({ default: m.AchievementsPage })));
 
-import { InstitutionDashboardPage } from '../features/institutions/InstitutionDashboardPage';
-import { ParticipantsPage } from '../features/institutions/ParticipantsPage';
-import { InstitutionProgrammesPage } from '../features/institutions/ProgrammesPage';
+const IdeaLabPage = lazy(() => import('../features/previews/IdeaLabPage').then((m) => ({ default: m.IdeaLabPage })));
+const ResearchLabPage = lazy(() => import('../features/previews/ResearchLabPage').then((m) => ({ default: m.ResearchLabPage })));
+const PolicyLabPage = lazy(() => import('../features/previews/PolicyLabPage').then((m) => ({ default: m.PolicyLabPage })));
+const ParliamentPage = lazy(() => import('../features/previews/ParliamentPage').then((m) => ({ default: m.ParliamentPage })));
+const StakeholdersPage = lazy(() => import('../features/previews/StakeholdersPage').then((m) => ({ default: m.StakeholdersPage })));
+const StudioPage = lazy(() => import('../features/previews/StudioPage').then((m) => ({ default: m.StudioPage })));
 
-import { AdminDashboardPage } from '../features/administration/AdminDashboardPage';
-import { AdminProgrammesPage } from '../features/administration/AdminProgrammesPage';
-import { AdminContentPage } from '../features/administration/AdminContentPage';
-import { AdminModerationPage } from '../features/moderation/AdminModerationPage';
-import { AnalyticsPage } from '../features/analytics/AnalyticsPage';
+const InstitutionDashboardPage = lazy(() => import('../features/institutions/InstitutionDashboardPage').then((m) => ({ default: m.InstitutionDashboardPage })));
+const ParticipantsPage = lazy(() => import('../features/institutions/ParticipantsPage').then((m) => ({ default: m.ParticipantsPage })));
+const InstitutionProgrammesPage = lazy(() => import('../features/institutions/ProgrammesPage').then((m) => ({ default: m.InstitutionProgrammesPage })));
 
-import { NotFoundPage } from '../features/errors/NotFoundPage';
+const AdminDashboardPage = lazy(() => import('../features/administration/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })));
+const AdminProgrammesPage = lazy(() => import('../features/administration/AdminProgrammesPage').then((m) => ({ default: m.AdminProgrammesPage })));
+const AdminContentPage = lazy(() => import('../features/administration/AdminContentPage').then((m) => ({ default: m.AdminContentPage })));
+const AdminModerationPage = lazy(() => import('../features/moderation/AdminModerationPage').then((m) => ({ default: m.AdminModerationPage })));
+const AnalyticsPage = lazy(() => import('../features/analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
+
+const NotFoundPage = lazy(() => import('../features/errors/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
 export const router = createBrowserRouter([
   {
     path: '/demo-login',
-    element: <DemoLoginPage />,
+    element: (
+      <Suspense fallback={<PageLoadingFallback />}>
+        <DemoLoginPage />
+      </Suspense>
+    ),
   },
   {
     path: '/',
     element: <AppShell />,
     errorElement: (
       <ErrorBoundary>
-        <NotFoundPage />
+        <Suspense fallback={<PageLoadingFallback />}>
+          <NotFoundPage />
+        </Suspense>
       </ErrorBoundary>
     ),
     children: [
@@ -83,209 +96,389 @@ export const router = createBrowserRouter([
       },
       {
         path: 'welcome',
-        element: <WelcomePage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WelcomePage />
+          </Suspense>
+        ),
       },
       {
         path: 'onboarding',
-        element: <OnboardingPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <OnboardingPage />
+          </Suspense>
+        ),
       },
       {
         path: 'dashboard',
-        element: <ParticipantDashboardPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ParticipantDashboardPage />
+          </Suspense>
+        ),
       },
       {
         path: 'profile',
-        element: <ProfilePage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ProfilePage />
+          </Suspense>
+        ),
       },
       {
         path: 'notifications',
-        element: <NotificationsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <NotificationsPage />
+          </Suspense>
+        ),
       },
 
       // Learning
       {
         path: 'learn',
-        element: <CoursesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CoursesPage />
+          </Suspense>
+        ),
       },
       {
         path: 'learn/:courseId',
-        element: <CourseDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CourseDetailPage />
+          </Suspense>
+        ),
       },
       {
         path: 'learn/:courseId/lesson/:lessonId',
-        element: <LessonPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <LessonPage />
+          </Suspense>
+        ),
       },
 
       // Assignments
       {
         path: 'assignments',
-        element: <AssignmentsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AssignmentsPage />
+          </Suspense>
+        ),
       },
       {
         path: 'assignments/:id',
-        element: <AssignmentDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AssignmentDetailPage />
+          </Suspense>
+        ),
       },
       {
         path: 'assignments/:id/submit',
-        element: <SubmitAssignmentPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <SubmitAssignmentPage />
+          </Suspense>
+        ),
       },
 
       // Participation & Events
       {
         path: 'participate',
-        element: <ActivitiesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ActivitiesPage />
+          </Suspense>
+        ),
       },
       {
         path: 'activities',
-        element: <ActivitiesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ActivitiesPage />
+          </Suspense>
+        ),
       },
       {
         path: 'events',
-        element: <EventsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <EventsPage />
+          </Suspense>
+        ),
       },
       {
         path: 'events/:id',
-        element: <EventDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <EventDetailPage />
+          </Suspense>
+        ),
       },
 
       // Community
       {
         path: 'community',
-        element: <CommunityPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CommunityPage />
+          </Suspense>
+        ),
       },
       {
         path: 'community/groups/:id',
-        element: <CommunityGroupDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CommunityGroupDetailPage />
+          </Suspense>
+        ),
       },
 
       // Deliberation & Assemblies
       {
         path: 'assemblies',
-        element: <AssembliesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AssembliesPage />
+          </Suspense>
+        ),
       },
       {
         path: 'assemblies/:id',
-        element: <AssemblyDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AssemblyDetailPage />
+          </Suspense>
+        ),
       },
       {
         path: 'assemblies/:id/session',
-        element: <AssemblySessionPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AssemblySessionPage />
+          </Suspense>
+        ),
       },
 
       // Propositions
       {
         path: 'propositions/:id',
-        element: <PropositionDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PropositionDetailPage />
+          </Suspense>
+        ),
       },
       {
         path: 'propositions/:id/revisions',
-        element: <PropositionRevisionsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PropositionRevisionsPage />
+          </Suspense>
+        ),
       },
 
       // Projects
       {
         path: 'projects',
-        element: <ProjectsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ProjectsPage />
+          </Suspense>
+        ),
       },
       {
         path: 'projects/:id',
-        element: <ProjectDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ProjectDetailPage />
+          </Suspense>
+        ),
       },
 
       // Issues Map
       {
         path: 'issues',
-        element: <CivicIssuesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CivicIssuesPage />
+          </Suspense>
+        ),
       },
       {
         path: 'issues/:id',
-        element: <IssueDetailPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <IssueDetailPage />
+          </Suspense>
+        ),
       },
 
       // Passport
       {
         path: 'passport',
-        element: <PassportPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PassportPage />
+          </Suspense>
+        ),
       },
       {
         path: 'passport/credits',
-        element: <CreditsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CreditsPage />
+          </Suspense>
+        ),
       },
       {
         path: 'passport/evidence',
-        element: <EvidencePage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <EvidencePage />
+          </Suspense>
+        ),
       },
       {
         path: 'passport/achievements',
-        element: <AchievementsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AchievementsPage />
+          </Suspense>
+        ),
       },
 
       // Previews & Labs
       {
         path: 'labs/ideas',
-        element: <IdeaLabPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <IdeaLabPage />
+          </Suspense>
+        ),
       },
       {
         path: 'labs/research',
-        element: <ResearchLabPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ResearchLabPage />
+          </Suspense>
+        ),
       },
       {
         path: 'labs/policy',
-        element: <PolicyLabPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PolicyLabPage />
+          </Suspense>
+        ),
       },
       {
         path: 'parliament',
-        element: <ParliamentPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ParliamentPage />
+          </Suspense>
+        ),
       },
       {
         path: 'stakeholders',
-        element: <StakeholdersPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <StakeholdersPage />
+          </Suspense>
+        ),
       },
       {
         path: 'studio',
-        element: <StudioPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <StudioPage />
+          </Suspense>
+        ),
       },
 
       // Institution
       {
         path: 'institution/dashboard',
-        element: <InstitutionDashboardPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <InstitutionDashboardPage />
+          </Suspense>
+        ),
       },
       {
         path: 'institution/participants',
-        element: <ParticipantsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ParticipantsPage />
+          </Suspense>
+        ),
       },
       {
         path: 'institution/programmes',
-        element: <InstitutionProgrammesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <InstitutionProgrammesPage />
+          </Suspense>
+        ),
       },
 
       // Admin & Analytics
       {
         path: 'admin/dashboard',
-        element: <AdminDashboardPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AdminDashboardPage />
+          </Suspense>
+        ),
       },
       {
         path: 'admin/programmes',
-        element: <AdminProgrammesPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AdminProgrammesPage />
+          </Suspense>
+        ),
       },
       {
         path: 'admin/content',
-        element: <AdminContentPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AdminContentPage />
+          </Suspense>
+        ),
       },
       {
         path: 'admin/moderation',
-        element: <AdminModerationPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AdminModerationPage />
+          </Suspense>
+        ),
       },
       {
         path: 'analytics',
-        element: <AnalyticsPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AnalyticsPage />
+          </Suspense>
+        ),
       },
 
       // Fallback
       {
         path: '*',
-        element: <NotFoundPage />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <NotFoundPage />
+          </Suspense>
+        ),
       },
     ],
   },

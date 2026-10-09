@@ -27,10 +27,30 @@ export const PropositionRevisionsPage: React.FC = () => {
     load();
   }, [id]);
 
-  if (isLoading || !proposition) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading proposition revisions">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!proposition) {
+    return (
+      <div className="space-y-6 max-w-3xl mx-auto py-4">
+        <Link to="/assemblies" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Assemblies</span>
+        </Link>
+        <Card className="p-8 text-center space-y-4 border-slate-200">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <History className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold font-heading text-slate-900">Proposition Not Found</h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Revision history is unavailable because proposition "{id}" does not exist.
+          </p>
+        </Card>
       </div>
     );
   }
