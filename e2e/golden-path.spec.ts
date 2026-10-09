@@ -31,12 +31,10 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     await page.goto('/learn/course_civic_obs_01/lesson/les_obs_104');
     await expect(page.getByRole('heading', { name: /Conducting Peer Pedestrian Safety Interviews/i })).toBeVisible();
 
-    // Mark Lesson Complete
+    // Mark Lesson Complete (deterministic)
     const completeLessonBtn = page.getByRole('button', { name: /Mark Lesson Complete/i });
-    if (await completeLessonBtn.isVisible()) {
-      await completeLessonBtn.click();
-      await expect(page.getByText(/completed/i).first()).toBeVisible();
-    }
+    await completeLessonBtn.click();
+    await expect(page.getByText(/Lesson Completed!|Completed Lesson/i).first()).toBeVisible();
 
     // 3. Assignment Workflow: Draft, Attach Mock Evidence, and Submit
     await page.goto('/assignments/asg_obs_03/submit');
@@ -103,7 +101,7 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     // Join Assembly
     const joinBtn = page.getByRole('button', { name: /Join Youth Assembly|Enter Live Deliberation Workspace/i });
     await joinBtn.click();
-    await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026/session');
+    await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026/session*');
 
     // 7. Deliberation: Add Substantive Contribution
     await page.getByRole('button', { name: /4\. Deliberation/i }).click();
@@ -121,31 +119,44 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     await page.getByRole('button', { name: /Submit Revision/i }).click();
     await expect(page.getByText(/Add mandatory roadside curb drainage flumes/i)).toBeVisible();
 
-    // 9. Outcome: Finalise Proposition Resolution
+    // 9. Outcome: Finalise Proposition Resolution (no conditional skips)
     await page.getByRole('button', { name: /8\. Final Outcome/i }).click();
     await expect(page.getByRole('heading', { name: /Final Outcome/i, level: 2 })).toBeVisible();
     const finaliseBtn = page.getByRole('button', { name: /Finalise Chamber Resolution/i });
-    if (await finaliseBtn.isVisible()) {
-      await finaliseBtn.click();
-    }
+    await finaliseBtn.click();
 
-    // 10. Reflection: Write Civic Reflection
-    await page.getByRole('button', { name: /9\. Civic Reflection/i }).click();
+    // 10. Reflection: Write Civic Reflection (auto-advanced to stage 9)
     await expect(page.getByRole('heading', { name: /Civic Reflection/i, level: 2 })).toBeVisible();
     const reflectionInput = page.getByPlaceholder(/Write your honest reflections/i);
     await reflectionInput.fill('Participating in this assembly reinforced that democratic deliberation requires listening closely to conflicting priorities—such as driver speed versus child pedestrian safety—and finding evidence-backed civic consensus.');
     await page.getByRole('button', { name: /Submit Reflection/i }).click();
     await expect(page.getByText(/Civic Reflection Recorded!/i)).toBeVisible();
 
-    // 11. Open Civic Passport & Confirm Connected Records & Credits
+    // 11. Open Civic Passport & Confirm All Connected Records & Reflections
     await page.goto('/passport');
     await expect(page.getByRole('heading', { name: /Aarav Sharma/i })).toBeVisible();
     await expect(page.getByText(/Verified Civic Passport/i)).toBeVisible();
 
-    // Check Credit Ledger
+    // Confirm Activity Timeline records from this exact run
+    await expect(page.getByText(/Completed: Conducting Peer Pedestrian Safety Interviews/i)).toBeVisible();
+    await expect(page.getByText(/Verified: Pedestrian Flow Interview with 5 Peers/i)).toBeVisible();
+    await expect(page.getByText(/Appointed Assembly Questioner/i)).toBeVisible();
+    await expect(page.getByText(/Substantive Contribution: Question/i)).toBeVisible();
+    await expect(page.getByText(/Assembly Resolution: QUALIFIED_SUPPORT/i)).toBeVisible();
+
+    // Confirm Reflection recorded in Passport history
+    await expect(page.getByText(/Participating in this assembly reinforced that democratic deliberation/i)).toBeVisible();
+
+    // 12. Check Credit Ledger & Specific Ledger Transactions
     await page.goto('/passport/credits');
     await expect(page.getByRole('heading', { name: /Civic Credit Ledger/i })).toBeVisible();
-    await expect(page.getByText(/Total Verified/i)).toBeVisible();
+    await expect(page.getByText(/Completed lesson: Conducting Peer Pedestrian Safety Interviews/i)).toBeVisible();
+    await expect(page.getByText(/Submitted assignment: Pedestrian Flow Interview with 5 Peers/i)).toBeVisible();
+    await expect(page.getByText(/Verified field evidence: Student Commuter Safety Survey Responses/i)).toBeVisible();
+    await expect(page.getByText(/Joined Youth Assembly: Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i)).toBeVisible();
+    await expect(page.getByText(/Added substantive contribution \(question\)/i)).toBeVisible();
+    await expect(page.getByText(/Civic reflection: Reflect on how this deliberative process/i)).toBeVisible();
   });
 });
+
 
