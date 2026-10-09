@@ -8,6 +8,7 @@ import {
   Assignment,
   Submission,
   Evidence,
+  Activity,
   Event,
   Session,
   Assembly,
@@ -21,6 +22,7 @@ import {
   CommunityGroup,
   CommunityPost,
   ModerationCase,
+  CivicIssue,
   DemoDatabase,
   AssemblyStage,
   CreditDimension,
@@ -257,6 +259,33 @@ export class LocalDemoRepository implements DemoRepository {
     return prog ? JSON.parse(JSON.stringify(prog)) : null;
   }
 
+  async createProgramme(
+    programmeInput: Omit<Programme, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
+  ): Promise<Programme> {
+    const db = this.getDb();
+    const now = new Date().toISOString();
+    const newProg: Programme = {
+      ...programmeInput,
+      id: generateId('prog'),
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.programmes.push(newProg);
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(newProg));
+  }
+
+  async updateProgramme(programmeId: string, updates: Partial<Programme>): Promise<Programme> {
+    const db = this.getDb();
+    const prog = db.programmes.find((p) => p.id === programmeId);
+    if (!prog) throw new Error(`Programme ${programmeId} not found`);
+
+    Object.assign(prog, updates, { updatedAt: new Date().toISOString() });
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(prog));
+  }
+
   // Learning
   async getCourses(_userId?: string): Promise<Course[]> {
     const db = this.getDb();
@@ -267,6 +296,33 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const course = db.courses.find((c) => c.id === courseId);
     return course ? JSON.parse(JSON.stringify(course)) : null;
+  }
+
+  async createCourse(
+    courseInput: Omit<Course, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
+  ): Promise<Course> {
+    const db = this.getDb();
+    const now = new Date().toISOString();
+    const newCourse: Course = {
+      ...courseInput,
+      id: generateId('course'),
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.courses.push(newCourse);
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(newCourse));
+  }
+
+  async updateCourse(courseId: string, updates: Partial<Course>): Promise<Course> {
+    const db = this.getDb();
+    const course = db.courses.find((c) => c.id === courseId);
+    if (!course) throw new Error(`Course ${courseId} not found`);
+
+    Object.assign(course, updates, { updatedAt: new Date().toISOString() });
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(course));
   }
 
   async getLessons(courseId: string): Promise<Lesson[]> {
@@ -1266,30 +1322,169 @@ export class LocalDemoRepository implements DemoRepository {
     if (!milestone) throw new Error(`Milestone ${milestoneId} not found`);
 
     const now = new Date().toISOString();
-    milestone.isCompleted = true;
-    milestone.completedAt = now;
-    project.updatedAt = now;
 
-    // Award credit
-    db.credits.push({
-      id: generateId('tx'),
-      userId,
-      dimension: 'Civic Action',
-      amount: 10,
-      sourceType: 'project',
-      sourceId: projectId,
-      status: 'Verified',
-      reason: `Completed milestone: ${milestone.title}`,
-      createdAt: now,
-      schemaVersion: 1,
-    });
+    // Idempotent check: only award and record if not already completed
+    if (!milestone.isCompleted) {
+      milestone.isCompleted = true;
+      milestone.completedAt = now;
+      project.updatedAt = now;
 
-    const user = db.users.find((u) => u.id === userId);
-    if (user) {
-      user.totalCredits += 10;
-      user.updatedAt = now;
+      // If all milestones completed, update project status
+      const allDone = project.milestones.every((m) => m.isCompleted);
+      if (allDone && project.status !== 'completed') {
+        project.status = 'completed';
+      }
+
+      // 1. Award +10 Civic Action credit (strictly idempotent)
+      const existingCredit = db.credits.find(
+        (c) => c.userId === userId && c.sourceType === 'project' && c.sourceId === milestoneId
+      );
+      if (!existingCredit) {
+        db.credits.push({
+          id: generateId('tx'),
+          userId,
+          dimension: 'Civic Action',
+          amount: 10,
+          sourceType: 'project',
+          sourceId: milestoneId,
+          status: 'Verified',
+          reason: `Completed project milestone: ${milestone.title} (${project.title})`,
+          createdAt: now,
+          schemaVersion: 1,
+        });
+
+        const user = db.users.find((u) => u.id === userId);
+        if (user) {
+          user.totalCredits = this.calculateUserCredits(db, userId);
+          user.updatedAt = now;
+        }
+      }
+
+      // 2. Create Activity record (idempotent)
+      const existingActivity = db.activities.find(
+        (a) => a.userId === userId && a.type === 'project_milestone' && a.referenceId === milestoneId
+      );
+      if (!existingActivity) {
+        db.activities.push({
+          id: generateId('act'),
+          userId,
+          type: 'project_milestone',
+          title: `Completed Project Milestone: ${milestone.title}`,
+          description: `Action milestone achieved in "${project.title}".`,
+          referenceId: milestoneId,
+          referenceType: 'milestone',
+          timestamp: now,
+          schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      // 3. Create Passport Entry (idempotent)
+      const existingPassport = db.passportEntries.find(
+        (p) => p.userId === userId && p.sourceReferenceId === milestoneId && p.category === 'civic_action'
+      );
+      if (!existingPassport) {
+        db.passportEntries.push({
+          id: generateId('pass'),
+          userId,
+          category: 'civic_action',
+          title: `Milestone Achieved: ${milestone.title}`,
+          subtitle: project.title,
+          date: now.split('T')[0],
+          creditsAwarded: 10,
+          evidenceIds: project.evidenceIds.slice(0, 2),
+          sourceReferenceId: milestoneId,
+          sourceReferenceType: 'project_milestone',
+          isVerified: true,
+          schemaVersion: 1,
+        });
+      }
+
+      // 4. Create Notification
+      db.notifications.push({
+        id: generateId('notif'),
+        userId,
+        title: 'Project Milestone Completed!',
+        message: `You completed "${milestone.title}" in ${project.title} and earned 10 Civic Action Credits.`,
+        type: 'project',
+        isRead: false,
+        targetRoute: `/projects/${projectId}`,
+        createdAt: now,
+        schemaVersion: 1,
+      });
+
+      this.saveDb(db);
     }
 
+    return JSON.parse(JSON.stringify(project));
+  }
+
+  async addProjectNote(
+    projectId: string,
+    note: { authorId: string; text: string }
+  ): Promise<Project> {
+    const db = this.getDb();
+    const project = db.projects.find((p) => p.id === projectId);
+    if (!project) throw new Error(`Project ${projectId} not found`);
+
+    const author = db.users.find((u) => u.id === note.authorId);
+    const now = new Date().toISOString();
+
+    if (!project.notes) {
+      project.notes = [];
+    }
+
+    project.notes.push({
+      id: generateId('note'),
+      authorId: note.authorId,
+      authorName: author?.name || 'Team Member',
+      text: note.text.trim(),
+      createdAt: now,
+    });
+    project.updatedAt = now;
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(project));
+  }
+
+  async addProjectEvidence(projectId: string, evidenceId: string): Promise<Project> {
+    const db = this.getDb();
+    const project = db.projects.find((p) => p.id === projectId);
+    if (!project) throw new Error(`Project ${projectId} not found`);
+
+    if (!project.evidenceIds.includes(evidenceId)) {
+      project.evidenceIds.push(evidenceId);
+      project.updatedAt = new Date().toISOString();
+      this.saveDb(db);
+    }
+    return JSON.parse(JSON.stringify(project));
+  }
+
+  async createProject(
+    projectInput: Omit<Project, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
+  ): Promise<Project> {
+    const db = this.getDb();
+    const now = new Date().toISOString();
+    const newProject: Project = {
+      ...projectInput,
+      id: generateId('proj'),
+      notes: projectInput.notes || [],
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.projects.push(newProject);
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(newProject));
+  }
+
+  async updateProject(projectId: string, updates: Partial<Project>): Promise<Project> {
+    const db = this.getDb();
+    const project = db.projects.find((p) => p.id === projectId);
+    if (!project) throw new Error(`Project ${projectId} not found`);
+
+    Object.assign(project, updates, { updatedAt: new Date().toISOString() });
     this.saveDb(db);
     return JSON.parse(JSON.stringify(project));
   }
@@ -1312,17 +1507,135 @@ export class LocalDemoRepository implements DemoRepository {
     return sess ? JSON.parse(JSON.stringify(sess)) : null;
   }
 
-  async rsvpEvent(eventId: string, userId: string): Promise<Event> {
+  async getSessionByEvent(eventId: string): Promise<Session | null> {
+    const db = this.getDb();
+    const sess = db.sessions.find((s) => s.eventId === eventId);
+    if (sess) {
+      return JSON.parse(JSON.stringify(sess));
+    }
+    const evt = db.events.find((e) => e.id === eventId);
+    if (!evt) return null;
+
+    // Default simulated session details
+    const mockSession: Session = {
+      id: `sess_sim_${eventId}`,
+      eventId,
+      title: `${evt.title} — Agenda & Resources`,
+      agenda: [
+        { time: `${evt.startTime} - Briefing`, topic: 'Facilitator Welcome & Context Briefing', presenter: 'Session Chair' },
+        { time: 'Deliberation Track', topic: `Field Observation Synthesis & Action Audit (${evt.type.replace('_', ' ')})`, presenter: 'Participating Youth Cohort' },
+        { time: `Closing - ${evt.endTime}`, topic: 'Outcomes Synthesis & Civic Credit Recording', presenter: 'Rapporteur' },
+      ],
+      resources: [
+        { title: `${evt.title} Reference Brief (PDF)`, url: '#', type: 'brief' },
+        { title: 'Indian Road Congress (IRC) School Zone Standard Reference', url: '#', type: 'standard' },
+        { title: 'Community Field Observation Tally Sheet', url: '#', type: 'worksheet' },
+      ],
+      notesSummary: `Simulated interactive session workspace for ${evt.title}. All youth participants can view agenda and study materials.`,
+      schemaVersion: 1,
+      createdAt: evt.createdAt,
+      updatedAt: evt.updatedAt,
+    };
+    return mockSession;
+  }
+
+  async rsvpEvent(
+    eventId: string,
+    userId: string,
+    status: 'attending' | 'maybe' | 'declined' = 'attending'
+  ): Promise<Event> {
     const db = this.getDb();
     const evt = db.events.find((e) => e.id === eventId);
     if (!evt) throw new Error(`Event ${eventId} not found`);
 
-    if (!evt.attendeeUserIds.includes(userId)) {
-      evt.attendeeUserIds.push(userId);
-      evt.updatedAt = new Date().toISOString();
+    const now = new Date().toISOString();
+    evt.attendeeUserIds = evt.attendeeUserIds || [];
+    evt.rsvpMap = evt.rsvpMap || {};
+    evt.rsvpMap[userId] = status;
+
+    if (status === 'attending') {
+      if (!evt.attendeeUserIds.includes(userId)) {
+        evt.attendeeUserIds.push(userId);
+      }
+    } else if (status === 'declined') {
+      evt.attendeeUserIds = evt.attendeeUserIds.filter((id) => id !== userId);
+    }
+    evt.updatedAt = now;
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(evt));
+  }
+
+  async checkInEvent(
+    eventId: string,
+    userId: string
+  ): Promise<{ event: Event; activity?: Activity }> {
+    const db = this.getDb();
+    const evt = db.events.find((e) => e.id === eventId);
+    if (!evt) throw new Error(`Event ${eventId} not found`);
+
+    const now = new Date().toISOString();
+    evt.checkedInUserIds = evt.checkedInUserIds || [];
+
+    let act: Activity | undefined;
+    if (!evt.checkedInUserIds.includes(userId)) {
+      evt.checkedInUserIds.push(userId);
+      if (!evt.attendeeUserIds.includes(userId)) {
+        evt.attendeeUserIds.push(userId);
+      }
+      evt.updatedAt = now;
+
+      // Add activity entry
+      act = {
+        id: generateId('act'),
+        userId,
+        type: 'assembly_joined',
+        title: `Attended Civic Session: ${evt.title}`,
+        description: `Verified attendance at ${evt.location}.`,
+        referenceId: eventId,
+        referenceType: 'event',
+        timestamp: now,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.activities.push(act);
+
       this.saveDb(db);
     }
-    return JSON.parse(JSON.stringify(evt));
+
+    return {
+      event: JSON.parse(JSON.stringify(evt)),
+      activity: act ? JSON.parse(JSON.stringify(act)) : undefined,
+    };
+  }
+
+  // Activities
+  async getActivities(userId?: string): Promise<Activity[]> {
+    const db = this.getDb();
+    let acts = db.activities;
+    if (userId) {
+      acts = acts.filter((a) => a.userId === userId);
+    }
+    acts = acts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return JSON.parse(JSON.stringify(acts));
+  }
+
+  async addActivity(
+    activityInput: Omit<Activity, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
+  ): Promise<Activity> {
+    const db = this.getDb();
+    const now = new Date().toISOString();
+    const newAct: Activity = {
+      ...activityInput,
+      id: generateId('act'),
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.activities.push(newAct);
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(newAct));
   }
 
   // Reflections
@@ -1528,6 +1841,30 @@ export class LocalDemoRepository implements DemoRepository {
     return grp ? JSON.parse(JSON.stringify(grp)) : null;
   }
 
+  async joinCommunityGroup(groupId: string, userId: string): Promise<CommunityGroup> {
+    const db = this.getDb();
+    const grp = db.communityGroups.find((g) => g.id === groupId);
+    if (!grp) throw new Error(`Community group ${groupId} not found`);
+
+    if (!grp.memberUserIds.includes(userId)) {
+      grp.memberUserIds.push(userId);
+      grp.updatedAt = new Date().toISOString();
+      this.saveDb(db);
+    }
+    return JSON.parse(JSON.stringify(grp));
+  }
+
+  async leaveCommunityGroup(groupId: string, userId: string): Promise<CommunityGroup> {
+    const db = this.getDb();
+    const grp = db.communityGroups.find((g) => g.id === groupId);
+    if (!grp) throw new Error(`Community group ${groupId} not found`);
+
+    grp.memberUserIds = grp.memberUserIds.filter((id) => id !== userId);
+    grp.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(grp));
+  }
+
   async getCommunityPosts(groupId: string): Promise<CommunityPost[]> {
     const db = this.getDb();
     const posts = db.communityPosts
@@ -1557,6 +1894,7 @@ export class LocalDemoRepository implements DemoRepository {
       content: post.content,
       tags: post.tags,
       likesCount: 0,
+      likedByUserIds: [],
       replies: [],
       isPinned: false,
       schemaVersion: 1,
@@ -1592,6 +1930,78 @@ export class LocalDemoRepository implements DemoRepository {
 
     this.saveDb(db);
     return JSON.parse(JSON.stringify(post));
+  }
+
+  async likeCommunityPost(postId: string, userId: string): Promise<CommunityPost> {
+    const db = this.getDb();
+    const post = db.communityPosts.find((p) => p.id === postId);
+    if (!post) throw new Error(`Post ${postId} not found`);
+
+    post.likedByUserIds = post.likedByUserIds || [];
+    if (!post.likedByUserIds.includes(userId)) {
+      post.likedByUserIds.push(userId);
+      post.likesCount += 1;
+    } else {
+      post.likedByUserIds = post.likedByUserIds.filter((id) => id !== userId);
+      post.likesCount = Math.max(0, post.likesCount - 1);
+    }
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(post));
+  }
+
+  // Civic Issues Map
+  async getCivicIssues(): Promise<CivicIssue[]> {
+    const db = this.getDb();
+    return JSON.parse(JSON.stringify(db.civicIssues || []));
+  }
+
+  async getCivicIssue(issueId: string): Promise<CivicIssue | null> {
+    const db = this.getDb();
+    const iss = (db.civicIssues || []).find((i) => i.id === issueId);
+    return iss ? JSON.parse(JSON.stringify(iss)) : null;
+  }
+
+  async upvoteCivicIssue(issueId: string, userId: string): Promise<CivicIssue> {
+    const db = this.getDb();
+    db.civicIssues = db.civicIssues || [];
+    const iss = db.civicIssues.find((i) => i.id === issueId);
+    if (!iss) throw new Error(`Civic issue ${issueId} not found`);
+
+    iss.upvotedByUserIds = iss.upvotedByUserIds || [];
+    if (!iss.upvotedByUserIds.includes(userId)) {
+      iss.upvotedByUserIds.push(userId);
+      iss.reportsCount += 1;
+    } else {
+      iss.upvotedByUserIds = iss.upvotedByUserIds.filter((id) => id !== userId);
+      iss.reportsCount = Math.max(1, iss.reportsCount - 1);
+    }
+    iss.updatedAt = new Date().toISOString();
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(iss));
+  }
+
+  async reportCivicIssue(
+    issueInput: Omit<CivicIssue, 'id' | 'reportsCount' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
+  ): Promise<CivicIssue> {
+    const db = this.getDb();
+    db.civicIssues = db.civicIssues || [];
+    const now = new Date().toISOString();
+
+    const newIssue: CivicIssue = {
+      ...issueInput,
+      id: generateId('iss'),
+      reportsCount: 1,
+      upvotedByUserIds: issueInput.upvotedByUserIds || [],
+      evidenceIds: issueInput.evidenceIds || [],
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.civicIssues.push(newIssue);
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(newIssue));
   }
 
   // Moderation
