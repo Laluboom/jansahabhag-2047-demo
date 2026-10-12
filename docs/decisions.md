@@ -2,6 +2,11 @@
 
 **Reviewed:** 12 October 2026. **Governing source:** [Master PRD archive](reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A. The file is named `v3.1`, but its internal version table says `v3.0 — Consolidated Master PRD`; the reason is not documented. This record does not treat archived v2.1 defaults as new owner approvals.
 
+## Owner direction recorded 12 October 2026
+
+- **Delivery target:** the next implementation pass is the connected competition demo, not the first multi-user release. This settles the immediate target but not the date, presentation script, or exact functional-versus-prototype boundary in OD.1–OD.3. The Master PRD's minimum connected journey still applies.
+- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. Calculation, exceptions, privacy, and activity boundaries (OD.16–OD.19) are not yet approved. No reservation behavior is implemented or claimed compliant.
+
 ## Answered by the governing Master PRD
 
 | Question | Answer | Source |
@@ -36,3 +41,17 @@ The PRD supplies requirements or safe defaults for some topics, but **does not r
 | OD.14 | Budget ceiling, hosting choice, credits and team capacity | The Master PRD explicitly leaves these unknown and requires estimates after inputs are supplied. |
 
 Additional release inputs remain open: initial moderators and their scopes; minimum participant age, consent and safeguarding policy after qualified review; approved privacy/terms/grievance materials; and confirmation of whether the supplied archive should carry an internal `v3.1` label. These are not inferred from archived source copies.
+
+## Supplementary policy approved in principle
+
+The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) explicitly says **“Proposed product requirement — owner approval required”** and extends, rather than replaces, the Master PRD. The owner approved the policy in principle on 12 October 2026. The remaining inputs from §9 require separate answers before the corresponding behavior can be fixed.
+
+| ID | Open decision | What the supplement proposes or bounds |
+|---|---|---|
+| OD.15 | **Approved in principle, 12 October 2026:** adopt the minimum 33% rule across applicable allocated places and formal positions. | §§1–2 cover Parliament, Assembly, Debate Room, limited activities and delegations. Open participation without allocated places or roles is excluded. Detailed boundaries remain under OD.19. |
+| OD.16 | Approve the denominator and rounding method, especially for allocations of 1–3 places. | §6 proposes `ceiling(total applicable allocated places × 0.33)`; this calculation is not final policy. Totals and selections would need revalidation when they change. |
+| OD.17 | Decide whether exceptions are allowed, who may approve them, and how unfilled reserved places work. | §§5–6 disallow silent bypasses. If approved, each exception needs reason, approver, time, policy version and outcome, and must be labelled as an exception. |
+| OD.18 | Approve how gender information is declared, protected, accessed and retained. | §7 prohibits inference from names, photographs, voices or proxies; aggregate compliance must not disclose individual gender information. |
+| OD.19 | Confirm any activity-specific difference, including how Assembly functional roles relate to formal positions and when an event's capacity means allocated places. | §2 distinguishes open participation from limited selections and allocated roles. These boundary cases need an explicit rule. |
+
+**Pre-launch review:** §9 also calls for qualified legal review before public launch and does not claim that the same legal requirement applies universally. The Master PRD's legal and privacy launch gates remain open. No legal conclusion or owner approval is recorded here.

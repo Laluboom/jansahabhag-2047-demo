@@ -8,7 +8,7 @@ A browser-based interactive demo of **JanSahabhag 2047** with a connected partic
 
 This is **not** a production implementation. It intentionally simulates backend, authentication, AI, verification, moderation, and real-time behaviour so the product can be reviewed, demonstrated, and manually tested before production infrastructure is built.
 
-**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [Master PRD reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records differences from this demo, and [product decisions](docs/decisions.md) records open owner inputs. This README describes the current demo, including choices that do not yet match the PRD.
+**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner on 12 October 2026; its calculation, exceptions, privacy and activity boundaries remain open. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records differences from this demo; [product decisions](docs/decisions.md) records open inputs. This README describes the current demo, including choices that do not yet match the PRD.
 
 ---
 
@@ -854,4 +854,4 @@ The demo should preserve the product's core ideas even where infrastructure is s
 - simulated AI should not appear to make consequential decisions
 - participant work should remain connected across learning, deliberation, projects, and Passport
 
-See **`IMPLEMENTATION_PLAN.md`** for the detailed implementation approach.
+The [implementation plan](IMPLEMENTATION_PLAN.md) records the historical browser-demo approach. For further work, begin with the [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md), [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md), [open decisions](docs/decisions.md) and [current connected-demo plan](docs/plans/COMPETITION_DEMO_PRD_PLAN.md); the reservation policy is approved in principle but its operating rules are not yet settled.

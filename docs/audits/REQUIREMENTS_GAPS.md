@@ -1186,3 +1186,9 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
   5. *Architectural Compatibility*: **Met**. The modular repository contract (`DemoRepository` in `src/services/repository.ts`) and typed domain definitions (`src/types/domain.ts`) provide clean abstraction seams for dropping in an HTTP backend and database without requiring a frontend rewrite.
 
 ---
+
+## Supplementary source added after this scope audit
+
+The [Supplementary PRD v2.0 on 33% women's reservation](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was not included in this audit's original scope and labels its rule a **proposed product requirement requiring owner approval**. The owner approved the policy in principle on 12 October 2026, while operating details remain open. It proposes reservation across allocated places and formal positions, while excluding open participation without such allocations. The [updated reconciliation](MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation) records the source-checked app gaps in rulebooks, validation, calculation, exceptions, privacy and fictional demo cases; [product decisions](../decisions.md#supplementary-policy-approved-in-principle) records remaining owner choices and pre-launch legal review. Earlier findings in this file must not be read as proof that the rule is implemented.
+
+---
