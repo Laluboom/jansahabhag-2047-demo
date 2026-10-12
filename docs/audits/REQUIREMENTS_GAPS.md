@@ -1,11 +1,12 @@
 # JanSahabhag 2047 — Requirements Missing from the Demo
 
 - **Audit date:** 12 October 2026
-- **Comparison source:** [Rules & Requirements by Scope](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md)
+- **Original comparison source:** [Rules & Requirements by Scope](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md)
+- **Subsequent source check:** [Master PRD reconciliation](MASTER_PRD_RECONCILIATION.md) against the [supplied archive](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx)
 - **App baseline:** `autobuild` commit `41a7b89` and the live [Vercel demo](https://jansahabhag2027.vercel.app)
 - **Method:** Three independent sub-agy agents used the three configured accounts to review separate scopes. Their reports were checked against source, tests, and the live dashboard, then corrected before consolidation.
 
-This document lists requirements in the supplied scope file that are **missing, partial, simulated, contradicted, or not verified** in the current app. It includes P0/P1 demo and release gates, P2 previews, P3 production foundations, P4 later-phase scope, and owner decisions. A P3 or P4 item is a retained gap, not automatically a defect in the agreed browser-only demo. The Master PRD and other referenced source documents were not separately provided for this audit; source precedence is reported as stated in the supplied file.
+This document records the original scope-file comparison: requirements **missing, partial, simulated, contradicted, or not verified** in the current app. It includes demo and release gates, prototypes, production foundations, later-phase scope, and owner decisions. The Master PRD was supplied later. Read [the source-checked corrections](MASTER_PRD_RECONCILIATION.md) and [decision record](../decisions.md) with this baseline; the earlier severity labels and page references are not all final.
 
 The deployed app is a client-rendered React/Vite demo with local browser persistence. Its public URL is reachable, but this audit does not certify the public-launch reviews named in Scope P. The live dashboard and navigation were inspected; the detailed findings rely mainly on code and test evidence, and untested live behavior is labelled as such.
 
@@ -22,12 +23,12 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 
 | ID | Subject | Priority | Canonical Source Requirement | Existing README / Code State | Conflict / Decision Rationale |
 |---|---|---|---|---|---|
-| **OD-01** | Product Branding vs. Deployment URL | **OD** | Master PRD §1; Scope A ([L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)): Platform name is **JanSahabhag 2047**. Name discrepancy must be an explicit Owner Decision; do not silently rename. | [README.md](../../README.md#L1) headers claim `JanSahabhag 2047`, but live URL is `https://jansahabhag2027.vercel.app`, repo root is `jansahabhag_2027`, and [package.json](../../package.json#L2) uses `jansahabhag-2047-demo`. | **Unresolved Owner Decision.** No decision log records whether `2027` is a temporary deployment URL or if a `2047` domain will replace it. |
+| **OD-01** | Product Branding vs. Deployment URL | **OD** | Master PRD §1; Scope A ([L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)): Platform name is **JanSahabhag 2047**. Name discrepancy must be an explicit Owner Decision; do not silently rename. | [README.md](../../README.md#L1) uses `JanSahabhag 2047`, but the live URL is `https://jansahabhag2027.vercel.app` and the repo directory is `jansahabhag_2027`. | **Unresolved Owner Decision**, now recorded in [docs/decisions.md](../decisions.md); the owner has not chosen retain, redirect or replace. |
 | **OD-02** | Founder Details Public Approval | **OD** | Master PRD §A5; Scope E ([L257](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L257)): Founder public profile requires formal confirmation of which details are approved for publication. | [src/features/welcome/WelcomePage.tsx](../../src/features/welcome/WelcomePage.tsx) contains no founder section. Zero founder entities exist in [src/types/domain.ts](../../src/types/domain.ts). | **Decision Needed.** Draft handoff copy cannot be published until the platform owner confirms approved biographical facts and contact methods. |
 | **OD-03** | UHV Curriculum Source & Licensing | **OD** | Master PRD §A11; Scope F ([L298](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L298)): Confirm content source, curriculum, and licensing with owner before production publication. | [src/data/seed/courses.ts](../../src/data/seed/courses.ts#L133) hardcodes Jeevan Vidya concepts into `course_uhv_leadership_05` without attribution or licensing metadata. | **Decision Needed.** Owner confirmation is required before treating curriculum content as approved for production. |
-| **CF-01** | Canonical Learner Navigation Structure | **P0** | Master PRD §1; Scope B ([L101](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L101)): Strict 11-item ordered learner navigation: Home, Learn, Activities & Assignments, Debate Room, Youth Assembly, Youth Parliament, Workspace, Labs & Projects, Community, Civic Passport, UHV / Jeevan Vidya. | [README.md](../../README.md#L110) and [src/components/layout/DesktopSidebar.tsx](../../src/components/layout/DesktopSidebar.tsx#L29) collapse learner nav into 6 items (`Home, Learn, Participate, Deliberate, Act, Passport`), demoting Assignments, Community, and Labs to auxiliary lists. | **Direct Contradiction.** README changed the canonical navigation structure defined by the Master PRD. |
-| **CF-02** | Complete Omission of Debate Room | **P0 / P1** | Master PRD §A4, §A8; Scope B ([L106](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L106)), Scope H ([L348](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L348)): Debate Room is learner navigation item 4 and a core P1/P3 structured motion feature. | [README.md](../../README.md) omits Debate Room entirely from scope, routes, and vision modules. Code contains zero debate routes or engines. | **Direct Contradiction.** README completely dropped a core deliberative format mandated by the Master PRD. |
-| **CF-03** | Product Methodology & Product Loop | **P0** | Master PRD §1; Scope B ([L89](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L89)): Product loop is strictly `LEARN → OBSERVE → DELIBERATE → PROPOSE → REFLECT`. | [README.md](../../README.md#L19) defines a 9-step sequence. [src/components/layout/ThreadMotif.tsx](../../src/components/layout/ThreadMotif.tsx#L12) defines stages as `Learn -> Field Evidence -> Youth Assembly -> Civic Action -> Passport`. | **Direct Contradiction.** Replaces the formal `OBSERVE` and `PROPOSE` steps with "Field Evidence" and "Civic Action". |
+| **CF-01** | Canonical Learner Navigation Structure | **P0** | Master PRD opening §1: strict 11-item ordered learner navigation. | [README.md](../../README.md) now distinguishes the current six-area demo from the target menu; [DesktopSidebar.tsx](../../src/components/layout/DesktopSidebar.tsx) still renders six primary entries. | **App mismatch remains.** Documentation no longer presents the six-area grouping as the target. |
+| **CF-02** | Complete Omission of Debate Room | **P0 / P1** | Master PRD §§A4, A8: Debate Room is learner item 4 and a distinct structured mode. | [README.md](../../README.md) now records the missing module; code still has no Debate Room route or engine. | **App gap remains.** |
+| **CF-03** | Product Methodology & Product Loop | **P0** | Master PRD opening §1 and Part A §A3: the method is `LEARN → OBSERVE → DELIBERATE → PROPOSE → REFLECT`. | The nine-step [README.md](../../README.md#L19) journey is a concrete user path and is compatible with the method. [ThreadMotif.tsx](../../src/components/layout/ThreadMotif.tsx#L12) instead labels its five steps `Learn -> Field Evidence -> Youth Assembly -> Civic Action -> Passport`. | **Partial conflict in the UI motif.** Keep the longer user journey, but present the canonical five-stage method consistently. |
 | **CF-04** | Studio Permission Gating | **P0** | Master PRD §A4; Scope B ([L128](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L128)): Studio must be permission-gated (accessible only to authorized roles). | [README.md](../../README.md#L78) lists Studio as a generic preview module; [src/components/layout/DesktopSidebar.tsx](../../src/components/layout/DesktopSidebar.tsx#L70) exposes `/studio` to unauthenticated/participant personas. | **Direct Contradiction.** Exposes an administrative creator surface to general participants without role checks. |
 
 ---
@@ -37,14 +38,14 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 ### Finding A.1: Incomplete Phase 0 Route Inventory and Decision Log
 - **Requirement:** Phase 0 delivery gate requires an explicit route-level inventory (classifying every route as Keep, Change, Build, Remove, Not Verified), an evidence-backed gap list, and a formal decision log before building or releasing ([README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L52](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L52)).
 - **Priority:** P0
-- **Status:** Partial — this document supplies the gap list; a complete route inventory and decision log remain missing.
+- **Status:** Partial — this document supplies the gap list and [docs/decisions.md](../decisions.md) records decisions and open inputs; a complete route/control inventory and owner sign-offs remain missing.
 - **Evidence:**
   - [docs/](../../docs/) contains architecture and feature summaries ([features.md](../features.md), [architecture.md](../architecture.md)), but lacks a route-level inventory tracking component mappings and Keep/Change/Build classifications.
-  - Searching the repo for a decision log (`rg -i "decision log" .`) returns only requirement declarations in [README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L24](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L24). No decision log file exists.
+  - [docs/decisions.md](../decisions.md) records source-resolved rules and owner inputs; it does not count as owner approval or a complete route-by-route decision matrix.
 - **Why it matters (Demo vs. Production):**
   - *Demo:* Evaluators still lack a route-by-route record of which screens are functional, simulated, or unverified.
   - *Production:* Delivery gates prevent unreviewed UI placeholders from being promoted to release.
-- **Next Action:** Create `docs/audits/route-inventory.md` and establish `docs/decisions.md` to track owner decisions.
+- **Next Action:** Complete a route/control inventory with desktop and mobile evidence, then record owner sign-offs in [docs/decisions.md](../decisions.md).
 
 ### Finding A.2: Product Name "2047" vs Deployed URL / Repository Directory "2027" Discrepancy
 - **Requirement:** Resolve the `2047` product name vs `2027` deployment URL as an owner decision; do not silently rename it ([README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)).
@@ -53,7 +54,7 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 - **Evidence:**
   - UI header ([src/components/layout/DesktopSidebar.tsx#L83](../../src/components/layout/DesktopSidebar.tsx#L83)) and [package.json#L2](../../package.json#L2) declare "JanSahabhag 2047".
   - Repository directory name is `jansahabhag_2027`, and the live deployment URL in [README.md#L5](../../README.md#L5) is `https://jansahabhag2027.vercel.app`.
-  - No decision log entry explains or resolves this difference.
+  - [docs/decisions.md](../decisions.md) records the difference as open; no owner resolution is documented.
 - **Why it matters (Demo vs. Production):**
   - *Demo:* Causes branding confusion during reviews.
   - *Production:* Domain branding, TLS certificates, and DNS records must match official product names.
@@ -97,8 +98,8 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 - **Evidence:**
   - [src/components/layout/ThreadMotif.tsx#L12](../../src/components/layout/ThreadMotif.tsx#L12) encodes the journey as: `1. Learn -> 2. Field Evidence -> 3. Youth Assembly -> 4. Civic Action -> 5. Passport`.
   - [src/components/layout/DesktopSidebar.tsx#L29](../../src/components/layout/DesktopSidebar.tsx#L29) defines participant nav as: `Home -> Learn -> Participate -> Deliberate -> Act -> Passport`.
-  - [README.md#L19](../../README.md#L19) states a 9-step variant.
-  - The formal `OBSERVE` and `PROPOSE` methodology milestones are replaced with "Field Evidence" and "Act".
+  - [README.md#L19](../../README.md#L19) states a longer participant journey; Part A §A3 of the Master PRD also describes a longer journey. This is not itself a contradiction.
+  - The UI motif replaces the formal `OBSERVE` and `PROPOSE` methodology labels with "Field Evidence" and "Civic Action".
 - **Why it matters (Demo vs. Production):**
   - *Demo:* Misrepresents the core democratic methodology that distinguishes JanSahabhag from a general volunteer task tracker.
   - *Production:* Platform data models and telemetry depend on alignment with the 5 loop states.
@@ -140,14 +141,14 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
   - *Production:* Violates PRD information architecture standards.
 - **Next Action:** Consolidate navigation so that item 3 links to Activities & Assignments and item 8 groups Labs & Projects.
 
-### Finding B.5: Demotion of Youth Parliament from Canonical Item 6 to Unnumbered Preview Link
+### Finding B.5: Youth Parliament preview is allowed, but its navigation placement differs
 - **Requirement:** Canonical learner navigation item 6 is Youth Parliament ([README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L108](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L108)).
-- **Priority:** P0
-- **Status:** Contradicted / Partial
+- **Priority:** P0 navigation / P2 demo prototype
+- **Status:** Preview depth permitted; navigation placement differs
 - **Evidence:**
   - [src/components/layout/DesktopSidebar.tsx#L64](../../src/components/layout/DesktopSidebar.tsx#L64) relegates Youth Parliament (`/parliament`) to an auxiliary 2-column preview grid marked with a generic "Demo Preview" badge, rather than placing it in the primary learner navigation list.
 - **Why it matters (Demo vs. Production):**
-  - *Demo:* Treats parliamentary simulation as an optional side project rather than a primary civic simulation pillar.
+  - *Demo:* The Master PRD opening §1 allows a clearly labelled clickable Youth Parliament prototype. The current preview depth is consistent with that allowance; placement outside learner item 6 still differs from canonical navigation.
   - *Production:* Disrupts learner progression through municipal, assembly, and parliamentary chambers.
 - **Next Action:** Move Youth Parliament into position 6 of the primary learner navigation menu.
 
@@ -787,8 +788,8 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
   - **Grievance/contact process:** No user grievance intake, contact form, or formal escalation route is defined.
   - **Incident response:** No documented security or safeguarding incident response runbooks exist.
   - **Provider/data-flow review:** No formal review of third-party assets or hosting providers (Vercel CDN, Google Fonts CDN at `index.html:10-14`) is documented.
-- **Demo vs Production Impact:** The repository represents a competition and evaluation prototype. It must not be opened for public access or live participant enrollment until all eight review areas are formally completed.
-- **Next Action:** Establish a formal Launch Gate Review checklist addressing each of the eight areas prior to public deployment.
+- **Demo vs Production Impact:** The Vercel demo is already publicly reachable, but public access to a fictional demo does not show that public registration with real participants is safe or approved. The listed reviews remain a gate before a real public launch; demo access and data handling need their own review now.
+- **Next Action:** Record the eight launch-gate reviews and assess the publicly reachable demo's access, notices and data handling before inviting real participants.
 
 ### Finding P-2: Unauthenticated Sessions and Plaintext LocalStorage Persistence
 - **Requirement:** Secure sessions, TLS, encryption at rest, secrets management.
@@ -1022,8 +1023,8 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
     - `"14,820"` Municipal Propositions (`line 260`)
     - `"842"` Enacted Safety Bylaws (`line 266`)
     - Regional Council rankings (Northern Hub: 382,000, Western Hub: 294,000) (`lines 91-97`)
-  - Although tagged with `DemoPreviewBadge` (`line 238-242`), these provisional scale targets are not accompanied by documented workload assumptions or test plans.
-- **Demo vs. Production Impact**: Displaying large user figures without clarifying that they are illustrative vision targets risks misrepresenting current system scale.
+  - The `DemoPreviewBadge` (`line 238-242`) already marks these figures illustrative. Workload assumptions and test plans remain absent, so the figures are not verified current usage or proven capacity.
+- **Demo vs. Production Impact**: The preview label addresses the immediate simulation disclosure. Scale targets remain provisional planning inputs for later capacity work.
 - **Next Action**: Ensure the preview banner explicitly notes that national figures represent provisional targets subject to workload modeling and infrastructure validation.
 
 ---
@@ -1091,7 +1092,7 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 ### Finding U.1: Provisional Scale Targets and Infrastructure Sizing
 - **Paraphrase**: Scale targets remain provisional until workload assumptions, load scripts, infrastructure sizing, monitoring thresholds, and restore tests are documented.
 - **Priority**: P3 Production Target
-- **Status**: Missing / Unverified
+- **Status**: Provisional production planning; not a static-demo capacity claim
 - **Concrete Code & Test Evidence**:
   - `README_01_RULES_REQUIREMENTS_BY_SCOPE.md:754-770`: States that targets for availability, DAU, concurrency, API latency, realtime latency, upload size, throughput, RPO/RTO, backup/restore, accessibility, and low bandwidth remain provisional.
   - The repository contains no documented workload assumptions, server capacity models, database sizing, or compute cluster specifications in `docs/` or configuration files.

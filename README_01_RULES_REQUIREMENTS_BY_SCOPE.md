@@ -9,6 +9,7 @@ Use the documents in this order when making implementation decisions:
 1. **Master PRD v3.1 Lossless Archive** — governing product specification.
    - Canonical decisions at the front override conflicting historical wording.
    - Archived appendices exist for traceability; they are not parallel governing specifications.
+   - [The supplied archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) is named `v3.1`, while its internal version table says `v3.0 — Consolidated Master PRD`. The discrepancy is unresolved; use its opening canonical rules and retained Parts A–C, and record any version decision separately.
 2. **Cleaned Developer Start-Here Note** — implementation/scoping guidance.
    - Use it to separate demo-critical, prototype, later-phase, and unresolved/owner-decision work.
    - It does **not** replace the Master PRD.
@@ -24,6 +25,8 @@ If two documents conflict:
 - preserve the conflict in the decision log;
 - request an owner decision where the Master PRD leaves the matter unresolved;
 - never silently merge incompatible requirements.
+
+The [Master PRD reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) corrects earlier scope-audit severity claims. [Product decisions](docs/decisions.md) separates PRD answers from owner inputs.
 
 ---
 

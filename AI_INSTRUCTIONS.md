@@ -6,11 +6,11 @@
 
 ## Current handoff
 
-The previous user-requested pause has ended. [paused.md](paused.md) records the completed Autobuild jobs. Tasks 01–05 are merged into `autobuild`, and the integrated build, unit suite and browser suite passed. The last Gemini five-hour quota check showed 98.9% after reset; check it again before any future sub-agy dispatch and follow the requested method's 20% threshold.
+The previous user-requested pause has ended. [paused.md](paused.md) records Autobuild Tasks 01–05, merged into `autobuild`. The demo is published to GitHub and Vercel. The supplied [Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) was checked against the app in [the reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md); [product decisions](docs/decisions.md) identifies owner inputs. Check current sub-agy quota before any new dispatch and follow the requested method's 20% Gemini five-hour threshold.
 
 ## Working rules
 
-- Treat `README.md` and `IMPLEMENTATION_PLAN.md` as product specifications. The user chose `/home/lalu/Softwares/sub-agy/AUTOBUILD-PROMPT.md` as the implementation method; its local path may not be present in future sessions, but the ignored `.subagy/plans/` and job records remain.
+- Use the Master PRD opening canonical rules, Part A and retained Parts B/C as product authority. Its archived appendices are traceability copies. The archive filename says `v3.1` but its internal table says `v3.0`; do not guess why. `README.md` and `IMPLEMENTATION_PLAN.md` describe the earlier browser-demo scope and can differ from the Master PRD. The user chose `/home/lalu/Softwares/sub-agy/AUTOBUILD-PROMPT.md` as the implementation method; ignored `.subagy/plans/` and job records remain.
 - Keep feature screens behind `DemoRepository` in `src/services/repository.ts`. Do not access localStorage or canonical seed arrays as live UI data.
 - Preserve traceable source IDs from evidence, submissions, assemblies, propositions or projects to Passport and credit records. Derive totals from transactions and make repeatable awards idempotent.
 - Use fictional data only. Persona switching, frontend role checks, verification, moderation, AI, video, external delivery and national metrics are demo or preview behavior, not production services.

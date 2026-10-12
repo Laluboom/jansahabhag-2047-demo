@@ -1,6 +1,6 @@
 # Feature index and verified status
 
-Tasks 01–05 are merged in `autobuild`. Every route listed in `README.md` has a router entry and passed the Task 05 browser route smoke test. [paused.md](../paused.md) records the completed job and merge history.
+Tasks 01–05 are merged in `autobuild`. Every route listed in the earlier demo `README.md` has a router entry and passed the Task 05 browser route smoke test. This does not mean every [Master PRD](reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) route or rule is implemented: see [the reconciliation](audits/MASTER_PRD_RECONCILIATION.md). [paused.md](../paused.md) records the original build history.
 
 | Area | Routes | Behavior |
 | --- | --- | --- |
@@ -19,4 +19,4 @@ Tasks 01–05 are merged in `autobuild`. Every route listed in `README.md` has a
 
 ## Verification
 
-`npm run build`, `npm run test -- --run` (89 tests) and `npm run test:e2e` (six Chromium tests) passed independently on Task 05's branch and again on merged `autobuild`. Playwright includes the complete Aarav-to-Passport journey, all README routes, invalid-record fallbacks, refresh persistence, mobile assembly/admin smoke, persona/notification/reset checks. Lazy route loading keeps the final production chunks below the earlier 500 kB warning threshold. The interface remains a browser demo; production services and deployment are outside this implementation.
+`npm run build`, `npm run test -- --run` (89 tests) and `npm run test:e2e` (six Chromium tests) passed independently on Task 05's branch and again on merged `autobuild`. Playwright includes the Aarav-to-Passport journey, all earlier README routes, invalid-record fallbacks, refresh persistence, mobile assembly/admin smoke, persona/notification/reset checks. These tests predate the Master PRD comparison and do not verify its missing routes, permission rules, safety workflows or public-launch gates. The interface is deployed as a browser demo; production services are absent.

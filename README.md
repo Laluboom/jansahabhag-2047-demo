@@ -1,12 +1,14 @@
 # JanSahabhag 2047 — Frontend Demo
 
-A frontend-first interactive demo of **JanSahabhag 2047**, designed to demonstrate the full product vision with a polished participant journey, realistic mock data, local persistence, and selected administrative views.
+A browser-based interactive demo of **JanSahabhag 2047** with a connected participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification.
 
 **Live demo:** [jansahabhag2027.vercel.app](https://jansahabhag2027.vercel.app)
 
 **Source:** [Laluboom/jansahabhag-2047-demo](https://github.com/Laluboom/jansahabhag-2047-demo)
 
 This is **not** a production implementation. It intentionally simulates backend, authentication, AI, verification, moderation, and real-time behaviour so the product can be reviewed, demonstrated, and manually tested before production infrastructure is built.
+
+**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [Master PRD reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records differences from this demo, and [product decisions](docs/decisions.md) records open owner inputs. This README describes the current demo, including choices that do not yet match the PRD.
 
 ---
 
@@ -28,7 +30,7 @@ The wider platform should also be visible through supporting experiences for:
 - Moderator
 - Platform Admin
 
-The full product is visible, but implementation depth varies:
+The demo shows selected product areas at different depths:
 
 - **Core participant modules:** interactive
 - **Supporting admin modules:** partially interactive
@@ -109,7 +111,7 @@ A component library may be added if useful, but the application should retain a 
 
 ## 4. Product navigation
 
-The participant-facing experience should be grouped into six primary areas:
+The current demo groups participant links into six primary areas:
 
 1. **Home**
 2. **Learn**
@@ -126,6 +128,8 @@ Supporting navigation:
 - Profile
 
 Administrative roles receive a separate administration workspace.
+
+The Master PRD's required learner navigation is **Home, Learn, Activities & Assignments, Debate Room, Youth Assembly, Youth Parliament, Workspace, Labs & Projects, Community, Civic Passport, UHV / Jeevan Vidya**, in that order. Profile, Notifications, Settings, Help/Rulebooks and language are utilities; consoles are permission-gated. The current six-area sidebar is a known mismatch, and Debate Room and learner Workspace are absent. Youth Parliament may remain a clearly labelled clickable demo prototype, but belongs in item 6 of the canonical menu.
 
 ---
 
@@ -204,6 +208,8 @@ Use one coherent story across the platform instead of disconnected placeholder r
 Age: 17  
 Institution: **Navchetna Public School, Jaipur**  
 Programme: **My Community, My Future**
+
+Aarav and all demo records are fictional. This browser demo does not provide the age, consent or safeguarding controls needed to enrol real minors.
 
 ### Civic theme
 

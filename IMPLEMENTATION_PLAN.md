@@ -2,6 +2,8 @@
 
 This document explains **how the frontend demo will be implemented**, how the pieces connect, what will be real versus simulated, and in what order the work should be completed.
 
+This is the historical plan for the browser demo, not the governing full-product specification. The [supplied Master PRD](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) takes precedence for product behavior and release gates; [the reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records what this plan and implementation still lack.
+
 The implementation is intentionally frontend-first. The objective is to create a believable, testable product experience without spending time on production backend infrastructure before the user experience has been validated.
 
 ---
