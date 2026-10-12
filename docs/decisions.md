@@ -5,7 +5,14 @@
 ## Owner direction recorded 12 October 2026
 
 - **Delivery target:** the next implementation pass is the connected competition demo, not the first multi-user release. This settles the immediate target but not the date, presentation script, or exact functional-versus-prototype boundary in OD.1–OD.3. The Master PRD's minimum connected journey still applies.
-- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. Calculation, exceptions, privacy, and activity boundaries (OD.16–OD.19) are not yet approved. No reservation behavior is implemented or claimed compliant.
+- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. The formula was subsequently approved; the allocation unit, exceptions, real-data privacy, and activity boundaries remain open. No reservation behavior is implemented or claimed compliant.
+
+## Further owner direction recorded 12 October 2026
+
+- **Demo data and story:** use fictional demo data and the Jaipur pedestrian-safety story. This settles the example story in OD.2 but not the demo date or final acceptance sign-off.
+- **Demo implementation mode:** keep a clearly labelled single-browser simulation. This settles the immediate backend choice for the demo; it does **not** satisfy the Master PRD's connected multi-user journey, durable shared data, or server-side authorization requirements. Preserve those as explicit gaps and do not describe this mode as a compliant connected demo or production release. Full-system backend architecture and budget under OD.14 remain open.
+- **Reservation arithmetic:** use `ceil(0.33 × applicable allocated places)`, as proposed in Supplement §6. The owner's phrase “keep unified allocation” is being clarified before fixing the allocation unit or treatment of unfilled reserved places. No allocation code or exception path is approved by this arithmetic choice alone.
+- **Gender data for this demo:** use fictional demo data only. No real participant gender collection or retention is approved; OD.18 remains open for a real release.
 
 ## Answered by the governing Master PRD
 
@@ -26,7 +33,7 @@ The PRD supplies requirements or safe defaults for some topics, but **does not r
 | ID | Open decision | What the PRD already settles |
 |---|---|---|
 | OD.1 | Exact competition/demo date | The five-minute demonstration is a target; no calendar deadline is approved. |
-| OD.2 | Final demonstration story and acceptance sign-off | The minimum connected journey is specified; the owner has not approved the exact presentation script. |
+| OD.2 | **Jaipur pedestrian-safety story selected;** final script and acceptance sign-off remain open. | The minimum connected journey is specified in the Master PRD; the chosen single-browser mode cannot prove shared participation. |
 | OD.3 | Date-based functional versus prototype scope | Youth Parliament and stakeholder routing have explicit prototype allowances. Debate Room, Workspace invitation/moderation and the connected civic loop remain demo requirements. |
 | OD.4 | Whether live video is required in the competition demonstration | The product supports video with text/audio fallback; a demo provider and usage decision are not recorded. |
 | OD.5 | Session access policy for each programme/room | Access must be scoped and configurable; the default for Workspace discoverability is private or institution-scoped. |
@@ -38,7 +45,7 @@ The PRD supplies requirements or safe defaults for some topics, but **does not r
 | OD.11 | Available external educational/municipal integrations | Provider-neutral integration design is specified; availability and permissions are unknown. |
 | OD.12 | Real stakeholder recipients and routing approval | The routing lifecycle is specified; live recipients and operating ownership are not. A labelled prototype is allowed in the demo. |
 | OD.13 | Curriculum, UHV source, uploader and rights | UHV is a separate stream; its source, licence and approved content manager remain unconfirmed. |
-| OD.14 | Budget ceiling, hosting choice, credits and team capacity | The Master PRD explicitly leaves these unknown and requires estimates after inputs are supplied. |
+| OD.14 | **Single-browser simulation chosen for the immediate demo;** full-system backend, budget, hosting and team capacity remain open. | The Master PRD requires server-side authorization and shared persistence for the connected product. |
 
 Additional release inputs remain open: initial moderators and their scopes; minimum participant age, consent and safeguarding policy after qualified review; approved privacy/terms/grievance materials; and confirmation of whether the supplied archive should carry an internal `v3.1` label. These are not inferred from archived source copies.
 
@@ -49,9 +56,9 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
 | ID | Open decision | What the supplement proposes or bounds |
 |---|---|---|
 | OD.15 | **Approved in principle, 12 October 2026:** adopt the minimum 33% rule across applicable allocated places and formal positions. | §§1–2 cover Parliament, Assembly, Debate Room, limited activities and delegations. Open participation without allocated places or roles is excluded. Detailed boundaries remain under OD.19. |
-| OD.16 | Approve the denominator and rounding method, especially for allocations of 1–3 places. | §6 proposes `ceiling(total applicable allocated places × 0.33)`; this calculation is not final policy. Totals and selections would need revalidation when they change. |
+| OD.16 | **Rounding formula approved:** `ceil(0.33 × applicable allocated places)`. Allocation unit and the owner's “unified allocation” wording await clarification, especially for 1–3 places. | §6 proposes this formula per applicable allocation. Totals and selections would need revalidation when they change. No enforcement is implemented. |
 | OD.17 | Decide whether exceptions are allowed, who may approve them, and how unfilled reserved places work. | §§5–6 disallow silent bypasses. If approved, each exception needs reason, approver, time, policy version and outcome, and must be labelled as an exception. |
-| OD.18 | Approve how gender information is declared, protected, accessed and retained. | §7 prohibits inference from names, photographs, voices or proxies; aggregate compliance must not disclose individual gender information. |
+| OD.18 | **Fictional data only for this demo.** Real declaration, access controls and retention remain open. | §7 prohibits inference from names, photographs, voices or proxies; aggregate compliance must not disclose individual gender information. |
 | OD.19 | Confirm any activity-specific difference, including how Assembly functional roles relate to formal positions and when an event's capacity means allocated places. | §2 distinguishes open participation from limited selections and allocated roles. These boundary cases need an explicit rule. |
 
 **Pre-launch review:** §9 also calls for qualified legal review before public launch and does not claim that the same legal requirement applies universally. The Master PRD's legal and privacy launch gates remain open. No legal conclusion or owner approval is recorded here.

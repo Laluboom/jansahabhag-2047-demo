@@ -12,11 +12,15 @@
 
 The navigation branch adds eight path patterns (`debate-room`, `debates`, `workspace`, `workspaces`, `uhv`, `uhv/learn`, `help`, `settings`), bringing its isolated router to 55 patterns. The Phase 0 inventory describes the 47-pattern baseline, so update or supplement it after merging the navigation branch. The three branches have not been tested together.
 
+## Parked browser evidence branch
+
+The `agy-rainy-2` browser-audit job `j-20261012-162134-6xv8` is parked at `agy/j-20261012-162134-6xv8` (`8752faa`) after its second and final repair round. Its result has `contract_ok: false`, and an independent link check found eight screenshot links in `docs/audits/PHASE0_BROWSER_EVIDENCE.md` that point to hyphenated names while the files use underscores. Do not merge or cite this report as accepted Phase 0 evidence. Its provisional measurements identify phone horizontal overflow on the Jaipur Assembly session (+113px) and Passport evidence (+77px), plus direct loading of admin screens under the simulated persona. Reproduce those findings before treating them as verified defects. The branch contains a reusable 47-route browser audit script, JSON and 16 screenshots, but the result contract and report links must be repaired in a new task; the Autobuild prompt caps repair at two rounds.
+
 ## Remaining material gaps
 
 - The [connected demo plan](../plans/COMPETITION_DEMO_PRD_PLAN.md) packages 02–09 remain unbuilt. The existing browser-only persona switch and local storage cannot support shared sessions, server-enforced roles, or multi-user persistence.
-- The owner still needs to decide OD.1–OD.3 (date, story, working/prototype boundary), OD.14 (backend/hosting direction), and OD.16–OD.19 (reservation calculation, exceptions, privacy, applicability). See [product decisions](../decisions.md). The 33% policy has only in-principle approval; no enforcement is implemented.
-- Phase 0 live evidence covers only four deployed routes. Desktop and phone checks across the remaining routes, data recovery, negative permission behavior, and screenshots remain unverified. The deployed site still serves the older build.
+- The owner selected fictional Jaipur data, a labelled single-browser demo, and `ceil(0.33 × applicable places)` arithmetic. The remaining decisions are the demo date and final acceptance, the exact working/prototype boundary, full-system backend/hosting, the meaning of “unified allocation,” unfilled places or exceptions, real-data privacy, and activity applicability. See [product decisions](../decisions.md). The 33% policy has only in-principle approval; no enforcement is implemented. The chosen demo mode cannot prove the Master PRD's shared-session or server-authorization requirements.
+- Accepted Phase 0 live evidence covers only four deployed routes. The parked browser audit cannot close the remaining desktop and phone route checks. Data recovery, negative permission behavior, and accepted all-route screenshots remain unverified. The deployed site still serves the older build.
 - The existing fictional UHV seed contains assignment `asg_uhv_08` with a ten-point `Depth of Self-Exploration` rubric and a seeded personal submission/reflection. The Master PRD opening §1 and Part A §A11 prohibit grading ideological agreement or treating personal reflection as objectively measurable. The navigation branch separates the stream but does not resolve this content and grading review; OD.13 source and rights also remain open.
 
 ## Owner merge and acceptance

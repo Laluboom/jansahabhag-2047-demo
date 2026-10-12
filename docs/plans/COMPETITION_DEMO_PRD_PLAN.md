@@ -1,6 +1,6 @@
 # Connected competition demo — PRD implementation plan
 
-**Status:** decision-gated draft, 12 October 2026. This is the current plan for the owner's chosen **connected competition demo**. The [historical browser-demo plan](../../IMPLEMENTATION_PLAN.md) describes what was built earlier; it is not the work order for this pass. No task below is marked implemented by this plan.
+**Status:** decision-gated requirements map, 12 October 2026. The owner originally chose a **connected competition demo**, then chose a clearly labelled **single-browser simulation** with fictional data and the Jaipur pedestrian-safety story for the immediate pass. The Master PRD's connected and server-authorized requirements remain the governing gaps; choosing a simulation does not satisfy them. The [historical browser-demo plan](../../IMPLEMENTATION_PLAN.md) describes what was built earlier; it is not the work order for this pass. No task below is marked implemented by this plan.
 
 **Isolated review update:** [12 October sub-agy review](../audits/DEMO_SUBAGY_REVIEW_2026-10-12.md) records ready, unmerged branches for a Phase 0 route inventory and package 01 method/navigation changes. Package 00 live certification and packages 02–09 remain open.
 
@@ -14,9 +14,11 @@
 
 ## Current delivery boundary
 
-The owner chose the connected competition demo on 12 October 2026, not the first multi-user release. The Master PRD still requires a narrow, truthful assignment → observation/evidence → shared session/Youth Assembly → proposition with dissent → Workspace invitation/moderation → reflection/Passport path. Youth Parliament and external stakeholder routing may be clearly labelled prototypes. The source also requires role separation, persistence, visible rulebooks, failure handling and a denied-access test for the connected path. Whether this pass adds a small backend or remains an explicitly limited browser simulation is pending owner direction; the latter would leave the PRD's server-side permission requirement unmet.
+The owner chose a labelled single-browser simulation for the immediate demo. Use fictional records and the Jaipur pedestrian-safety story. The Master PRD still requires a narrow, truthful assignment → observation/evidence → shared session/Youth Assembly → proposition with dissent → Workspace invitation/moderation → reflection/Passport path. Youth Parliament and external stakeholder routing may be clearly labelled prototypes. Browser-local state can demonstrate some of this sequence, but cannot establish shared participation, durable cross-device records, or server-side authorization. Label each simulated action and preserve those requirements as incomplete. The source also requires role separation, persistence, visible rulebooks, failure handling and a denied-access test for the connected path.
 
-The reservation policy is approved in principle. Do not implement a fixed calculation, exception path, individual gender data collection or activity-specific enforcement until OD.16–OD.19 are decided. Any interim explanation should say the rule is planned and unenforced. Public-launch legal/privacy and safeguarding gates remain separate from demo completion.
+The reservation policy is approved in principle, and the owner approved `ceil(0.33 × applicable allocated places)`. Do not implement the calculation until “unified allocation” is clarified as the allocation unit or unfilled-place treatment; OD.17 and OD.19 also remain open. Use fictional demo data only; real gender collection, access and retention under OD.18 remain undecided. Any interim explanation should say the rule is planned and unenforced. Public-launch legal/privacy and safeguarding gates remain separate from demo completion.
+
+**Current-pass implementation rule:** package 02's production backend, shared session authority and secure permissions are deferred by the owner's single-browser choice, not completed. Packages 03–07 may demonstrate local, labelled interactions where feasible, but must not claim multi-user or server-backed behavior. Keep the connected requirement and its acceptance tests visible for a later delivery decision.
 
 ## Work packages
 
@@ -39,6 +41,6 @@ The full product still needs server-backed multi-user governance, complete Parli
 
 ## Owner choices that can change this plan
 
-- **Demo:** OD.1 date; OD.2 story/sign-off; OD.3 exact working/prototype boundary; OD.4 video; OD.5 session access; OD.14 hosting/budget/team. The backend choice is needed before package 02.
-- **Reservation:** OD.16 formula/denominator; OD.17 exceptions and unfilled places; OD.18 declaration/access/retention; OD.19 which allocated roles and limited events are in scope.
+- **Demo:** OD.1 date; OD.2 Jaipur story is selected but final sign-off remains; OD.3 exact working/prototype boundary beyond single-browser mode; OD.4 video; OD.5 session access; OD.14 full-system hosting/budget/team. The immediate demo mode is browser-only by owner choice.
+- **Reservation:** OD.16 formula is approved but the “unified allocation” meaning and denominator unit await clarification; OD.17 exceptions and unfilled places; OD.18 real-data declaration/access/retention (fictional demo data only is settled); OD.19 which allocated roles and limited events are in scope.
 - **Publication and content:** OD.6 founder facts; OD.7 domain; OD.8 Hindi reviewer/scope; OD.9 data migration; OD.10 AI provider; OD.11 integrations; OD.12 recipients; OD.13 UHV rights. These can use unpublished, fictional or labelled prototype states for the demo where the Master PRD permits, but cannot be silently asserted as completed.

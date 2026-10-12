@@ -1,6 +1,6 @@
 # JanSahabhag 2047 — Frontend Demo
 
-A browser-based interactive demo of **JanSahabhag 2047** with a connected participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification.
+A browser-based interactive demo of **JanSahabhag 2047** with a linked single-browser participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification. The owner selected the Jaipur pedestrian-safety story for the immediate demo.
 
 **Live demo:** [jansahabhag2027.vercel.app](https://jansahabhag2027.vercel.app)
 
@@ -8,7 +8,7 @@ A browser-based interactive demo of **JanSahabhag 2047** with a connected partic
 
 This is **not** a production implementation. It intentionally simulates backend, authentication, AI, verification, moderation, and real-time behaviour so the product can be reviewed, demonstrated, and manually tested before production infrastructure is built.
 
-**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner on 12 October 2026; its calculation, exceptions, privacy and activity boundaries remain open. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records differences from this demo; [product decisions](docs/decisions.md) records open inputs. This README describes the current demo, including choices that do not yet match the PRD.
+**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner on 12 October 2026. The owner later approved its `ceil(0.33 × applicable places)` arithmetic for fictional demo data; the allocation unit, exceptions, real-data privacy and activity boundaries remain open. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records differences from this demo; [product decisions](docs/decisions.md) records open inputs. This README describes the current demo, including choices that do not yet match the PRD.
 
 ---
 
