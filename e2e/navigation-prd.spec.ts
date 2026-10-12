@@ -223,4 +223,3 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     await expect(toggle).toBeFocused();
   });
 });
-
