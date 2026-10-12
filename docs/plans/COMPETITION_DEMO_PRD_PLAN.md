@@ -2,6 +2,8 @@
 
 **Status:** decision-gated draft, 12 October 2026. This is the current plan for the owner's chosen **connected competition demo**. The [historical browser-demo plan](../../IMPLEMENTATION_PLAN.md) describes what was built earlier; it is not the work order for this pass. No task below is marked implemented by this plan.
 
+**Isolated review update:** [12 October sub-agy review](../audits/DEMO_SUBAGY_REVIEW_2026-10-12.md) records ready, unmerged branches for a Phase 0 route inventory and package 01 method/navigation changes. Package 00 live certification and packages 02–09 remain open.
+
 ## Read in this order
 
 1. [Master PRD archive](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx): opening §§1–3 govern, Part A and retained Parts B/C provide detail. The archive appendices are historical copies.
