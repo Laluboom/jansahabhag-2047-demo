@@ -71,6 +71,8 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             onClick={onToggleMobileMenu}
             className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-civic-indigo-500"
             aria-label="Toggle navigation menu"
+            aria-expanded={isMobileMenuOpen}
+            data-testid="mobile-menu-toggle"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>

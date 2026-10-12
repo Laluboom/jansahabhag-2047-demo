@@ -119,6 +119,9 @@ export const ProjectsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <span className="text-xs font-bold text-civic-indigo-700 uppercase tracking-wider block mb-1">
+            Labs & Projects
+          </span>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
             <Target className="w-7 h-7 text-civic-saffron-600" />
             <span>Youth Civic Action Projects</span>
@@ -132,6 +135,58 @@ export const ProjectsPage: React.FC = () => {
           <Plus className="w-4 h-4 mr-1.5" />
           <span>Start Initiative</span>
         </Button>
+      </div>
+
+      {/* Connected Civic Innovation Labs Previews (Master PRD §1, Item 8) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            Connected Civic Innovation Labs
+          </p>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
+            Demo Previews
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link
+            to="/labs/ideas"
+            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-civic-indigo-300 hover:shadow-xs transition-all group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 group-hover:text-civic-indigo-600">
+              <span>Idea Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-civic-indigo-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+              Grassroots pedestrian safety inventions & street prototypes.
+            </p>
+          </Link>
+
+          <Link
+            to="/labs/research"
+            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-civic-teal-300 hover:shadow-xs transition-all group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 group-hover:text-civic-teal-600">
+              <span>Research Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-civic-teal-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+              Empirical traffic census datasets & conflict telemetry.
+            </p>
+          </Link>
+
+          <Link
+            to="/labs/policy"
+            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-civic-saffron-300 hover:shadow-xs transition-all group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 group-hover:text-civic-saffron-600">
+              <span>Policy Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-civic-saffron-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+              Model municipal crosswalk bylaws & school zone design codes.
+            </p>
+          </Link>
+        </div>
       </div>
 
       {/* Summary Stats Cards */}

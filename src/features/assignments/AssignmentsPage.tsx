@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Assignment, Submission, User } from '../../types/domain';
-import { Card, CardTitle, CardHeader, CardContent } from '../../components/ui/Card';
+import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   AlertCircle,
   Clock,
-  UserCheck,
+  Compass,
+  HeartHandshake,
 } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 
@@ -63,33 +64,39 @@ export const AssignmentsPage: React.FC = () => {
     );
   }
 
+  // Master PRD Scope F: Keep UHV reflections separate from general civic assignments
+  const civicAssignments = assignments.filter(
+    (a) => a.courseId !== 'course_uhv_leadership_05' && a.id !== 'asg_uhv_08'
+  );
+  const civicSubmissions = submissions.filter((s) => s.assignmentId !== 'asg_uhv_08');
+
   // Teacher perspective tabs & rendering
   if (isTeacher) {
     const teacherTabs = [
-      { id: 'all', label: 'All Submissions', count: submissions.length },
+      { id: 'all', label: 'All Submissions', count: civicSubmissions.length },
       {
         id: 'needs_review',
         label: 'Needs Review',
-        count: submissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length,
+        count: civicSubmissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length,
       },
       {
         id: 'revision_requested',
         label: 'Revision Requested',
-        count: submissions.filter((s) => s.status === 'revision_requested').length,
+        count: civicSubmissions.filter((s) => s.status === 'revision_requested').length,
       },
       {
         id: 'verified',
         label: 'Verified',
-        count: submissions.filter((s) => s.status === 'verified').length,
+        count: civicSubmissions.filter((s) => s.status === 'verified').length,
       },
       {
         id: 'assignments_list',
         label: 'Assignment Catalog',
-        count: assignments.length,
+        count: civicAssignments.length,
       },
     ];
 
-    const filteredSubmissions = submissions.filter((s) => {
+    const filteredSubmissions = civicSubmissions.filter((s) => {
       if (activeTab === 'all') return true;
       if (activeTab === 'needs_review') return s.status === 'submitted' || s.status === 'under_review';
       if (activeTab === 'revision_requested') return s.status === 'revision_requested';
@@ -117,9 +124,28 @@ export const AssignmentsPage: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 shrink-0 text-right">
             <span className="text-xs font-bold text-amber-900 uppercase block">Pending Reviews</span>
             <span className="text-2xl font-extrabold text-amber-950 font-heading">
-              {submissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length}
+              {civicSubmissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length}
             </span>
           </div>
+        </div>
+
+        {/* Visible Path to Activities */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs">
+          <div className="space-y-0.5">
+            <span className="font-bold text-civic-indigo-950 uppercase tracking-wider block">
+              Activities & Assignments Hub
+            </span>
+            <p className="text-slate-600">
+              Field observations connect directly to participatory action events. Review live student participation in the Activities Stream.
+            </p>
+          </div>
+          <Link to="/activities" className="shrink-0">
+            <Button size="sm" variant="outline">
+              <Compass className="w-3.5 h-3.5 mr-1" />
+              <span>View Activities Stream</span>
+              <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </Link>
         </div>
 
         {/* Tabs */}
@@ -128,7 +154,7 @@ export const AssignmentsPage: React.FC = () => {
         {/* Assignment Catalog Tab view */}
         {activeTab === 'assignments_list' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {assignments.map((asg) => (
+            {civicAssignments.map((asg) => (
               <Card key={asg.id} className="border-slate-200 flex flex-col justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -144,7 +170,7 @@ export const AssignmentsPage: React.FC = () => {
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-xs text-slate-500">
-                    {submissions.filter((s) => s.assignmentId === asg.id).length} student submissions
+                    {civicSubmissions.filter((s) => s.assignmentId === asg.id).length} student submissions
                   </span>
                   <Link to={`/assignments/${asg.id}`}>
                     <Button size="sm" variant="outline">
@@ -166,7 +192,7 @@ export const AssignmentsPage: React.FC = () => {
             ) : (
               filteredSubmissions.map((sub) => {
                 const student = users.find((u) => u.id === sub.userId);
-                const asg = assignments.find((a) => a.id === sub.assignmentId);
+                const asg = civicAssignments.find((a) => a.id === sub.assignmentId);
 
                 return (
                   <Card
@@ -245,35 +271,35 @@ export const AssignmentsPage: React.FC = () => {
 
   // Participant perspective
   const participantTabs = [
-    { id: 'all', label: 'All Assignments', count: assignments.length },
+    { id: 'all', label: 'All Assignments', count: civicAssignments.length },
     {
       id: 'active',
       label: 'Action Required',
-      count: assignments.filter((a) => {
-        const sub = submissions.find((s) => s.assignmentId === a.id);
+      count: civicAssignments.filter((a) => {
+        const sub = civicSubmissions.find((s) => s.assignmentId === a.id);
         return !sub || sub.status === 'draft' || sub.status === 'revision_requested';
       }).length,
     },
     {
       id: 'submitted',
       label: 'Under Review',
-      count: assignments.filter((a) => {
-        const sub = submissions.find((s) => s.assignmentId === a.id);
+      count: civicAssignments.filter((a) => {
+        const sub = civicSubmissions.find((s) => s.assignmentId === a.id);
         return sub && (sub.status === 'submitted' || sub.status === 'under_review');
       }).length,
     },
     {
       id: 'verified',
       label: 'Verified',
-      count: assignments.filter((a) => {
-        const sub = submissions.find((s) => s.assignmentId === a.id);
+      count: civicAssignments.filter((a) => {
+        const sub = civicSubmissions.find((s) => s.assignmentId === a.id);
         return sub && sub.status === 'verified';
       }).length,
     },
   ];
 
-  const filteredAssignments = assignments.filter((asg) => {
-    const sub = submissions.find((s) => s.assignmentId === asg.id);
+  const filteredAssignments = civicAssignments.filter((asg) => {
+    const sub = civicSubmissions.find((s) => s.assignmentId === asg.id);
     if (activeTab === 'all') return true;
     if (activeTab === 'active') return !sub || sub.status === 'draft' || sub.status === 'revision_requested';
     if (activeTab === 'submitted') return sub && (sub.status === 'submitted' || sub.status === 'under_review');
@@ -283,6 +309,7 @@ export const AssignmentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
@@ -294,12 +321,47 @@ export const AssignmentsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Visible Path to Activities (Master PRD §1, Item 3) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs">
+        <div className="space-y-0.5">
+          <span className="font-bold text-civic-indigo-950 uppercase tracking-wider block">
+            Activities & Assignments Stream
+          </span>
+          <p className="text-slate-600">
+            Log participation hours, neighborhood observation audits, and collaborative field sessions.
+          </p>
+        </div>
+        <Link to="/activities" className="shrink-0">
+          <Button size="sm" variant="primary">
+            <Compass className="w-3.5 h-3.5 mr-1" />
+            <span>Explore Activities Stream</span>
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
+        </Link>
+      </div>
+
+      {/* UHV Stream Isolation Notice */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600">
+        <div className="flex items-center gap-2">
+          <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>
+            <strong>UHV Stream Separation:</strong> Universal Human Values reflections are isolated from civic grading under Scope F.
+          </span>
+        </div>
+        <Link to="/uhv" className="shrink-0">
+          <Button size="sm" variant="outline">
+            <span>View UHV Stream</span>
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
+        </Link>
+      </div>
+
       {/* Tabs */}
       <Tabs tabs={participantTabs} activeTab={activeTab} onChange={setActiveTab} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {filteredAssignments.map((asg) => {
-          const submission = submissions.find((s) => s.assignmentId === asg.id);
+          const submission = civicSubmissions.find((s) => s.assignmentId === asg.id);
           const isSubmitted = !!submission && submission.status !== 'draft';
           const isDraft = submission?.status === 'draft';
           const isRevision = submission?.status === 'revision_requested';
@@ -405,4 +467,3 @@ export const AssignmentsPage: React.FC = () => {
     </div>
   );
 };
-
