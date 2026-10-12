@@ -21,7 +21,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       <DemoPreviewBadge
         size="banner"
         label="Debate Room — Planned Demo Module (Pending Shared Session Engine)"
-        description="Canonical learner item 4 under Master PRD §A8. Multi-party structured motion debating awaits session engine integration."
+        description="Fictional browser demo. Canonical learner item 4 under Master PRD §A8. Multi-party structured motion debating awaits session engine integration."
       />
 
       {/* Header */}
@@ -119,10 +119,10 @@ export const DebateRoomPreviewPage: React.FC = () => {
             <h3>Connected Deliberative Loop</h3>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Live deliberative Assembly is currently active in the demo. You can explore the running Jaipur Safe Streets deliberation session today.
+            Deliberative assembly mockups can be explored in this fictional browser demo using seeded records.
           </p>
           <Link to="/assemblies" className="inline-flex items-center text-xs font-semibold text-civic-indigo-600 hover:text-civic-indigo-800 pt-1">
-            <span>Explore Youth Assembly</span>
+            <span>Explore Youth Assembly Demo</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Link>
         </Card>

@@ -21,7 +21,7 @@ export const WorkspacePreviewPage: React.FC = () => {
       <DemoPreviewBadge
         size="banner"
         label="Workspace — Planned Demo Module (Pending Permission-Safe Persistence)"
-        description="Canonical learner item 7 under Master PRD §A12. Team, topic, and institutional collaboration workspaces."
+        description="Fictional browser demo. Canonical learner item 7 under Master PRD §A12. Team, topic, and institutional collaboration workspaces."
       />
 
       {/* Header */}
@@ -32,7 +32,7 @@ export const WorkspacePreviewPage: React.FC = () => {
             <span>Workspace</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Scoped collaboration spaces for teams, student cohorts, civic project groups, and institutions.
+            Scoped collaboration spaces for teams, student cohorts, civic project groups, and institutions (fictional browser demo).
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export const WorkspacePreviewPage: React.FC = () => {
           <Link to="/projects">
             <Button size="sm" variant="primary">
               <Target className="w-4 h-4 mr-1.5" />
-              <span>View Active Projects</span>
+              <span>View Demo Projects</span>
             </Button>
           </Link>
           <Link to="/dashboard">
@@ -66,7 +66,7 @@ export const WorkspacePreviewPage: React.FC = () => {
               In accordance with Master PRD §1 and Part A §A12, <strong>Workspace</strong> occupies canonical learner navigation position 7. It provides institutional, cross-institutional, team, and topic workspaces with role-scoped memberships, join requests, announcements, and channel collaboration.
             </p>
             <p className="text-slate-600">
-              The platform owner selected the connected competition demo; authenticated multi-user persistence and permission-safe role isolation are scheduled for subsequent delivery tasks. This preview does not provide live invitations, shared document authoring, or persistent multi-user chats.
+              The platform owner selected the connected competition demo; authenticated multi-user persistence and permission-safe role isolation are scheduled for subsequent delivery tasks. This preview does not provide live invitations, shared document authoring, or persistent multi-user chats. Fictional browser demo.
             </p>
           </div>
         </div>
@@ -116,10 +116,10 @@ export const WorkspacePreviewPage: React.FC = () => {
         <Card className="p-5 border-slate-200 space-y-2">
           <div className="flex items-center gap-2 text-civic-teal-700 font-semibold text-sm">
             <Target className="w-4 h-4" />
-            <h3>Active Project Initiatives</h3>
+            <h3>Sample Project Initiatives</h3>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            You can currently review and participate in active micro-initiatives such as the Navchetna Crosswalk Action in the Projects section.
+            You can review seeded sample micro-initiatives such as the Navchetna Crosswalk Action in the Labs & Projects section in this simulated browser demo.
           </p>
           <Link to="/projects" className="inline-flex items-center text-xs font-semibold text-civic-teal-700 hover:text-civic-teal-900 pt-1">
             <span>Explore Labs & Projects</span>

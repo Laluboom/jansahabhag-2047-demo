@@ -185,7 +185,7 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     expect(screen.getByRole('heading', { name: /^Workspace/i })).toBeInTheDocument();
     expect(screen.getByText(/Planned Demo Module/i)).toBeInTheDocument();
     expect(screen.getByText(/Nonfunctional Preview Destination/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /View Active Projects/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /View Demo Projects/i })).toBeInTheDocument();
 
     // Help & Rulebooks
     rerender(
@@ -193,10 +193,11 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
         <HelpRulebooksPage />
       </MemoryRouter>
     );
-    expect(screen.getByRole('heading', { name: /Help & Point-of-Use Rulebooks/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Help & Rulebooks \(Draft Index\)/i })).toBeInTheDocument();
+    expect(screen.getByText(/Draft Overview • Planned Summaries Pending Owner Review/i)).toBeInTheDocument();
   });
 
-  it('Requirement 3: General Civic Learn excludes UHV courses from the main listing', async () => {
+  it('Requirement 3: General Civic Learn excludes UHV courses from the main listing and tabs', async () => {
     render(
       <MemoryRouter initialEntries={['/learn']}>
         <Routes>
@@ -209,13 +210,29 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
       expect(screen.getByRole('heading', { name: /Civic Learning Hub/i })).toBeInTheDocument();
     });
 
-    // On /learn default 'All Civic Courses' tab, UHV course should NOT be in the general listing
+    // Regression check: UHV tab is completely removed from civic learn tabs
+    expect(screen.queryByRole('button', { name: /Universal Human Values \(Separate Stream\)/i })).not.toBeInTheDocument();
+
+    // On /learn default 'All Civic Courses' tab, UHV course should NOT be in the listing
     expect(screen.getByText(/CIV-101/i)).toBeInTheDocument();
+    expect(screen.queryByText(/UHV-101/i)).not.toBeInTheDocument();
+
+    // Test civic tabs: none of them render UHV courses
+    const civicAcademyTab = screen.getByRole('button', { name: /Civic Academy/i });
+    fireEvent.click(civicAcademyTab);
+    expect(screen.queryByText(/UHV-101/i)).not.toBeInTheDocument();
+
+    const actionSkillsTab = screen.getByRole('button', { name: /Action Skills/i });
+    fireEvent.click(actionSkillsTab);
+    expect(screen.queryByText(/UHV-101/i)).not.toBeInTheDocument();
+
+    const selfGrowthTab = screen.getByRole('button', { name: /Self Growth/i });
+    fireEvent.click(selfGrowthTab);
     expect(screen.queryByText(/UHV-101/i)).not.toBeInTheDocument();
 
     // Verify separation banner and button linking to /uhv
     expect(screen.getByText(/Universal Human Values \(UHV \/ Jeevan Vidya\) is maintained as a distinct study stream/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Open UHV \/ Jeevan Vidya Stream/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open Universal Human Values Stream/i })).toBeInTheDocument();
   });
 
   it('Requirement 3: UHV / Jeevan Vidya dedicated stream renders fictional disclosure and isolates UHV track', async () => {
@@ -244,7 +261,41 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     expect(screen.queryByText(/CIV-101/i)).not.toBeInTheDocument();
   });
 
-  it('Requirement 2 & 3: Assignments page provides visible path to Activities and excludes UHV reflections', async () => {
+  it('Requirement 2 & 3: Assignments page provides visible path to Activities and excludes UHV reflections dynamically', async () => {
+    // Inject a second synthetic UHV course and synthetic assignment to prove dynamic exclusion
+    const db = PersistenceService.loadDatabase();
+    db.courses.push({
+      id: 'course_uhv_synthetic_99',
+      programmeId: 'prog_my_community_future',
+      title: 'Synthetic UHV Advanced Ethics Course',
+      code: 'UHV-201',
+      description: 'A synthetic UHV course for regression testing',
+      track: 'uhv',
+      level: 'intermediate',
+      estimatedMinutes: 60,
+      modules: [],
+      moduleCount: 1,
+      lessonCount: 4,
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    db.assignments.push({
+      id: 'asg_uhv_synthetic_99',
+      courseId: 'course_uhv_synthetic_99',
+      title: 'Synthetic UHV Dynamic Reflection Assignment',
+      prompt: 'Test dynamic reflection exclusion',
+      rubric: [],
+      requiredEvidenceType: 'observation',
+      creditsReward: 10,
+      status: 'active',
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      dueDate: '2026-12-31T23:59:59.000Z',
+    });
+    PersistenceService.saveDatabase(db);
+
     render(
       <MemoryRouter initialEntries={['/assignments']}>
         <AssignmentsPage />
@@ -261,9 +312,59 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     // Check UHV stream separation notice
     expect(screen.getByText(/UHV Stream Separation/i)).toBeInTheDocument();
 
-    // Check general civic assignments are present and UHV reflection is excluded
+    // Check general civic assignments are present
     expect(screen.getByText(/School Gate Traffic Audit/i)).toBeInTheDocument();
+
+    // Verify both original and synthetic UHV assignments are dynamically excluded
     expect(screen.queryByText(/Civic Ethics & Community Harmony Reflection/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Synthetic UHV Dynamic Reflection Assignment/i)).not.toBeInTheDocument();
+  });
+
+  it('Requirement 4: Mobile drawer is focus-safe with aria-controls, Tab trap, and focus restoration', async () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <AppShell />
+      </MemoryRouter>
+    );
+
+    const toggle = screen.getByTestId('mobile-menu-toggle');
+    expect(toggle).toHaveAttribute('aria-controls', 'mobile-navigation-drawer');
+
+    // Open drawer
+    toggle.focus();
+    fireEvent.click(toggle);
+
+    const drawer = screen.getByRole('dialog', { name: /navigation drawer/i });
+    expect(drawer).toHaveAttribute('id', 'mobile-navigation-drawer');
+
+    // Close button should be focused on open
+    await waitFor(() => {
+      const closeBtn = within(drawer).getByRole('button', { name: /close navigation menu/i });
+      expect(document.activeElement).toBe(closeBtn);
+    });
+
+    // Focus cycling test: focus last element, Tab should wrap to first
+    const focusables = Array.from(
+      drawer.querySelectorAll<HTMLElement>('button:not([disabled]), [href]:not([disabled])')
+    );
+    const firstElement = focusables[0];
+    const lastElement = focusables[focusables.length - 1];
+
+    lastElement.focus();
+    expect(document.activeElement).toBe(lastElement);
+
+    fireEvent.keyDown(window, { key: 'Tab' });
+    expect(document.activeElement).toBe(firstElement);
+
+    // Shift+Tab on first element wraps to last
+    firstElement.focus();
+    fireEvent.keyDown(window, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(lastElement);
+
+    // Escape closes drawer and restores focus to menu toggle
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: /navigation drawer/i })).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(toggle);
   });
 
   it('Requirement 2: Projects page provides visible links to Idea Lab, Research Lab, and Policy Lab previews', async () => {

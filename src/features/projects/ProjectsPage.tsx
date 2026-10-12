@@ -127,7 +127,7 @@ export const ProjectsPage: React.FC = () => {
             <span>Youth Civic Action Projects</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Student-led micro-initiatives translating deliberation into municipal pedestrian safety action.
+            Simulated student-led micro-initiatives translating deliberation into pedestrian safety action in this fictional browser demo.
           </p>
         </div>
 
@@ -135,6 +135,11 @@ export const ProjectsPage: React.FC = () => {
           <Plus className="w-4 h-4 mr-1.5" />
           <span>Start Initiative</span>
         </Button>
+      </div>
+
+      {/* Demo Disclosure Banner */}
+      <div className="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
+        <strong>Fictional Browser Demo:</strong> All project initiatives, innovation lab previews, and milestone records are synthetic demo data.
       </div>
 
       {/* Connected Civic Innovation Labs Previews (Master PRD §1, Item 8) */}
@@ -215,23 +220,23 @@ export const ProjectsPage: React.FC = () => {
 
         <Card className="p-4 border-slate-200">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Active in Field
+            Active in Field (Demo)
           </span>
           <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading mt-1 block">
             {projects.filter((p) => p.status === 'active' || p.status === 'milestone_review').length}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">Underway with ULB</span>
+          <span className="text-[10px] text-slate-500 mt-0.5 block">Simulated ULB tracking</span>
         </Card>
 
         <Card className="p-4 border-slate-200">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Completed Actions
+            Completed Actions (Demo)
           </span>
           <span className="text-2xl font-extrabold text-civic-teal-700 font-heading mt-1 block">
             {projects.filter((p) => p.status === 'completed').length}
           </span>
           <span className="text-[10px] text-civic-teal-600 font-medium mt-0.5 block">
-            Verified implementation
+            Simulated completion
           </span>
         </Card>
       </div>

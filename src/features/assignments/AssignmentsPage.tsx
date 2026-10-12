@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Assignment, Submission, User } from '../../types/domain';
+import { Assignment, Submission, User, Course } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -29,6 +29,7 @@ export const AssignmentsPage: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,14 +40,16 @@ export const AssignmentsPage: React.FC = () => {
       if (!currentUser) return;
       setIsLoading(true);
       try {
-        const [asgs, subs, allUsers] = await Promise.all([
+        const [asgs, subs, allUsers, allCourses] = await Promise.all([
           demoRepository.getAssignments(),
           demoRepository.getSubmissions(isTeacher ? undefined : currentUser.id),
           demoRepository.getUsers(),
+          demoRepository.getCourses(),
         ]);
         setAssignments(asgs);
         setSubmissions(subs);
         setUsers(allUsers);
+        setCourses(allCourses);
       } catch (err) {
         console.error('Failed to load assignments', err);
       } finally {
@@ -65,10 +68,17 @@ export const AssignmentsPage: React.FC = () => {
   }
 
   // Master PRD Scope F: Keep UHV reflections separate from general civic assignments
-  const civicAssignments = assignments.filter(
-    (a) => a.courseId !== 'course_uhv_leadership_05' && a.id !== 'asg_uhv_08'
+  // Derive UHV assignment & submission exclusion dynamically from course.track === 'uhv'
+  const uhvCourseIds = new Set(
+    courses.filter((c) => c.track === 'uhv').map((c) => c.id)
   );
-  const civicSubmissions = submissions.filter((s) => s.assignmentId !== 'asg_uhv_08');
+  const assignmentCourseMap = new Map(assignments.map((a) => [a.id, a.courseId]));
+
+  const civicAssignments = assignments.filter((a) => !uhvCourseIds.has(a.courseId));
+  const civicSubmissions = submissions.filter((s) => {
+    const courseId = assignmentCourseMap.get(s.assignmentId);
+    return !courseId || !uhvCourseIds.has(courseId);
+  });
 
   // Teacher perspective tabs & rendering
   if (isTeacher) {
@@ -117,7 +127,7 @@ export const AssignmentsPage: React.FC = () => {
               Assignment Review Queue
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Verify student observations, field audits, and evidence submissions from Navchetna Public School.
+              Verify simulated student observations, field audits, and evidence submissions in this browser demo.
             </p>
           </div>
 
@@ -136,7 +146,7 @@ export const AssignmentsPage: React.FC = () => {
               Activities & Assignments Hub
             </span>
             <p className="text-slate-600">
-              Field observations connect directly to participatory action events. Review live student participation in the Activities Stream.
+              Field observations connect directly to simulated participatory action events. Review simulated student participation in the Activities Stream.
             </p>
           </div>
           <Link to="/activities" className="shrink-0">
@@ -316,7 +326,7 @@ export const AssignmentsPage: React.FC = () => {
             Field Evidence & Assignments
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Collect observable field data, traffic counts, and community interviews verified by mentors.
+            Collect observable field data, traffic counts, and community interviews verified by mentors (fictional browser demo).
           </p>
         </div>
       </div>
@@ -328,7 +338,7 @@ export const AssignmentsPage: React.FC = () => {
             Activities & Assignments Stream
           </span>
           <p className="text-slate-600">
-            Log participation hours, neighborhood observation audits, and collaborative field sessions.
+            Log simulated participation hours, neighborhood observation audits, and collaborative field sessions.
           </p>
         </div>
         <Link to="/activities" className="shrink-0">
@@ -345,7 +355,7 @@ export const AssignmentsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            <strong>UHV Stream Separation:</strong> Universal Human Values reflections are isolated from civic grading under Scope F.
+            <strong>UHV Stream Separation:</strong> Universal Human Values reflections are isolated from civic grading under Scope F. Fictional browser demo.
           </span>
         </div>
         <Link to="/uhv" className="shrink-0">

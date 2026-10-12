@@ -182,4 +182,45 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     await page.waitForURL('**/labs/policy');
     await expect(page.getByRole('heading', { name: /Policy Lab/i })).toBeVisible();
   });
+
+  test('mobile drawer is focus safe: focuses close control on open, keeps Tab within drawer, restores focus on close, aria-controls present', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/dashboard');
+
+    const toggle = page.locator('button[data-testid="mobile-menu-toggle"]');
+    await expect(toggle).toHaveAttribute('aria-controls', 'mobile-navigation-drawer');
+
+    // Click toggle to open drawer
+    await toggle.click();
+
+    const drawer = page.locator('#mobile-navigation-drawer');
+    await expect(drawer).toBeVisible();
+
+    // Verify close control is focused on open
+    const closeBtn = drawer.locator('button[aria-label="Close navigation menu"]');
+    await expect(closeBtn).toBeFocused();
+
+    // Press Shift+Tab and Tab, verify focus remains inside drawer
+    await page.keyboard.press('Shift+Tab');
+    const isInside1 = await page.evaluate(() => {
+      const drawerEl = document.getElementById('mobile-navigation-drawer');
+      return drawerEl ? drawerEl.contains(document.activeElement) : false;
+    });
+    expect(isInside1).toBe(true);
+
+    await page.keyboard.press('Tab');
+    const isInside2 = await page.evaluate(() => {
+      const drawerEl = document.getElementById('mobile-navigation-drawer');
+      return drawerEl ? drawerEl.contains(document.activeElement) : false;
+    });
+    expect(isInside2).toBe(true);
+
+    // Close drawer via Escape key
+    await page.keyboard.press('Escape');
+    await expect(drawer).not.toBeVisible();
+
+    // Focus restored to the toggle button
+    await expect(toggle).toBeFocused();
+  });
 });
+

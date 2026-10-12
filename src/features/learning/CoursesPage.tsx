@@ -193,21 +193,17 @@ export const CoursesPage: React.FC = () => {
 
   // General Civic Learn View (Excludes UHV from general course listings)
   const civicCourses = courses.filter((c) => c.track !== 'uhv');
-  const uhvCoursesCount = courses.filter((c) => c.track === 'uhv').length;
 
   const tabs = [
     { id: 'all', label: 'All Civic Courses', count: civicCourses.length },
     { id: 'civic_academy', label: 'Civic Academy', count: civicCourses.filter((c) => c.track === 'civic_academy').length },
     { id: 'action_skills', label: 'Action Skills', count: civicCourses.filter((c) => c.track === 'action_skills').length },
     { id: 'self_growth', label: 'Self Growth', count: civicCourses.filter((c) => c.track === 'self_growth').length },
-    { id: 'uhv', label: 'Universal Human Values (Separate Stream)', count: uhvCoursesCount },
   ];
 
   const filteredCourses = selectedTrack === 'all'
     ? civicCourses
-    : selectedTrack === 'uhv'
-      ? courses.filter((c) => c.track === 'uhv')
-      : civicCourses.filter((c) => c.track === (selectedTrack as CourseTrack));
+    : civicCourses.filter((c) => c.track === (selectedTrack as CourseTrack));
 
   return (
     <div className="space-y-6">
@@ -218,7 +214,7 @@ export const CoursesPage: React.FC = () => {
             Civic Learning Hub
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Structured modules designed to connect field observation with democratic action.
+            Structured civic modules in a fictional browser demo.
           </p>
         </div>
       </div>
@@ -228,12 +224,12 @@ export const CoursesPage: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            <strong>Stream Separation:</strong> Universal Human Values (UHV / Jeevan Vidya) is maintained as a distinct study stream.
+            <strong>Stream Separation:</strong> Universal Human Values (UHV / Jeevan Vidya) is maintained as a distinct study stream. Fictional demo material.
           </span>
         </div>
         <Link to="/uhv" className="shrink-0 self-start sm:self-auto">
           <Button size="sm" variant="outline">
-            <span>Open UHV / Jeevan Vidya Stream</span>
+            <span>Open Universal Human Values Stream</span>
             <ArrowRight className="w-3 h-3 ml-1" />
           </Button>
         </Link>
@@ -241,22 +237,6 @@ export const CoursesPage: React.FC = () => {
 
       {/* Tabs */}
       <Tabs tabs={tabs} activeTab={selectedTrack} onChange={setSelectedTrack} />
-
-      {/* Explanatory Notice when UHV tab is selected inside general Learn */}
-      {selectedTrack === 'uhv' && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1">
-          <p className="font-semibold flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-amber-600" />
-            Isolated UHV Stream Preview
-          </p>
-          <p>
-            Under Master PRD §1 and Scope F, UHV is isolated from civic assignments and loop grading. You can also access this curriculum through the dedicated navigation item{' '}
-            <Link to="/uhv" className="font-bold underline text-amber-900 hover:text-amber-950">
-              UHV / Jeevan Vidya
-            </Link>.
-          </p>
-        </div>
-      )}
 
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

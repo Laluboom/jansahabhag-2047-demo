@@ -21,10 +21,10 @@ export const HelpRulebooksPage: React.FC = () => {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2.5">
             <BookOpen className="w-7 h-7 text-civic-indigo-600" />
-            <span>Help & Point-of-Use Rulebooks</span>
+            <span>Help & Rulebooks (Draft Index)</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Democratic protocols, deliberation guidelines, safeguarding standards, and ethical codes.
+            Planned draft index and procedural overviews pending owner review. Fictional browser demo.
           </p>
         </div>
 
@@ -36,22 +36,33 @@ export const HelpRulebooksPage: React.FC = () => {
         </Link>
       </div>
 
+      {/* Draft Index Disclosure Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-1.5 shadow-xs">
+        <div className="flex items-center gap-2 font-bold text-xs sm:text-sm uppercase tracking-wider text-amber-900">
+          <BookOpen className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>Draft Overview &bull; Planned Summaries Pending Owner Review</span>
+        </div>
+        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+          This section serves as a draft index and navigational overview of platform guidelines. Detailed competition rubrics, deliberative standing orders, and verification criteria are planned summaries pending platform owner review. Fictional browser demo.
+        </p>
+      </div>
+
       {/* Rulebook Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Card className="p-5 border-slate-200 space-y-3">
           <div className="flex items-center gap-2 text-civic-indigo-700 font-semibold text-sm">
             <Vote className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              Youth Deliberative Assembly Protocol
+              Draft Overview: Youth Assembly Protocol
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Covers stage progression (Problem Definition &rarr; Evidence &rarr; Deliberation &rarr; Voting), role powers (Chair, Presenter, Delegate), speaking turns, and dissent preservation during proposition revisions.
+            Planned draft summary of stage progression, speaking turns, and dissent preservation for deliberative assembly mockups pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/assemblies">
               <Button size="sm" variant="outline">
-                <span>View Live Assembly</span>
+                <span>View Assembly Prototype</span>
                 <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </Link>
@@ -62,11 +73,11 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-civic-saffron-700 font-semibold text-sm">
             <Landmark className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              National Youth Parliament Standing Orders
+              Draft Overview: National Youth Parliament Standing Orders
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Protocols for apex chamber motions, representative aggregation across 28 State Deliberation Grids, and official transmission to Urban Local Bodies and line ministries.
+            Planned draft outline of apex chamber motions, representative aggregation, and policy briefs pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/parliament">
@@ -82,11 +93,11 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm">
             <FileCheck2 className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              Field Evidence & Verification Standard
+              Draft Overview: Field Evidence & Verification Standard
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Requirements for observable field audits: verifiable timestamps, location-privacy tiers, ethical peer interviews, mentor review criteria, and non-tampering invariants.
+            Planned draft summary for observable field audits, verifiable timestamps, and mentor verification criteria pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/assignments">
@@ -102,11 +113,11 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-teal-700 font-semibold text-sm">
             <HeartHandshake className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              UHV / Jeevan Vidya Study Charter
+              Draft Overview: UHV / Jeevan Vidya Study Charter
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Charter governing the Universal Human Values study stream: self-exploration based on natural acceptance, voluntary inquiry, no grading of ideological conformity, and curriculum rights disclosure.
+            Planned draft summary of exploratory study principles: voluntary inquiry, no grading of ideological conformity, and curriculum rights pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/uhv">
