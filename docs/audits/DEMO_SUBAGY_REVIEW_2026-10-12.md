@@ -10,8 +10,11 @@
 | Phase 0 browser rendering evidence | `agy-rainy-2` / `j-20261012-213548-ijnr` | `agy/j-20261012-213548-ijnr` at `e43ff02` | Result contract passed; report/JSON nonempty, all relative report links resolved, `git diff --check` passed. An independent fresh build and local Playwright rerun rendered 94/94 baseline route/viewport checks, reproducing two phone overflows. | Four deployed routes at two widths were checked by the agent, separate from local results; the orchestrator independently reran local checks only. This is visual route evidence, not completed interactive, recovery, or permission certification. The branch includes the earlier audit commits and is pinned to the 47-route baseline. |
 | Canonical five-stage method | `agy` / `j-20261012-153339-0zfe` | `agy/j-20261012-153339-0zfe` at `51dab67` | Fresh `npm run build` and `npm run test:run` passed (92 tests); `git diff --check` passed. | Updates the method strip and call sites only. |
 | Canonical learner navigation and UHV stream | `agy-rainy` / `j-20261012-153847-t0do` | `agy/j-20261012-153847-t0do` at `bd88e23` | Fresh `npm run build`, `npm run test:run` (98 tests), and `npm run test:e2e` (11 browser tests) passed; `git diff --check` passed. Browser tests needed local server access outside the restricted sandbox. | Debate Room and Workspace remain labelled nonfunctional previews. UHV curriculum rights and shared sessions remain open. |
+| Phone overflow repair | `agy-rainy` / `j-20261012-215520-ssz8` | `agy/j-20261012-215520-ssz8` at `41ea8f4` | Round two result contract passed. Independent fresh `npm run build`, `npm run test:run` (89 tests), `npm run test:e2e` (7 browser tests), `git diff --check` and interface detector passed. The browser regression checks both affected routes at 375px and 320px and clicks their stage/filter controls. | Fixes the two overflows measured by the baseline audit in isolated code only; the deployed build is unchanged. The first round ended without a valid result or commit, then was repaired. |
 
-The navigation branch adds eight path patterns (`debate-room`, `debates`, `workspace`, `workspaces`, `uhv`, `uhv/learn`, `help`, `settings`), bringing its isolated router to 55 patterns. The Phase 0 inventory and browser audit describe the 47-pattern baseline, so update or supplement both after merging the navigation branch. These branches have not been tested together.
+The navigation branch adds eight path patterns (`debate-room`, `debates`, `workspace`, `workspaces`, `uhv`, `uhv/learn`, `help`, `settings`), bringing its isolated router to 55 patterns. The Phase 0 inventory and browser audit describe the 47-pattern baseline, so update or supplement both after merging the navigation branch. The navigation and phone branches both edit `e2e/smoke-routes.spec.ts`; combined acceptance and possible conflict resolution remain the owner's merge work. These branches have not been tested together.
+
+On 13 October, an untracked `docs-rescued/` folder in the real checkout triggered the Autobuild escape check. After the owner authorised inspection and resolution, its byte-identical copies of the Master PRD and reservation supplement were identified, its two unique JanSahabhag handoff DOCX files were added to [source references](../reference/README.md), and all six original files were preserved under local ignored `.subagy/quarantine/docs-rescued-2026-10-13/`. The two Markdown files in that folder belonged to an unrelated job-matching product and were not adopted as JanSahabhag instructions. The root checkout is clean again after local documentation commit `e805306`.
 
 ## Parked browser evidence branch
 
@@ -21,18 +24,19 @@ The original `agy-rainy-2` browser-audit job `j-20261012-162134-6xv8` is parked 
 
 - The [connected demo plan](../plans/COMPETITION_DEMO_PRD_PLAN.md) packages 02–09 remain unbuilt. The existing browser-only persona switch and local storage cannot support shared sessions, server-enforced roles, or multi-user persistence.
 - The owner selected fictional Jaipur data, a labelled single-browser demo, `ceil(0.33 × applicable allocated places)` per allocation, and leaving unmet reserved places unfilled. The remaining decisions are the demo date and final acceptance, the exact working/prototype boundary, full-system backend/hosting, whether documented exceptions are allowed, real-data privacy, and activity applicability. See [product decisions](../decisions.md). The 33% policy has only in-principle approval; no enforcement is implemented. The chosen demo mode cannot prove the Master PRD's shared-session or server-authorization requirements.
-- The repaired browser audit covers 47 local baseline routes at two widths and four representative deployed routes at two widths. It documents visual rendering and two phone overflows; it does not verify interactions, data recovery, negative permission behavior, or the eight routes in the unmerged navigation branch. The deployed site still serves the older build.
+- The repaired browser audit covers 47 local baseline routes at two widths and four representative deployed routes at two widths. It documents visual rendering and two phone overflows in the earlier build. A separate unmerged branch fixes those local phone layouts; the deployed site still serves the older build. The audit does not verify interactions, data recovery, negative permission behavior, or the eight routes in the unmerged navigation branch.
 - The existing fictional UHV seed contains assignment `asg_uhv_08` with a ten-point `Depth of Self-Exploration` rubric and a seeded personal submission/reflection. The Master PRD opening §1 and Part A §A11 prohibit grading ideological agreement or treating personal reflection as objectively measurable. The navigation branch separates the stream but does not resolve this content and grading review; OD.13 source and rights also remain open.
 
 ## Owner merge and acceptance
 
-The branches share baseline `411588b` and have disjoint intended scopes. Suggested merge order:
+The branches descend from the 47-route baseline; the repaired audit and phone branches include intermediate documentation ancestors. Suggested merge order:
 
 ```bash
 git merge --no-ff agy/j-20261012-130900-zy09
 git merge --no-ff agy/j-20261012-213548-ijnr
 git merge --no-ff agy/j-20261012-153339-0zfe
 git merge --no-ff agy/j-20261012-153847-t0do
+git merge --no-ff agy/j-20261012-215520-ssz8
 npm run build
 npm run test:run
 npm run test:e2e
