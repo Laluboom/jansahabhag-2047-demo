@@ -5,14 +5,18 @@
 ## Owner direction recorded 12 October 2026
 
 - **Delivery target:** the next implementation pass is the connected competition demo, not the first multi-user release. This settles the immediate target but not the date, presentation script, or exact functional-versus-prototype boundary in OD.1–OD.3. The Master PRD's minimum connected journey still applies.
-- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. The formula was subsequently approved; the allocation unit, exceptions, real-data privacy, and activity boundaries remain open. No reservation behavior is implemented or claimed compliant.
+- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. The per-allocation formula and unfilled reserved-place rule were subsequently approved; exceptions, real-data privacy, and activity boundaries remain open. No reservation behavior is implemented or claimed compliant.
 
 ## Further owner direction recorded 12 October 2026
 
 - **Demo data and story:** use fictional demo data and the Jaipur pedestrian-safety story. This settles the example story in OD.2 but not the demo date or final acceptance sign-off.
 - **Demo implementation mode:** keep a clearly labelled single-browser simulation. This settles the immediate backend choice for the demo; it does **not** satisfy the Master PRD's connected multi-user journey, durable shared data, or server-side authorization requirements. Preserve those as explicit gaps and do not describe this mode as a compliant connected demo or production release. Full-system backend architecture and budget under OD.14 remain open.
-- **Reservation arithmetic:** use `ceil(0.33 × applicable allocated places)`, as proposed in Supplement §6. The owner's phrase “keep unified allocation” is being clarified before fixing the allocation unit or treatment of unfilled reserved places. No allocation code or exception path is approved by this arithmetic choice alone.
+- **Reservation arithmetic:** use `ceil(0.33 × applicable allocated places)` for each applicable allocation, as proposed in Supplement §6. Do not pool places across activities. No allocation code or exception path is approved by this arithmetic choice alone.
 - **Gender data for this demo:** use fictional demo data only. No real participant gender collection or retention is approved; OD.18 remains open for a real release.
+
+## Further owner direction recorded 13 October 2026
+
+- **Unfilled reserved places:** when no eligible woman is available for a reserved place, leave that place unfilled. Do not silently transfer it to another category or pool it with a different activity. This settles the unfilled-place part of OD.17; whether a documented exception can ever be approved remains open.
 
 ## Answered by the governing Master PRD
 
@@ -56,8 +60,8 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
 | ID | Open decision | What the supplement proposes or bounds |
 |---|---|---|
 | OD.15 | **Approved in principle, 12 October 2026:** adopt the minimum 33% rule across applicable allocated places and formal positions. | §§1–2 cover Parliament, Assembly, Debate Room, limited activities and delegations. Open participation without allocated places or roles is excluded. Detailed boundaries remain under OD.19. |
-| OD.16 | **Rounding formula approved:** `ceil(0.33 × applicable allocated places)`. Allocation unit and the owner's “unified allocation” wording await clarification, especially for 1–3 places. | §6 proposes this formula per applicable allocation. Totals and selections would need revalidation when they change. No enforcement is implemented. |
-| OD.17 | Decide whether exceptions are allowed, who may approve them, and how unfilled reserved places work. | §§5–6 disallow silent bypasses. If approved, each exception needs reason, approver, time, policy version and outcome, and must be labelled as an exception. |
+| OD.16 | **Rounding formula and unit approved:** `ceil(0.33 × applicable allocated places)` for each applicable allocation, including 1–3 places. No pooling across activities. | §6 proposes this formula per applicable allocation. Totals and selections would need revalidation when they change. No enforcement is implemented. |
+| OD.17 | **Unfilled reserved places stay vacant.** Decide whether any documented exceptions are allowed and who may approve them. | §§5–6 disallow silent bypasses. If approved, each exception needs reason, approver, time, policy version and outcome, and must be labelled as an exception. |
 | OD.18 | **Fictional data only for this demo.** Real declaration, access controls and retention remain open. | §7 prohibits inference from names, photographs, voices or proxies; aggregate compliance must not disclose individual gender information. |
 | OD.19 | Confirm any activity-specific difference, including how Assembly functional roles relate to formal positions and when an event's capacity means allocated places. | §2 distinguishes open participation from limited selections and allocated roles. These boundary cases need an explicit rule. |
 

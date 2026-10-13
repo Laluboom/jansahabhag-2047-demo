@@ -10,20 +10,20 @@ Use the documents in this order when making implementation decisions:
    - Canonical decisions at the front override conflicting historical wording.
    - Archived appendices exist for traceability; they are not parallel governing specifications.
    - [The supplied archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) is named `v3.1`, while its internal version table says `v3.0 — Consolidated Master PRD`. The discrepancy is unresolved; use its opening canonical rules and retained Parts A–C, and record any version decision separately.
-2. **Cleaned Developer Start-Here Note** — implementation/scoping guidance.
+2. **[Cleaned Developer Start-Here Note](docs/reference/JanSahabhag_2047_Cleaned_Developer_Start_Here.docx)** — implementation/scoping guidance.
    - Use it to separate demo-critical, prototype, later-phase, and unresolved/owner-decision work.
    - It does **not** replace the Master PRD.
-3. **Website Content & About Us — Developer Handoff** — public-facing identity/content supplement.
+3. **[Website Content & About Us — Developer Handoff](docs/reference/JanSahabhag_2047_Developer_Handoff.docx)** — public-facing identity/content supplement.
    - Use for About Us / identity copy and presentation.
    - Public facts must still pass approval/verification requirements.
 
-The [Supplementary PRD v2.0 on 33% women's reservation](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) is a proposed extension whose policy the owner **approved in principle on 12 October 2026**. The owner later approved `ceil(0.33 × applicable places)` arithmetic and fictional demo data only. The meaning of “unified allocation,” exceptions, real-data privacy and activity boundaries still require decisions. It does not replace the Master PRD. Its scope and current app gaps are in the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation); its open choices and pre-launch legal review are in [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle).
+The [Supplementary PRD v2.0 on 33% women's reservation](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) is a proposed extension whose policy the owner **approved in principle on 12 October 2026**. The owner later approved `ceil(0.33 × applicable allocated places)` for each applicable allocation, chose to leave unmet reserved places unfilled, and limited the immediate demo to fictional data. Exceptions, real-data privacy and activity boundaries still require decisions. It does not replace the Master PRD. Its scope and current app gaps are in the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation); its open choices and pre-launch legal review are in [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle).
 
 ### How to use these files for implementation
 
 1. Read the Master PRD's opening rules and relevant Part A–C section for the feature. Use this scope guide to find its priority and source location.
 2. Check the reconciliation for what the current demo actually lacks. Verify the affected screen and code before changing it; the audit is a dated comparison, not proof of current live behavior.
-3. Check product decisions before fixing policy-dependent behavior. For reservation, the formula is approved but the allocation unit, unfilled-place treatment, exceptions, real gender-data handling and activity boundaries are not. Do not infer them from the arithmetic alone.
+3. Check product decisions before fixing policy-dependent behavior. For reservation, calculate separately for each applicable allocation and leave unmet reserved places unfilled. Exceptions, real gender-data handling and which activities allocate places remain open; do not infer those rules from the arithmetic.
 4. Use [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) only for the historical browser-demo architecture and sequencing. The [competition demo PRD plan](docs/plans/COMPETITION_DEMO_PRD_PLAN.md) maps governing work packages and the owner's immediate labelled single-browser mode; add executable task plans only after verifying the relevant source, code and approvals.
 
 ### Conflict rule
@@ -837,7 +837,7 @@ Confirm before locking scope where applicable:
 - content/curriculum/licensing;
 - budget/hosting/team capacity assumptions.
 
-The reservation supplement adds five owner choices (OD.15–OD.19) and a pre-launch legal review; see [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle). OD.15 was approved in principle. OD.16 has approved arithmetic but unresolved allocation-unit wording; fictional demo data is approved for the immediate mode, while real-data aspects of OD.18 and OD.17/OD.19 remain open. These are separate from the original 14 Master PRD questions.
+The reservation supplement adds five owner choices (OD.15–OD.19) and a pre-launch legal review; see [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle). OD.15 was approved in principle. OD.16 uses the approved per-allocation formula, and OD.17 leaves unmet reserved places vacant; exception approvals remain open. Fictional demo data is approved for the immediate mode, while real-data aspects of OD.18 and activity boundaries under OD.19 remain open. These are separate from the original 14 Master PRD questions.
 
 ---
 
