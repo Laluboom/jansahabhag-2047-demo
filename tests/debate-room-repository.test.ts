@@ -268,18 +268,68 @@ describe('Debate Room & Shared Live Session Repository Operations', () => {
       expect(reflection.id).toBeDefined();
       expect(reflection.contextType).toBe('session');
       expect(reflection.contextId).toBe('sess_jaipur_01');
+      // Enforces private reflection even if caller passed isPublicInPassport: true
+      expect(reflection.isPublicInPassport).toBe(false);
 
       // Verify no automatic credits awarded for self-reflection
       const userAfter = await repository.getUser('user_aarav');
       expect(userAfter?.totalCredits).toBe(creditsBefore);
 
-      // Verify readable via getSessionReflections
+      // Verify readable via getSessionReflections for active persona (Aarav)
       const sessionRefls = await repository.getSessionReflections('sess_jaipur_01');
       expect(sessionRefls.some((r) => r.id === reflection.id)).toBe(true);
 
       const aaravRefls = await repository.getSessionReflections('sess_jaipur_01', 'user_aarav');
       expect(aaravRefls.length).toBeGreaterThanOrEqual(1);
       expect(aaravRefls[0].text).toContain('physical traffic calming');
+
+      // Test persona boundary: Switch to user_vikram
+      repository.switchUser('user_vikram');
+
+      // Vikram must NOT see Aarav's private session reflection
+      const vikramSessionRefls = await repository.getSessionReflections('sess_jaipur_01');
+      expect(vikramSessionRefls.some((r) => r.id === reflection.id)).toBe(false);
+
+      const allVikramRefls = await repository.getReflections();
+      expect(allVikramRefls.some((r) => r.id === reflection.id)).toBe(false);
+
+      const singleRefl = await repository.getReflection(reflection.id);
+      expect(singleRefl).toBeNull();
+
+      // Switch back to Aarav
+      repository.switchUser('user_aarav');
+    });
+
+    it('rejects post-session reflection if user is not active persona or not in session roster', async () => {
+      // Active user is Aarav; attempting to submit as Vikram
+      await expect(
+        repository.addReflection({
+          userId: 'user_vikram',
+          contextType: 'session',
+          contextId: 'sess_jaipur_01',
+          prompt: 'Prompt',
+          text: 'Reflection text',
+          valuesHighlighted: [],
+          isPublicInPassport: false,
+        })
+      ).rejects.toThrow(/can only save reflection as the currently active persona/);
+
+      // Switch to an active user not in the session roster
+      // user_meera is not in sess_jaipur_01 roster
+      repository.switchUser('user_meera');
+      await expect(
+        repository.addReflection({
+          userId: 'user_meera',
+          contextType: 'session',
+          contextId: 'sess_jaipur_01',
+          prompt: 'Prompt',
+          text: 'Reflection text',
+          valuesHighlighted: [],
+          isPublicInPassport: false,
+        })
+      ).rejects.toThrow(/is not in session .* roster/);
+
+      repository.switchUser('user_aarav');
     });
 
     it('records and persists rulebook acknowledgement for participants', async () => {
@@ -338,10 +388,28 @@ describe('Debate Room & Shared Live Session Repository Operations', () => {
       expect(lastContrib?.text).toBe('Initial debate intervention before mode switch');
     });
 
-    it('rejects mode switching by non-facilitators', async () => {
+    it('rejects mode switching to unsupported modes or by non-facilitators', async () => {
+      // Non-facilitator
       await expect(
         repository.switchSessionMode('sess_jaipur_01', 'user_aarav', 'youth_assembly')
       ).rejects.toThrow(/Unauthorized actor action/);
+
+      // Unsupported mode
+      await expect(
+        repository.switchSessionMode(
+          'sess_jaipur_01',
+          'user_rohan',
+          'youth_parliament'
+        )
+      ).rejects.toThrow(/Unsupported session mode "youth_parliament"/);
+
+      await expect(
+        repository.switchSessionMode(
+          'sess_jaipur_01',
+          'user_rohan',
+          'workshop'
+        )
+      ).rejects.toThrow(/Unsupported session mode "workshop"/);
     });
 
     it('persists session updates across localStorage reload', async () => {

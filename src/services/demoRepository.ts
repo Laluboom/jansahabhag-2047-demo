@@ -2276,6 +2276,13 @@ export class LocalDemoRepository implements DemoRepository {
     targetMode: SessionMode,
     summary?: string
   ): Promise<Session> {
+    const ALLOWED_LOCAL_MODES: SessionMode[] = ['debate_room', 'youth_assembly', 'standard_meeting'];
+    if (!ALLOWED_LOCAL_MODES.includes(targetMode)) {
+      throw new Error(
+        `Unsupported session mode "${targetMode}". Only debate_room, youth_assembly, and standard_meeting modes are supported in this local simulation.`
+      );
+    }
+
     const db = this.getDb();
     const session = db.sessions.find((s) => s.id === sessionId);
     if (!session) {
@@ -2384,6 +2391,7 @@ export class LocalDemoRepository implements DemoRepository {
     acts = acts.filter((a) => {
       if (this.isUhvReflectionActivity(a, db)) return false;
       if (a.userId !== activeUserId && this.isUhvActivity(a, db)) return false;
+      if (a.referenceType === 'session_reflection' && a.userId !== activeUserId) return false;
       return true;
     });
     acts = acts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -2413,8 +2421,8 @@ export class LocalDemoRepository implements DemoRepository {
     const activeUserId = db.activeUserId;
     const refls = db.reflections.filter((r) => {
       if (userId && r.userId !== userId) return false;
-      // In this single-browser simulation, private UHV reflections are visible only when the active demo persona is their owner
-      if (this.isUhvReflectionRecord(r, db)) {
+      // In this single-browser simulation, private UHV and session reflections are visible only when the active demo persona is their owner
+      if (this.isUhvReflectionRecord(r, db) || r.contextType === 'session') {
         return r.userId === activeUserId;
       }
       return true;
@@ -2424,9 +2432,14 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getCivicReflections(userId?: string): Promise<Reflection[]> {
     const db = this.getDb();
+    const activeUserId = db.activeUserId;
     const refls = db.reflections.filter((r) => {
       if (userId && r.userId !== userId) return false;
       if (this.isUhvReflectionRecord(r, db)) return false;
+      // In this single-browser simulation, private session reflections are visible only to their owner
+      if (r.contextType === 'session') {
+        return r.userId === activeUserId;
+      }
       return true;
     });
     return JSON.parse(JSON.stringify(refls));
@@ -2447,7 +2460,7 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const refl = db.reflections.find((r) => r.id === id);
     if (!refl) return null;
-    if (this.isUhvReflectionRecord(refl, db) && refl.userId !== db.activeUserId) {
+    if ((this.isUhvReflectionRecord(refl, db) || refl.contextType === 'session') && refl.userId !== db.activeUserId) {
       return null;
     }
     return JSON.parse(JSON.stringify(refl));
@@ -2455,9 +2468,12 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getSessionReflections(sessionId: string, userId?: string): Promise<Reflection[]> {
     const db = this.getDb();
+    const activeUserId = db.activeUserId;
+    const targetUserId = userId || activeUserId;
     const refls = db.reflections.filter((r) => {
       if (r.contextType !== 'session' || r.contextId !== sessionId) return false;
-      if (userId && r.userId !== userId) return false;
+      // In this single-browser simulation, private session reflections are visible only when the active persona is their author
+      if (r.userId !== targetUserId || r.userId !== activeUserId) return false;
       return true;
     });
     return JSON.parse(JSON.stringify(refls));
@@ -2469,6 +2485,50 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const now = new Date().toISOString();
     const isUhv = this.isUhvContext(reflection.contextType, reflection.contextId, db);
+
+    // If session context: validate active persona, linked session, and session roster; private by default, no credit
+    if (reflection.contextType === 'session') {
+      const activeUserId = db.activeUserId;
+      if (reflection.userId !== activeUserId) {
+        throw new Error(`Unauthorized: can only save reflection as the currently active persona (${activeUserId})`);
+      }
+      const session = db.sessions.find((s) => s.id === reflection.contextId);
+      if (!session) {
+        throw new Error(`Session ${reflection.contextId} not found`);
+      }
+      const isInRoster = session.roster.some((r) => r.userId === reflection.userId);
+      if (!isInRoster) {
+        throw new Error(`User ${reflection.userId} is not in session ${session.id} roster`);
+      }
+
+      const newRefl: Reflection = {
+        ...reflection,
+        isPublicInPassport: false, // Private by default in this single-browser simulation
+        id: generateId('refl'),
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.reflections.push(newRefl);
+
+      // Record activity with generic summary to avoid publishing private reflection text
+      db.activities.push({
+        id: generateId('act'),
+        userId: reflection.userId,
+        type: 'reflection_shared',
+        title: 'Completed Debate Session Self-Reflection',
+        description: 'Personal deliberation self-reflection recorded in private session log.',
+        referenceId: newRefl.id,
+        referenceType: 'session_reflection',
+        timestamp: now,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      this.saveDb(db);
+      return JSON.parse(JSON.stringify(newRefl));
+    }
 
     const newRefl: Reflection = {
       ...reflection,
@@ -2482,26 +2542,6 @@ export class LocalDemoRepository implements DemoRepository {
 
     // If UHV context: record privately with NO civic credits, NO passport entry, NO public activity text, and NO teacher notifications
     if (isUhv) {
-      this.saveDb(db);
-      return JSON.parse(JSON.stringify(newRefl));
-    }
-
-    // If session context: record for the persona linked to this session, with NO automatic credit/verification claim
-    if (reflection.contextType === 'session') {
-      db.activities.push({
-        id: generateId('act'),
-        userId: reflection.userId,
-        type: 'reflection_shared',
-        title: 'Completed Debate Session Self-Reflection',
-        description: reflection.text.slice(0, 90),
-        referenceId: newRefl.id,
-        referenceType: 'session_reflection',
-        timestamp: now,
-        schemaVersion: 1,
-        createdAt: now,
-        updatedAt: now,
-      });
-
       this.saveDb(db);
       return JSON.parse(JSON.stringify(newRefl));
     }

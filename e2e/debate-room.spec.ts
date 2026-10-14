@@ -104,6 +104,34 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(page.getByText(/Reflection saved locally to your profile/i)).toBeVisible();
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).toBeVisible();
 
+    // 6. Persona boundary regression: switch to unacknowledged participant Vikram in same mounted page
+    await page.getByRole('button', { name: /Viewing as/i }).click();
+    await expect(page.getByText('Switch Demo Persona')).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /Vikram/i }).click();
+    await expect(page.getByText(/Persona: Vikram/i)).toBeVisible();
+
+    // Verify Aarav's private reflection is NOT visible to Vikram
+    await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).not.toBeVisible();
+
+    // Verify unacknowledged rulebook banner IS visible for Vikram
+    await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).toBeVisible();
+
+    // Attempting to request speaking turn without acknowledgement opens rulebook and shows error
+    await page.getByRole('button', { name: /Request Speaking Turn/i }).click();
+    await expect(page.getByText(/Please review and acknowledge the Debate Ground Rules/i)).toBeVisible();
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
+
+    // Vikram acknowledges via rulebook modal
+    await modal.getByRole('button', { name: /Acknowledge Ground Rules/i }).click();
+    await expect(modal).not.toBeVisible();
+    await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).not.toBeVisible();
+
+    // Switch back to Aarav for passport link test
+    await page.getByRole('button', { name: /Viewing as/i }).click();
+    await expect(page.getByText('Switch Demo Persona')).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /Aarav Sharma/i }).click();
+
     await page.getByRole('button', { name: /Open Civic Passport/i }).click();
     await page.waitForURL('**/passport');
     await expect(page.getByText(/Verified Civic Passport/i)).toBeVisible();

@@ -52,7 +52,6 @@ export const DebateRoomPreviewPage: React.FC = () => {
 
   // Modals & Panels
   const [isRulebookOpen, setIsRulebookOpen] = useState(false);
-  const [hasAcknowledgedRules, setHasAcknowledgedRules] = useState(false);
   const [isInterstitialOpen, setIsInterstitialOpen] = useState(false);
 
   // Form State
@@ -78,7 +77,9 @@ export const DebateRoomPreviewPage: React.FC = () => {
       const [evidence, users, reflections] = await Promise.all([
         demoRepository.getEvidenceList(),
         demoRepository.getUsers(),
-        demoRepository.getSessionReflections('sess_jaipur_01'),
+        currentUser
+          ? demoRepository.getSessionReflections('sess_jaipur_01', currentUser.id)
+          : Promise.resolve([]),
       ]);
       setEvidenceList(evidence);
       setAllUsers(users);
@@ -93,6 +94,16 @@ export const DebateRoomPreviewPage: React.FC = () => {
   useEffect(() => {
     loadSessionData();
   }, []);
+
+  // Re-fetch persona-scoped session reflections when currentUser changes
+  useEffect(() => {
+    if (session && currentUser) {
+      demoRepository
+        .getSessionReflections(session.id, currentUser.id)
+        .then(setSessionReflections)
+        .catch(() => {});
+    }
+  }, [currentUser?.id, session?.id]);
 
   if (isLoading || !session || !currentUser) {
     return (
@@ -121,8 +132,10 @@ export const DebateRoomPreviewPage: React.FC = () => {
     ? allUsers.find((u) => u.id === activeSpeakerId) || { name: activeSpeakerId }
     : null;
 
-  const isRulebookAcknowledged =
-    session.debateData?.acknowledgedUserIds?.includes(currentUser.id) || hasAcknowledgedRules;
+  // Strict persona acknowledgement check: only acknowledged if currentUser.id is in session debateData
+  const isRulebookAcknowledged = Boolean(
+    session.debateData?.acknowledgedUserIds?.includes(currentUser.id)
+  );
 
   // Actions
   const handleRequestTurn = async () => {
@@ -158,11 +171,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
           'How did the debate discussion and evidence presented shape your perspective on safe school corridors?',
         text: reflectionText.trim(),
         valuesHighlighted: ['Evidence-based Reasoning', 'Civic Responsibility'],
-        isPublicInPassport: true,
+        isPublicInPassport: false,
       });
       setSessionReflections((prev) => [saved, ...prev]);
       setReflectionText('');
-      setReflectionSuccess('Reflection saved locally to your profile. (No automated credits claimed)');
+      setReflectionSuccess('Private reflection saved locally to your profile. (No automated credits claimed)');
     } catch (err: any) {
       setActionError(err.message || 'Failed to save reflection');
     } finally {
@@ -232,6 +245,13 @@ export const DebateRoomPreviewPage: React.FC = () => {
     setIsSubmitting(true);
     setActionError(null);
     setActionSuccess(null);
+
+    if (!isRulebookAcknowledged) {
+      setActionError('Please review and acknowledge the Debate Ground Rules before posting an intervention.');
+      setIsRulebookOpen(true);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const updated = await demoRepository.postDebateContribution({
@@ -419,7 +439,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       </div>
 
       {/* Pre-Action Rulebook Banner (if not acknowledged yet) */}
-      {!hasAcknowledgedRules && (
+      {!isRulebookAcknowledged && (
         <Card className="p-4 border-amber-200 bg-amber-50/60">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-2.5">
@@ -445,7 +465,15 @@ export const DebateRoomPreviewPage: React.FC = () => {
               <Button
                 size="sm"
                 variant="primary"
-                onClick={() => setHasAcknowledgedRules(true)}
+                onClick={async () => {
+                  try {
+                    const updated = await demoRepository.acknowledgeRulebook(session.id, currentUser.id);
+                    setSession(updated);
+                    setActionSuccess('Debate Rulebook acknowledged.');
+                  } catch (err) {
+                    setActionError(err instanceof Error ? err.message : 'Failed to acknowledge rulebook');
+                  }
+                }}
                 className="text-xs bg-amber-700 hover:bg-amber-800 text-white"
               >
                 Acknowledge & Continue
@@ -863,7 +891,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                     'Reflect on the evidence and arguments in your Civic Passport.'}
                 </p>
                 <p className="text-[11px] text-slate-500 italic">
-                  Local Simulation: Reflection is saved to your local profile. In accordance with competition rules, deliberation reflections do not claim automated verified credits.
+                  Local Simulation: Reflection is saved privately for your current persona in this browser session. In accordance with competition rules, deliberation reflections are not public evidence and do not claim automated verified credits.
                 </p>
               </div>
             </div>
@@ -909,7 +937,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
             {sessionReflections.length > 0 && (
               <div className="pt-2 border-t border-civic-teal-200/60 space-y-2">
                 <span className="text-[11px] font-semibold text-civic-teal-950 uppercase tracking-wider">
-                  Saved Session Reflections ({sessionReflections.length})
+                  Your Saved Session Reflections ({sessionReflections.length})
                 </span>
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {sessionReflections.map((refl) => {
@@ -1048,12 +1076,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
                 try {
                   const updated = await demoRepository.acknowledgeRulebook(session.id, currentUser.id);
                   setSession(updated);
-                } catch {
-                  // ignore
+                  setIsRulebookOpen(false);
+                  setActionSuccess('Debate Rulebook acknowledged.');
+                } catch (err) {
+                  setActionError(err instanceof Error ? err.message : 'Failed to acknowledge rulebook');
                 }
-                setHasAcknowledgedRules(true);
-                setIsRulebookOpen(false);
-                setActionSuccess('Debate Rulebook acknowledged.');
               }}
               className="text-xs bg-civic-indigo-600 hover:bg-civic-indigo-700 text-white"
             >
@@ -1073,7 +1100,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs text-slate-700">
           <p className="leading-relaxed">
-            As Facilitator Rohan Mehta, you are initiating a live session mode transition from <strong>Debate Room</strong> to the linked <strong>Youth Assembly</strong> chamber.
+            As Facilitator Rohan Mehta, you are initiating a local session mode transition in this simulation from <strong>Debate Room</strong> to the linked <strong>Youth Assembly</strong> chamber.
           </p>
 
           <div className="p-3.5 rounded-lg border border-civic-teal-200 bg-civic-teal-50/60 space-y-2">
