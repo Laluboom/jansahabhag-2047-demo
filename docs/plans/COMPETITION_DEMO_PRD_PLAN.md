@@ -2,7 +2,7 @@
 
 **Status:** decision-gated requirements map, 12 October 2026. The owner originally chose a **connected competition demo**, then chose a clearly labelled **single-browser simulation** with fictional data and the Jaipur pedestrian-safety story for the immediate pass. The Master PRD's connected and server-authorized requirements remain the governing gaps; choosing a simulation does not satisfy them. The [historical browser-demo plan](../../IMPLEMENTATION_PLAN.md) describes what was built earlier; it is not the work order for this pass. No task below is marked implemented by this plan.
 
-**Isolated review update:** [12 October sub-agy review](../audits/DEMO_SUBAGY_REVIEW_2026-10-12.md) records ready, unmerged branches for a Phase 0 route inventory and package 01 method/navigation changes. Package 00 live certification and packages 02–09 remain open.
+**Isolated review update:** [sub-agy review, updated 14 October](../audits/DEMO_SUBAGY_REVIEW_2026-10-12.md) records ready, unmerged branches for the Phase 0 inventory, package 01 method/navigation/UHV boundary, and repairs for two phone page overflows. The final UHV branch contains the earlier navigation branch. Package 00 live certification and packages 02–09 remain open; no branch combination or deployed build has been accepted.
 
 ## Read in this order
 
