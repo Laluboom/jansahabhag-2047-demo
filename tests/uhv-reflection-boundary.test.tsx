@@ -306,6 +306,32 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
             createdAt: '2026-09-05T10:00:00Z',
             updatedAt: '2026-09-05T10:00:00Z',
           },
+          {
+            id: 'refl_uhv_legacy_01',
+            userId: 'user_meera',
+            contextType: 'course',
+            contextId: 'course_uhv_leadership_05',
+            prompt: 'Legacy UHV reflection prompt',
+            text: 'Legacy private reflections on human values',
+            valuesHighlighted: ['Trust'],
+            isPublicInPassport: true, // Legacy defect
+            schemaVersion: 1,
+            createdAt: '2026-09-01T10:00:00Z',
+            updatedAt: '2026-09-01T10:00:00Z',
+          },
+          {
+            id: 'refl_meera_assembly_01',
+            userId: 'user_meera',
+            contextType: 'assembly',
+            contextId: 'assembly_jaipur_pedestrian_2026',
+            prompt: 'Civic reflection on assembly dialogue',
+            text: 'Deliberation improved my understanding of pedestrian infrastructure.',
+            valuesHighlighted: ['Deliberation', 'Empathy'],
+            isPublicInPassport: true,
+            schemaVersion: 1,
+            createdAt: '2026-09-05T12:00:00Z',
+            updatedAt: '2026-09-05T12:00:00Z',
+          },
         ],
         credits: [
           {
@@ -321,6 +347,18 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
             schemaVersion: 1,
           },
           {
+            id: 'tx_legacy_uhv_refl',
+            userId: 'user_meera',
+            dimension: 'Reflection',
+            amount: 5,
+            sourceType: 'reflection',
+            sourceId: 'refl_uhv_legacy_01',
+            status: 'Verified',
+            reason: 'Legacy UHV reflection credit defect',
+            createdAt: '2026-09-01T10:00:00Z',
+            schemaVersion: 1,
+          },
+          {
             id: 'tx_meera_civic_01',
             userId: 'user_meera',
             dimension: 'Civic Action',
@@ -330,6 +368,18 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
             status: 'Verified',
             reason: 'Civic action milestone',
             createdAt: '2026-09-03T10:00:00Z',
+            schemaVersion: 1,
+          },
+          {
+            id: 'tx_meera_assembly_refl',
+            userId: 'user_meera',
+            dimension: 'Reflection',
+            amount: 5,
+            sourceType: 'reflection',
+            sourceId: 'refl_meera_assembly_01',
+            status: 'Verified',
+            reason: 'Civic reflection credit',
+            createdAt: '2026-09-05T12:00:00Z',
             schemaVersion: 1,
           },
         ],
@@ -345,6 +395,34 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
             evidenceIds: [],
             sourceReferenceId: 'course_uhv_leadership_05',
             sourceReferenceType: 'course',
+            isVerified: true,
+            schemaVersion: 1,
+          },
+          {
+            id: 'pass_legacy_uhv_refl',
+            userId: 'user_meera',
+            category: 'reflection',
+            title: 'Legacy UHV Reflection',
+            subtitle: 'Defective passport entry',
+            date: '2026-09-01',
+            creditsAwarded: 5,
+            evidenceIds: [],
+            sourceReferenceId: 'refl_uhv_legacy_01',
+            sourceReferenceType: 'reflection',
+            isVerified: true,
+            schemaVersion: 1,
+          },
+          {
+            id: 'pass_meera_assembly_refl',
+            userId: 'user_meera',
+            category: 'reflection',
+            title: 'Assembly Deliberation Reflection',
+            subtitle: 'Pedestrian dialogue',
+            date: '2026-09-05',
+            creditsAwarded: 5,
+            evidenceIds: [],
+            sourceReferenceId: 'refl_meera_assembly_01',
+            sourceReferenceType: 'reflection',
             isVerified: true,
             schemaVersion: 1,
           },
@@ -400,13 +478,23 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(charter).toBeDefined();
       expect(charter?.title).toBe('Youth Pedestrian Rights Charter: Ajmer Draft');
 
-      // Legacy UHV reward records removed
+      // Legacy UHV reward records removed (both course and reflection-linked)
       expect(migrated.credits.find((c) => c.id === 'tx_meera_03')).toBeUndefined();
       expect(migrated.passportEntries.find((p) => p.id === 'pass_meera_03')).toBeUndefined();
+      expect(migrated.credits.find((c) => c.id === 'tx_legacy_uhv_refl')).toBeUndefined();
+      expect(migrated.passportEntries.find((p) => p.id === 'pass_legacy_uhv_refl')).toBeUndefined();
 
-      // Unrelated user civic records preserved
+      // Legacy UHV reflection normalized to private
+      const uhvRefl = migrated.reflections.find((r) => r.id === 'refl_uhv_legacy_01');
+      expect(uhvRefl).toBeDefined();
+      expect(uhvRefl?.isPublicInPassport).toBe(false);
+
+      // Unrelated user civic records preserved, including civic reflections and credits!
       expect(migrated.credits.find((c) => c.id === 'tx_meera_civic_01')).toBeDefined();
+      expect(migrated.credits.find((c) => c.id === 'tx_meera_assembly_refl')).toBeDefined();
+      expect(migrated.passportEntries.find((p) => p.id === 'pass_meera_assembly_refl')).toBeDefined();
       expect(migrated.reflections.find((r) => r.id === 'refl_custom_user_01')).toBeDefined();
+      expect(migrated.reflections.find((r) => r.id === 'refl_meera_assembly_01')).toBeDefined();
       expect(migrated.civicIssues?.find((i) => i.id === 'issue_custom_user_01')).toBeDefined();
     });
   });
@@ -501,6 +589,170 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Must NOT promise credits
       expect(screen.queryByText(/Mark Lesson Complete \(\+5 Credits\)/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Go to Assignment \(\+10 Credits\)/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('7. Direct UHV reflection method and cross-persona read isolation', () => {
+    it('records direct UHV reflections privately without civic credits, passport entries, public activity, or teacher notifications', async () => {
+      await useAuthStore.getState().switchPersona('user_meera');
+      const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
+      const initialPassport = await demoRepository.getPassport('user_meera');
+
+      // Call addReflection directly with UHV context
+      const refl = await demoRepository.addReflection({
+        userId: 'user_meera',
+        contextType: 'course',
+        contextId: 'course_uhv_leadership_05',
+        prompt: 'Direct reflection on interpersonal trust',
+        text: 'Private observations exploring harmony and personal values.',
+        valuesHighlighted: ['Trust', 'Respect'],
+        isPublicInPassport: true, // Should be forced to false
+      });
+
+      // Reflection must be private
+      expect(refl.isPublicInPassport).toBe(false);
+
+      // User total credits MUST remain unchanged
+      const creditsAfter = (await demoRepository.getCurrentUser()).totalCredits;
+      expect(creditsAfter).toBe(initialCredits);
+
+      // Passport must NOT contain any reflection entry for this reflection
+      const passportAfter = await demoRepository.getPassport('user_meera');
+      expect(passportAfter.entries.find((p) => p.sourceReferenceId === refl.id)).toBeUndefined();
+      expect(passportAfter.totalCredits).toBe(initialPassport.totalCredits);
+
+      // Credits must NOT contain any transaction for this reflection
+      const creditsList = await demoRepository.getCredits('user_meera');
+      expect(creditsList.find((c) => c.sourceId === refl.id)).toBeUndefined();
+
+      // Teacher Kavita must NOT receive notifications about Meera's UHV reflection
+      const teacherNotifs = await demoRepository.getNotifications('user_kavita');
+      expect(teacherNotifs.find((n) => n.message.includes('Direct reflection on interpersonal trust'))).toBeUndefined();
+    });
+
+    it('isolates private UHV reflections so other personas cannot read them via getReflections or getReflection', async () => {
+      // Meera is active persona: can read her own seeded UHV reflection refl_meera_01
+      await useAuthStore.getState().switchPersona('user_meera');
+      const meeraRefls = await demoRepository.getReflections('user_meera');
+      expect(meeraRefls.find((r) => r.id === 'refl_meera_01')).toBeDefined();
+
+      const directLookupMeera = await demoRepository.getReflection('refl_meera_01');
+      expect(directLookupMeera).toBeDefined();
+      expect(directLookupMeera?.id).toBe('refl_meera_01');
+
+      // Switch to Teacher Kavita: cannot access Meera's private UHV reflection
+      await useAuthStore.getState().switchPersona('user_kavita');
+
+      // getReflections with Meera's ID excludes UHV reflection
+      const kavitaLookingAtMeera = await demoRepository.getReflections('user_meera');
+      expect(kavitaLookingAtMeera.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
+
+      // getReflections without user ID excludes UHV reflection
+      const allRefls = await demoRepository.getReflections();
+      expect(allRefls.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
+
+      // Direct lookup by ID returns null for another persona's private UHV reflection
+      const directLookupKavita = await demoRepository.getReflection('refl_meera_01');
+      expect(directLookupKavita).toBeNull();
+    });
+  });
+
+  describe('8. addCredit guard & intact civic Assembly reflection workflow', () => {
+    it('prevents direct addCredit for UHV lesson, assignment, course, or UHV reflection sources', async () => {
+      await useAuthStore.getState().switchPersona('user_aarav');
+      const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
+
+      // Lesson source
+      await expect(
+        demoRepository.addCredit({
+          userId: 'user_aarav',
+          dimension: 'Learning',
+          amount: 5,
+          sourceType: 'lesson',
+          sourceId: 'les_uhv_501',
+          status: 'Verified',
+          reason: 'Attempted UHV lesson credit',
+        })
+      ).rejects.toThrow(/Civic credits cannot be awarded for Universal Human Values/);
+
+      // Assignment source
+      await expect(
+        demoRepository.addCredit({
+          userId: 'user_aarav',
+          dimension: 'Contribution',
+          amount: 10,
+          sourceType: 'assignment',
+          sourceId: 'asg_uhv_08',
+          status: 'Verified',
+          reason: 'Attempted UHV assignment credit',
+        })
+      ).rejects.toThrow(/Civic credits cannot be awarded for Universal Human Values/);
+
+      // Course source
+      await expect(
+        demoRepository.addCredit({
+          userId: 'user_aarav',
+          dimension: 'Learning',
+          amount: 30,
+          sourceType: 'course' as any,
+          sourceId: 'course_uhv_leadership_05',
+          status: 'Verified',
+          reason: 'Attempted UHV course credit',
+        })
+      ).rejects.toThrow(/Civic credits cannot be awarded for Universal Human Values/);
+
+      // Reflection source
+      await expect(
+        demoRepository.addCredit({
+          userId: 'user_aarav',
+          dimension: 'Reflection',
+          amount: 5,
+          sourceType: 'reflection',
+          sourceId: 'refl_meera_01',
+          status: 'Verified',
+          reason: 'Attempted UHV reflection credit',
+        })
+      ).rejects.toThrow(/Civic credits cannot be awarded for Universal Human Values/);
+
+      // Total credits unchanged
+      expect((await demoRepository.getCurrentUser()).totalCredits).toBe(initialCredits);
+    });
+
+    it('preserves full +5 Reflection Credit, Passport entry, and notification for civic Assembly reflections', async () => {
+      await useAuthStore.getState().switchPersona('user_aarav');
+      const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
+
+      const civicRefl = await demoRepository.addReflection({
+        userId: 'user_aarav',
+        contextType: 'assembly',
+        contextId: 'assembly_jaipur_pedestrian_2026',
+        prompt: 'What did you learn from deliberating on pedestrian speed tables?',
+        text: 'Active listening helped resolve safety concerns regarding ambulance passage.',
+        valuesHighlighted: ['Constructive Dialogue', 'Empathy'],
+        isPublicInPassport: true,
+      });
+
+      expect(civicRefl.id).toBeDefined();
+      expect(civicRefl.isPublicInPassport).toBe(true);
+
+      // Awards +5 Reflection Credits
+      const creditsAfter = (await demoRepository.getCurrentUser()).totalCredits;
+      expect(creditsAfter).toBe(initialCredits + 5);
+
+      // Passport entry created and verified
+      const passport = await demoRepository.getPassport('user_aarav');
+      const passEntry = passport.entries.find((p) => p.sourceReferenceId === civicRefl.id);
+      expect(passEntry).toBeDefined();
+      expect(passEntry?.creditsAwarded).toBe(5);
+      expect(passEntry?.isVerified).toBe(true);
+
+      // Activity logged
+      const activities = await demoRepository.getActivities('user_aarav');
+      expect(activities.find((a) => a.referenceId === civicRefl.id)).toBeDefined();
+
+      // Notifications received
+      const notifs = await demoRepository.getNotifications('user_aarav');
+      expect(notifs.find((n) => n.title === 'Reflection Recorded')).toBeDefined();
     });
   });
 });

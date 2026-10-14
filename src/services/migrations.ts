@@ -99,21 +99,49 @@ export function normalizeUhvRecords(storedData: any): DemoDatabase {
     });
   }
 
-  // 5. Clean UHV credit transactions (tx_meera_03, tx_meera_06, or any UHV lesson/assignment rewards)
+  // 5. Identify UHV reflections and normalize to private without overwriting participant's authored text
+  const uhvReflectionIds = new Set<string>();
+  uhvReflectionIds.add('refl_meera_01');
+  if (Array.isArray(db.reflections)) {
+    db.reflections.forEach((r) => {
+      const isUhv =
+        r.id === 'refl_meera_01' ||
+        (r.contextType === 'course' && uhvCourseIds.has(r.contextId)) ||
+        ((r.contextType as string) === 'lesson' && uhvLessonIds.has(r.contextId)) ||
+        (r.contextType === 'assignment' && uhvAssignmentIds.has(r.contextId)) ||
+        uhvCourseIds.has(r.contextId) ||
+        uhvLessonIds.has(r.contextId) ||
+        uhvAssignmentIds.has(r.contextId);
+      if (isUhv) {
+        uhvReflectionIds.add(r.id);
+        r.isPublicInPassport = false;
+      }
+    });
+  }
+
+  // 6. Clean UHV credit transactions (tx_meera_03, tx_meera_06, or any UHV lesson/assignment/reflection rewards)
   // Preserves ALL civic credits and user-created rewards by strictly using typed source references or exact IDs!
   if (Array.isArray(db.credits)) {
     db.credits = db.credits.filter((c) => {
       if (c.id === 'tx_meera_03' || c.id === 'tx_meera_06') return false;
-      if (c.sourceId === 'tx_meera_03' || c.sourceId === 'asg_uhv_08') return false;
+      if (c.sourceId === 'tx_meera_03' || c.sourceId === 'tx_meera_06' || c.sourceId === 'asg_uhv_08') return false;
       if (c.sourceType === 'assignment' && uhvAssignmentIds.has(c.sourceId)) return false;
       if (c.sourceType === 'lesson' && uhvLessonIds.has(c.sourceId)) return false;
       if ((c.sourceType as string) === 'course' && uhvCourseIds.has(c.sourceId)) return false;
-      if (uhvCourseIds.has(c.sourceId) || uhvLessonIds.has(c.sourceId) || uhvAssignmentIds.has(c.sourceId)) return false;
+      if (c.sourceType === 'reflection' && uhvReflectionIds.has(c.sourceId)) return false;
+      if (
+        uhvCourseIds.has(c.sourceId) ||
+        uhvLessonIds.has(c.sourceId) ||
+        uhvAssignmentIds.has(c.sourceId) ||
+        uhvReflectionIds.has(c.sourceId)
+      ) {
+        return false;
+      }
       return true;
     });
   }
 
-  // 6. Clean UHV passport entries (pass_meera_03, or any UHV entries asserting civic graduate / reward)
+  // 7. Clean UHV passport entries (pass_meera_03, or any UHV entries asserting civic graduate / reward)
   // Preserves ALL civic passport entries by strictly using typed source references or exact IDs!
   if (Array.isArray(db.passportEntries)) {
     db.passportEntries = db.passportEntries.filter((p) => {
@@ -121,20 +149,16 @@ export function normalizeUhvRecords(storedData: any): DemoDatabase {
       if (p.sourceReferenceType === 'course' && uhvCourseIds.has(p.sourceReferenceId)) return false;
       if (p.sourceReferenceType === 'lesson' && uhvLessonIds.has(p.sourceReferenceId)) return false;
       if (p.sourceReferenceType === 'assignment' && uhvAssignmentIds.has(p.sourceReferenceId)) return false;
-      if (uhvCourseIds.has(p.sourceReferenceId) || uhvLessonIds.has(p.sourceReferenceId) || uhvAssignmentIds.has(p.sourceReferenceId)) return false;
+      if (p.sourceReferenceType === 'reflection' && uhvReflectionIds.has(p.sourceReferenceId)) return false;
+      if (
+        uhvCourseIds.has(p.sourceReferenceId) ||
+        uhvLessonIds.has(p.sourceReferenceId) ||
+        uhvAssignmentIds.has(p.sourceReferenceId) ||
+        uhvReflectionIds.has(p.sourceReferenceId)
+      ) {
+        return false;
+      }
       return true;
-    });
-  }
-
-  // 7. Normalize UHV reflections to private without overwriting participant's authored text
-  if (Array.isArray(db.reflections)) {
-    db.reflections.forEach((r) => {
-      if ((r as any).contextId && uhvCourseIds.has((r as any).contextId)) {
-        r.isPublicInPassport = false;
-      }
-      if (r.id === 'refl_meera_01') {
-        r.isPublicInPassport = false;
-      }
     });
   }
 

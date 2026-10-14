@@ -18,6 +18,8 @@ import {
   Project,
   Reflection,
   CreditTransaction,
+  CreditSourceType,
+  PassportEntry,
   Notification,
   CommunityGroup,
   CommunityPost,
@@ -52,15 +54,7 @@ export class LocalDemoRepository implements DemoRepository {
     return db.credits
       .filter((c) => {
         if (c.userId !== userId) return false;
-        if (
-          c.sourceId?.startsWith('les_uhv_') ||
-          c.sourceId?.startsWith('asg_uhv_') ||
-          c.sourceId === 'course_uhv_leadership_05' ||
-          c.id === 'tx_meera_03' ||
-          c.id === 'tx_meera_06'
-        ) {
-          return false;
-        }
+        if (this.isUhvCredit(c, db)) return false;
         return true;
       })
       .reduce((sum, c) => sum + c.amount, 0);
@@ -81,6 +75,120 @@ export class LocalDemoRepository implements DemoRepository {
     const asg = database.assignments.find((a) => a.id === sub.assignmentId);
     if (!asg) return sub.assignmentId === 'asg_uhv_08';
     return this.isUhvAssignment(asg, database);
+  }
+
+  public isUhvLesson(lesson: Lesson, db?: DemoDatabase): boolean {
+    if (lesson.id.startsWith('les_uhv_')) return true;
+    const database = db || this.getDb();
+    const course = database.courses.find((c) => c.id === lesson.courseId);
+    return course?.track === 'uhv' || lesson.courseId === 'course_uhv_leadership_05';
+  }
+
+  public isUhvContext(contextType: string, contextId: string, db?: DemoDatabase): boolean {
+    const database = db || this.getDb();
+    if (
+      contextId === 'course_uhv_leadership_05' ||
+      contextId.startsWith('course_uhv_') ||
+      contextId === 'asg_uhv_08' ||
+      contextId.startsWith('asg_uhv_') ||
+      contextId.startsWith('les_uhv_') ||
+      contextId === 'refl_meera_01'
+    ) {
+      return true;
+    }
+    if (contextType === 'course') {
+      const course = database.courses.find((c) => c.id === contextId);
+      return course?.track === 'uhv';
+    }
+    if (contextType === 'lesson') {
+      const lesson = database.lessons.find((l) => l.id === contextId);
+      if (lesson) {
+        const course = database.courses.find((c) => c.id === lesson.courseId);
+        return course?.track === 'uhv';
+      }
+    }
+    if (contextType === 'assignment') {
+      const asg = database.assignments.find((a) => a.id === contextId);
+      if (asg) return this.isUhvAssignment(asg, database);
+    }
+    return false;
+  }
+
+  public isUhvReflectionRecord(refl: Reflection, db?: DemoDatabase): boolean {
+    if (refl.id === 'refl_meera_01') return true;
+    return this.isUhvContext(refl.contextType, refl.contextId, db);
+  }
+
+  public isUhvCreditSource(sourceType: CreditSourceType, sourceId: string, db?: DemoDatabase): boolean {
+    const database = db || this.getDb();
+    if (sourceId === 'tx_meera_03' || sourceId === 'tx_meera_06') return true;
+    if (sourceId === 'course_uhv_leadership_05' || sourceId.startsWith('course_uhv_')) return true;
+    if (sourceId === 'asg_uhv_08' || sourceId.startsWith('asg_uhv_')) return true;
+    if (sourceId.startsWith('les_uhv_')) return true;
+    if (sourceId === 'refl_meera_01') return true;
+
+    if (sourceType === 'assignment') {
+      const asg = database.assignments?.find((a) => a.id === sourceId);
+      if (asg && this.isUhvAssignment(asg, database)) return true;
+    }
+    if (sourceType === 'lesson') {
+      if (sourceId.startsWith('les_uhv_')) return true;
+      const lesson = database.lessons?.find((l) => l.id === sourceId);
+      if (lesson) {
+        const course = database.courses?.find((c) => c.id === lesson.courseId);
+        if (course?.track === 'uhv') return true;
+      }
+    }
+    if ((sourceType as string) === 'course') {
+      const course = database.courses?.find((c) => c.id === sourceId);
+      if (course?.track === 'uhv') return true;
+    }
+    if (sourceType === 'reflection') {
+      const refl = database.reflections?.find((r) => r.id === sourceId);
+      if (refl && this.isUhvReflectionRecord(refl, database)) return true;
+    }
+    return false;
+  }
+
+  public isUhvCredit(c: CreditTransaction, db?: DemoDatabase): boolean {
+    const database = db || this.getDb();
+    if (c.id === 'tx_meera_03' || c.id === 'tx_meera_06') return true;
+    return this.isUhvCreditSource(c.sourceType, c.sourceId, database);
+  }
+
+  public isUhvPassportEntry(p: PassportEntry, db?: DemoDatabase): boolean {
+    const database = db || this.getDb();
+    if (p.id === 'pass_meera_03') return true;
+    if (
+      p.sourceReferenceId === 'course_uhv_leadership_05' ||
+      p.sourceReferenceId === 'asg_uhv_08' ||
+      p.sourceReferenceId === 'refl_meera_01' ||
+      p.sourceReferenceId?.startsWith('course_uhv_') ||
+      p.sourceReferenceId?.startsWith('asg_uhv_') ||
+      p.sourceReferenceId?.startsWith('les_uhv_')
+    ) {
+      return true;
+    }
+    if (p.sourceReferenceType === 'course') {
+      const course = database.courses?.find((c) => c.id === p.sourceReferenceId);
+      if (course?.track === 'uhv') return true;
+    }
+    if (p.sourceReferenceType === 'lesson') {
+      const lesson = database.lessons?.find((l) => l.id === p.sourceReferenceId);
+      if (lesson) {
+        const course = database.courses?.find((c) => c.id === lesson.courseId);
+        if (course?.track === 'uhv') return true;
+      }
+    }
+    if (p.sourceReferenceType === 'assignment') {
+      const asg = database.assignments?.find((a) => a.id === p.sourceReferenceId);
+      if (asg && this.isUhvAssignment(asg, database)) return true;
+    }
+    if (p.sourceReferenceType === 'reflection') {
+      const refl = database.reflections?.find((r) => r.id === p.sourceReferenceId);
+      if (refl && this.isUhvReflectionRecord(refl, database)) return true;
+    }
+    return false;
   }
 
   // Users & Personas
@@ -1828,8 +1936,26 @@ export class LocalDemoRepository implements DemoRepository {
   // Reflections
   async getReflections(userId?: string): Promise<Reflection[]> {
     const db = this.getDb();
-    const refls = userId ? db.reflections.filter((r) => r.userId === userId) : db.reflections;
+    const activeUserId = db.activeUserId;
+    const refls = db.reflections.filter((r) => {
+      if (userId && r.userId !== userId) return false;
+      // In this single-browser simulation, private UHV reflections are visible only when the active demo persona is their owner
+      if (this.isUhvReflectionRecord(r, db)) {
+        return r.userId === activeUserId;
+      }
+      return true;
+    });
     return JSON.parse(JSON.stringify(refls));
+  }
+
+  async getReflection(id: string): Promise<Reflection | null> {
+    const db = this.getDb();
+    const refl = db.reflections.find((r) => r.id === id);
+    if (!refl) return null;
+    if (this.isUhvReflectionRecord(refl, db) && refl.userId !== db.activeUserId) {
+      return null;
+    }
+    return JSON.parse(JSON.stringify(refl));
   }
 
   async addReflection(
@@ -1837,8 +1963,11 @@ export class LocalDemoRepository implements DemoRepository {
   ): Promise<Reflection> {
     const db = this.getDb();
     const now = new Date().toISOString();
+    const isUhv = this.isUhvContext(reflection.contextType, reflection.contextId, db);
+
     const newRefl: Reflection = {
       ...reflection,
+      isPublicInPassport: isUhv ? false : (reflection.isPublicInPassport ?? true),
       id: generateId('refl'),
       schemaVersion: 1,
       createdAt: now,
@@ -1846,6 +1975,13 @@ export class LocalDemoRepository implements DemoRepository {
     };
     db.reflections.push(newRefl);
 
+    // If UHV context: record privately with NO civic credits, NO passport entry, NO public activity text, and NO teacher notifications
+    if (isUhv) {
+      this.saveDb(db);
+      return JSON.parse(JSON.stringify(newRefl));
+    }
+
+    // Civic Reflection path (Assembly, project, civic courses): preserves existing behavior
     // Credit transaction (+5 Reflection)
     db.credits.push({
       id: generateId('tx'),
@@ -1923,27 +2059,12 @@ export class LocalDemoRepository implements DemoRepository {
     const user = db.users.find((u) => u.id === userId) || db.users[0];
     const entries = db.passportEntries.filter((p) => {
       if (p.userId !== userId) return false;
-      if (
-        p.sourceReferenceId === 'course_uhv_leadership_05' ||
-        p.sourceReferenceId?.startsWith('les_uhv_') ||
-        p.sourceReferenceId?.startsWith('asg_uhv_') ||
-        p.id === 'pass_meera_03'
-      ) {
-        return false;
-      }
+      if (this.isUhvPassportEntry(p, db)) return false;
       return true;
     });
     const credits = db.credits.filter((c) => {
       if (c.userId !== userId) return false;
-      if (
-        c.sourceId?.startsWith('les_uhv_') ||
-        c.sourceId?.startsWith('asg_uhv_') ||
-        c.sourceId === 'course_uhv_leadership_05' ||
-        c.id === 'tx_meera_03' ||
-        c.id === 'tx_meera_06'
-      ) {
-        return false;
-      }
+      if (this.isUhvCredit(c, db)) return false;
       return true;
     });
     const totalCredits = credits.reduce((sum, c) => sum + c.amount, 0);
@@ -1988,15 +2109,7 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const credits = db.credits.filter((c) => {
       if (c.userId !== userId) return false;
-      if (
-        c.sourceId?.startsWith('les_uhv_') ||
-        c.sourceId?.startsWith('asg_uhv_') ||
-        c.sourceId === 'course_uhv_leadership_05' ||
-        c.id === 'tx_meera_03' ||
-        c.id === 'tx_meera_06'
-      ) {
-        return false;
-      }
+      if (this.isUhvCredit(c, db)) return false;
       return true;
     });
     return JSON.parse(JSON.stringify(credits));
@@ -2006,6 +2119,9 @@ export class LocalDemoRepository implements DemoRepository {
     transaction: Omit<CreditTransaction, 'id' | 'schemaVersion' | 'createdAt'>
   ): Promise<CreditTransaction> {
     const db = this.getDb();
+    if (this.isUhvCreditSource(transaction.sourceType, transaction.sourceId, db)) {
+      throw new Error('Civic credits cannot be awarded for Universal Human Values reflections or study modules.');
+    }
     const now = new Date().toISOString();
     const newTx: CreditTransaction = {
       ...transaction,
@@ -2017,7 +2133,7 @@ export class LocalDemoRepository implements DemoRepository {
 
     const user = db.users.find((u) => u.id === transaction.userId);
     if (user) {
-      user.totalCredits += transaction.amount;
+      user.totalCredits = this.calculateUserCredits(db, transaction.userId);
       user.updatedAt = now;
     }
 

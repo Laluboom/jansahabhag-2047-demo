@@ -128,6 +128,7 @@ export interface DemoRepository {
 
   // Reflections
   getReflections(userId?: string): Promise<Reflection[]>;
+  getReflection(reflectionId: string): Promise<Reflection | null>;
   addReflection(reflection: Omit<Reflection, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Reflection>;
 
   // Passport & Credits
