@@ -41,7 +41,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { to: '/dashboard', label: 'Home', icon: Home },
     { to: '/learn', label: 'Learn', icon: BookOpen },
     { to: '/assignments', label: 'Activities & Assignments', icon: FileCheck2 },
-    { to: '/debate-room', label: 'Debate Room', icon: Scale, badge: 'Planned' },
+    { to: '/debate-room', label: 'Debate Room', icon: Scale, badge: 'Simulation' },
     { to: '/assemblies', label: 'Youth Assembly', icon: Vote },
     { to: '/parliament', label: 'Youth Parliament', icon: Landmark, badge: 'Prototype' },
     { to: '/workspace', label: 'Workspace', icon: Layers, badge: 'Planned' },
@@ -150,6 +150,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     <span
                       className={cn(
                         'text-[10px] px-1.5 py-0.5 rounded border font-normal shrink-0 ml-1.5',
+                        item.badge === 'Simulation' && 'bg-indigo-950/80 border-indigo-800/80 text-indigo-300',
                         item.badge === 'Planned' && 'bg-amber-950/80 border-amber-800/80 text-amber-300',
                         item.badge === 'Prototype' && 'bg-sky-950/80 border-sky-800/80 text-sky-300',
                         item.badge === 'Stream' && 'bg-emerald-950/80 border-emerald-800/80 text-emerald-300'

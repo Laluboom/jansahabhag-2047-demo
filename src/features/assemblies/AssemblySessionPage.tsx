@@ -15,6 +15,7 @@ import {
   DissentRecord,
   Reflection,
   User,
+  Session,
 } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -123,6 +124,7 @@ export const AssemblySessionPage: React.FC = () => {
   ]);
   const [isSubmittingReflection, setIsSubmittingReflection] = useState(false);
   const [reflectionSuccess, setReflectionSuccess] = useState(false);
+  const [linkedSession, setLinkedSession] = useState<Session | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -131,13 +133,14 @@ export const AssemblySessionPage: React.FC = () => {
       if (!id || !currentUser) return;
       if (!assembly) setIsLoading(true);
       try {
-        const [asm, r, roles, contribs, allUsers, refls] = await Promise.all([
+        const [asm, r, roles, contribs, allUsers, refls, sess] = await Promise.all([
           demoRepository.getAssembly(id),
           demoRepository.getUserAssemblyRole(id, currentUser.id),
           demoRepository.getAssemblyRoles(id),
           demoRepository.getContributions(id),
           demoRepository.getUsers(),
           demoRepository.getCivicReflections(currentUser.id),
+          demoRepository.getSession('sess_jaipur_01'),
         ]);
 
         setAssembly(asm);
@@ -145,6 +148,9 @@ export const AssemblySessionPage: React.FC = () => {
         setAllRoles(roles);
         setContributions(contribs);
         setReflections(refls.filter((refl) => refl.contextId === id));
+        if (sess && sess.assemblyId === id) {
+          setLinkedSession(sess);
+        }
 
         if (asm) {
           if (!stageFromUrl && !activeStage) {
@@ -429,6 +435,24 @@ export const AssemblySessionPage: React.FC = () => {
             <Button size="sm" variant="outline" className="bg-slate-800 text-civic-saffron-400 border-slate-700 hover:bg-slate-700 text-xs">
               <Award className="w-3.5 h-3.5 mr-1" />
               <span>Civic Passport</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Shared Session Reciprocal Link & Single-Browser Notice (Master PRD §A7, Scope G) */}
+      <div className="p-3.5 rounded-xl border border-civic-teal-200 bg-civic-teal-50/70 text-civic-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+        <div className="flex items-center gap-2">
+          <Scale className="w-4 h-4 text-civic-teal-700 shrink-0" />
+          <span>
+            <strong>Linked Shared Session:</strong> {linkedSession ? linkedSession.id : 'sess_jaipur_01'} | Engine Mode: <strong>Youth Assembly</strong>. State is only shared among personas within this browser.
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link to="/debate-room">
+            <Button size="sm" variant="outline" className="bg-white text-civic-teal-800 border-civic-teal-300 hover:bg-civic-teal-100 text-xs h-7 px-2.5">
+              <Scale className="w-3.5 h-3.5 mr-1" />
+              <span>Switch to Debate Room</span>
             </Button>
           </Link>
         </div>

@@ -1,5 +1,6 @@
 import { DemoDatabase } from '../types/domain';
 import { CURRENT_SCHEMA_VERSION, getFreshSeedDatabase } from '../data/seed';
+import { seedSessions } from '../data/seed/events';
 
 export interface Migration {
   version: number;
@@ -193,6 +194,104 @@ export const migrations: Migration[] = [
   },
 ];
 
+export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+
+  if (!Array.isArray(db.sessions)) {
+    db.sessions = JSON.parse(JSON.stringify(seedSessions));
+    return db;
+  }
+
+  // Ensure sess_jaipur_01 exists
+  const hasJaipurSession = db.sessions.some((s) => s.id === 'sess_jaipur_01');
+  if (!hasJaipurSession) {
+    const seedJaipur = seedSessions.find((s) => s.id === 'sess_jaipur_01');
+    if (seedJaipur) {
+      db.sessions.push(JSON.parse(JSON.stringify(seedJaipur)));
+    }
+  }
+
+  db.sessions.forEach((session) => {
+    session.currentMode = session.currentMode || (session.id === 'sess_jaipur_01' ? 'debate_room' : 'standard_meeting');
+    session.facilitatorId = session.facilitatorId || 'user_rohan';
+
+    if (!Array.isArray(session.roster) || session.roster.length === 0) {
+      const linkedAssembly = db.assemblies?.find((a) => a.id === session.assemblyId);
+      const participantIds = new Set<string>();
+      if (linkedAssembly?.participantUserIds) {
+        linkedAssembly.participantUserIds.forEach((pid) => participantIds.add(pid));
+      }
+      participantIds.add(session.facilitatorId);
+      participantIds.add('user_aarav');
+
+      session.roster = Array.from(participantIds).map((uid) => {
+        const u = db.users?.find((user) => user.id === uid);
+        const isFacilitator = uid === session.facilitatorId;
+        return {
+          userId: uid,
+          name: u?.name || (isFacilitator ? 'Rohan Mehta' : uid),
+          role: isFacilitator ? 'Facilitator' : 'Participant',
+          joinedAt: session.createdAt || '2026-10-12T10:00:00Z',
+        };
+      });
+    }
+
+    if (!Array.isArray(session.modeTransitions) || session.modeTransitions.length === 0) {
+      session.modeTransitions = [
+        {
+          id: `trans_${session.id}_01`,
+          fromMode: 'standard_meeting',
+          toMode: session.currentMode,
+          timestamp: session.createdAt || '2026-10-12T10:05:00Z',
+          initiatedBy: session.facilitatorId,
+          summary: `Session initialized in ${session.currentMode} mode.`,
+        },
+      ];
+    }
+
+    if (session.id === 'sess_jaipur_01') {
+      const seedJaipur = seedSessions.find((s) => s.id === 'sess_jaipur_01');
+      if (!session.debateData && seedJaipur?.debateData) {
+        session.debateData = JSON.parse(JSON.stringify(seedJaipur.debateData));
+      } else if (session.debateData) {
+        session.debateData.motion =
+          session.debateData.motion ||
+          'Immediate installation of tabletop pedestrian crosswalks, raised intersections, and 20 km/h traffic calming on Madhyam Marg outside Navchetna School.';
+        session.debateData.linkedQuestion =
+          session.debateData.linkedQuestion ||
+          'How might Jaipur Municipal Corporation and school communities co-design pedestrian crossings that guarantee safe, dignified walking routes for students?';
+        session.debateData.propositionId = session.debateData.propositionId || 'prop_jaipur_pedestrian_01';
+        session.debateData.currentPhase = session.debateData.currentPhase || 'DISCUSSION';
+        if (!Array.isArray(session.debateData.speakingQueue)) {
+          session.debateData.speakingQueue = [];
+        }
+        if (!Array.isArray(session.debateData.contributions)) {
+          session.debateData.contributions = [];
+        }
+        if (!Array.isArray(session.debateData.evidenceIds) || session.debateData.evidenceIds.length === 0) {
+          session.debateData.evidenceIds = [
+            'ev_aarav_traffic_count_01',
+            'ev_aarav_crossing_photo_02',
+            'ev_aarav_incident_log_03',
+          ];
+        }
+        if (!Array.isArray(session.debateData.acknowledgedUserIds)) {
+          session.debateData.acknowledgedUserIds = seedJaipur?.debateData?.acknowledgedUserIds || [];
+        }
+        if (!session.debateData.rulebook) {
+          session.debateData.rulebook = seedJaipur?.debateData?.rulebook || {
+            version: 'v1.0',
+            title: 'JanSahabhag Debate Room Rules of Procedure',
+            rules: [],
+          };
+        }
+      }
+    }
+  });
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -210,6 +309,7 @@ export function runMigrations(storedData: any): DemoDatabase {
 
   // Apply version 2 migration if upgrading from version 1 or earlier, or normalize
   const migrated = normalizeUhvRecords(storedData);
+  normalizeSessionRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }

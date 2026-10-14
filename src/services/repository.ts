@@ -119,6 +119,14 @@ export interface DemoRepository {
   getEvent(eventId: string): Promise<Event | null>;
   getSession(sessionId: string): Promise<Session | null>;
   getSessionByEvent(eventId: string): Promise<Session | null>;
+  acknowledgeRulebook(sessionId: string, userId: string): Promise<Session>;
+  requestSpeakingTurn(sessionId: string, userId: string): Promise<Session>;
+  cancelSpeakingTurn(sessionId: string, userId: string): Promise<Session>;
+  recognizeSpeakingTurn(sessionId: string, actorId: string, targetUserId: string): Promise<Session>;
+  advanceSpeakingTurn(sessionId: string, actorId: string): Promise<Session>;
+  advanceDebatePhase(sessionId: string, actorId: string, nextPhase: import('../types/domain').DebatePhase): Promise<Session>;
+  postDebateContribution(input: { sessionId: string; userId: string; text: string; evidenceIds?: string[] }): Promise<Session>;
+  switchSessionMode(sessionId: string, actorId: string, targetMode: import('../types/domain').SessionMode, summary?: string): Promise<Session>;
   rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined'): Promise<Event>;
   checkInEvent(eventId: string, userId: string): Promise<{ event: Event; activity?: Activity }>;
 
@@ -131,6 +139,7 @@ export interface DemoRepository {
   getCivicReflections(userId?: string): Promise<Reflection[]>;
   getUhvReflections(userId?: string): Promise<Reflection[]>;
   getReflection(reflectionId: string): Promise<Reflection | null>;
+  getSessionReflections(sessionId: string, userId?: string): Promise<Reflection[]>;
   addReflection(reflection: Omit<Reflection, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Reflection>;
 
   // Passport & Credits

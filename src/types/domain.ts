@@ -271,6 +271,102 @@ export interface SessionResource {
   type: string;
 }
 
+export type SessionMode =
+  | 'standard_meeting'
+  | 'debate_room'
+  | 'youth_assembly'
+  | 'youth_parliament'
+  | 'workshop';
+
+export interface SessionRosterEntry {
+  userId: string;
+  name: string;
+  role: string;
+  joinedAt: string;
+  isSpeaking?: boolean;
+}
+
+export interface SessionModeTransition {
+  id: string;
+  fromMode: SessionMode;
+  toMode: SessionMode;
+  timestamp: string;
+  initiatedBy: string;
+  summary?: string;
+}
+
+export type DebatePhase =
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'OPEN'
+  | 'MOTION_CONFIRMED'
+  | 'OPENING_STATEMENTS'
+  | 'DISCUSSION'
+  | 'REBUTTAL_OR_QUESTIONS'
+  | 'CLOSING_STATEMENTS'
+  | 'REFLECTION'
+  | 'CLOSED'
+  | 'REPORT_PUBLISHED';
+
+export const DEBATE_PHASES: DebatePhase[] = [
+  'DRAFT',
+  'SCHEDULED',
+  'OPEN',
+  'MOTION_CONFIRMED',
+  'OPENING_STATEMENTS',
+  'DISCUSSION',
+  'REBUTTAL_OR_QUESTIONS',
+  'CLOSING_STATEMENTS',
+  'REFLECTION',
+  'CLOSED',
+  'REPORT_PUBLISHED',
+];
+
+export interface SpeakingQueueEntry {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole?: string;
+  requestedAt: string;
+  recognizedAt?: string;
+  status: 'waiting' | 'speaking' | 'completed' | 'cancelled';
+}
+
+export interface DebateContribution {
+  id: string;
+  userId: string;
+  userName: string;
+  phase: DebatePhase;
+  timestamp: string;
+  text: string;
+  evidenceIds?: string[];
+}
+
+export interface DebateRulebookRule {
+  title: string;
+  content: string;
+}
+
+export interface DebateRulebook {
+  version: string;
+  title: string;
+  rules: DebateRulebookRule[];
+}
+
+export interface DebateRoomData {
+  motion: string;
+  linkedQuestion?: string;
+  propositionId?: string;
+  currentPhase: DebatePhase;
+  speakingQueue: SpeakingQueueEntry[];
+  activeSpeakerId?: string | null;
+  contributions: DebateContribution[];
+  evidenceIds: string[];
+  rulebook: DebateRulebook;
+  acknowledgedUserIds?: string[];
+  reflectionPrompt?: string;
+}
+
 export interface Session {
   id: string;
   eventId: string;
@@ -279,6 +375,11 @@ export interface Session {
   agenda: SessionAgendaItem[];
   resources: SessionResource[];
   notesSummary?: string;
+  currentMode: SessionMode;
+  facilitatorId: string;
+  roster: SessionRosterEntry[];
+  modeTransitions: SessionModeTransition[];
+  debateData?: DebateRoomData;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -448,7 +549,7 @@ export interface Project {
   updatedAt: string;
 }
 
-export type ReflectionContextType = 'course' | 'assignment' | 'assembly' | 'project' | 'general';
+export type ReflectionContextType = 'course' | 'assignment' | 'assembly' | 'project' | 'session' | 'general';
 
 export interface Reflection {
   id: string;

@@ -96,4 +96,20 @@ describe('Seed Data Integrity & Completeness', () => {
     expect(fresh2.users[0].name).toBe('Aarav Sharma');
     expect(seedDatabase.users[0].name).toBe('Aarav Sharma');
   });
+
+  it('contains valid shared live session sess_jaipur_01 with typed debate data', () => {
+    const db = getFreshSeedDatabase();
+    const session = db.sessions.find((s) => s.id === 'sess_jaipur_01');
+    expect(session).toBeDefined();
+    expect(session?.currentMode).toBe('debate_room');
+    expect(session?.facilitatorId).toBe('user_rohan');
+    expect(session?.assemblyId).toBe('assembly_jaipur_pedestrian_2026');
+    expect(session?.roster.length).toBeGreaterThanOrEqual(5);
+    expect(session?.modeTransitions.length).toBeGreaterThanOrEqual(1);
+    expect(session?.debateData).toBeDefined();
+    expect(session?.debateData?.motion).toContain('tabletop pedestrian crosswalks');
+    expect(session?.debateData?.currentPhase).toBe('DISCUSSION');
+    expect(session?.debateData?.rulebook.version).toBe('v1.0');
+    expect(session?.debateData?.speakingQueue.length).toBeGreaterThanOrEqual(1);
+  });
 });

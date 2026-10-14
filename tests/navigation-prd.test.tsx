@@ -68,7 +68,7 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     });
 
     // Verify status badges for preview/planned modules
-    expect(links[3]).toHaveTextContent('Planned'); // Debate Room
+    expect(links[3]).toHaveTextContent('Simulation'); // Debate Room
     expect(links[5]).toHaveTextContent('Prototype'); // Youth Parliament
     expect(links[6]).toHaveTextContent('Planned'); // Workspace
     expect(links[10]).toHaveTextContent('Stream'); // UHV / Jeevan Vidya
@@ -164,17 +164,17 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     unmount();
   });
 
-  it('Requirement 2: Debate Room and Workspace render clearly labelled nonfunctional preview destinations', () => {
-    // Debate Room preview
+  it('Requirement 2: Debate Room renders interactive simulation and Workspace renders nonfunctional preview destination', async () => {
+    // Debate Room interactive local simulation
     const { rerender } = render(
       <MemoryRouter>
         <DebateRoomPreviewPage />
       </MemoryRouter>
     );
-    expect(screen.getByRole('heading', { name: /^Debate Room/i })).toBeInTheDocument();
-    expect(screen.getByText(/Planned Demo Module/i)).toBeInTheDocument();
-    expect(screen.getByText(/Nonfunctional Preview Destination/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Enter Youth Assembly/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeInTheDocument();
+    expect(screen.getByText(/Single-Browser Local Simulation/i)).toBeInTheDocument();
+    expect(screen.getByText(/State is only shared among personas within this browser/i)).toBeInTheDocument();
+    expect(screen.getByText(/Immediate installation of tabletop pedestrian crosswalks/i)).toBeInTheDocument();
 
     // Workspace preview
     rerender(

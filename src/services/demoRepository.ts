@@ -11,6 +11,12 @@ import {
   Activity,
   Event,
   Session,
+  SessionMode,
+  DebatePhase,
+  DEBATE_PHASES,
+  SpeakingQueueEntry,
+  DebateContribution,
+  DebateRoomData,
   Assembly,
   AssemblyRole,
   Contribution,
@@ -1913,6 +1919,27 @@ export class LocalDemoRepository implements DemoRepository {
       id: `sess_sim_${eventId}`,
       eventId,
       title: `${evt.title} — Agenda & Resources`,
+      currentMode: 'standard_meeting',
+      facilitatorId: evt.organizerId || 'user_rohan',
+      roster: (evt.attendeeUserIds || []).map((uid) => {
+        const u = db.users.find((user) => user.id === uid);
+        return {
+          userId: uid,
+          name: u?.name || uid,
+          role: 'Participant',
+          joinedAt: evt.createdAt,
+        };
+      }),
+      modeTransitions: [
+        {
+          id: `trans_sim_${eventId}`,
+          fromMode: 'standard_meeting',
+          toMode: 'standard_meeting',
+          timestamp: evt.createdAt,
+          initiatedBy: evt.organizerId || 'user_rohan',
+          summary: 'Session scheduled in standard meeting mode',
+        },
+      ],
       agenda: [
         { time: `${evt.startTime} - Briefing`, topic: 'Facilitator Welcome & Context Briefing', presenter: 'Session Chair' },
         { time: 'Deliberation Track', topic: `Field Observation Synthesis & Action Audit (${evt.type.replace('_', ' ')})`, presenter: 'Participating Youth Cohort' },
@@ -1929,6 +1956,350 @@ export class LocalDemoRepository implements DemoRepository {
       updatedAt: evt.updatedAt,
     };
     return mockSession;
+  }
+
+  async acknowledgeRulebook(sessionId: string, userId: string): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+    if (!session.debateData) throw new Error(`Session ${sessionId} has no active debate data`);
+
+    const isInRoster = session.roster.some((r) => r.userId === userId);
+    if (!isInRoster) {
+      throw new Error(`Unknown participant: user ${userId} is not in the session roster`);
+    }
+
+    session.debateData.acknowledgedUserIds = session.debateData.acknowledgedUserIds || [];
+    if (!session.debateData.acknowledgedUserIds.includes(userId)) {
+      session.debateData.acknowledgedUserIds.push(userId);
+      session.updatedAt = new Date().toISOString();
+      this.saveDb(db);
+    }
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async requestSpeakingTurn(sessionId: string, userId: string): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (session.currentMode !== 'debate_room') {
+      throw new Error(`Session is currently in "${session.currentMode}" mode. Debate operations are only permitted in debate_room mode.`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Session is closed: cannot request speaking turn in a closed session');
+    }
+    if (
+      session.debateData.currentPhase === 'DRAFT' ||
+      session.debateData.currentPhase === 'SCHEDULED' ||
+      session.debateData.currentPhase === 'OPEN' ||
+      session.debateData.currentPhase === 'MOTION_CONFIRMED'
+    ) {
+      throw new Error(`Speaking turns cannot be requested during "${session.debateData.currentPhase}" phase. Floor queue opens during active debate phases.`);
+    }
+    if (session.debateData.currentPhase === 'REFLECTION') {
+      throw new Error(`Speaking turns cannot be requested during "${session.debateData.currentPhase}" phase. Debate floor is concluded.`);
+    }
+
+    // Validate participant is in roster
+    const isInRoster = session.roster.some((r) => r.userId === userId);
+    const user = db.users.find((u) => u.id === userId);
+    if (!isInRoster || !user) {
+      throw new Error(`Unknown participant: user ${userId} is not in the session roster`);
+    }
+
+    // Check duplicate queue entry
+    const existingEntry = session.debateData.speakingQueue.find(
+      (q) => q.userId === userId && (q.status === 'waiting' || q.status === 'speaking')
+    );
+    if (existingEntry) {
+      throw new Error(`Duplicate queue entry: user ${userId} is already in the speaking queue`);
+    }
+
+    const newEntry: SpeakingQueueEntry = {
+      id: `queue_${Date.now()}_${userId}`,
+      userId,
+      userName: user.name,
+      userRole: user.role,
+      requestedAt: new Date().toISOString(),
+      status: 'waiting',
+    };
+
+    session.debateData.speakingQueue.push(newEntry);
+    session.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async cancelSpeakingTurn(sessionId: string, userId: string): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (session.currentMode !== 'debate_room') {
+      throw new Error(`Session is currently in "${session.currentMode}" mode. Debate operations are only permitted in debate_room mode.`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Session is closed: cannot cancel speaking turn in a closed session');
+    }
+
+    const queueEntry = session.debateData.speakingQueue.find(
+      (q) => q.userId === userId && (q.status === 'waiting' || q.status === 'speaking')
+    );
+    if (!queueEntry) {
+      throw new Error(`No active or waiting speaking request found for user ${userId}`);
+    }
+
+    if (queueEntry.status === 'speaking' || session.debateData.activeSpeakerId === userId) {
+      session.debateData.activeSpeakerId = null;
+    }
+    queueEntry.status = 'cancelled';
+    session.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async recognizeSpeakingTurn(sessionId: string, actorId: string, targetUserId: string): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (session.currentMode !== 'debate_room') {
+      throw new Error(`Session is currently in "${session.currentMode}" mode. Debate operations are only permitted in debate_room mode.`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+    if (actorId !== session.facilitatorId) {
+      throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) can recognize speaking turns`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Session is closed: cannot recognize speaking turn in a closed session');
+    }
+    if (session.debateData.currentPhase === 'REFLECTION') {
+      throw new Error(`Cannot recognize speaking turns during "${session.debateData.currentPhase}" phase.`);
+    }
+
+    const targetEntry = session.debateData.speakingQueue.find(
+      (q) => q.userId === targetUserId && q.status === 'waiting'
+    );
+    if (!targetEntry) {
+      throw new Error(`Target participant ${targetUserId} is not waiting in the speaking queue`);
+    }
+
+    // Complete any existing speaking turn
+    session.debateData.speakingQueue.forEach((q) => {
+      if (q.status === 'speaking') {
+        q.status = 'completed';
+      }
+    });
+
+    targetEntry.status = 'speaking';
+    targetEntry.recognizedAt = new Date().toISOString();
+    session.debateData.activeSpeakerId = targetUserId;
+    session.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async advanceSpeakingTurn(sessionId: string, actorId: string): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (session.currentMode !== 'debate_room') {
+      throw new Error(`Session is currently in "${session.currentMode}" mode. Debate operations are only permitted in debate_room mode.`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+    if (actorId !== session.facilitatorId) {
+      throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) can advance speaking turns`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Session is closed: cannot advance speaking turns in a closed session');
+    }
+    if (session.debateData.currentPhase === 'REFLECTION') {
+      throw new Error(`Cannot advance speaking turns during "${session.debateData.currentPhase}" phase.`);
+    }
+
+    // Complete current speaker if any
+    session.debateData.speakingQueue.forEach((q) => {
+      if (q.status === 'speaking') {
+        q.status = 'completed';
+      }
+    });
+
+    // Find next waiting participant
+    const nextWaiting = session.debateData.speakingQueue.find((q) => q.status === 'waiting');
+    if (nextWaiting) {
+      nextWaiting.status = 'speaking';
+      nextWaiting.recognizedAt = new Date().toISOString();
+      session.debateData.activeSpeakerId = nextWaiting.userId;
+    } else {
+      session.debateData.activeSpeakerId = null;
+    }
+
+    session.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async advanceDebatePhase(sessionId: string, actorId: string, nextPhase: DebatePhase): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (session.currentMode !== 'debate_room') {
+      throw new Error(`Session is currently in "${session.currentMode}" mode. Debate operations are only permitted in debate_room mode.`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+    if (actorId !== session.facilitatorId) {
+      throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) can advance debate phases`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Session is closed: cannot change phase in a closed session');
+    }
+
+    const currentPhase = session.debateData.currentPhase;
+    const currIndex = DEBATE_PHASES.indexOf(currentPhase);
+    const nextIndex = DEBATE_PHASES.indexOf(nextPhase);
+
+    if (currIndex === -1 || nextIndex !== currIndex + 1) {
+      throw new Error(`Invalid phase transition: cannot skip phases from ${currentPhase} to ${nextPhase}. Phases must advance sequentially.`);
+    }
+
+    // If moving to reflection, closed, or report published, complete current speaker
+    if (['REFLECTION', 'CLOSED', 'REPORT_PUBLISHED'].includes(nextPhase)) {
+      session.debateData.speakingQueue.forEach((q) => {
+        if (q.status === 'speaking') q.status = 'completed';
+      });
+      session.debateData.activeSpeakerId = null;
+    }
+
+    session.debateData.currentPhase = nextPhase;
+    session.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async postDebateContribution(input: {
+    sessionId: string;
+    userId: string;
+    text: string;
+    evidenceIds?: string[];
+  }): Promise<Session> {
+    if (!input.text || !input.text.trim()) {
+      throw new Error('Contribution text cannot be empty');
+    }
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === input.sessionId);
+    if (!session) {
+      throw new Error(`Session ${input.sessionId} not found`);
+    }
+    if (session.currentMode !== 'debate_room') {
+      throw new Error(`Session is currently in "${session.currentMode}" mode. Debate operations are only permitted in debate_room mode.`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${input.sessionId} has no active debate data`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Session is closed: cannot post contributions to a closed session');
+    }
+
+    const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
+      'OPENING_STATEMENTS',
+      'DISCUSSION',
+      'REBUTTAL_OR_QUESTIONS',
+      'CLOSING_STATEMENTS',
+    ];
+
+    if (!ACTIVE_DEBATE_PHASES.includes(session.debateData.currentPhase)) {
+      throw new Error(
+        `Invalid debate phase: contributions are only allowed during active debate phases (opening statements, discussion, rebuttal, closing statements), but current phase is ${session.debateData.currentPhase}`
+      );
+    }
+
+    if (session.debateData.activeSpeakerId !== input.userId) {
+      throw new Error('Unauthorized: only the recognized participant may post a text contribution during an active debate turn');
+    }
+
+    // Validate evidence IDs against session's allowed evidence
+    if (input.evidenceIds && input.evidenceIds.length > 0) {
+      for (const evId of input.evidenceIds) {
+        const ev = db.evidence.find((e) => e.id === evId);
+        if (!ev) {
+          throw new Error(`Evidence with ID "${evId}" does not exist in repository`);
+        }
+        if (session.assemblyId) {
+          const assembly = db.assemblies.find((a) => a.id === session.assemblyId);
+          if (assembly && !assembly.evidenceIds.includes(evId)) {
+            throw new Error(`Evidence "${evId}" is not attached to this session's assembly`);
+          }
+        }
+      }
+    }
+
+    const user = db.users.find((u) => u.id === input.userId);
+    const contrib: DebateContribution = {
+      id: `deb_contrib_${Date.now()}_${input.userId}`,
+      userId: input.userId,
+      userName: user?.name || input.userId,
+      phase: session.debateData.currentPhase,
+      timestamp: new Date().toISOString(),
+      text: input.text.trim(),
+      evidenceIds: input.evidenceIds || [],
+    };
+
+    session.debateData.contributions.push(contrib);
+    session.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(session));
+  }
+
+  async switchSessionMode(
+    sessionId: string,
+    actorId: string,
+    targetMode: SessionMode,
+    summary?: string
+  ): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (actorId !== session.facilitatorId) {
+      throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) can switch session modes`);
+    }
+
+    if (session.currentMode !== targetMode) {
+      session.modeTransitions.push({
+        id: `trans_${Date.now()}`,
+        fromMode: session.currentMode,
+        toMode: targetMode,
+        timestamp: new Date().toISOString(),
+        initiatedBy: actorId,
+        summary: summary || `Facilitator transitioned session mode from ${session.currentMode} to ${targetMode}`,
+      });
+      session.currentMode = targetMode;
+      session.updatedAt = new Date().toISOString();
+      this.saveDb(db);
+    }
+
+    return JSON.parse(JSON.stringify(session));
   }
 
   async rsvpEvent(
@@ -2082,6 +2453,16 @@ export class LocalDemoRepository implements DemoRepository {
     return JSON.parse(JSON.stringify(refl));
   }
 
+  async getSessionReflections(sessionId: string, userId?: string): Promise<Reflection[]> {
+    const db = this.getDb();
+    const refls = db.reflections.filter((r) => {
+      if (r.contextType !== 'session' || r.contextId !== sessionId) return false;
+      if (userId && r.userId !== userId) return false;
+      return true;
+    });
+    return JSON.parse(JSON.stringify(refls));
+  }
+
   async addReflection(
     reflection: Omit<Reflection, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
   ): Promise<Reflection> {
@@ -2101,6 +2482,26 @@ export class LocalDemoRepository implements DemoRepository {
 
     // If UHV context: record privately with NO civic credits, NO passport entry, NO public activity text, and NO teacher notifications
     if (isUhv) {
+      this.saveDb(db);
+      return JSON.parse(JSON.stringify(newRefl));
+    }
+
+    // If session context: record for the persona linked to this session, with NO automatic credit/verification claim
+    if (reflection.contextType === 'session') {
+      db.activities.push({
+        id: generateId('act'),
+        userId: reflection.userId,
+        type: 'reflection_shared',
+        title: 'Completed Debate Session Self-Reflection',
+        description: reflection.text.slice(0, 90),
+        referenceId: newRefl.id,
+        referenceType: 'session_reflection',
+        timestamp: now,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+
       this.saveDb(db);
       return JSON.parse(JSON.stringify(newRefl));
     }
