@@ -5,7 +5,7 @@ import { demoRepository } from '../../services/demoRepository';
 import { Evidence } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { StatusChip } from '../../components/ui/StatusChip';
-import { ArrowLeft, FileCheck2, ShieldCheck, MapPin, EyeOff, Filter, Search } from 'lucide-react';
+import { ArrowLeft, FileCheck2, ShieldCheck, MapPin, EyeOff, Filter, Search, Download } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 
 export const EvidencePage: React.FC = () => {
@@ -158,6 +158,43 @@ export const EvidencePage: React.FC = () => {
                     <div className="flex items-center gap-1 text-[11px] text-slate-500">
                       <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                       <span className="truncate">{ev.location}</span>
+                    </div>
+                  )}
+
+                  {ev.fileInfo ? (
+                    <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-blue-900 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold truncate">{ev.fileInfo.name}</span>
+                        <span className="text-[10px] text-blue-700 shrink-0">
+                          {(ev.fileInfo.size / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-blue-600 block">
+                        {ev.fileInfo.demoLabel || 'DEMO local browser file'}
+                      </span>
+                      {ev.fileInfo.dataUrl ? (
+                        <div className="pt-1">
+                          <a
+                            href={ev.fileInfo.dataUrl}
+                            download={ev.fileInfo.name}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-civic-teal-700 hover:text-civic-teal-900 bg-white px-2 py-0.5 rounded border border-civic-teal-300 shadow-2xs transition-colors"
+                            title={`Download or preview ${ev.fileInfo.name}`}
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>Download / Preview File</span>
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-500 italic block">
+                          No stored file bytes (illustrative metadata only)
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[10px] text-slate-500">
+                      DEMO Description (Single-browser simulation - no remote upload server)
                     </div>
                   )}
                 </div>

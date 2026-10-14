@@ -34,6 +34,7 @@ import {
   DemoDatabase,
   AssemblyStage,
   CreditDimension,
+  VerificationStatus,
 } from '../types/domain';
 import {
   DashboardData,
@@ -61,6 +62,7 @@ export class LocalDemoRepository implements DemoRepository {
       .filter((c) => {
         if (c.userId !== userId) return false;
         if (this.isUhvCredit(c, db)) return false;
+        if (c.status === 'Pending') return false; // Do not count pending credit as verified/earned
         return true;
       })
       .reduce((sum, c) => sum + c.amount, 0);
@@ -836,9 +838,29 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getSubmissions(userId?: string, assignmentId?: string): Promise<Submission[]> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isTeacher = activeUser?.role === 'teacher';
+
+    // Security & persona boundary: non-teachers can only query their own submissions
+    let targetUserId = userId;
+    if (!isTeacher) {
+      if (userId && userId !== db.activeUserId) {
+        return [];
+      }
+      targetUserId = db.activeUserId;
+    }
+
     let subs = db.submissions;
-    if (userId) subs = subs.filter((s) => s.userId === userId);
+    if (targetUserId) subs = subs.filter((s) => s.userId === targetUserId);
     if (assignmentId) subs = subs.filter((s) => s.assignmentId === assignmentId);
+
+    // Draft privacy: drafts are strictly visible only to their author
+    subs = subs.filter((s) => {
+      if (s.status === 'draft') {
+        return s.userId === db.activeUserId;
+      }
+      return true;
+    });
 
     // Privacy boundary: Do not expose private UHV reflections to other users, teachers, or generic queues
     subs = subs.filter((s) => {
@@ -871,6 +893,19 @@ export class LocalDemoRepository implements DemoRepository {
     const sub = db.submissions.find((s) => s.id === submissionId);
     if (!sub) return null;
 
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isTeacher = activeUser?.role === 'teacher';
+
+    // Draft privacy: drafts are only accessible by their author
+    if (sub.status === 'draft' && sub.userId !== db.activeUserId) {
+      return null;
+    }
+
+    // Non-teachers can only access their own submissions
+    if (!isTeacher && sub.userId !== db.activeUserId) {
+      return null;
+    }
+
     // Privacy boundary: Do not expose private UHV reflections to other users or teachers
     if (this.isUhvSubmission(sub, db) && db.activeUserId !== sub.userId) {
       return null;
@@ -891,15 +926,38 @@ export class LocalDemoRepository implements DemoRepository {
 
   async saveAssignmentDraft(input: AssignmentSubmissionInput): Promise<Submission> {
     const db = this.getDb();
-    const now = new Date().toISOString();
-    const asg = db.assignments.find((a) => a.id === input.assignmentId);
-    const isUhv = asg ? this.isUhvAssignment(asg, db) : input.assignmentId === 'asg_uhv_08';
+    if (input.userId !== db.activeUserId) {
+      throw new Error('Unauthorized: cannot save draft for another persona');
+    }
 
+    const asg = db.assignments.find((a) => a.id === input.assignmentId);
+    if (!asg) {
+      throw new Error(`Assignment ${input.assignmentId} not found`);
+    }
+    if (asg.status !== 'active') {
+      throw new Error(`Cannot save draft for inactive assignment`);
+    }
+
+    const isUhv = this.isUhvAssignment(asg, db);
+
+    if (!isUhv && input.evidenceIds && input.evidenceIds.length > 0) {
+      for (const eid of input.evidenceIds) {
+        const ev = db.evidence.find((e) => e.id === eid);
+        if (!ev) {
+          throw new Error(`Evidence ${eid} not found`);
+        }
+        if (ev.ownerId !== input.userId) {
+          throw new Error('Unauthorized: cannot attach evidence owned by another participant');
+        }
+      }
+    }
+
+    const now = new Date().toISOString();
     const existing = db.submissions.find(
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
 
-    if (existing && (existing.status === 'verified' || existing.status === 'under_review')) {
+    if (existing && (existing.status === 'submitted' || existing.status === 'under_review' || existing.status === 'verified')) {
       throw new Error(`Cannot modify submission with status '${existing.status}'`);
     }
 
@@ -945,25 +1003,71 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const db = this.getDb();
-    const now = new Date().toISOString();
+    if (input.userId !== db.activeUserId) {
+      throw new Error('Unauthorized: cannot submit assignment for another persona');
+    }
+
     const asg = db.assignments.find((a) => a.id === input.assignmentId);
-    const isUhv = asg ? this.isUhvAssignment(asg, db) : input.assignmentId === 'asg_uhv_08';
+    if (!asg) {
+      throw new Error(`Assignment ${input.assignmentId} not found`);
+    }
+    if (asg.status !== 'active') {
+      throw new Error(`Cannot submit for inactive assignment`);
+    }
 
     const existing = db.submissions.find(
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
 
-    if (existing && (existing.status === 'verified' || existing.status === 'under_review')) {
-      throw new Error(`Cannot modify submission with status '${existing.status}'`);
+    if (existing) {
+      if (existing.status === 'verified' || existing.status === 'under_review') {
+        throw new Error(`Cannot modify submission with status '${existing.status}'`);
+      }
+    }
+
+    const isUhv = this.isUhvAssignment(asg, db);
+    if (!isUhv && (!input.content || !input.content.trim())) {
+      throw new Error('Observation notes cannot be empty on submission');
+    }
+
+    if (!isUhv) {
+      if (!input.evidenceIds || input.evidenceIds.length === 0) {
+        throw new Error('At least one evidence record is required for assignment submission');
+      }
+      for (const eid of input.evidenceIds) {
+        const ev = db.evidence.find((e) => e.id === eid);
+        if (!ev) {
+          throw new Error(`Evidence ${eid} not found`);
+        }
+        if (ev.ownerId !== input.userId) {
+          throw new Error('Unauthorized: cannot attach evidence owned by another participant');
+        }
+      }
+    }
+
+    const now = new Date().toISOString();
+
+    if (existing) {
+      if (existing.status === 'submitted') {
+        const sameContent = existing.content === input.content;
+        const sameEvidence =
+          (input.evidenceIds || []).length === existing.evidenceIds.length &&
+          (input.evidenceIds || []).every((id) => existing.evidenceIds.includes(id));
+        if (sameContent && sameEvidence) {
+          return JSON.parse(JSON.stringify(existing));
+        }
+      }
     }
 
     let submission: Submission;
     const finalStatus: 'completed' | 'submitted' = isUhv ? 'completed' : 'submitted';
+    const submissionId = existing?.id || generateId('sub');
 
     if (existing) {
       existing.content = input.content;
       existing.evidenceIds = isUhv ? [] : input.evidenceIds || [];
       existing.status = finalStatus;
+      existing.receiptId = existing.id;
       if (isUhv) {
         existing.isUhvReflection = true;
         existing.visibility = 'private';
@@ -977,7 +1081,8 @@ export class LocalDemoRepository implements DemoRepository {
       submission = existing;
     } else {
       submission = {
-        id: generateId('sub'),
+        id: submissionId,
+        receiptId: submissionId,
         assignmentId: input.assignmentId,
         userId: input.userId,
         content: input.content,
@@ -1027,7 +1132,7 @@ export class LocalDemoRepository implements DemoRepository {
       return JSON.parse(JSON.stringify(submission));
     }
 
-    // Submission credit: +10 Contribution once per submission, idempotent on retries
+    // Submission credit: +10 Contribution once per submission with Pending status (never minted as Verified before mentor review)
     const existingCredit = db.credits.find(
       (c) => c.userId === input.userId && c.sourceType === 'assignment' && c.sourceId === input.assignmentId
     );
@@ -1039,8 +1144,8 @@ export class LocalDemoRepository implements DemoRepository {
         amount: 10,
         sourceType: 'assignment',
         sourceId: input.assignmentId,
-        status: 'Verified',
-        reason: `Submitted assignment: ${asg?.title || input.assignmentId}`,
+        status: 'Pending',
+        reason: `Submitted assignment (pending mentor review): ${asg?.title || input.assignmentId}`,
         createdAt: now,
         schemaVersion: 1,
       });
@@ -1102,8 +1207,20 @@ export class LocalDemoRepository implements DemoRepository {
 
   async reviewSubmission(input: SubmissionReviewInput): Promise<Submission> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    if (activeUser?.role !== 'teacher') {
+      throw new Error('Unauthorized: only teachers may review submissions');
+    }
+    if (input.reviewerId !== db.activeUserId) {
+      throw new Error('Unauthorized: reviewerId must match active user');
+    }
+
     const submission = db.submissions.find((s) => s.id === input.submissionId);
     if (!submission) throw new Error(`Submission ${input.submissionId} not found`);
+
+    if (submission.userId === input.reviewerId) {
+      throw new Error('Unauthorized: teachers cannot review their own submissions');
+    }
 
     if (this.isUhvSubmission(submission, db)) {
       throw new Error('Teacher review and scoring are not permitted for private UHV reflections.');
@@ -1121,6 +1238,25 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error('Cannot change status of an already verified submission');
     }
 
+    const asg = db.assignments.find((a) => a.id === submission.assignmentId);
+    if (!asg) {
+      throw new Error(`Assignment ${submission.assignmentId} not found`);
+    }
+
+    for (const eid of submission.evidenceIds) {
+      const ev = db.evidence.find((e) => e.id === eid);
+      if (!ev) {
+        throw new Error(`Evidence ${eid} not found`);
+      }
+      if (ev.ownerId !== submission.userId) {
+        throw new Error('Unauthorized: submission contains evidence not owned by submitter');
+      }
+    }
+
+    if (input.status === 'revision_requested' && (!input.teacherFeedback || !input.teacherFeedback.trim())) {
+      throw new Error('Teacher feedback is required when requesting revision');
+    }
+
     const now = new Date().toISOString();
     submission.status = input.status;
     submission.teacherFeedback = input.teacherFeedback;
@@ -1129,9 +1265,16 @@ export class LocalDemoRepository implements DemoRepository {
     if (input.score !== undefined) submission.score = input.score;
     submission.updatedAt = now;
 
-    const asg = db.assignments.find((a) => a.id === submission.assignmentId);
-
     if (input.status === 'verified') {
+      // Update submission credit transaction status to Verified
+      const subCredit = db.credits.find(
+        (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId
+      );
+      if (subCredit) {
+        subCredit.status = 'Verified';
+        subCredit.reason = `Submitted assignment: ${asg?.title || submission.assignmentId}`;
+      }
+
       // 1. Mark attached evidence verified and award +5 Observation credit per evidence (idempotently)
       submission.evidenceIds.forEach((eid) => {
         const ev = db.evidence.find((e) => e.id === eid);
@@ -1190,7 +1333,7 @@ export class LocalDemoRepository implements DemoRepository {
           userId: submission.userId,
           category: 'contribution',
           title: `Verified: ${asg?.title || 'Field Assignment'}`,
-          subtitle: `Reviewed and verified by teacher`,
+          subtitle: `Reviewed and verified by teacher (Local Demo)`,
           date: now.split('T')[0],
           creditsAwarded: submission.evidenceIds.length > 0 ? submission.evidenceIds.length * 5 : 5,
           evidenceIds: submission.evidenceIds,
@@ -1226,7 +1369,6 @@ export class LocalDemoRepository implements DemoRepository {
     return JSON.parse(JSON.stringify(submission));
   }
 
-
   // Evidence
   async getEvidenceList(options?: {
     ownerId?: string;
@@ -1234,26 +1376,82 @@ export class LocalDemoRepository implements DemoRepository {
     verificationStatus?: string;
   }): Promise<Evidence[]> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isTeacher = activeUser?.role === 'teacher';
+
     let evs = db.evidence;
     if (options?.ownerId) evs = evs.filter((e) => e.ownerId === options.ownerId);
     if (options?.visibility) evs = evs.filter((e) => e.visibility === options.visibility);
     if (options?.verificationStatus) evs = evs.filter((e) => e.verificationStatus === options.verificationStatus);
-    return JSON.parse(JSON.stringify(evs));
+
+    // Cross-persona privacy guard: private evidence is only visible to its owner or reviewing teacher
+    evs = evs.filter((e) => {
+      if (e.visibility === 'private') {
+        return e.ownerId === db.activeUserId || isTeacher;
+      }
+      return true;
+    });
+
+    const cloned: Evidence[] = JSON.parse(JSON.stringify(evs));
+    // DataUrl protection: do not expose raw file dataUrl to other participants
+    for (const item of cloned) {
+      if (item.ownerId !== db.activeUserId && !isTeacher) {
+        if (item.fileInfo?.dataUrl) {
+          delete item.fileInfo.dataUrl;
+        }
+      }
+    }
+    return cloned;
   }
 
   async getEvidence(evidenceId: string): Promise<Evidence | null> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isTeacher = activeUser?.role === 'teacher';
+
     const ev = db.evidence.find((e) => e.id === evidenceId);
-    return ev ? JSON.parse(JSON.stringify(ev)) : null;
+    if (!ev) return null;
+
+    // Cross-persona privacy guard: private evidence is not accessible to other participants
+    if (ev.visibility === 'private' && ev.ownerId !== db.activeUserId && !isTeacher) {
+      return null;
+    }
+
+    const cloned: Evidence = JSON.parse(JSON.stringify(ev));
+    // DataUrl protection: do not expose raw file dataUrl to other participants
+    if (cloned.ownerId !== db.activeUserId && !isTeacher) {
+      if (cloned.fileInfo?.dataUrl) {
+        delete cloned.fileInfo.dataUrl;
+      }
+    }
+    return cloned;
   }
 
   async addEvidence(
     evidenceInput: Omit<Evidence, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
   ): Promise<Evidence> {
     const db = this.getDb();
+    if (evidenceInput.ownerId !== db.activeUserId) {
+      throw new Error('Unauthorized: cannot create evidence for another participant');
+    }
+
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isTeacher = activeUser?.role === 'teacher';
+
+    // Force newly created participant evidence to unverified/pending; reject/normalize forged status
+    let verificationStatus: VerificationStatus = 'under_review';
+    if (evidenceInput.verificationStatus === 'unverified') {
+      verificationStatus = 'unverified';
+    } else if (evidenceInput.verificationStatus === 'verified' && !isTeacher) {
+      verificationStatus = 'under_review';
+    } else if (isTeacher && evidenceInput.verificationStatus) {
+      verificationStatus = evidenceInput.verificationStatus;
+    }
+
     const now = new Date().toISOString();
     const newEvidence: Evidence = {
       ...evidenceInput,
+      verificationStatus,
       id: generateId('ev'),
       schemaVersion: 1,
       createdAt: now,
@@ -2630,7 +2828,10 @@ export class LocalDemoRepository implements DemoRepository {
       if (this.isUhvCredit(c, db)) return false;
       return true;
     });
-    const totalCredits = credits.reduce((sum, c) => sum + c.amount, 0);
+    const verifiedCredits = credits.filter((c) => c.status !== 'Pending');
+    const pendingCredits = credits.filter((c) => c.status === 'Pending');
+    const totalCredits = verifiedCredits.reduce((sum, c) => sum + c.amount, 0);
+    const pendingCreditsTotal = pendingCredits.reduce((sum, c) => sum + c.amount, 0);
 
     const creditsByDimension: Record<CreditDimension, number> = {
       Learning: 0,
@@ -2661,6 +2862,7 @@ export class LocalDemoRepository implements DemoRepository {
       entries: JSON.parse(JSON.stringify(entries)),
       credits: JSON.parse(JSON.stringify(credits)),
       totalCredits,
+      pendingCredits: pendingCreditsTotal,
       creditsByDimension,
       verifiedEvidence: JSON.parse(JSON.stringify(verifiedEvidence)),
       completedCoursesCount: completedCourses.length,

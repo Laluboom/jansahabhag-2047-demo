@@ -28,7 +28,7 @@ describe('Persona Switching & Shared State Isolation', () => {
       assignmentId: 'asg_obs_03',
       userId: 'user_aarav',
       content: 'Aarav field observation notes.',
-      evidenceIds: [],
+      evidenceIds: ['ev_aarav_interview_05'],
     });
 
     // Switch to Teacher Kavita

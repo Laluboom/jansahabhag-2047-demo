@@ -175,9 +175,13 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(sub.status).toBe('submitted');
       expect(sub.evidenceIds).toContain(evidence.id);
 
-      // +10 Contribution credits awarded
+      // +10 Contribution credit recorded as pending mentor review; total verified credits not prematurely increased
+      const credits = await demoRepository.getCredits('user_aarav');
+      const pendingSubCredit = credits.find((c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03');
+      expect(pendingSubCredit?.status).toBe('Pending');
+      expect(pendingSubCredit?.amount).toBe(10);
       const creditsAfterSubmit = (await demoRepository.getCurrentUser()).totalCredits;
-      expect(creditsAfterSubmit).toBe(initialCredits + 10);
+      expect(creditsAfterSubmit).toBe(initialCredits);
 
       // Teacher Kavita reviews and verifies civic assignment
       await useAuthStore.getState().switchPersona('user_kavita');

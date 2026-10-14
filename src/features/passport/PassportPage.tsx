@@ -89,6 +89,11 @@ export const PassportPage: React.FC = () => {
             <span className="text-3xl font-extrabold font-heading text-civic-saffron-400">
               {passport.totalCredits}
             </span>
+            {passport.pendingCredits !== undefined && passport.pendingCredits > 0 && (
+              <span className="text-[11px] text-amber-300 block mt-0.5 font-medium">
+                +{passport.pendingCredits} pending mentor review
+              </span>
+            )}
           </div>
         </div>
 

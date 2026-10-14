@@ -5,7 +5,7 @@ import { demoRepository } from '../../services/demoRepository';
 import { CreditTransaction, CreditDimension } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { ArrowLeft, Award, CheckCircle2, ShieldCheck, Sparkles, Filter } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle2, Clock, ShieldCheck, Sparkles, Filter } from 'lucide-react';
 import { formatDateTime } from '../../utils/formatters';
 
 const ALL_DIMENSIONS: CreditDimension[] = [
@@ -52,7 +52,12 @@ export const CreditsPage: React.FC = () => {
     return c.dimension === selectedDimension;
   });
 
-  const total = credits.reduce((sum, c) => sum + c.amount, 0);
+  const verifiedTotal = credits
+    .filter((c) => c.status !== 'Pending')
+    .reduce((sum, c) => sum + c.amount, 0);
+  const pendingTotal = credits
+    .filter((c) => c.status === 'Pending')
+    .reduce((sum, c) => sum + c.amount, 0);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -72,9 +77,17 @@ export const CreditsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200 text-left sm:text-right shrink-0">
-          <span className="text-xs font-semibold text-civic-saffron-900 uppercase block">Total Verified</span>
-          <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading">{total} Credits</span>
+        <div className="flex flex-wrap items-center gap-3">
+          {pendingTotal > 0 && (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left sm:text-right shrink-0">
+              <span className="text-xs font-semibold text-amber-900 uppercase block">Pending Mentor Review</span>
+              <span className="text-xl font-bold text-amber-700 font-heading">+{pendingTotal} Credits</span>
+            </div>
+          )}
+          <div className="p-3.5 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200 text-left sm:text-right shrink-0">
+            <span className="text-xs font-semibold text-civic-saffron-900 uppercase block">Total Verified</span>
+            <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading">{verifiedTotal} Credits</span>
+          </div>
         </div>
       </div>
 
@@ -147,9 +160,21 @@ export const CreditsPage: React.FC = () => {
                 <span className="font-extrabold text-sm text-civic-saffron-700 bg-civic-saffron-50 px-2 py-0.5 rounded border border-civic-saffron-200 inline-block">
                   +{tx.amount}
                 </span>
-                <span className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center justify-end gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  {tx.status}
+                <span
+                  className={`text-[10px] font-semibold mt-1 flex items-center justify-end gap-1 ${
+                    tx.status === 'Pending'
+                      ? 'text-amber-600'
+                      : tx.status === 'Audited'
+                      ? 'text-blue-600'
+                      : 'text-emerald-600'
+                  }`}
+                >
+                  {tx.status === 'Pending' ? (
+                    <Clock className="w-3 h-3 text-amber-500" />
+                  ) : (
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  )}
+                  {tx.status === 'Pending' ? 'Pending Review' : tx.status}
                 </span>
               </div>
             </div>

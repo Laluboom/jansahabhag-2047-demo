@@ -184,9 +184,18 @@ export interface Submission {
   reviewedAt?: string;
   score?: number;
   submittedAt?: string;
+  receiptId?: string;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EvidenceFileInfo {
+  name: string;
+  size: number;
+  type: string;
+  dataUrl?: string;
+  demoLabel?: string;
 }
 
 export interface Evidence {
@@ -203,6 +212,9 @@ export interface Evidence {
   tags: string[];
   mediaUrl?: string;
   metadata?: Record<string, string | number | boolean>;
+  assignmentId?: string;
+  observationTime?: string;
+  fileInfo?: EvidenceFileInfo;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -747,4 +759,10 @@ export interface DemoDatabase {
   communityPosts: CommunityPost[];
   moderationCases: ModerationCase[];
   civicIssues?: CivicIssue[];
+}
+
+declare module './index' {
+  interface PassportView {
+    pendingCredits?: number;
+  }
 }
