@@ -115,7 +115,7 @@ export const seedCredits: CreditTransaction[] = [
     schemaVersion: 1,
   },
 
-  // Meera's Transactions (Total: 180 credits)
+  // Meera's Transactions (Total: 120 credits)
   {
     id: 'tx_meera_01',
     userId: 'user_meera',
@@ -141,18 +141,6 @@ export const seedCredits: CreditTransaction[] = [
     schemaVersion: 1,
   },
   {
-    id: 'tx_meera_03',
-    userId: 'user_meera',
-    dimension: 'Learning',
-    amount: 30,
-    sourceType: 'lesson',
-    sourceId: 'les_uhv_501',
-    status: 'Verified',
-    reason: 'Completed Universal Human Values Foundation Track',
-    createdAt: '2026-09-01T15:00:00Z',
-    schemaVersion: 1,
-  },
-  {
     id: 'tx_meera_04',
     userId: 'user_meera',
     dimension: 'Deliberation',
@@ -174,18 +162,6 @@ export const seedCredits: CreditTransaction[] = [
     status: 'Verified',
     reason: 'Delivered Youth Pedestrian Rights Charter to Ward Councillor',
     createdAt: '2026-09-08T15:00:00Z',
-    schemaVersion: 1,
-  },
-  {
-    id: 'tx_meera_06',
-    userId: 'user_meera',
-    dimension: 'Reflection',
-    amount: 30,
-    sourceType: 'reflection',
-    sourceId: 'refl_meera_01',
-    status: 'Verified',
-    reason: 'Published reflection on Trust (Vishwas) and public road ethics',
-    createdAt: '2026-09-08T16:00:00Z',
     schemaVersion: 1,
   },
 

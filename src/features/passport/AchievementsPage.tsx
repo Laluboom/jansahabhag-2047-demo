@@ -65,15 +65,15 @@ export const AchievementsPage: React.FC = () => {
     },
     {
       id: 'b3',
-      title: 'Ethical & Reflective Thinker',
-      desc: 'Recorded universal human values reflections in Civic Passport (+5 Reflection).',
+      title: 'Civic Deliberative Reflector',
+      desc: 'Recorded civic and ethical reflections in Civic Passport (+5 Reflection).',
       earned: hasReflection,
       category: 'Reflection',
       icon: Sparkles,
     },
     {
       id: 'b4',
-      title: 'Universal Values Explorer',
+      title: 'Civic Knowledge Explorer',
       desc: 'Completed civic foundations and ethics learning modules (+15 Learning).',
       earned: hasLearning,
       category: 'Learning',

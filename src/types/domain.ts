@@ -143,14 +143,17 @@ export interface RubricItem {
   description: string;
 }
 
+export type AssignmentType = 'civic_assignment' | 'uhv_reflection';
+
 export interface Assignment {
   id: string;
   courseId: string;
   lessonId?: string;
+  assignmentType?: AssignmentType;
   title: string;
   prompt: string;
   rubric: RubricItem[];
-  requiredEvidenceType: EvidenceType;
+  requiredEvidenceType?: EvidenceType;
   creditsReward: number;
   status: 'draft' | 'active' | 'archived';
   dueDate?: string;
@@ -164,7 +167,8 @@ export type SubmissionStatus =
   | 'submitted'
   | 'under_review'
   | 'verified'
-  | 'revision_requested';
+  | 'revision_requested'
+  | 'completed';
 
 export interface Submission {
   id: string;
@@ -173,6 +177,8 @@ export interface Submission {
   content: string;
   evidenceIds: string[];
   status: SubmissionStatus;
+  isUhvReflection?: boolean;
+  visibility?: 'private' | 'shared_with_mentor';
   teacherFeedback?: string;
   reviewerId?: string;
   reviewedAt?: string;

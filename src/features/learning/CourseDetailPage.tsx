@@ -89,14 +89,18 @@ export const CourseDetailPage: React.FC = () => {
     );
   }
 
+  const isUhv = course.track === 'uhv';
   const completedLessonIds = enrolment?.completedLessonIds || [];
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Back button */}
-      <Link to="/learn" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+      <Link
+        to={isUhv ? '/uhv' : '/learn'}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+      >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to Course Directory</span>
+        <span>{isUhv ? 'Back to Universal Human Values' : 'Back to Course Directory'}</span>
       </Link>
 
       {/* Course Overview Header */}
@@ -107,7 +111,7 @@ export const CourseDetailPage: React.FC = () => {
               {course.code}
             </span>
             <span className="text-xs uppercase tracking-wider font-semibold text-slate-500">
-              {course.track.replace('_', ' ')} &bull; {course.level}
+              {isUhv ? 'Personal Reflection Track' : `${course.track.replace('_', ' ')} \u2022 ${course.level}`}
             </span>
           </div>
           {enrolment && <StatusChip status={enrolment.status} />}
@@ -122,10 +126,21 @@ export const CourseDetailPage: React.FC = () => {
           </p>
         </div>
 
+        {isUhv && (
+          <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1 text-xs">
+            <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-blue-900">
+              Personal Reflection Boundary (Simulation)
+            </span>
+            <p className="text-blue-800 leading-relaxed">
+              Universal Human Values is an autonomous personal inquiry stream. Self-paced study modules carry no numeric scores or Civic Credits.
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-6 pt-2 text-xs text-slate-500 border-t border-slate-100">
           <span className="flex items-center gap-1.5">
             <BookOpen className="w-4 h-4 text-slate-400" />
-            {lessons.length} Structured Lessons
+            {lessons.length} {isUhv ? 'Inquiry Modules' : 'Structured Lessons'}
           </span>
           <span className="flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-slate-400" />
@@ -150,7 +165,7 @@ export const CourseDetailPage: React.FC = () => {
       {/* Modules & Lessons Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold font-heading text-slate-900">
-          Course Curriculum & Field Modules
+          {isUhv ? 'Personal Values Curriculum & Inquiry Modules' : 'Course Curriculum & Field Modules'}
         </h2>
 
         {course.modules.map((mod) => {
@@ -197,7 +212,7 @@ export const CourseDetailPage: React.FC = () => {
                             {lesson.assignmentId && (
                               <span className="flex items-center gap-1 text-civic-saffron-700 font-medium">
                                 <FileCheck2 className="w-3 h-3" />
-                                Field Assignment Attached
+                                {isUhv ? 'Personal Reflection Prompt Attached' : 'Field Assignment Attached'}
                               </span>
                             )}
                           </div>

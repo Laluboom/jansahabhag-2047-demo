@@ -26,17 +26,25 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-const submissionFormSchema = z.object({
-  content: z
-    .string()
-    .min(20, 'Observation notes must be at least 20 characters long with specific field details.')
-    .max(3000, 'Observation notes cannot exceed 3000 characters.'),
-  evidenceIds: z
-    .array(z.string())
-    .min(1, 'Please select or add at least one evidence record to support your submission.'),
-});
+const buildSubmissionSchema = (isUhv: boolean) =>
+  z.object({
+    content: isUhv
+      ? z.string().max(5000, 'Reflection notes cannot exceed 5000 characters.')
+      : z
+          .string()
+          .min(20, 'Observation notes must be at least 20 characters long with specific field details.')
+          .max(3000, 'Observation notes cannot exceed 3000 characters.'),
+    evidenceIds: isUhv
+      ? z.array(z.string()).default([])
+      : z
+          .array(z.string())
+          .min(1, 'Please select or add at least one evidence record to support your submission.'),
+  });
 
-type SubmissionFormData = z.infer<typeof submissionFormSchema>;
+type SubmissionFormData = {
+  content: string;
+  evidenceIds: string[];
+};
 
 export const SubmitAssignmentPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +58,13 @@ export const SubmitAssignmentPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isUhv = Boolean(
+    assignment?.assignmentType === 'uhv_reflection' ||
+    id === 'asg_uhv_08' ||
+    id?.startsWith('asg_uhv_') ||
+    assignment?.courseId === 'course_uhv_leadership_05'
+  );
 
   // Mock evidence modal state
   const [isAddEvidenceModalOpen, setIsAddEvidenceModalOpen] = useState(false);
@@ -68,7 +83,8 @@ export const SubmitAssignmentPage: React.FC = () => {
     reset,
     formState: { errors },
   } = useForm<SubmissionFormData>({
-    resolver: zodResolver(submissionFormSchema),
+    resolver: (values, context, options) =>
+      zodResolver(buildSubmissionSchema(isUhv))(values, context, options),
     defaultValues: {
       content: '',
       evidenceIds: [],
@@ -130,8 +146,8 @@ export const SubmitAssignmentPage: React.FC = () => {
       await demoRepository.saveAssignmentDraft({
         assignmentId: id,
         userId: currentUser.id,
-        content: currentContent.trim() || 'Draft observation notes in progress...',
-        evidenceIds: selectedEvidenceIds,
+        content: currentContent.trim() || (isUhv ? 'Draft personal reflection notes...' : 'Draft observation notes in progress...'),
+        evidenceIds: isUhv ? [] : selectedEvidenceIds,
       });
       triggerRefresh();
       navigate(`/assignments/${id}`);
@@ -150,7 +166,7 @@ export const SubmitAssignmentPage: React.FC = () => {
         assignmentId: id,
         userId: currentUser.id,
         content: data.content.trim(),
-        evidenceIds: data.evidenceIds,
+        evidenceIds: isUhv ? [] : data.evidenceIds,
         status: 'submitted',
       });
       triggerRefresh();
@@ -250,20 +266,40 @@ export const SubmitAssignmentPage: React.FC = () => {
         <div>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-civic-indigo-600">
-              Field Submission & Evidence Portal
+              {isUhv ? 'Personal Reflection & Inquiry (Private)' : 'Field Submission & Evidence Portal'}
             </span>
-            <span className="text-xs font-semibold text-civic-saffron-700 bg-civic-saffron-50 px-2.5 py-0.5 rounded border border-civic-saffron-200">
-              +{assignment.creditsReward} Civic Credits on Submit
-            </span>
+            {isUhv ? (
+              <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+                Personal Study Stream &bull; No Civic Credits
+              </span>
+            ) : (
+              <span className="text-xs font-semibold text-civic-saffron-700 bg-civic-saffron-50 px-2.5 py-0.5 rounded border border-civic-saffron-200">
+                +{assignment.creditsReward} Civic Credits on Submit
+              </span>
+            )}
           </div>
           <h1 className="text-2xl font-bold font-heading text-slate-900 mt-1">
-            {isRevision ? 'Revise Submission: ' : isDraft ? 'Resume Draft: ' : 'Submit: '}
-            {assignment.title}
+            {isUhv
+              ? (isDraft ? 'Resume Private Reflection: ' : 'Personal Reflection: ') + assignment.title
+              : (isRevision ? 'Revise Submission: ' : isDraft ? 'Resume Draft: ' : 'Submit: ') + assignment.title}
           </h1>
           <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
             {assignment.prompt}
           </p>
         </div>
+
+        {/* UHV Single-browser Simulation Disclosure */}
+        {isUhv && (
+          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1.5 text-xs">
+            <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-blue-900">
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              Private Reflection Boundary (Single-Browser Simulation)
+            </span>
+            <p className="text-blue-800 leading-relaxed">
+              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credits, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
+            </p>
+          </div>
+        )}
 
         {/* Teacher Revision Alert if revising */}
         {isRevision && existingSubmission?.teacherFeedback && (
@@ -286,108 +322,127 @@ export const SubmitAssignmentPage: React.FC = () => {
             render={({ field }) => (
               <Textarea
                 {...field}
-                label="Field Observation Notes & Data Log"
-                placeholder="Record structured observation breakdown, timestamps (e.g. 7:45 - 8:15 AM), peak vehicle count, pedestrian delays, or interview quotes..."
+                label={isUhv ? 'Your Personal Reflection & Inquiry Notes' : 'Field Observation Notes & Data Log'}
+                placeholder={
+                  isUhv
+                    ? 'Write your personal reflections, observations, or questions freely. No minimum word count or ideological agreement is required...'
+                    : 'Record structured observation breakdown, timestamps (e.g. 7:45 - 8:15 AM), peak vehicle count, pedestrian delays, or interview quotes...'
+                }
                 rows={7}
                 error={errors.content?.message}
-                helperText="Include objective counts, location context, and observations aligned with the assessment rubric."
+                helperText={
+                  isUhv
+                    ? 'Private to your local study record. You may write freely or leave notes in progress.'
+                    : 'Include objective counts, location context, and observations aligned with the assessment rubric.'
+                }
               />
             )}
           />
 
-          {/* Select / Create Attached Evidence Section */}
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <label className="block text-sm font-semibold text-slate-900">
-                  Attach Field Evidence Records ({selectedEvidenceIds.length} selected)
-                </label>
-                <p className="text-xs text-slate-500">
-                  Required evidence type: <strong>{assignment.requiredEvidenceType}</strong>
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setNewEvType(assignment.requiredEvidenceType);
-                  setIsAddEvidenceModalOpen(true);
-                }}
-                className="shrink-0 text-civic-indigo-700 border-civic-indigo-200 bg-civic-indigo-50/50 hover:bg-civic-indigo-100 text-xs"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                <span>Log New Mock Evidence</span>
-              </Button>
+          {/* Evidence Notice for UHV */}
+          {isUhv && (
+            <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">
+              Personal reflections are exploratory inquiries. No field evidence records or document attachments are required.
             </div>
+          )}
 
-            {errors.evidenceIds && (
-              <p className="text-xs font-medium text-rose-600 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {errors.evidenceIds.message}
-              </p>
-            )}
+          {/* Select / Create Attached Evidence Section (Civic Assignments Only) */}
+          {!isUhv && (
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900">
+                    Attach Field Evidence Records ({selectedEvidenceIds.length} selected)
+                  </label>
+                  <p className="text-xs text-slate-500">
+                    Required evidence type: <strong>{assignment.requiredEvidenceType}</strong>
+                  </p>
+                </div>
 
-            {availableEvidence.length === 0 ? (
-              <div className="p-6 rounded-xl border border-dashed border-slate-200 text-center space-y-2 bg-slate-50">
-                <p className="text-xs text-slate-500">No field evidence records found in your vault.</p>
                 <Button
                   type="button"
                   size="sm"
-                  variant="primary"
-                  onClick={() => setIsAddEvidenceModalOpen(true)}
+                  variant="outline"
+                  onClick={() => {
+                    if (assignment.requiredEvidenceType) {
+                      setNewEvType(assignment.requiredEvidenceType);
+                    }
+                    setIsAddEvidenceModalOpen(true);
+                  }}
+                  className="shrink-0 text-civic-indigo-700 border-civic-indigo-200 bg-civic-indigo-50/50 hover:bg-civic-indigo-100 text-xs"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  <span>Create First Evidence Record</span>
+                  <span>Log New Mock Evidence</span>
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {availableEvidence.map((ev) => {
-                  const isSelected = selectedEvidenceIds.includes(ev.id);
-                  const isMatchingType = ev.type === assignment.requiredEvidenceType;
 
-                  return (
-                    <div
-                      key={ev.id}
-                      onClick={() => toggleEvidence(ev.id)}
-                      className={`p-3.5 rounded-xl border text-xs cursor-pointer flex items-center justify-between transition-all ${
-                        isSelected
-                          ? 'border-civic-indigo-500 bg-civic-indigo-50/60 ring-1 ring-civic-indigo-500 shadow-2xs'
-                          : 'border-slate-200 hover:border-slate-300 bg-white'
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0 pr-3 space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 truncate">{ev.title}</span>
-                          {isMatchingType && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-medium shrink-0">
-                              Matches Required
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-600 line-clamp-1">{ev.description}</p>
-                        <span className="text-[10px] text-slate-400 block">
-                          Type: <strong className="capitalize">{ev.type}</strong> &bull; {ev.source}
-                        </span>
-                      </div>
+              {errors.evidenceIds && (
+                <p className="text-xs font-medium text-rose-600 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {errors.evidenceIds.message}
+                </p>
+              )}
 
+              {availableEvidence.length === 0 ? (
+                <div className="p-6 rounded-xl border border-dashed border-slate-200 text-center space-y-2 bg-slate-50">
+                  <p className="text-xs text-slate-500">No field evidence records found in your vault.</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="primary"
+                    onClick={() => setIsAddEvidenceModalOpen(true)}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    <span>Create First Evidence Record</span>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {availableEvidence.map((ev) => {
+                    const isSelected = selectedEvidenceIds.includes(ev.id);
+                    const isMatchingType = ev.type === assignment.requiredEvidenceType;
+
+                    return (
                       <div
-                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors ${
+                        key={ev.id}
+                        onClick={() => toggleEvidence(ev.id)}
+                        className={`p-3.5 rounded-xl border text-xs cursor-pointer flex items-center justify-between transition-all ${
                           isSelected
-                            ? 'bg-civic-indigo-600 text-white'
-                            : 'border border-slate-300 bg-white'
+                            ? 'border-civic-indigo-500 bg-civic-indigo-50/60 ring-1 ring-civic-indigo-500 shadow-2xs'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
                         }`}
                       >
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                        <div className="flex-1 min-w-0 pr-3 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900 truncate">{ev.title}</span>
+                            {isMatchingType && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-medium shrink-0">
+                                Matches Required
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-600 line-clamp-1">{ev.description}</p>
+                          <span className="text-[10px] text-slate-400 block">
+                            Type: <strong className="capitalize">{ev.type}</strong> &bull; {ev.source}
+                          </span>
+                        </div>
+
+                        <div
+                          className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected
+                              ? 'bg-civic-indigo-600 text-white'
+                              : 'border border-slate-300 bg-white'
+                          }`}
+                        >
+                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Footer */}
           <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -419,7 +474,13 @@ export const SubmitAssignmentPage: React.FC = () => {
                 isLoading={isSubmitting}
                 disabled={isSavingDraft}
               >
-                <span>{isRevision ? 'Resubmit for Review (+10 Credits)' : 'Submit for Verification (+10 Credits)'}</span>
+                <span>
+                  {isUhv
+                    ? 'Save Private Reflection'
+                    : isRevision
+                    ? 'Resubmit for Review (+10 Credits)'
+                    : 'Submit for Verification (+10 Credits)'}
+                </span>
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </div>

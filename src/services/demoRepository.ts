@@ -50,8 +50,37 @@ export class LocalDemoRepository implements DemoRepository {
 
   private calculateUserCredits(db: DemoDatabase, userId: string): number {
     return db.credits
-      .filter((c) => c.userId === userId)
+      .filter((c) => {
+        if (c.userId !== userId) return false;
+        if (
+          c.sourceId?.startsWith('les_uhv_') ||
+          c.sourceId?.startsWith('asg_uhv_') ||
+          c.sourceId === 'course_uhv_leadership_05' ||
+          c.id === 'tx_meera_03' ||
+          c.id === 'tx_meera_06'
+        ) {
+          return false;
+        }
+        return true;
+      })
       .reduce((sum, c) => sum + c.amount, 0);
+  }
+
+  public isUhvAssignment(asg: Assignment, db?: DemoDatabase): boolean {
+    if (asg.assignmentType === 'uhv_reflection') return true;
+    if (asg.id === 'asg_uhv_08' || asg.id.startsWith('asg_uhv_')) return true;
+    if (asg.courseId === 'course_uhv_leadership_05') return true;
+    const database = db || this.getDb();
+    const course = database.courses.find((c) => c.id === asg.courseId);
+    return course?.track === 'uhv';
+  }
+
+  public isUhvSubmission(sub: Submission, db?: DemoDatabase): boolean {
+    if (sub.isUhvReflection) return true;
+    const database = db || this.getDb();
+    const asg = database.assignments.find((a) => a.id === sub.assignmentId);
+    if (!asg) return sub.assignmentId === 'asg_uhv_08';
+    return this.isUhvAssignment(asg, database);
   }
 
   // Users & Personas
@@ -113,7 +142,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     const activeSubmissions = userSubmissions.filter((s) => s.status === 'submitted' || s.status === 'verified' || s.status === 'under_review');
     const activeSubmittedAsgIds = activeSubmissions.map((s) => s.assignmentId);
-    const pendingAssignments = db.assignments.filter((a) => !activeSubmittedAsgIds.includes(a.id));
+    const pendingAssignments = db.assignments.filter(
+      (a) => !activeSubmittedAsgIds.includes(a.id) && !this.isUhvAssignment(a, db)
+    );
 
     const notifications = db.notifications
       .filter((n) => n.userId === userId)
@@ -161,14 +192,26 @@ export class LocalDemoRepository implements DemoRepository {
       const draftSub = userSubmissions.find((s) => s.status === 'draft');
       if (draftSub) {
         const asg = db.assignments.find((a) => a.id === draftSub.assignmentId);
-        nextStep = {
-          type: 'assignment',
-          title: `Resume Draft: ${asg?.title || 'Assignment'}`,
-          description: 'Continue editing and attach field observation evidence.',
-          targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
-          badgeText: 'Draft in Progress',
-          rewardText: '+10 Credits on Submit',
-        };
+        const isUhv = asg ? this.isUhvAssignment(asg, db) : this.isUhvSubmission(draftSub, db);
+        if (isUhv) {
+          nextStep = {
+            type: 'assignment',
+            title: `Resume Reflection: ${asg?.title || 'Personal Reflection'}`,
+            description: 'Continue your personal self-exploration reflection in your private study journal.',
+            targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
+            badgeText: 'Study Journal',
+            rewardText: 'Private Reflection',
+          };
+        } else {
+          nextStep = {
+            type: 'assignment',
+            title: `Resume Draft: ${asg?.title || 'Assignment'}`,
+            description: 'Continue editing and attach field observation evidence.',
+            targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
+            badgeText: 'Draft in Progress',
+            rewardText: '+10 Credits on Submit',
+          };
+        }
       }
     }
 
@@ -180,13 +223,14 @@ export class LocalDemoRepository implements DemoRepository {
         const courseLessons = db.lessons.filter((l) => l.courseId === inProgressEnrolment.courseId).sort((a, b) => a.order - b.order);
         const nextLesson = courseLessons.find((l) => !inProgressEnrolment.completedLessonIds.includes(l.id));
         if (nextLesson && course) {
+          const isUhvCourse = course.track === 'uhv' || course.id === 'course_uhv_leadership_05';
           nextStep = {
             type: 'lesson',
-            title: `Continue Lesson: ${nextLesson.title}`,
+            title: isUhvCourse ? `Continue Module: ${nextLesson.title}` : `Continue Lesson: ${nextLesson.title}`,
             description: nextLesson.contentSummary || course.description,
             targetRoute: `/learn/${course.id}/lesson/${nextLesson.id}`,
-            badgeText: `${course.code} &bull; Next Lesson`,
-            rewardText: '+5 Learning Credits',
+            badgeText: isUhvCourse ? `${course.code} &bull; Next Module` : `${course.code} &bull; Next Lesson`,
+            rewardText: isUhvCourse ? 'Self-Exploration' : '+5 Learning Credits',
           };
         }
       }
@@ -381,6 +425,7 @@ export class LocalDemoRepository implements DemoRepository {
     if (!lesson) throw new Error(`Lesson ${lessonId} not found`);
 
     const course = db.courses.find((c) => c.id === lesson.courseId);
+    const isUhv = course?.track === 'uhv';
     let enrolment = db.enrolments.find((e) => e.userId === userId && e.courseId === lesson.courseId);
     const now = new Date().toISOString();
 
@@ -418,108 +463,142 @@ export class LocalDemoRepository implements DemoRepository {
       }
       enrolment.updatedAt = now;
 
-      // Create credit transaction for lesson (idempotent)
-      const existingTx = db.credits.find(
-        (c) => c.userId === userId && c.sourceType === 'lesson' && c.sourceId === lessonId
-      );
-      if (!existingTx) {
-        creditTx = {
-          id: generateId('tx'),
-          userId,
-          dimension: 'Learning',
-          amount: 5,
-          sourceType: 'lesson',
-          sourceId: lessonId,
-          status: 'Verified',
-          reason: `Completed lesson: ${lesson.title}`,
-          createdAt: now,
-          schemaVersion: 1,
-        };
-        db.credits.push(creditTx);
-      }
-
-      // Create activity record (idempotent)
-      const existingAct = db.activities.find(
-        (a) => a.userId === userId && a.type === 'lesson_completed' && a.referenceId === lessonId
-      );
-      if (!existingAct) {
-        db.activities.push({
-          id: generateId('act'),
-          userId,
-          type: 'lesson_completed',
-          title: `Completed Lesson: ${lesson.title}`,
-          description: `Progress in ${course?.title || lesson.courseId} reached ${enrolment.progressPercent}%`,
-          referenceId: lessonId,
-          referenceType: 'lesson',
-          timestamp: now,
-          schemaVersion: 1,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      // Create Passport Entry (idempotent)
-      const existingPass = db.passportEntries.find(
-        (p) => p.userId === userId && p.sourceReferenceId === lessonId
-      );
-      if (!existingPass) {
-        db.passportEntries.push({
-          id: generateId('pass'),
-          userId,
-          category: 'learning',
-          title: `Completed: ${lesson.title}`,
-          subtitle: course?.title || 'Civic Academy Lesson',
-          date: now.split('T')[0],
-          creditsAwarded: 5,
-          evidenceIds: [],
-          sourceReferenceId: lessonId,
-          sourceReferenceType: 'lesson',
-          isVerified: true,
-          schemaVersion: 1,
-        });
-      }
-
-      // If course is newly completed, create achievement passport entry
-      if (newlyCompleted) {
-        const existingCoursePass = db.passportEntries.find(
-          (p) => p.userId === userId && p.sourceReferenceId === lesson.courseId && p.category === 'achievement'
+      if (!isUhv) {
+        // Create credit transaction for lesson (idempotent)
+        const existingTx = db.credits.find(
+          (c) => c.userId === userId && c.sourceType === 'lesson' && c.sourceId === lessonId
         );
-        if (!existingCoursePass) {
+        if (!existingTx) {
+          creditTx = {
+            id: generateId('tx'),
+            userId,
+            dimension: 'Learning',
+            amount: 5,
+            sourceType: 'lesson',
+            sourceId: lessonId,
+            status: 'Verified',
+            reason: `Completed lesson: ${lesson.title}`,
+            createdAt: now,
+            schemaVersion: 1,
+          };
+          db.credits.push(creditTx);
+        }
+
+        // Create activity record (idempotent)
+        const existingAct = db.activities.find(
+          (a) => a.userId === userId && a.type === 'lesson_completed' && a.referenceId === lessonId
+        );
+        if (!existingAct) {
+          db.activities.push({
+            id: generateId('act'),
+            userId,
+            type: 'lesson_completed',
+            title: `Completed Lesson: ${lesson.title}`,
+            description: `Progress in ${course?.title || lesson.courseId} reached ${enrolment.progressPercent}%`,
+            referenceId: lessonId,
+            referenceType: 'lesson',
+            timestamp: now,
+            schemaVersion: 1,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+
+        // Create Passport Entry (idempotent)
+        const existingPass = db.passportEntries.find(
+          (p) => p.userId === userId && p.sourceReferenceId === lessonId
+        );
+        if (!existingPass) {
           db.passportEntries.push({
             id: generateId('pass'),
             userId,
-            category: 'achievement',
-            title: `Course Mastered: ${course?.title || 'Civic Track'}`,
-            subtitle: `Completed all ${totalCount} lessons in ${course?.code || 'curriculum'}`,
+            category: 'learning',
+            title: `Completed: ${lesson.title}`,
+            subtitle: course?.title || 'Civic Academy Lesson',
             date: now.split('T')[0],
-            creditsAwarded: 0,
+            creditsAwarded: 5,
             evidenceIds: [],
-            sourceReferenceId: lesson.courseId,
-            sourceReferenceType: 'course',
+            sourceReferenceId: lessonId,
+            sourceReferenceType: 'lesson',
             isVerified: true,
             schemaVersion: 1,
           });
         }
-      }
 
-      // Notification
-      db.notifications.push({
-        id: generateId('notif'),
-        userId,
-        title: 'Lesson Completed!',
-        message: `You completed "${lesson.title}" and earned 5 Learning Credits.`,
-        type: 'credit',
-        isRead: false,
-        targetRoute: `/passport/credits`,
-        createdAt: now,
-        schemaVersion: 1,
-      });
+        // If course is newly completed, create achievement passport entry
+        if (newlyCompleted) {
+          const existingCoursePass = db.passportEntries.find(
+            (p) => p.userId === userId && p.sourceReferenceId === lesson.courseId && p.category === 'achievement'
+          );
+          if (!existingCoursePass) {
+            db.passportEntries.push({
+              id: generateId('pass'),
+              userId,
+              category: 'achievement',
+              title: `Course Mastered: ${course?.title || 'Civic Track'}`,
+              subtitle: `Completed all ${totalCount} lessons in ${course?.code || 'curriculum'}`,
+              date: now.split('T')[0],
+              creditsAwarded: 0,
+              evidenceIds: [],
+              sourceReferenceId: lesson.courseId,
+              sourceReferenceType: 'course',
+              isVerified: true,
+              schemaVersion: 1,
+            });
+          }
+        }
 
-      // Update user total credits
-      const user = db.users.find((u) => u.id === userId);
-      if (user) {
-        user.totalCredits = this.calculateUserCredits(db, userId);
-        user.updatedAt = now;
+        // Notification
+        db.notifications.push({
+          id: generateId('notif'),
+          userId,
+          title: 'Lesson Completed!',
+          message: `You completed "${lesson.title}" and earned 5 Learning Credits.`,
+          type: 'credit',
+          isRead: false,
+          targetRoute: `/passport/credits`,
+          createdAt: now,
+          schemaVersion: 1,
+        });
+
+        // Update user total credits
+        const user = db.users.find((u) => u.id === userId);
+        if (user) {
+          user.totalCredits = this.calculateUserCredits(db, userId);
+          user.updatedAt = now;
+        }
+      } else {
+        // UHV Course Completion - NO credits, NO verified passport entry, NO civic achievement!
+        const existingAct = db.activities.find(
+          (a) => a.userId === userId && a.type === 'lesson_completed' && a.referenceId === lessonId
+        );
+        if (!existingAct) {
+          db.activities.push({
+            id: generateId('act'),
+            userId,
+            type: 'lesson_completed',
+            title: `Completed Study Module: ${lesson.title}`,
+            description: `Progress in ${course?.title || lesson.courseId} reached ${enrolment.progressPercent}% (Personal Study Stream).`,
+            referenceId: lessonId,
+            referenceType: 'lesson',
+            timestamp: now,
+            schemaVersion: 1,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+
+        db.notifications.push({
+          id: generateId('notif'),
+          userId,
+          title: 'Study Module Completed',
+          message: `You completed "${lesson.title}". Personal reflections carry no civic credits.`,
+          type: 'system',
+          isRead: false,
+          targetRoute: `/uhv`,
+          createdAt: now,
+          schemaVersion: 1,
+        });
       }
 
       this.saveDb(db);
@@ -549,18 +628,62 @@ export class LocalDemoRepository implements DemoRepository {
     let subs = db.submissions;
     if (userId) subs = subs.filter((s) => s.userId === userId);
     if (assignmentId) subs = subs.filter((s) => s.assignmentId === assignmentId);
-    return JSON.parse(JSON.stringify(subs));
+
+    // Privacy boundary: Do not expose private UHV reflections to other users, teachers, or generic queues
+    subs = subs.filter((s) => {
+      if (this.isUhvSubmission(s, db)) {
+        return db.activeUserId === s.userId;
+      }
+      return true;
+    });
+
+    // Defense-in-depth: sanitize any UHV records in memory so they never leak scoring or evidence
+    return JSON.parse(
+      JSON.stringify(
+        subs.map((s) => {
+          if (this.isUhvSubmission(s, db)) {
+            const clone = { ...s, evidenceIds: [], isUhvReflection: true, visibility: 'private' as const };
+            delete clone.score;
+            delete clone.reviewerId;
+            delete clone.reviewedAt;
+            delete clone.teacherFeedback;
+            return clone;
+          }
+          return s;
+        })
+      )
+    );
   }
 
   async getSubmission(submissionId: string): Promise<Submission | null> {
     const db = this.getDb();
     const sub = db.submissions.find((s) => s.id === submissionId);
-    return sub ? JSON.parse(JSON.stringify(sub)) : null;
+    if (!sub) return null;
+
+    // Privacy boundary: Do not expose private UHV reflections to other users or teachers
+    if (this.isUhvSubmission(sub, db) && db.activeUserId !== sub.userId) {
+      return null;
+    }
+
+    const cloned = JSON.parse(JSON.stringify(sub));
+    if (this.isUhvSubmission(cloned, db)) {
+      cloned.evidenceIds = [];
+      cloned.isUhvReflection = true;
+      cloned.visibility = 'private';
+      delete cloned.score;
+      delete cloned.reviewerId;
+      delete cloned.reviewedAt;
+      delete cloned.teacherFeedback;
+    }
+    return cloned;
   }
 
   async saveAssignmentDraft(input: AssignmentSubmissionInput): Promise<Submission> {
     const db = this.getDb();
     const now = new Date().toISOString();
+    const asg = db.assignments.find((a) => a.id === input.assignmentId);
+    const isUhv = asg ? this.isUhvAssignment(asg, db) : input.assignmentId === 'asg_uhv_08';
+
     const existing = db.submissions.find(
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
@@ -572,8 +695,16 @@ export class LocalDemoRepository implements DemoRepository {
     let submission: Submission;
     if (existing) {
       existing.content = input.content;
-      existing.evidenceIds = input.evidenceIds || [];
+      existing.evidenceIds = isUhv ? [] : input.evidenceIds || [];
       existing.status = 'draft';
+      if (isUhv) {
+        existing.isUhvReflection = true;
+        existing.visibility = 'private';
+        delete existing.score;
+        delete existing.reviewerId;
+        delete existing.reviewedAt;
+        delete existing.teacherFeedback;
+      }
       existing.updatedAt = now;
       submission = existing;
     } else {
@@ -582,8 +713,10 @@ export class LocalDemoRepository implements DemoRepository {
         assignmentId: input.assignmentId,
         userId: input.userId,
         content: input.content,
-        evidenceIds: input.evidenceIds || [],
+        evidenceIds: isUhv ? [] : input.evidenceIds || [],
         status: 'draft',
+        isUhvReflection: isUhv ? true : undefined,
+        visibility: isUhv ? 'private' : undefined,
         schemaVersion: 1,
         createdAt: now,
         updatedAt: now,
@@ -603,6 +736,8 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const now = new Date().toISOString();
     const asg = db.assignments.find((a) => a.id === input.assignmentId);
+    const isUhv = asg ? this.isUhvAssignment(asg, db) : input.assignmentId === 'asg_uhv_08';
+
     const existing = db.submissions.find(
       (s) => s.assignmentId === input.assignmentId && s.userId === input.userId
     );
@@ -612,11 +747,20 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     let submission: Submission;
+    const finalStatus: 'completed' | 'submitted' = isUhv ? 'completed' : 'submitted';
 
     if (existing) {
       existing.content = input.content;
-      existing.evidenceIds = input.evidenceIds || [];
-      existing.status = 'submitted';
+      existing.evidenceIds = isUhv ? [] : input.evidenceIds || [];
+      existing.status = finalStatus;
+      if (isUhv) {
+        existing.isUhvReflection = true;
+        existing.visibility = 'private';
+        delete existing.score;
+        delete existing.reviewerId;
+        delete existing.reviewedAt;
+        delete existing.teacherFeedback;
+      }
       existing.submittedAt = now;
       existing.updatedAt = now;
       submission = existing;
@@ -626,14 +770,50 @@ export class LocalDemoRepository implements DemoRepository {
         assignmentId: input.assignmentId,
         userId: input.userId,
         content: input.content,
-        evidenceIds: input.evidenceIds || [],
-        status: 'submitted',
+        evidenceIds: isUhv ? [] : input.evidenceIds || [],
+        status: finalStatus,
+        isUhvReflection: isUhv ? true : undefined,
+        visibility: isUhv ? 'private' : undefined,
         submittedAt: now,
         schemaVersion: 1,
         createdAt: now,
         updatedAt: now,
       };
       db.submissions.push(submission);
+    }
+
+    if (isUhv) {
+      // UHV Reflection:
+      // NO civic credits awarded!
+      // NO teacher notification!
+      // Activity logged as private personal reflection (idempotent)
+      const existingActivity = db.activities.find(
+        (a) =>
+          a.userId === input.userId &&
+          a.type === 'reflection_shared' &&
+          (a.referenceId === submission.id || a.referenceId === input.assignmentId)
+      );
+      if (existingActivity) {
+        existingActivity.timestamp = now;
+        existingActivity.updatedAt = now;
+      } else {
+        db.activities.push({
+          id: generateId('act'),
+          userId: input.userId,
+          type: 'reflection_shared',
+          title: `Recorded Personal Reflection: ${asg?.title || 'Values Inquiry'}`,
+          description: 'Saved privately to your personal study record (no civic credits).',
+          referenceId: submission.id,
+          referenceType: 'submission',
+          timestamp: now,
+          schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      this.saveDb(db);
+      return JSON.parse(JSON.stringify(submission));
     }
 
     // Submission credit: +10 Contribution once per submission, idempotent on retries
@@ -663,7 +843,10 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Activity (idempotent on resubmission)
     const existingActivity = db.activities.find(
-      (a) => a.userId === input.userId && a.type === 'assignment_submitted' && (a.referenceId === submission.id || a.referenceId === input.assignmentId)
+      (a) =>
+        a.userId === input.userId &&
+        a.type === 'assignment_submitted' &&
+        (a.referenceId === submission.id || a.referenceId === input.assignmentId)
     );
     if (existingActivity) {
       existingActivity.timestamp = now;
@@ -710,6 +893,10 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const submission = db.submissions.find((s) => s.id === input.submissionId);
     if (!submission) throw new Error(`Submission ${input.submissionId} not found`);
+
+    if (this.isUhvSubmission(submission, db)) {
+      throw new Error('Teacher review and scoring are not permitted for private UHV reflections.');
+    }
 
     if (submission.status === 'draft') {
       throw new Error('Cannot review a draft submission');
@@ -1734,8 +1921,31 @@ export class LocalDemoRepository implements DemoRepository {
   async getPassport(userId: string): Promise<PassportView> {
     const db = this.getDb();
     const user = db.users.find((u) => u.id === userId) || db.users[0];
-    const entries = db.passportEntries.filter((p) => p.userId === userId);
-    const credits = db.credits.filter((c) => c.userId === userId);
+    const entries = db.passportEntries.filter((p) => {
+      if (p.userId !== userId) return false;
+      if (
+        p.sourceReferenceId === 'course_uhv_leadership_05' ||
+        p.sourceReferenceId?.startsWith('les_uhv_') ||
+        p.sourceReferenceId?.startsWith('asg_uhv_') ||
+        p.id === 'pass_meera_03'
+      ) {
+        return false;
+      }
+      return true;
+    });
+    const credits = db.credits.filter((c) => {
+      if (c.userId !== userId) return false;
+      if (
+        c.sourceId?.startsWith('les_uhv_') ||
+        c.sourceId?.startsWith('asg_uhv_') ||
+        c.sourceId === 'course_uhv_leadership_05' ||
+        c.id === 'tx_meera_03' ||
+        c.id === 'tx_meera_06'
+      ) {
+        return false;
+      }
+      return true;
+    });
     const totalCredits = credits.reduce((sum, c) => sum + c.amount, 0);
 
     const creditsByDimension: Record<CreditDimension, number> = {
@@ -1755,9 +1965,11 @@ export class LocalDemoRepository implements DemoRepository {
     const verifiedEvidence = db.evidence.filter(
       (e) => e.ownerId === userId && e.verificationStatus === 'verified'
     );
-    const completedCourses = db.enrolments.filter(
-      (e) => e.userId === userId && e.status === 'completed'
-    );
+    const completedCourses = db.enrolments.filter((e) => {
+      if (e.userId !== userId || e.status !== 'completed') return false;
+      const course = db.courses.find((c) => c.id === e.courseId);
+      return course?.track !== 'uhv';
+    });
     const assemblies = db.assemblies.filter((a) => a.participantUserIds.includes(userId));
 
     return {
@@ -1774,7 +1986,19 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getCredits(userId: string): Promise<CreditTransaction[]> {
     const db = this.getDb();
-    const credits = db.credits.filter((c) => c.userId === userId);
+    const credits = db.credits.filter((c) => {
+      if (c.userId !== userId) return false;
+      if (
+        c.sourceId?.startsWith('les_uhv_') ||
+        c.sourceId?.startsWith('asg_uhv_') ||
+        c.sourceId === 'course_uhv_leadership_05' ||
+        c.id === 'tx_meera_03' ||
+        c.id === 'tx_meera_06'
+      ) {
+        return false;
+      }
+      return true;
+    });
     return JSON.parse(JSON.stringify(credits));
   }
 

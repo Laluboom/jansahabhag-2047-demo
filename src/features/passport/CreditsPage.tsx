@@ -87,6 +87,9 @@ export const CreditsPage: React.FC = () => {
         <p className="leading-relaxed">
           &bull; Complete lesson: <strong>+5 Learning</strong> &bull; Assignment submission: <strong>+10 Contribution</strong> &bull; Verified field evidence: <strong>+5 Observation</strong> &bull; Assembly participation: <strong>+10 Deliberation</strong> &bull; Substantive inquiry: <strong>+5 Deliberation</strong> &bull; Reflection: <strong>+5 Reflection</strong> &bull; Project milestone: <strong>+10 Civic Action</strong>.
         </p>
+        <p className="text-[11px] text-slate-500 italic">
+          Note: Personal Universal Human Values (UHV) reflections are autonomous personal inquiries and carry no Civic Credits.
+        </p>
       </Card>
 
       {/* Dimension Filter Tabs */}

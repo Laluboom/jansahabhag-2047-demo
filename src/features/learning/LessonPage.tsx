@@ -108,6 +108,7 @@ export const LessonPage: React.FC = () => {
     );
   }
 
+  const isUhv = course?.track === 'uhv';
   const isCompleted = enrolment?.completedLessonIds.includes(lesson.id) || completionSuccess;
 
   return (
@@ -115,19 +116,29 @@ export const LessonPage: React.FC = () => {
       {/* Back to course breadcrumb */}
       <div className="flex items-center justify-between">
         <Link
-          to={`/learn/${course.id}`}
+          to={isUhv ? '/uhv' : `/learn/${course.id}`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to {course.title}</span>
+          <span>{isUhv ? 'Back to Universal Human Values' : `Back to ${course.title}`}</span>
         </Link>
-        {isCompleted && <StatusChip status="completed" />}
+        {isCompleted && (
+          isUhv ? (
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800">
+              Module Completed
+            </span>
+          ) : (
+            <StatusChip status="completed" />
+          )
+        )}
       </div>
 
       {/* Lesson Header Card */}
       <Card className="border-slate-200 p-6 sm:p-8 space-y-3">
         <span className="text-xs font-semibold text-civic-indigo-600 uppercase tracking-wider">
-          Lesson {lesson.order} &bull; {lesson.estimatedMinutes} Minutes
+          {isUhv
+            ? `Study Module ${lesson.order} \u2022 ${lesson.estimatedMinutes} Minutes (Personal Study)`
+            : `Lesson ${lesson.order} \u2022 ${lesson.estimatedMinutes} Minutes`}
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
           {lesson.title}
@@ -141,7 +152,7 @@ export const LessonPage: React.FC = () => {
           <div className="mt-4 p-4 rounded-xl bg-civic-indigo-50/60 border border-civic-indigo-100 space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-civic-indigo-900 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              Learning Objectives
+              {isUhv ? 'Inquiry Themes' : 'Learning Objectives'}
             </h3>
             <ul className="space-y-1.5 text-xs text-slate-700">
               {lesson.learningObjectives.map((obj, i) => (
@@ -174,12 +185,18 @@ export const LessonPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-bold font-heading text-slate-900">
-              {isCompleted ? 'Lesson Completed!' : 'Finished Reading the Lesson?'}
+              {isUhv
+                ? (isCompleted ? 'Study Module Finished' : 'Finished Reading this Module?')
+                : (isCompleted ? 'Lesson Completed!' : 'Finished Reading the Lesson?')}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {isCompleted
-                ? 'Your progress has been recorded and 5 Civic Credits added.'
-                : 'Mark as complete to update your course progress and earn Civic Credits.'}
+              {isUhv
+                ? (isCompleted
+                    ? 'Your module reading progress has been recorded in your private study stream.'
+                    : 'Mark as complete to update your self-paced study progress (no civic credits).')
+                : (isCompleted
+                    ? 'Your progress has been recorded and 5 Civic Credits added.'
+                    : 'Mark as complete to update your course progress and earn Civic Credits.')}
             </p>
           </div>
 
@@ -191,12 +208,12 @@ export const LessonPage: React.FC = () => {
               onClick={handleCompleteLesson}
             >
               <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              <span>Mark Lesson Complete (+5 Credits)</span>
+              <span>{isUhv ? 'Mark Module Complete' : 'Mark Lesson Complete (+5 Credits)'}</span>
             </Button>
           ) : (
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Completed & Verified</span>
+              <span>{isUhv ? 'Study Module Completed' : 'Completed & Verified'}</span>
             </div>
           )}
         </div>
@@ -206,7 +223,7 @@ export const LessonPage: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200">
             <div className="space-y-0.5">
               <span className="text-[10px] uppercase font-bold text-civic-saffron-800 tracking-wider">
-                Hands-on Field Practice
+                {isUhv ? 'Personal Reflection Prompt' : 'Hands-on Field Practice'}
               </span>
               <h4 className="text-sm font-bold text-slate-900">{assignment.title}</h4>
               <p className="text-xs text-slate-600 line-clamp-1">{assignment.prompt}</p>
@@ -214,7 +231,11 @@ export const LessonPage: React.FC = () => {
             <Link to={`/assignments/${assignment.id}`}>
               <Button size="sm" variant="saffron" className="shrink-0">
                 <FileCheck2 className="w-4 h-4 mr-1" />
-                <span>Go to Assignment (+{assignment.creditsReward} Credits)</span>
+                <span>
+                  {isUhv
+                    ? 'Open Reflection Prompt'
+                    : `Go to Assignment (+${assignment.creditsReward} Credits)`}
+                </span>
               </Button>
             </Link>
           </div>
