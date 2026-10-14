@@ -168,10 +168,7 @@ export const SubmitAssignmentPage: React.FC = () => {
         console.error('Failed to load submit screen', err);
       } finally {
         setIsLoading(false);
-        // Delay releasing initial load to avoid immediate trigger
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 150);
+        isInitialLoadRef.current = false;
       }
     }
     load();
@@ -332,9 +329,9 @@ export const SubmitAssignmentPage: React.FC = () => {
       return;
     }
 
-    const maxBytes = 1.5 * 1024 * 1024; // 1.5 MB practical browser limit
+    const maxBytes = 250 * 1024; // 250 KB conservative limit for durable browser storage
     if (file.size > maxBytes) {
-      setFileError(`File size (${(file.size / 1024 / 1024).toFixed(1)} MB) exceeds browser storage limit of 1.5 MB.`);
+      setFileError(`File size (${(file.size / 1024).toFixed(1)} KB) exceeds conservative browser storage limit of 250 KB. Please select a smaller file.`);
       setSelectedFile(null);
       return;
     }
@@ -400,8 +397,9 @@ export const SubmitAssignmentPage: React.FC = () => {
       setSelectedFile(null);
       setFileError(null);
       setIsAddEvidenceModalOpen(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to add evidence', err);
+      setFileError(err?.message || 'Storage error: Failed to save evidence to browser storage.');
     } finally {
       setIsCreatingEvidence(false);
     }
@@ -554,6 +552,13 @@ export const SubmitAssignmentPage: React.FC = () => {
             <p className="text-xs text-rose-800 leading-relaxed italic">
               "{existingSubmission.teacherFeedback}"
             </p>
+          </div>
+        )}
+
+        {draftError && (
+          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-2" role="alert">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{draftError}</span>
           </div>
         )}
 
@@ -829,7 +834,7 @@ export const SubmitAssignmentPage: React.FC = () => {
               Attach Local File (Image or Document)
             </label>
             <p className="text-[11px] text-slate-500">
-              DEMO single-browser simulation: File is read and stored locally in browser storage. No file is uploaded to a remote server. Supported formats: JPEG, PNG, WebP, PDF, CSV, TXT (max 1.5 MB).
+              DEMO single-browser simulation: File is read and stored locally in browser storage. Maximum file size: 250 KB (conservative limit to guarantee localStorage durability). Supported formats: JPEG, PNG, WebP, PDF, CSV, TXT.
             </p>
 
             <div className="flex items-center gap-3">

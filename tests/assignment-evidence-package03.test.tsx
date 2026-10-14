@@ -1,6 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import React from 'react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { demoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
+import { useAuthStore } from '../src/stores/authStore';
+import { SubmitAssignmentPage } from '../src/features/assignments/SubmitAssignmentPage';
 
 describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
   beforeEach(async () => {
@@ -261,6 +266,44 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       expect(forged.verificationStatus).toBe('under_review');
     });
 
+    it('normalizes teacher addEvidence call with verified status to under_review', async () => {
+      await demoRepository.switchUser('user_kavita');
+      const teacherEv = await demoRepository.addEvidence({
+        ownerId: 'user_kavita',
+        ownerName: 'Kavita Rao',
+        type: 'observation',
+        title: 'Teacher Demonstration Walk',
+        description: 'Demonstration observations.',
+        source: 'Classroom Fieldwork',
+        visibility: 'assembly',
+        verificationStatus: 'verified',
+        tags: ['Mentor'],
+      });
+      // Verification must go through reviewSubmission, not self-minted on addEvidence
+      expect(teacherEv.verificationStatus).toBe('under_review');
+    });
+
+    it('rejects addEvidence when file size exceeds conservative 250 KB limit', async () => {
+      await expect(
+        demoRepository.addEvidence({
+          ownerId: 'user_aarav',
+          ownerName: 'Aarav Sharma',
+          type: 'document',
+          title: 'Oversized Observation Document',
+          description: 'Document exceeding browser quota durability.',
+          source: 'Field Audit',
+          visibility: 'assembly',
+          verificationStatus: 'under_review',
+          tags: ['Oversized'],
+          fileInfo: {
+            name: 'large_recording.pdf',
+            size: 300 * 1024,
+            type: 'application/pdf',
+          },
+        })
+      ).rejects.toThrow(/exceeds durable browser storage limit of 250 KB/i);
+    });
+
     it('rejects addEvidence direct call for another persona', async () => {
       await expect(
         demoRepository.addEvidence({
@@ -507,6 +550,100 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       });
 
       expect(finalVerified.status).toBe('verified');
+    });
+  });
+
+  describe('7. Storage Quota & Storage Failure Resilience', () => {
+    it('fails visibly on localStorage quota error and leaves prior durable data intact', async () => {
+      // 1. Establish prior durable draft on asg_obs_03
+      const priorDraft = await demoRepository.saveAssignmentDraft({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Original durable draft before quota error.',
+      });
+
+      // 2. Mock Storage.prototype.setItem to simulate QuotaExceededError
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string) => {
+        if (key === '__storage_test__') return;
+        const error = new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+        throw error;
+      });
+
+      try {
+        // Attempting to update draft fails with descriptive quota error
+        await expect(
+          demoRepository.saveAssignmentDraft({
+            assignmentId: 'asg_obs_03',
+            userId: 'user_aarav',
+            content: 'Draft update that should fail on quota.',
+          })
+        ).rejects.toThrow(/quota exceeded or storage disabled/i);
+
+        // Attempting to add evidence with file data fails with descriptive error
+        await expect(
+          demoRepository.addEvidence({
+            ownerId: 'user_aarav',
+            ownerName: 'Aarav Sharma',
+            type: 'observation',
+            title: 'Failing Evidence on Quota',
+            description: 'Should not persist.',
+            source: 'Field Log',
+            visibility: 'assembly',
+            verificationStatus: 'under_review',
+            tags: ['QuotaTest'],
+            fileInfo: {
+              name: 'failing_file.csv',
+              size: 2048,
+              type: 'text/csv',
+              dataUrl: 'data:text/csv;base64,VGltZSxWYWx1ZQo=',
+            },
+          })
+        ).rejects.toThrow(/quota exceeded or storage disabled/i);
+      } finally {
+        setItemSpy.mockRestore();
+      }
+
+      // 3. Verify prior durable draft was NOT corrupted or overwritten
+      const checkDraft = await demoRepository.getSubmission(priorDraft.id);
+      expect(checkDraft).toBeDefined();
+      expect(checkDraft?.content).toBe('Original durable draft before quota error.');
+      expect(checkDraft?.status).toBe('draft');
+    });
+
+    it('renders actionable error in SubmitAssignmentPage when save/storage fails', async () => {
+      await useAuthStore.getState().initialize();
+
+      // Mock saveAssignmentDraft to throw storage failure
+      const originalSaveDraft = demoRepository.saveAssignmentDraft;
+      demoRepository.saveAssignmentDraft = async () => {
+        throw new Error('Browser storage write failed: localStorage quota exceeded or storage disabled.');
+      };
+
+      try {
+        render(
+          <MemoryRouter initialEntries={['/assignments/asg_obs_03/submit']}>
+            <Routes>
+              <Route path="/assignments/:id/submit" element={<SubmitAssignmentPage />} />
+            </Routes>
+          </MemoryRouter>
+        );
+
+        await waitFor(() => {
+          expect(screen.getByRole('heading', { name: /Pedestrian Flow Interview with 5 Peers/i })).toBeInTheDocument();
+        });
+
+        // Click Save Draft button
+        const saveDraftBtn = screen.getByRole('button', { name: /Save as Draft/i });
+        saveDraftBtn.click();
+
+        // Actionable error banner must be rendered visibly on screen
+        await waitFor(() => {
+          expect(screen.getByRole('alert')).toBeInTheDocument();
+          expect(screen.getByText(/Browser storage write failed: localStorage quota exceeded/i)).toBeInTheDocument();
+        });
+      } finally {
+        demoRepository.saveAssignmentDraft = originalSaveDraft;
+      }
     });
   });
 });

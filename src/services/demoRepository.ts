@@ -54,7 +54,12 @@ export class LocalDemoRepository implements DemoRepository {
   }
 
   private saveDb(db: DemoDatabase): void {
-    PersistenceService.saveDatabase(db);
+    const success = PersistenceService.saveDatabase(db);
+    if (!success) {
+      throw new Error(
+        'Browser storage write failed: localStorage quota exceeded or storage disabled. Prior durable data remains intact.'
+      );
+    }
   }
 
   private calculateUserCredits(db: DemoDatabase, userId: string): number {
@@ -1435,17 +1440,18 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error('Unauthorized: cannot create evidence for another participant');
     }
 
-    const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isTeacher = activeUser?.role === 'teacher';
+    const maxFileBytes = 250 * 1024;
+    if (evidenceInput.fileInfo?.size && evidenceInput.fileInfo.size > maxFileBytes) {
+      throw new Error(
+        `File size (${Math.round(evidenceInput.fileInfo.size / 1024)} KB) exceeds durable browser storage limit of 250 KB.`
+      );
+    }
 
-    // Force newly created participant evidence to unverified/pending; reject/normalize forged status
+    // Force newly created evidence to unverified/under_review for all personas.
+    // Mentors/teachers cannot self-mint verified evidence; verification must proceed via reviewSubmission.
     let verificationStatus: VerificationStatus = 'under_review';
     if (evidenceInput.verificationStatus === 'unverified') {
       verificationStatus = 'unverified';
-    } else if (evidenceInput.verificationStatus === 'verified' && !isTeacher) {
-      verificationStatus = 'under_review';
-    } else if (isTeacher && evidenceInput.verificationStatus) {
-      verificationStatus = evidenceInput.verificationStatus;
     }
 
     const now = new Date().toISOString();
