@@ -22,7 +22,7 @@ export const AchievementsPage: React.FC = () => {
           demoRepository.getCivicReflections(currentUser.id),
         ]);
         setPassport(p);
-        setReflections(rList);
+        setReflections(rList.filter((r) => r.contextType !== 'session'));
       } catch (err) {
         console.error('Failed to load achievements data', err);
       } finally {
@@ -42,7 +42,9 @@ export const AchievementsPage: React.FC = () => {
 
   const hasObservation = (passport?.creditsByDimension.Observation || 0) >= 5;
   const hasDeliberation = (passport?.creditsByDimension.Deliberation || 0) >= 10;
-  const hasReflection = reflections.length > 0 || (passport?.creditsByDimension.Reflection || 0) >= 5;
+  const hasReflection =
+    reflections.filter((r) => r.contextType !== 'session').length > 0 ||
+    (passport?.creditsByDimension.Reflection || 0) >= 5;
   const hasLearning = (passport?.creditsByDimension.Learning || 0) >= 15;
   const hasCivicAction = (passport?.creditsByDimension['Civic Action'] || 0) >= 10;
 

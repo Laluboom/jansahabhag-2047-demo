@@ -2432,14 +2432,12 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getCivicReflections(userId?: string): Promise<Reflection[]> {
     const db = this.getDb();
-    const activeUserId = db.activeUserId;
     const refls = db.reflections.filter((r) => {
       if (userId && r.userId !== userId) return false;
       if (this.isUhvReflectionRecord(r, db)) return false;
-      // In this single-browser simulation, private session reflections are visible only to their owner
-      if (r.contextType === 'session') {
-        return r.userId === activeUserId;
-      }
+      // In this single-browser simulation, debate session reflections are private deliberation journals
+      // and are excluded from verified credential-facing civic reflections
+      if (r.contextType === 'session') return false;
       return true;
     });
     return JSON.parse(JSON.stringify(refls));

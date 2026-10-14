@@ -39,7 +39,7 @@ export const PassportPage: React.FC = () => {
           demoRepository.getCivicReflections(currentUser.id),
         ]);
         setPassport(p);
-        setReflections(rList);
+        setReflections(rList.filter((r) => r.contextType !== 'session'));
       } catch (err) {
         console.error('Failed to load passport', err);
       } finally {

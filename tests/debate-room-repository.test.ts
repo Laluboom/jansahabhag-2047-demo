@@ -283,6 +283,11 @@ describe('Debate Room & Shared Live Session Repository Operations', () => {
       expect(aaravRefls.length).toBeGreaterThanOrEqual(1);
       expect(aaravRefls[0].text).toContain('physical traffic calming');
 
+      // Excluded from credential-facing civic reflections for Aarav
+      const aaravCivicRefls = await repository.getCivicReflections('user_aarav');
+      expect(aaravCivicRefls.some((r) => r.id === reflection.id)).toBe(false);
+      expect(aaravCivicRefls.some((r) => r.contextType === 'session')).toBe(false);
+
       // Test persona boundary: Switch to user_vikram
       repository.switchUser('user_vikram');
 

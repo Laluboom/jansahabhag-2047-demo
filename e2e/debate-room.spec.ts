@@ -101,7 +101,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(reflInput).toBeVisible();
     await reflInput.fill('Hearing community observations proved that physical tabletop ramps are needed rather than mere signage.');
     await page.getByRole('button', { name: /Save Reflection/i }).click();
-    await expect(page.getByText(/Reflection saved locally to your profile/i)).toBeVisible();
+    await expect(page.getByText(/Private reflection saved locally to this Debate Room journal/i)).toBeVisible();
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).toBeVisible();
 
     // 6. Persona boundary regression: switch to unacknowledged participant Vikram in same mounted page
@@ -136,6 +136,9 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await page.waitForURL('**/passport');
     await expect(page.getByText(/Verified Civic Passport/i)).toBeVisible();
     await expect(page.getByRole('heading', { name: /Aarav Sharma/i })).toBeVisible();
+
+    // Verify Aarav's debate room reflection is NOT rendered in Passport credentials
+    await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).not.toBeVisible();
   });
 
   test('survives Debate Room to Youth Assembly mode switch and reciprocal roundtrip without data loss', async ({ page }) => {

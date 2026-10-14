@@ -175,7 +175,9 @@ export const DebateRoomPreviewPage: React.FC = () => {
       });
       setSessionReflections((prev) => [saved, ...prev]);
       setReflectionText('');
-      setReflectionSuccess('Private reflection saved locally to your profile. (No automated credits claimed)');
+      setReflectionSuccess(
+        'Private reflection saved locally to this Debate Room journal. It stays in this browser session and does not become verified Civic Passport evidence or claim automated credits.'
+      );
     } catch (err: any) {
       setActionError(err.message || 'Failed to save reflection');
     } finally {
@@ -884,14 +886,14 @@ export const DebateRoomPreviewPage: React.FC = () => {
               <Award className="w-5 h-5 text-civic-teal-700 shrink-0 mt-0.5" />
               <div className="text-xs space-y-1">
                 <h3 className="font-bold text-civic-teal-950 font-heading">
-                  Post-Debate Civic Reflection Path
+                  Post-Debate Private Reflection Journal
                 </h3>
                 <p className="text-slate-600">
                   {debateData?.reflectionPrompt ||
-                    'Reflect on the evidence and arguments in your Civic Passport.'}
+                    'How did the debate discussion and evidence presented shape your perspective on safe school corridors?'}
                 </p>
                 <p className="text-[11px] text-slate-500 italic">
-                  Local Simulation: Reflection is saved privately for your current persona in this browser session. In accordance with competition rules, deliberation reflections are not public evidence and do not claim automated verified credits.
+                  Local Simulation: This private journal stays in this browser&apos;s Debate Room and does not become verified Civic Passport evidence. In this demo, session self-reflections do not earn automated Civic Credits, verified status, or badges.
                 </p>
               </div>
             </div>
@@ -915,7 +917,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                 className="text-xs bg-white"
                 required
               />
-              <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
                 <Button
                   type="submit"
                   size="sm"
@@ -925,12 +927,17 @@ export const DebateRoomPreviewPage: React.FC = () => {
                 >
                   {isSavingReflection ? 'Saving...' : 'Save Reflection'}
                 </Button>
-                <Link to="/passport">
-                  <Button size="sm" variant="outline" className="text-xs bg-white text-civic-teal-800 border-civic-teal-300">
-                    Open Civic Passport
-                    <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
+                <div className="text-right">
+                  <Link to="/passport" title="View Civic Passport credentials (debate journal remains in this room)">
+                    <Button size="sm" variant="outline" className="text-xs bg-white text-civic-teal-800 border-civic-teal-300">
+                      Open Civic Passport
+                      <ArrowRight className="w-3 h-3 ml-1" />
+                    </Button>
+                  </Link>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Separate navigation: private debate reflections do not appear in Passport credentials.
+                  </p>
+                </div>
               </div>
             </form>
 
