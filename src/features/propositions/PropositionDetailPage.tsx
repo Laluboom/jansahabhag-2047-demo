@@ -98,7 +98,7 @@ export const PropositionDetailPage: React.FC = () => {
           }
 
           if (currentUser) {
-            const reflList = await demoRepository.getReflections(currentUser.id);
+            const reflList = await demoRepository.getCivicReflections(currentUser.id);
             setReflections(reflList.filter((r) => r.contextId === prop.assemblyId || r.contextId === prop.id));
           }
         }

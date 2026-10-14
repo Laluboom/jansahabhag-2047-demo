@@ -128,6 +128,8 @@ export interface DemoRepository {
 
   // Reflections
   getReflections(userId?: string): Promise<Reflection[]>;
+  getCivicReflections(userId?: string): Promise<Reflection[]>;
+  getUhvReflections(userId?: string): Promise<Reflection[]>;
   getReflection(reflectionId: string): Promise<Reflection | null>;
   addReflection(reflection: Omit<Reflection, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Reflection>;
 

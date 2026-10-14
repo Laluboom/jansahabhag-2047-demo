@@ -8,6 +8,12 @@ import { demoRepository } from '../src/services/demoRepository';
 import { SubmitAssignmentPage } from '../src/features/assignments/SubmitAssignmentPage';
 import { AssignmentDetailPage } from '../src/features/assignments/AssignmentDetailPage';
 import { LessonPage } from '../src/features/learning/LessonPage';
+import { PassportPage } from '../src/features/passport/PassportPage';
+import { AchievementsPage } from '../src/features/passport/AchievementsPage';
+import { AssemblySessionPage } from '../src/features/assemblies/AssemblySessionPage';
+import { PropositionDetailPage } from '../src/features/propositions/PropositionDetailPage';
+import { CoursesPage } from '../src/features/learning/CoursesPage';
+import { Activity } from '../src/types/domain';
 
 describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
   beforeEach(async () => {
@@ -753,6 +759,259 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Notifications received
       const notifs = await demoRepository.getNotifications('user_aarav');
       expect(notifs.find((n) => n.title === 'Reflection Recorded')).toBeDefined();
+    });
+  });
+
+  describe('9. Civic surfaces reflection isolation, badge logic, and cross-persona activity suppression', () => {
+    it('excludes private UHV reflection from Civic Passport while preserving civic Assembly reflections in PassportPage', async () => {
+      await useAuthStore.getState().switchPersona('user_meera');
+
+      // 1. Repository-level civic reflections check
+      const civicReflsBefore = await demoRepository.getCivicReflections('user_meera');
+      expect(civicReflsBefore.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
+
+      // Owner can still read her private UHV reflection via getReflections or getUhvReflections
+      const allReflsMeera = await demoRepository.getReflections('user_meera');
+      expect(allReflsMeera.find((r) => r.id === 'refl_meera_01')).toBeDefined();
+      const uhvReflsMeera = await demoRepository.getUhvReflections('user_meera');
+      expect(uhvReflsMeera.find((r) => r.id === 'refl_meera_01')).toBeDefined();
+
+      // Render PassportPage before adding civic reflection
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/passport']}>
+          <Routes>
+            <Route path="/passport" element={<PassportPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Verified Civic Passport')).toBeInTheDocument();
+      });
+
+      // UHV prompt and reflection text MUST NOT appear under Civic & Ethical Reflections
+      expect(screen.queryByText(/Reflect on your perspectives on trust and civic responsibility/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/When we approach community spaces with mutual respect and trust/i)).not.toBeInTheDocument();
+      expect(screen.queryByText('Civic & Ethical Reflections')).not.toBeInTheDocument();
+      unmount();
+
+      // 2. Now record a civic Assembly reflection
+      const civicAssemblyRefl = await demoRepository.addReflection({
+        userId: 'user_meera',
+        contextType: 'assembly',
+        contextId: 'assembly_jaipur_pedestrian_2026',
+        prompt: 'What did you observe regarding cross-group consensus in the youth assembly?',
+        text: 'Facilitating small group discussions built cross-ward alignment on safety priorities.',
+        valuesHighlighted: ['Consensus', 'Respect'],
+        isPublicInPassport: true,
+      });
+
+      // getCivicReflections now returns the civic reflection, but still NOT refl_meera_01
+      const civicReflsAfter = await demoRepository.getCivicReflections('user_meera');
+      expect(civicReflsAfter.find((r) => r.id === civicAssemblyRefl.id)).toBeDefined();
+      expect(civicReflsAfter.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
+
+      // Re-render PassportPage: civic reflection IS rendered with verified badge
+      render(
+        <MemoryRouter initialEntries={['/passport']}>
+          <Routes>
+            <Route path="/passport" element={<PassportPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Civic & Ethical Reflections')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/"What did you observe regarding cross-group consensus in the youth assembly\?"/i)).toBeInTheDocument();
+      expect(screen.getByText(/Facilitating small group discussions built cross-ward alignment on safety priorities\./i)).toBeInTheDocument();
+      expect(screen.queryByText(/When we approach community spaces with mutual respect and trust/i)).not.toBeInTheDocument();
+    });
+
+    it('does not earn Civic Deliberative Reflector badge from private UHV reflections in AchievementsPage', async () => {
+      // Meera has only seeded private UHV reflection refl_meera_01 and 0 reflection credits initially
+      await useAuthStore.getState().switchPersona('user_meera');
+
+      render(
+        <MemoryRouter initialEntries={['/passport/achievements']}>
+          <Routes>
+            <Route path="/passport/achievements" element={<AchievementsPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Civic Deliberative Reflector')).toBeInTheDocument();
+      });
+
+      // The reflector badge must be unearned (In Progress), NOT Unlocked
+      const reflectorBadgeTitle = screen.getByText('Civic Deliberative Reflector');
+      const cardContainer = reflectorBadgeTitle.closest('.border-slate-200');
+      expect(cardContainer).toBeInTheDocument();
+      expect(cardContainer?.textContent).toContain('In Progress');
+      expect(cardContainer?.textContent).not.toContain('Unlocked');
+    });
+
+    it('excludes UHV reflections from Assembly and Proposition deliberation reflection views', async () => {
+      await useAuthStore.getState().switchPersona('user_meera');
+
+      // Assembly view
+      const { unmount: unmountAssembly } = render(
+        <MemoryRouter initialEntries={['/assemblies/assembly_jaipur_pedestrian_2026?stage=reflection']}>
+          <Routes>
+            <Route path="/assemblies/:id" element={<AssemblySessionPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Civic Reflection/i).length).toBeGreaterThan(0);
+      });
+
+      // UHV reflection must not appear in assembly history
+      expect(screen.queryByText(/When we approach community spaces with mutual respect and trust/i)).not.toBeInTheDocument();
+      unmountAssembly();
+
+      // Proposition view
+      render(
+        <MemoryRouter initialEntries={['/propositions/prop_jaipur_pedestrian_01']}>
+          <Routes>
+            <Route path="/propositions/:id" element={<PropositionDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/Post-Outcome Civic & Ethical Reflection/i)).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText(/When we approach community spaces with mutual respect and trust/i)).not.toBeInTheDocument();
+    });
+
+    it('suppresses legacy v1 UHV reflection activity from civic timelines and hides UHV activity from other personas', async () => {
+      // Inject legacy v1 activity created by old generic addReflection
+      const db = PersistenceService.loadDatabase();
+      const legacyUhvAct: Activity = {
+        id: 'act_legacy_uhv_reflection',
+        userId: 'user_meera',
+        type: 'reflection_shared',
+        title: 'Completed Civic & Ethical Reflection',
+        description: 'When we approach community spaces with mutual respect and trust, neighbourhood cooperation...',
+        referenceId: 'refl_meera_01',
+        referenceType: 'reflection',
+        timestamp: '2026-09-08T16:00:00Z',
+        schemaVersion: 1,
+        createdAt: '2026-09-08T16:00:00Z',
+        updatedAt: '2026-09-08T16:00:00Z',
+      };
+      const meeraUhvLessonAct: Activity = {
+        id: 'act_meera_uhv_lesson',
+        userId: 'user_meera',
+        type: 'lesson_completed',
+        title: 'Completed Study Module: les_uhv_501',
+        description: 'Progress in UHV reached 50% (Personal Study Stream).',
+        referenceId: 'les_uhv_501',
+        referenceType: 'lesson',
+        timestamp: '2026-09-08T12:00:00Z',
+        schemaVersion: 1,
+        createdAt: '2026-09-08T12:00:00Z',
+        updatedAt: '2026-09-08T12:00:00Z',
+      };
+      const meeraCivicAct: Activity = {
+        id: 'act_meera_civic_pedestrian',
+        userId: 'user_meera',
+        type: 'assembly_joined',
+        title: 'Joined Youth Assembly: Jaipur School Zone Pedestrian Safety',
+        description: 'Participating in pedestrian speed table deliberation.',
+        referenceId: 'assembly_jaipur_pedestrian_2026',
+        referenceType: 'assembly',
+        timestamp: '2026-10-05T09:00:00Z',
+        schemaVersion: 1,
+        createdAt: '2026-10-05T09:00:00Z',
+        updatedAt: '2026-10-05T09:00:00Z',
+      };
+
+      db.activities.push(legacyUhvAct, meeraUhvLessonAct, meeraCivicAct);
+      PersistenceService.saveDatabase(db);
+
+      // Switch to Teacher Kavita Rao
+      await useAuthStore.getState().switchPersona('user_kavita');
+
+      // 1. getActivities('user_meera') read by Kavita
+      const meeraActsFromKavita = await demoRepository.getActivities('user_meera');
+      expect(meeraActsFromKavita.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
+      expect(meeraActsFromKavita.find((a) => a.id === 'act_meera_uhv_lesson')).toBeUndefined();
+      // Unrelated civic activity MUST be preserved!
+      expect(meeraActsFromKavita.find((a) => a.id === 'act_meera_civic_pedestrian')).toBeDefined();
+
+      // 2. getActivities() all users read by Kavita
+      const allActsFromKavita = await demoRepository.getActivities();
+      expect(allActsFromKavita.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
+      expect(allActsFromKavita.find((a) => a.id === 'act_meera_uhv_lesson')).toBeUndefined();
+
+      // 3. getDashboard('user_meera') read by Kavita
+      const meeraDashboardFromKavita = await demoRepository.getDashboard('user_meera');
+      expect(meeraDashboardFromKavita.recentActivities.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
+      expect(meeraDashboardFromKavita.recentActivities.find((a) => a.id === 'act_meera_uhv_lesson')).toBeUndefined();
+      expect(meeraDashboardFromKavita.recentActivities.find((a) => a.id === 'act_meera_civic_pedestrian')).toBeDefined();
+      expect(meeraDashboardFromKavita.activeEnrolments.find((e) => e.courseId === 'course_uhv_leadership_05')).toBeUndefined();
+
+      // 4. Meera reads her own timeline: legacy reflection activity is suppressed from civic trail
+      await useAuthStore.getState().switchPersona('user_meera');
+      const meeraOwnDashboard = await demoRepository.getDashboard('user_meera');
+      expect(meeraOwnDashboard.recentActivities.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
+      expect(meeraOwnDashboard.recentActivities.find((a) => a.id === 'act_meera_civic_pedestrian')).toBeDefined();
+    });
+
+    it('allows owner Meera to read private UHV reflection in dedicated /uhv stream with privacy disclosures', async () => {
+      await useAuthStore.getState().switchPersona('user_meera');
+
+      // Owner can read her UHV reflections
+      const uhvRefls = await demoRepository.getUhvReflections('user_meera');
+      expect(uhvRefls.find((r) => r.id === 'refl_meera_01')).toBeDefined();
+
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/uhv']}>
+          <Routes>
+            <Route path="/uhv" element={<CoursesPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Your Private UHV Reflections')).toBeInTheDocument();
+      });
+
+      // Reflection content visible to owner
+      expect(screen.getByText(/When we approach community spaces with mutual respect and trust/i)).toBeInTheDocument();
+      // Disclosures and simulation copy present
+      expect(screen.getByText(/Notice: Private in this single-browser simulation/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/No Civic Credits or verification/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/no production encryption or server-side privacy is implied/i)).toBeInTheDocument();
+      expect(screen.getByText(/personal study journal history rather than duplicate civic assignment submissions/i)).toBeInTheDocument();
+      unmount();
+
+      // Switch to Teacher Kavita: cannot see Meera's UHV reflection in /uhv stream
+      await useAuthStore.getState().switchPersona('user_kavita');
+      const kavitaUhvRefls = await demoRepository.getUhvReflections('user_kavita');
+      expect(kavitaUhvRefls.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
+      const kavitaLookingAtMeeraUhv = await demoRepository.getUhvReflections('user_meera');
+      expect(kavitaLookingAtMeeraUhv).toHaveLength(0);
+
+      render(
+        <MemoryRouter initialEntries={['/uhv']}>
+          <Routes>
+            <Route path="/uhv" element={<CoursesPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/No private UHV reflections recorded for Kavita Rao/i)).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText(/When we approach community spaces with mutual respect and trust/i)).not.toBeInTheDocument();
     });
   });
 });

@@ -191,6 +191,85 @@ export class LocalDemoRepository implements DemoRepository {
     return false;
   }
 
+  public isUhvCourseId(courseId: string, db?: DemoDatabase): boolean {
+    if (courseId === 'course_uhv_leadership_05' || courseId.startsWith('course_uhv_')) return true;
+    const database = db || this.getDb();
+    const course = database.courses?.find((c) => c.id === courseId);
+    return course?.track === 'uhv';
+  }
+
+  public isUhvReflectionActivity(act: Activity, db?: DemoDatabase): boolean {
+    const database = db || this.getDb();
+    if (act.referenceId === 'refl_meera_01') return true;
+    if (act.referenceType === 'reflection' && act.referenceId) {
+      const refl = database.reflections?.find((r) => r.id === act.referenceId);
+      if (refl) {
+        return this.isUhvReflectionRecord(refl, database);
+      }
+      return this.isUhvContext('reflection', act.referenceId, database);
+    }
+    if (act.type === 'reflection_shared') {
+      if (
+        act.referenceId === 'asg_uhv_08' ||
+        act.referenceId === 'course_uhv_leadership_05' ||
+        act.referenceId?.startsWith('course_uhv_') ||
+        act.referenceId?.startsWith('les_uhv_')
+      ) {
+        return true;
+      }
+      if (act.referenceType === 'assignment' && act.referenceId) {
+        const asg = database.assignments?.find((a) => a.id === act.referenceId);
+        if (asg && this.isUhvAssignment(asg, database)) return true;
+      }
+      if (act.referenceType === 'course' && act.referenceId) {
+        const course = database.courses?.find((c) => c.id === act.referenceId);
+        if (course?.track === 'uhv') return true;
+      }
+      const uhvReflections = database.reflections?.filter((r) => this.isUhvReflectionRecord(r, database)) || [];
+      for (const r of uhvReflections) {
+        if (act.description && r.text && act.description.includes(r.text.slice(0, 30))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public isUhvActivity(act: Activity, db?: DemoDatabase): boolean {
+    const database = db || this.getDb();
+    if (this.isUhvReflectionActivity(act, database)) return true;
+    if (
+      act.referenceId === 'asg_uhv_08' ||
+      act.referenceId === 'course_uhv_leadership_05' ||
+      act.referenceId?.startsWith('course_uhv_') ||
+      act.referenceId?.startsWith('les_uhv_') ||
+      act.referenceId === 'refl_meera_01'
+    ) {
+      return true;
+    }
+    if (act.referenceType === 'assignment' && act.referenceId) {
+      const asg = database.assignments?.find((a) => a.id === act.referenceId);
+      if (asg && this.isUhvAssignment(asg, database)) return true;
+    }
+    if (act.referenceType === 'course' && act.referenceId) {
+      const course = database.courses?.find((c) => c.id === act.referenceId);
+      if (course?.track === 'uhv') return true;
+    }
+    if (act.referenceType === 'lesson' && act.referenceId) {
+      const lesson = database.lessons?.find((l) => l.id === act.referenceId);
+      if (lesson) {
+        const course = database.courses?.find((c) => c.id === lesson.courseId);
+        if (course?.track === 'uhv') return true;
+      }
+    }
+    if (act.referenceType === 'credit' && act.referenceId) {
+      if (act.referenceId === 'tx_meera_03' || act.referenceId === 'tx_meera_06') return true;
+      const credit = database.credits?.find((c) => c.id === act.referenceId);
+      if (credit && this.isUhvCredit(credit, database)) return true;
+    }
+    return false;
+  }
+
   // Users & Personas
   async getCurrentUser(): Promise<User> {
     const db = this.getDb();
@@ -238,15 +317,31 @@ export class LocalDemoRepository implements DemoRepository {
     const userCredits = this.calculateUserCredits(db, userId);
     clonedUser.totalCredits = userCredits;
 
-    const enrolments = db.enrolments.filter((e) => e.userId === userId);
+    const activeUserId = db.activeUserId;
+    const isOtherPersona = userId !== activeUserId;
+
+    const enrolments = db.enrolments.filter((e) => {
+      if (e.userId !== userId) return false;
+      if (isOtherPersona && this.isUhvCourseId(e.courseId, db)) return false;
+      return true;
+    });
     const activities = db.activities
       .filter((a) => a.userId === userId)
+      .filter((a) => {
+        if (this.isUhvReflectionActivity(a, db)) return false;
+        if (isOtherPersona && this.isUhvActivity(a, db)) return false;
+        return true;
+      })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     const events = db.events.filter((e) => e.attendeeUserIds.includes(userId) || e.organizerId === userId);
     const assemblies = db.assemblies.filter(
       (a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId || a.status === 'deliberating' || a.status === 'active'
     );
-    const userSubmissions = db.submissions.filter((s) => s.userId === userId);
+    const userSubmissions = db.submissions.filter((s) => {
+      if (s.userId !== userId) return false;
+      if (isOtherPersona && this.isUhvSubmission(s, db)) return false;
+      return true;
+    });
 
     const activeSubmissions = userSubmissions.filter((s) => s.status === 'submitted' || s.status === 'verified' || s.status === 'under_review');
     const activeSubmittedAsgIds = activeSubmissions.map((s) => s.assignmentId);
@@ -302,14 +397,16 @@ export class LocalDemoRepository implements DemoRepository {
         const asg = db.assignments.find((a) => a.id === draftSub.assignmentId);
         const isUhv = asg ? this.isUhvAssignment(asg, db) : this.isUhvSubmission(draftSub, db);
         if (isUhv) {
-          nextStep = {
-            type: 'assignment',
-            title: `Resume Reflection: ${asg?.title || 'Personal Reflection'}`,
-            description: 'Continue your personal self-exploration reflection in your private study journal.',
-            targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
-            badgeText: 'Study Journal',
-            rewardText: 'Private Reflection',
-          };
+          if (!isOtherPersona) {
+            nextStep = {
+              type: 'assignment',
+              title: `Resume Reflection: ${asg?.title || 'Personal Reflection'}`,
+              description: 'Continue your personal self-exploration reflection in your private study journal.',
+              targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
+              badgeText: 'Study Journal',
+              rewardText: 'Private Reflection',
+            };
+          }
         } else {
           nextStep = {
             type: 'assignment',
@@ -1908,10 +2005,16 @@ export class LocalDemoRepository implements DemoRepository {
   // Activities
   async getActivities(userId?: string): Promise<Activity[]> {
     const db = this.getDb();
+    const activeUserId = db.activeUserId;
     let acts = db.activities;
     if (userId) {
       acts = acts.filter((a) => a.userId === userId);
     }
+    acts = acts.filter((a) => {
+      if (this.isUhvReflectionActivity(a, db)) return false;
+      if (a.userId !== activeUserId && this.isUhvActivity(a, db)) return false;
+      return true;
+    });
     acts = acts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     return JSON.parse(JSON.stringify(acts));
   }
@@ -1944,6 +2047,27 @@ export class LocalDemoRepository implements DemoRepository {
         return r.userId === activeUserId;
       }
       return true;
+    });
+    return JSON.parse(JSON.stringify(refls));
+  }
+
+  async getCivicReflections(userId?: string): Promise<Reflection[]> {
+    const db = this.getDb();
+    const refls = db.reflections.filter((r) => {
+      if (userId && r.userId !== userId) return false;
+      if (this.isUhvReflectionRecord(r, db)) return false;
+      return true;
+    });
+    return JSON.parse(JSON.stringify(refls));
+  }
+
+  async getUhvReflections(userId?: string): Promise<Reflection[]> {
+    const db = this.getDb();
+    const activeUserId = db.activeUserId;
+    const refls = db.reflections.filter((r) => {
+      if (userId && r.userId !== userId) return false;
+      if (!this.isUhvReflectionRecord(r, db)) return false;
+      return r.userId === activeUserId;
     });
     return JSON.parse(JSON.stringify(refls));
   }

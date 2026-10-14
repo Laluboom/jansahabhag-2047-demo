@@ -137,7 +137,7 @@ export const AssemblySessionPage: React.FC = () => {
           demoRepository.getAssemblyRoles(id),
           demoRepository.getContributions(id),
           demoRepository.getUsers(),
-          demoRepository.getReflections(currentUser.id),
+          demoRepository.getCivicReflections(currentUser.id),
         ]);
 
         setAssembly(asm);

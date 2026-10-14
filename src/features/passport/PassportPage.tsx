@@ -36,7 +36,7 @@ export const PassportPage: React.FC = () => {
       try {
         const [p, rList] = await Promise.all([
           demoRepository.getPassport(currentUser.id),
-          demoRepository.getReflections(currentUser.id),
+          demoRepository.getCivicReflections(currentUser.id),
         ]);
         setPassport(p);
         setReflections(rList);
