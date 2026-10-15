@@ -134,7 +134,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
 
     await page.getByRole('button', { name: /Open Civic Passport/i }).click();
     await page.waitForURL('**/passport');
-    await expect(page.getByText(/Verified Civic Passport/i)).toBeVisible();
+    await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
     await expect(page.getByRole('heading', { name: /Aarav Sharma/i })).toBeVisible();
 
     // Verify Aarav's debate room reflection is NOT rendered in Passport credentials

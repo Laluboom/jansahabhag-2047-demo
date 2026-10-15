@@ -111,7 +111,7 @@ describe('Debate Room Verified Credential Boundary', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Verified Civic Passport')).toBeInTheDocument();
+      expect(screen.getByText(/Civic Passport Portfolio/i)).toBeInTheDocument();
     });
     expect(
       screen.queryByText(/Private debate journal: community observations confirmed tabletop ramps are essential/i)

@@ -132,13 +132,12 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(subCredit?.dimension).toBe('Contribution');
       expect(subCredit?.amount).toBe(10);
 
-      // Check dashboard credit breakdown has Contribution
+      // Check dashboard and passport track pending credits before facilitator review (Package 07)
       const dashboard = await repository.getDashboard('user_aarav');
-      expect(dashboard.creditSummary.breakdown.Contribution).toBeGreaterThanOrEqual(10);
+      expect(dashboard.creditSummary.pendingCredits).toBeGreaterThanOrEqual(10);
 
-      // Check passport creditsByDimension has Contribution
       const passport = await repository.getPassport('user_aarav');
-      expect(passport.creditsByDimension.Contribution).toBeGreaterThanOrEqual(10);
+      expect(passport.pendingCredits).toBeGreaterThanOrEqual(10);
 
       // Check teacher notification
       const teacherNotifs = await repository.getNotifications('user_kavita');
@@ -257,25 +256,35 @@ describe('DemoRepository Domain Service Implementation', () => {
         })
       ).rejects.toThrow(/Cannot modify submission with status 'verified'/i);
 
-      // 8. Verified submission cannot be reverted to revision_requested by teacher
-      await repository.switchUser('user_kavita');
+      // 8. Participant cannot self-review or self-reverse a reviewer decision
+      await repository.switchUser('user_aarav');
       await expect(
         repository.reviewSubmission({
           submissionId: submitted.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'user_aarav',
           status: 'revision_requested',
-          teacherFeedback: 'Attempt to revert verified state',
+          teacherFeedback: 'Unauthorized participant self-reversal',
         })
-      ).rejects.toThrow(/Cannot change status of an already verified submission/i);
+      ).rejects.toThrow(/only teachers may review submissions/i);
 
-      // 9. Repeated verification call on already verified submission is idempotent
-      const duplicateReview = await repository.reviewSubmission({
+      // 9. Authorized fictional mentor can move accepted to revision_requested with attributed audit reconciliation
+      await repository.switchUser('user_kavita');
+      const reversedReview = await repository.reviewSubmission({
         submissionId: submitted.id,
         reviewerId: 'user_kavita',
-        status: 'verified',
-        teacherFeedback: 'Duplicate review check',
+        status: 'revision_requested',
+        teacherFeedback: 'Substantive revision required on ward boundary data',
       });
-      expect(duplicateReview.status).toBe('verified');
+      expect(reversedReview.status).toBe('revision_requested');
+
+      // 10. Repeated review call with identical state is idempotent
+      const duplicateReversal = await repository.reviewSubmission({
+        submissionId: submitted.id,
+        reviewerId: 'user_kavita',
+        status: 'revision_requested',
+        teacherFeedback: 'Substantive revision required on ward boundary data',
+      });
+      expect(duplicateReversal.status).toBe('revision_requested');
 
       await repository.switchUser('user_aarav');
     });

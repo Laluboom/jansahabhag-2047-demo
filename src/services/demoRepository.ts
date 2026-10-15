@@ -49,6 +49,7 @@ import {
   WorkspaceAction,
   WorkspaceAuditEvent,
   WorkspaceActionType,
+  CreditAppeal,
 } from '../types/domain';
 import {
   normalizeAssemblyStage,
@@ -190,10 +191,38 @@ export class LocalDemoRepository implements DemoRepository {
       .filter((c) => {
         if (c.userId !== userId) return false;
         if (this.isUhvCredit(c, db)) return false;
-        if (c.status === 'Pending') return false; // Do not count pending credit as verified/earned
-        return true;
+        if (c.status === 'Pending' || c.status === 'Reversed') return false; // Do not count pending or reversed credits
+        return c.status === 'Verified' || c.status === 'Audited';
       })
       .reduce((sum, c) => sum + c.amount, 0);
+  }
+
+  public getPassportSourceRoute(entry: { sourceReferenceType?: string; sourceReferenceId?: string; sourceRoute?: string }): string {
+    if (entry.sourceRoute) return entry.sourceRoute;
+    switch (entry.sourceReferenceType) {
+      case 'assignment':
+      case 'submission':
+        return `/assignments/${entry.sourceReferenceId}`;
+      case 'assembly':
+        return `/assemblies/${entry.sourceReferenceId}`;
+      case 'proposition':
+      case 'dissent':
+        return `/assemblies/assembly_jaipur_pedestrian_2026`;
+      case 'workspace':
+        return `/workspaces/${entry.sourceReferenceId}`;
+      case 'course':
+        return `/learn/${entry.sourceReferenceId}`;
+      case 'lesson':
+        return `/learn`;
+      case 'evidence':
+        return `/passport/evidence`;
+      case 'reflection':
+        return `/passport`;
+      case 'project':
+        return `/dashboard`;
+      default:
+        return `/passport`;
+    }
   }
 
   public isUhvAssignment(asg: Assignment, db?: DemoDatabase): boolean {
@@ -489,8 +518,11 @@ export class LocalDemoRepository implements DemoRepository {
       .filter((n) => n.userId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const credits = db.credits.filter((c) => c.userId === userId);
+    const credits = db.credits.filter((c) => c.userId === userId && !this.isUhvCredit(c, db));
+    const verifiedCredits = credits.filter((c) => c.status === 'Verified' || c.status === 'Audited');
+    const pendingCredits = credits.filter((c) => c.status === 'Pending');
     const totalCredits = userCredits;
+    const pendingCreditsTotal = pendingCredits.reduce((sum, c) => sum + c.amount, 0);
 
     const breakdown: Record<CreditDimension, number> = {
       Learning: 0,
@@ -498,10 +530,11 @@ export class LocalDemoRepository implements DemoRepository {
       Deliberation: 0,
       Reflection: 0,
       Contribution: 0,
+      Collaboration: 0,
       'Civic Action': 0,
     };
 
-    credits.forEach((c) => {
+    verifiedCredits.forEach((c) => {
       if (breakdown[c.dimension] !== undefined) {
         breakdown[c.dimension] += c.amount;
       }
@@ -614,6 +647,7 @@ export class LocalDemoRepository implements DemoRepository {
       recentNotifications: JSON.parse(JSON.stringify(notifications.slice(0, 5))),
       creditSummary: {
         total: totalCredits,
+        pendingCredits: pendingCreditsTotal,
         breakdown,
       },
       passportEntriesCount: passportEntries.length,
@@ -861,8 +895,14 @@ export class LocalDemoRepository implements DemoRepository {
             evidenceIds: [],
             sourceReferenceId: lessonId,
             sourceReferenceType: 'lesson',
+            sourceRoute: `/academy/courses/${course?.id || 'course_01'}/lessons/${lessonId}`,
+            verificationState: 'system_recorded',
+            reviewState: 'accepted',
+            calculationExplanation: 'Base rule: 5 credits per completed Civic Academy lesson (System recorded)',
             isVerified: true,
             schemaVersion: 1,
+            createdAt: now,
+            updatedAt: now,
           });
         }
 
@@ -883,8 +923,14 @@ export class LocalDemoRepository implements DemoRepository {
               evidenceIds: [],
               sourceReferenceId: lesson.courseId,
               sourceReferenceType: 'course',
+              sourceRoute: `/academy/courses/${lesson.courseId}`,
+              verificationState: 'system_recorded',
+              reviewState: 'accepted',
+              calculationExplanation: 'Milestone: Course completion milestone (0 credits, system recorded achievement)',
               isVerified: true,
               schemaVersion: 1,
+              createdAt: now,
+              updatedAt: now,
             });
           }
         }
@@ -1285,6 +1331,45 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
+    // Trace into Passport: create or update pending passport entry (self_reported, reviewState: 'pending')
+    const existingPassport = db.passportEntries.find(
+      (p) => p.userId === input.userId && (p.sourceReferenceId === submission.id || p.sourceReferenceId === input.assignmentId)
+    );
+    if (!existingPassport) {
+      db.passportEntries.push({
+        id: generateId('pass'),
+        userId: input.userId,
+        category: 'contribution',
+        title: `Pending Review: ${asg?.title || input.assignmentId}`,
+        subtitle: 'Submitted assignment awaiting mentor review (Jaipur Demo Simulation)',
+        date: now.split('T')[0],
+        creditsAwarded: 10,
+        evidenceIds: submission.evidenceIds || [],
+        sourceReferenceId: submission.id,
+        sourceReferenceType: 'submission',
+        sourceRoute: `/assignments/${input.assignmentId}?submissionId=${submission.id}`,
+        isVerified: false,
+        verificationState: 'self_reported',
+        reviewState: 'pending',
+        visibility: 'public',
+        calculationExplanation: 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review pending.',
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    } else if (existingPassport.reviewState === 'revision_requested' || existingPassport.reviewState === 'pending') {
+      existingPassport.title = `Pending Review: ${asg?.title || input.assignmentId}`;
+      existingPassport.subtitle = 'Submitted assignment awaiting mentor review (Jaipur Demo Simulation)';
+      existingPassport.date = now.split('T')[0];
+      existingPassport.evidenceIds = submission.evidenceIds || [];
+      existingPassport.sourceReferenceId = submission.id;
+      existingPassport.sourceRoute = `/assignments/${input.assignmentId}?submissionId=${submission.id}`;
+      existingPassport.isVerified = false;
+      existingPassport.verificationState = 'self_reported';
+      existingPassport.reviewState = 'pending';
+      existingPassport.updatedAt = now;
+    }
+
     // Activity (idempotent on resubmission)
     const existingActivity = db.activities.find(
       (a) =>
@@ -1358,12 +1443,9 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error('Cannot review a draft submission');
     }
 
-    if (submission.status === 'verified') {
-      if (input.status === 'verified') {
-        // Idempotent retry for already verified submission
-        return JSON.parse(JSON.stringify(submission));
-      }
-      throw new Error('Cannot change status of an already verified submission');
+    // Idempotent retry for exact same status and feedback
+    if (submission.status === input.status && submission.teacherFeedback === input.teacherFeedback && submission.reviewerId === input.reviewerId) {
+      return JSON.parse(JSON.stringify(submission));
     }
 
     const asg = db.assignments.find((a) => a.id === submission.assignmentId);
@@ -1386,6 +1468,7 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const now = new Date().toISOString();
+    const previousStatus = submission.status;
     submission.status = input.status;
     submission.teacherFeedback = input.teacherFeedback;
     submission.reviewerId = input.reviewerId;
@@ -1393,17 +1476,29 @@ export class LocalDemoRepository implements DemoRepository {
     if (input.score !== undefined) submission.score = input.score;
     submission.updatedAt = now;
 
+    const reviewerName = activeUser?.name || 'Reviewer';
+
     if (input.status === 'verified') {
-      // Update submission credit transaction status to Verified
+      // 1. Update submission credit transaction status to Verified
       const subCredit = db.credits.find(
         (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId
       );
       if (subCredit) {
         subCredit.status = 'Verified';
         subCredit.reason = `Submitted assignment: ${asg?.title || submission.assignmentId}`;
+        subCredit.sourceRoute = `/assignments/${submission.assignmentId}?submissionId=${submission.id}`;
+        subCredit.calculationExplanation = 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review confirmed.';
+        subCredit.auditTrail = subCredit.auditTrail || [];
+        subCredit.auditTrail.push({
+          date: now,
+          action: 'VERIFIED',
+          actorId: input.reviewerId,
+          actorName: reviewerName,
+          note: input.teacherFeedback,
+        });
       }
 
-      // 1. Mark attached evidence verified and award +5 Observation credit per evidence (idempotently)
+      // 2. Mark attached evidence verified and award +5 Observation credit per evidence (idempotently)
       submission.evidenceIds.forEach((eid) => {
         const ev = db.evidence.find((e) => e.id === eid);
         if (ev) {
@@ -1413,7 +1508,12 @@ export class LocalDemoRepository implements DemoRepository {
           const existingEvCredit = db.credits.find(
             (c) => c.userId === submission.userId && c.sourceType === 'evidence' && c.sourceId === eid
           );
-          if (!existingEvCredit) {
+          if (existingEvCredit) {
+            existingEvCredit.status = 'Verified';
+            existingEvCredit.amount = 5;
+            existingEvCredit.sourceRoute = `/passport/evidence`;
+            existingEvCredit.calculationExplanation = 'Fixed demo rule: +5 Observation on verified field evidence.';
+          } else {
             db.credits.push({
               id: generateId('tx'),
               userId: submission.userId,
@@ -1421,8 +1521,10 @@ export class LocalDemoRepository implements DemoRepository {
               amount: 5,
               sourceType: 'evidence',
               sourceId: eid,
+              sourceRoute: `/passport/evidence`,
               status: 'Verified',
               reason: `Verified field evidence: ${ev.title}`,
+              calculationExplanation: 'Fixed demo rule: +5 Observation on verified field evidence.',
               createdAt: now,
               schemaVersion: 1,
             });
@@ -1435,7 +1537,9 @@ export class LocalDemoRepository implements DemoRepository {
         const existingObsCredit = db.credits.find(
           (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId && c.dimension === 'Observation'
         );
-        if (!existingObsCredit) {
+        if (existingObsCredit) {
+          existingObsCredit.status = 'Verified';
+        } else {
           db.credits.push({
             id: generateId('tx'),
             userId: submission.userId,
@@ -1443,36 +1547,158 @@ export class LocalDemoRepository implements DemoRepository {
             amount: 5,
             sourceType: 'assignment',
             sourceId: submission.assignmentId,
+            sourceRoute: `/assignments/${submission.assignmentId}`,
             status: 'Verified',
             reason: `Verified assignment fieldwork: ${asg?.title || submission.assignmentId}`,
+            calculationExplanation: 'Fixed demo rule: +5 Observation on verified assignment fieldwork.',
             createdAt: now,
             schemaVersion: 1,
           });
         }
       }
 
-      // 2. Traceable Passport Entry (idempotent)
+      // 3. Traceable Passport Entry
       const existingPassport = db.passportEntries.find(
-        (p) => p.userId === submission.userId && p.sourceReferenceId === submission.id
+        (p) => p.userId === submission.userId && (p.sourceReferenceId === submission.id || p.sourceReferenceId === submission.assignmentId)
       );
-      if (!existingPassport) {
+      const creditsAwarded = submission.evidenceIds.length > 0 ? submission.evidenceIds.length * 5 : 5;
+      if (existingPassport) {
+        existingPassport.category = 'contribution';
+        existingPassport.title = `Verified: ${asg?.title || 'Field Assignment'}`;
+        existingPassport.subtitle = `Reviewed and verified by mentor (Jaipur Demo Simulation)`;
+        existingPassport.date = now.split('T')[0];
+        existingPassport.creditsAwarded = creditsAwarded;
+        existingPassport.evidenceIds = submission.evidenceIds;
+        existingPassport.sourceReferenceId = submission.id;
+        existingPassport.sourceReferenceType = 'submission';
+        existingPassport.sourceRoute = `/assignments/${submission.assignmentId}?submissionId=${submission.id}`;
+        existingPassport.verificationState = 'facilitator_reviewed';
+        existingPassport.reviewState = 'accepted';
+        existingPassport.verifier = {
+          id: input.reviewerId,
+          name: reviewerName,
+          role: 'Teacher / Mentor',
+          label: 'Mentor Review (Jaipur Demo Simulation)',
+        };
+        existingPassport.organisation = 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)';
+        existingPassport.calculationExplanation = 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+5 Observation per evidence).';
+        existingPassport.isVerified = true;
+        existingPassport.revisionHistory = existingPassport.revisionHistory || [];
+        existingPassport.revisionHistory.push({
+          date: now,
+          action: 'VERIFIED',
+          actorId: input.reviewerId,
+          actorName: reviewerName,
+          note: input.teacherFeedback,
+        });
+      } else {
         db.passportEntries.push({
           id: generateId('pass'),
           userId: submission.userId,
           category: 'contribution',
           title: `Verified: ${asg?.title || 'Field Assignment'}`,
-          subtitle: `Reviewed and verified by teacher (Local Demo)`,
+          subtitle: `Reviewed and verified by mentor (Jaipur Demo Simulation)`,
           date: now.split('T')[0],
-          creditsAwarded: submission.evidenceIds.length > 0 ? submission.evidenceIds.length * 5 : 5,
+          creditsAwarded,
           evidenceIds: submission.evidenceIds,
           sourceReferenceId: submission.id,
           sourceReferenceType: 'submission',
+          sourceRoute: `/assignments/${submission.assignmentId}?submissionId=${submission.id}`,
+          verificationState: 'facilitator_reviewed',
+          reviewState: 'accepted',
+          verifier: {
+            id: input.reviewerId,
+            name: reviewerName,
+            role: 'Teacher / Mentor',
+            label: 'Mentor Review (Jaipur Demo Simulation)',
+          },
+          organisation: 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)',
+          calculationExplanation: 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+5 Observation per evidence).',
           isVerified: true,
+          revisionHistory: [
+            {
+              date: now,
+              action: 'VERIFIED',
+              actorId: input.reviewerId,
+              actorName: reviewerName,
+              note: input.teacherFeedback,
+            },
+          ],
           schemaVersion: 1,
         });
       }
 
       // Update user credits
+      const user = db.users.find((u) => u.id === submission.userId);
+      if (user) {
+        user.totalCredits = this.calculateUserCredits(db, submission.userId);
+        user.updatedAt = now;
+      }
+    } else if (input.status === 'revision_requested') {
+      // Reversal / Reconciliation if previously verified or pending
+      // 1. Revert submission credit to Pending
+      const subCredit = db.credits.find(
+        (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId
+      );
+      if (subCredit) {
+        subCredit.status = 'Pending';
+        subCredit.reason = `Submitted assignment (revision requested): ${asg?.title || submission.assignmentId}`;
+        subCredit.auditTrail = subCredit.auditTrail || [];
+        subCredit.auditTrail.push({
+          date: now,
+          action: 'STATUS_RECONCILED',
+          actorId: input.reviewerId,
+          actorName: reviewerName,
+          note: `Reverted to revision requested: ${input.teacherFeedback}`,
+        });
+      }
+
+      // 2. Reverse dependent verification credits for evidence without deleting original evidence
+      submission.evidenceIds.forEach((eid) => {
+        const ev = db.evidence.find((e) => e.id === eid);
+        if (ev) {
+          ev.verificationStatus = 'under_review';
+          ev.updatedAt = now;
+        }
+        const evCredit = db.credits.find(
+          (c) => c.userId === submission.userId && c.sourceType === 'evidence' && c.sourceId === eid
+        );
+        if (evCredit) {
+          evCredit.status = 'Reversed';
+          evCredit.reason = `Reversal: Observation credit revoked upon mentor revision request`;
+          evCredit.auditTrail = evCredit.auditTrail || [];
+          evCredit.auditTrail.push({
+            date: now,
+            action: 'REVERSED',
+            actorId: input.reviewerId,
+            actorName: reviewerName,
+            note: `Reversed +5 Observation credit upon revision request. Original evidence preserved.`,
+          });
+        }
+      });
+
+      // 3. Reconcile Passport Entry (keep original record, update reviewState and add audit history)
+      const passEntry = db.passportEntries.find(
+        (p) => p.userId === submission.userId && (p.sourceReferenceId === submission.id || p.sourceReferenceId === submission.assignmentId)
+      );
+      if (passEntry) {
+        passEntry.reviewState = 'revision_requested';
+        passEntry.verificationState = 'self_reported';
+        passEntry.isVerified = false;
+        passEntry.creditsAwarded = 0;
+        passEntry.title = `Revision Requested: ${asg?.title || 'Field Assignment'}`;
+        passEntry.subtitle = `Mentor requested revision (Jaipur Demo Simulation)`;
+        passEntry.revisionHistory = passEntry.revisionHistory || [];
+        passEntry.revisionHistory.push({
+          date: now,
+          action: 'REVISION_REQUESTED',
+          actorId: input.reviewerId,
+          actorName: reviewerName,
+          note: input.teacherFeedback,
+        });
+      }
+
+      // 4. Recompute user's total credits
       const user = db.users.find((u) => u.id === submission.userId);
       if (user) {
         user.totalCredits = this.calculateUserCredits(db, submission.userId);
@@ -1790,8 +2016,14 @@ export class LocalDemoRepository implements DemoRepository {
           evidenceIds: assembly.evidenceIds.slice(0, 2),
           sourceReferenceId: assemblyId,
           sourceReferenceType: 'assembly',
+          sourceRoute: `/assemblies/${assemblyId}`,
+          verificationState: 'system_recorded',
+          reviewState: 'accepted',
+          calculationExplanation: 'Base rule: 10 Deliberation credits on joining youth assembly (System recorded)',
           isVerified: true,
           schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
         });
       }
 
@@ -1988,8 +2220,14 @@ export class LocalDemoRepository implements DemoRepository {
       evidenceIds: input.evidenceIds || [],
       sourceReferenceId: newContrib.id,
       sourceReferenceType: 'contribution',
+      sourceRoute: `/assemblies/${input.assemblyId}`,
+      verificationState: 'system_recorded',
+      reviewState: 'accepted',
+      calculationExplanation: 'Base rule: 5 Deliberation credits for substantive assembly contribution (System recorded)',
       isVerified: true,
       schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
     });
 
     this.saveDb(db);
@@ -2161,6 +2399,36 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
+    // Trace formal Dissent into Civic Passport (unjudged procedural record without score or moral worth)
+    if (input.responseState === 'Dissent') {
+      const existingDissentPass = db.passportEntries.find(
+        (p) => p.userId === input.userId && p.sourceReferenceId === prop.id && p.sourceReferenceType === 'dissent'
+      );
+      if (!existingDissentPass) {
+        db.passportEntries.push({
+          id: generateId('pass'),
+          userId: input.userId,
+          category: 'deliberation',
+          title: `Retained Dissent: ${(prop.question || prop.proposition || 'Assembly Proposition').slice(0, 50)}`,
+          subtitle: `Formal dissent recorded on assembly proposition (viewpoint preserved without scoring)`,
+          date: now.split('T')[0],
+          creditsAwarded: 0,
+          evidenceIds: [],
+          sourceReferenceId: prop.id,
+          sourceReferenceType: 'dissent',
+          sourceRoute: `/assemblies/${prop.assemblyId}?tab=propositions&propId=${prop.id}`,
+          isVerified: true,
+          verificationState: 'system_recorded',
+          reviewState: 'accepted',
+          visibility: 'public',
+          calculationExplanation: 'Democratic pluralism principle: dissent is preserved as a procedural record without ideological judgment or credit reward.',
+          schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
     // Recalculate support profile
     let strongly = 0;
     let modifications = 0;
@@ -2251,7 +2519,7 @@ export class LocalDemoRepository implements DemoRepository {
         });
 
         const existingPass = db.passportEntries.find(
-          (p) => p.userId === uid && p.sourceReferenceId === proposition.id && p.category === 'deliberation'
+          (p) => p.userId === uid && p.sourceReferenceId === proposition.id && p.sourceReferenceType === 'proposition'
         );
         if (!existingPass) {
           db.passportEntries.push({
@@ -2265,8 +2533,14 @@ export class LocalDemoRepository implements DemoRepository {
             evidenceIds: proposition.evidenceIds.slice(0, 2),
             sourceReferenceId: proposition.id,
             sourceReferenceType: 'proposition',
+            sourceRoute: `/assemblies/${proposition.assemblyId}?tab=propositions&propId=${proposition.id}`,
+            verificationState: 'system_recorded',
+            reviewState: 'accepted',
+            calculationExplanation: 'Democratic outcome record (0 credits, system recorded)',
             isVerified: true,
             schemaVersion: 1,
+            createdAt: now,
+            updatedAt: now,
           });
         }
       });
@@ -2579,8 +2853,14 @@ export class LocalDemoRepository implements DemoRepository {
           evidenceIds: project.evidenceIds.slice(0, 2),
           sourceReferenceId: milestoneId,
           sourceReferenceType: 'project_milestone',
+          sourceRoute: `/workspaces`,
+          verificationState: 'system_recorded',
+          reviewState: 'accepted',
+          calculationExplanation: 'Base rule: 10 Civic Action credits per completed milestone (System recorded)',
           isVerified: true,
           schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
         });
       }
 
@@ -3217,7 +3497,15 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getCivicReflections(userId?: string): Promise<Reflection[]> {
     const db = this.getDb();
-    const refls = db.reflections.filter((r) => {
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isOwner = !userId || db.activeUserId === userId;
+    const isStaff =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'platform_admin';
+
+    let refls = db.reflections.filter((r) => {
       if (userId && r.userId !== userId) return false;
       if (this.isUhvReflectionRecord(r, db)) return false;
       // In this single-browser simulation, debate session reflections are private deliberation journals
@@ -3225,6 +3513,11 @@ export class LocalDemoRepository implements DemoRepository {
       if (r.contextType === 'session') return false;
       return true;
     });
+
+    if (!isOwner && !isStaff) {
+      refls = refls.filter((r) => r.isPublicInPassport);
+    }
+
     return JSON.parse(JSON.stringify(refls));
   }
 
@@ -3380,8 +3673,14 @@ export class LocalDemoRepository implements DemoRepository {
       evidenceIds: [],
       sourceReferenceId: newRefl.id,
       sourceReferenceType: 'reflection',
+      sourceRoute: '/passport',
+      verificationState: 'system_recorded',
+      reviewState: 'accepted',
+      calculationExplanation: 'Base rule: 5 Reflection credits per shared civic reflection (System recorded)',
       isVerified: true,
       schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
     });
 
     // Notification
@@ -3404,18 +3703,55 @@ export class LocalDemoRepository implements DemoRepository {
   // Passport & Credits
   async getPassport(userId: string): Promise<PassportView> {
     const db = this.getDb();
-    const user = db.users.find((u) => u.id === userId) || db.users[0];
-    const entries = db.passportEntries.filter((p) => {
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isOwner = db.activeUserId === userId;
+    const isStaff =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'platform_admin';
+
+    const targetUser = db.users.find((u) => u.id === userId);
+    if (!targetUser) {
+      throw new Error(`User ${userId} not found`);
+    }
+    if (!isOwner && !isStaff) {
+      throw new Error('Unauthorized: cannot access Civic Passport of another persona');
+    }
+    let entries = db.passportEntries.filter((p) => {
       if (p.userId !== userId) return false;
       if (this.isUhvPassportEntry(p, db)) return false;
+      if (p.sourceReferenceType === 'reflection') {
+        const refl = db.reflections.find((r) => r.id === p.sourceReferenceId);
+        if (refl && refl.contextType === 'session') return false; // Private session journal omitted
+        if (refl && !refl.isPublicInPassport && !isOwner && !isStaff) return false;
+      }
       return true;
     });
+
+    // Persona-scoping: exclude private visibility items when viewed by another participant
+    if (!isOwner && !isStaff) {
+      entries = entries.filter((p) => p.visibility !== 'private');
+    }
+
+    // Ensure sourceRoute and verificationState are populated
+    entries = entries.map((p) => {
+      const clone = { ...p };
+      if (!clone.sourceRoute) {
+        clone.sourceRoute = this.getPassportSourceRoute(clone);
+      }
+      if (!clone.verificationState) {
+        clone.verificationState = clone.isVerified ? 'system_recorded' : 'self_reported';
+      }
+      return clone;
+    });
+
     const credits = db.credits.filter((c) => {
       if (c.userId !== userId) return false;
       if (this.isUhvCredit(c, db)) return false;
       return true;
     });
-    const verifiedCredits = credits.filter((c) => c.status !== 'Pending');
+    const verifiedCredits = credits.filter((c) => c.status === 'Verified' || c.status === 'Audited');
     const pendingCredits = credits.filter((c) => c.status === 'Pending');
     const totalCredits = verifiedCredits.reduce((sum, c) => sum + c.amount, 0);
     const pendingCreditsTotal = pendingCredits.reduce((sum, c) => sum + c.amount, 0);
@@ -3426,17 +3762,22 @@ export class LocalDemoRepository implements DemoRepository {
       Deliberation: 0,
       Reflection: 0,
       Contribution: 0,
+      Collaboration: 0,
       'Civic Action': 0,
     };
-    credits.forEach((c) => {
+    verifiedCredits.forEach((c) => {
       if (creditsByDimension[c.dimension] !== undefined) {
         creditsByDimension[c.dimension] += c.amount;
       }
     });
 
-    const verifiedEvidence = db.evidence.filter(
+    let verifiedEvidence = db.evidence.filter(
       (e) => e.ownerId === userId && e.verificationStatus === 'verified'
     );
+    if (!isOwner && !isStaff) {
+      verifiedEvidence = verifiedEvidence.filter((e) => e.visibility !== 'private');
+    }
+
     const completedCourses = db.enrolments.filter((e) => {
       if (e.userId !== userId || e.status !== 'completed') return false;
       const course = db.courses.find((c) => c.id === e.courseId);
@@ -3445,7 +3786,7 @@ export class LocalDemoRepository implements DemoRepository {
     const assemblies = db.assemblies.filter((a) => a.participantUserIds.includes(userId));
 
     return {
-      user: JSON.parse(JSON.stringify(user)),
+      user: JSON.parse(JSON.stringify(targetUser)),
       entries: JSON.parse(JSON.stringify(entries)),
       credits: JSON.parse(JSON.stringify(credits)),
       totalCredits,
@@ -3459,12 +3800,173 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getCredits(userId: string): Promise<CreditTransaction[]> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isOwner = db.activeUserId === userId;
+    const isStaff =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'platform_admin';
+    if (!isOwner && !isStaff) {
+      throw new Error('Unauthorized: cannot access credit ledger of another persona');
+    }
     const credits = db.credits.filter((c) => {
       if (c.userId !== userId) return false;
       if (this.isUhvCredit(c, db)) return false;
       return true;
+    }).map((c) => {
+      const clone = { ...c };
+      if (!clone.sourceRoute) {
+        clone.sourceRoute = this.getPassportSourceRoute({
+          sourceReferenceType: clone.sourceType,
+          sourceReferenceId: clone.sourceId,
+        });
+      }
+      return clone;
     });
     return JSON.parse(JSON.stringify(credits));
+  }
+
+  async requestCreditAppeal(params: {
+    userId: string;
+    targetType: 'credit' | 'submission' | 'passport';
+    targetId: string;
+    reason: string;
+  }): Promise<CreditAppeal> {
+    const db = this.getDb();
+    const callerId = db.activeUserId;
+    if (callerId !== params.userId) {
+      const activeUser = db.users.find((u) => u.id === callerId);
+      const isStaff =
+        activeUser?.role === 'teacher' ||
+        activeUser?.role === 'facilitator' ||
+        activeUser?.role === 'institution_admin' ||
+        activeUser?.role === 'platform_admin';
+      if (!isStaff) {
+        throw new Error('Unauthorized: cannot submit credit appeal on behalf of another participant');
+      }
+    }
+
+    const user = db.users.find((u) => u.id === params.userId);
+    if (!user) throw new Error(`User ${params.userId} not found`);
+
+    const trimmedReason = params.reason.trim();
+    if (trimmedReason.length < 5) {
+      throw new Error('Appeal reason must provide substantive details (at least 5 characters).');
+    }
+
+    // 1. Validate target existence and ownership for credit, submission, and passport targets
+    let targetCredit: CreditTransaction | undefined;
+    let targetSubmission: Submission | undefined;
+    let targetPassportEntry: PassportEntry | undefined;
+
+    if (params.targetType === 'credit') {
+      const credit = db.credits.find((c) => c.id === params.targetId);
+      if (!credit) {
+        throw new Error(`Target credit transaction '${params.targetId}' not found`);
+      }
+      if (credit.userId !== params.userId) {
+        throw new Error('Unauthorized: cannot appeal a credit transaction owned by another persona');
+      }
+      targetCredit = credit;
+    } else if (params.targetType === 'submission') {
+      const sub = db.submissions.find((s) => s.id === params.targetId);
+      if (!sub) {
+        throw new Error(`Target submission '${params.targetId}' not found`);
+      }
+      if (sub.userId !== params.userId) {
+        throw new Error('Unauthorized: cannot appeal a submission owned by another persona');
+      }
+      targetSubmission = sub;
+    } else if (params.targetType === 'passport') {
+      const passEntry = db.passportEntries.find(
+        (p) => p.id === params.targetId || p.sourceReferenceId === params.targetId
+      );
+      if (!passEntry) {
+        throw new Error(`Target passport entry '${params.targetId}' not found`);
+      }
+      if (passEntry.userId !== params.userId) {
+        throw new Error('Unauthorized: cannot appeal a passport entry owned by another persona');
+      }
+      targetPassportEntry = passEntry;
+    } else {
+      throw new Error(`Unsupported appeal target type: ${params.targetType}`);
+    }
+
+    const now = new Date().toISOString();
+    const newAppeal: CreditAppeal = {
+      id: generateId('appeal'),
+      userId: params.userId,
+      userName: user.name,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      reason: trimmedReason,
+      status: 'pending_human_review',
+      assignedReviewerName: 'Kavita Rao (Lead Mentor & Civic Reviewer - Simulation)',
+      aiDisclaimer: 'PRD §14 & §27 Safety Invariant: AI is strictly barred from deciding credit appeals or sanctions. A fictional human mentor reviews this inquiry.',
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: 1,
+    };
+
+    db.creditAppeals = db.creditAppeals || [];
+    db.creditAppeals.push(newAppeal);
+
+    if (params.targetType === 'credit' && targetCredit) {
+      targetCredit.auditTrail = targetCredit.auditTrail || [];
+      targetCredit.auditTrail.push({
+        date: now,
+        action: 'APPEAL_REQUESTED',
+        actorId: params.userId,
+        actorName: user.name,
+        note: trimmedReason,
+      });
+    } else if (params.targetType === 'passport' && targetPassportEntry) {
+      targetPassportEntry.revisionHistory = targetPassportEntry.revisionHistory || [];
+      targetPassportEntry.revisionHistory.push({
+        date: now,
+        action: 'APPEAL_REQUESTED',
+        actorId: params.userId,
+        actorName: user.name,
+        note: trimmedReason,
+      });
+    } else if (params.targetType === 'submission' && targetSubmission) {
+      const passEntry = db.passportEntries.find(
+        (p) =>
+          p.userId === params.userId &&
+          (p.sourceReferenceId === targetSubmission!.id || p.sourceReferenceId === targetSubmission!.assignmentId)
+      );
+      if (passEntry) {
+        passEntry.revisionHistory = passEntry.revisionHistory || [];
+        passEntry.revisionHistory.push({
+          date: now,
+          action: 'APPEAL_REQUESTED',
+          actorId: params.userId,
+          actorName: user.name,
+          note: trimmedReason,
+        });
+      }
+    }
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(newAppeal));
+  }
+
+  async getCreditAppeals(userId?: string): Promise<CreditAppeal[]> {
+    const db = this.getDb();
+    const targetUserId = userId || db.activeUserId;
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isOwner = db.activeUserId === targetUserId;
+    const isStaff =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'platform_admin';
+    if (!isOwner && !isStaff) {
+      throw new Error('Unauthorized: cannot access credit appeals of another persona');
+    }
+    const appeals = (db.creditAppeals || []).filter((a) => a.userId === targetUserId);
+    return JSON.parse(JSON.stringify(appeals));
   }
 
   async addCredit(
@@ -4291,6 +4793,60 @@ export class LocalDemoRepository implements DemoRepository {
       details: { title: trimmedTitle, actionType: params.actionType },
       schemaVersion: 1,
     });
+
+    // Award +5 Collaboration credits and create Passport entry for workspace action
+    const existingCredit = db.credits.find(
+      (c) => c.userId === params.authorId && c.sourceType === 'workspace' && c.sourceId === newAction.id
+    );
+    if (!existingCredit) {
+      db.credits.push({
+        id: generateId('tx'),
+        userId: params.authorId,
+        dimension: 'Collaboration',
+        amount: 5,
+        sourceType: 'workspace',
+        sourceId: newAction.id,
+        sourceRoute: `/workspaces/${params.workspaceId}`,
+        status: 'Verified',
+        reason: `Workspace collaboration action: ${trimmedTitle}`,
+        calculationExplanation: 'Fixed demo rule: +5 Collaboration on verified workspace action contribution.',
+        createdAt: now,
+        schemaVersion: 1,
+      });
+
+      const user = db.users.find((u) => u.id === params.authorId);
+      if (user) {
+        user.totalCredits = this.calculateUserCredits(db, params.authorId);
+        user.updatedAt = now;
+      }
+    }
+
+    const existingPassport = db.passportEntries.find(
+      (p) => p.userId === params.authorId && p.sourceReferenceId === newAction.id && p.sourceReferenceType === 'workspace'
+    );
+    if (!existingPassport) {
+      db.passportEntries.push({
+        id: generateId('pass'),
+        userId: params.authorId,
+        category: 'civic_action',
+        title: `Workspace Action: ${trimmedTitle}`,
+        subtitle: `Collaborative action in ${ws.title}`,
+        date: now.split('T')[0],
+        creditsAwarded: 5,
+        evidenceIds: [],
+        sourceReferenceId: newAction.id,
+        sourceReferenceType: 'workspace',
+        sourceRoute: `/workspaces/${params.workspaceId}`,
+        isVerified: true,
+        verificationState: 'system_recorded',
+        reviewState: 'accepted',
+        visibility: 'public',
+        calculationExplanation: 'Fixed demo rule: +5 Collaboration on verified workspace action contribution.',
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     this.saveDb(db);
 

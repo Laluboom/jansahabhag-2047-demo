@@ -28,6 +28,7 @@ import {
   WorkspaceAction,
   WorkspaceAuditEvent,
   WorkspaceActionType,
+  CreditAppeal,
 } from '../types/domain';
 import {
   DashboardData,
@@ -182,6 +183,13 @@ export interface DemoRepository {
   getPassport(userId: string): Promise<PassportView>;
   getCredits(userId: string): Promise<CreditTransaction[]>;
   addCredit(transaction: Omit<CreditTransaction, 'id' | 'schemaVersion' | 'createdAt'>): Promise<CreditTransaction>;
+  requestCreditAppeal(params: {
+    userId: string;
+    targetType: 'credit' | 'submission' | 'passport';
+    targetId: string;
+    reason: string;
+  }): Promise<CreditAppeal>;
+  getCreditAppeals(userId?: string): Promise<CreditAppeal[]>;
 
   // Notifications
   getNotifications(userId: string): Promise<Notification[]>;

@@ -521,6 +521,133 @@ export function normalizeWorkspaceRecords(db: DemoDatabase): DemoDatabase {
   return db;
 }
 
+export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+
+  // 1. Ensure creditAppeals exists
+  if (!Array.isArray(db.creditAppeals)) {
+    db.creditAppeals = [];
+  }
+
+  // 2. Ensure passportEntries are normalized with truthful review & verification states
+  if (Array.isArray(db.passportEntries)) {
+    db.passportEntries.forEach((p) => {
+      if (!p.sourceRoute) {
+        switch (p.sourceReferenceType) {
+          case 'assignment':
+          case 'submission':
+            p.sourceRoute = `/assignments/${p.sourceReferenceId}`;
+            break;
+          case 'assembly':
+            p.sourceRoute = `/assemblies/${p.sourceReferenceId}`;
+            break;
+          case 'proposition':
+          case 'dissent':
+            p.sourceRoute = `/assemblies/assembly_jaipur_pedestrian_2026`;
+            break;
+          case 'workspace':
+            p.sourceRoute = `/workspaces/${p.sourceReferenceId}`;
+            break;
+          case 'course':
+            p.sourceRoute = `/learn/${p.sourceReferenceId}`;
+            break;
+          case 'lesson':
+            p.sourceRoute = `/learn`;
+            break;
+          case 'evidence':
+            p.sourceRoute = `/passport/evidence`;
+            break;
+          case 'reflection':
+            p.sourceRoute = `/passport`;
+            break;
+          case 'project':
+            p.sourceRoute = `/dashboard`;
+            break;
+          default:
+            p.sourceRoute = `/passport`;
+            break;
+        }
+      }
+
+      if (!p.verificationState) {
+        if (p.sourceReferenceId === 'sub_aarav_01' || (p.sourceReferenceType === 'submission' && p.isVerified)) {
+          p.verificationState = 'facilitator_reviewed';
+          p.reviewState = 'accepted';
+          p.verifier = p.verifier || {
+            id: 'user_kavita',
+            name: 'Kavita Rao',
+            role: 'Teacher / Mentor',
+            label: 'Mentor Review (Jaipur Demo Simulation)',
+          };
+          p.organisation = p.organisation || 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)';
+        } else if (
+          p.sourceReferenceType === 'assembly' ||
+          p.sourceReferenceType === 'proposition' ||
+          p.sourceReferenceType === 'contribution' ||
+          p.sourceReferenceType === 'dissent' ||
+          p.sourceReferenceType === 'reflection' ||
+          p.sourceReferenceType === 'course' ||
+          p.sourceReferenceType === 'lesson' ||
+          p.sourceReferenceType === 'workspace' ||
+          p.sourceReferenceType === 'project' ||
+          p.isVerified
+        ) {
+          p.verificationState = 'system_recorded';
+          p.reviewState = p.reviewState || 'accepted';
+        } else {
+          // Historical entries with missing provenance
+          p.verificationState = 'sample_unverified';
+          p.reviewState = 'sample';
+          p.isVerified = false;
+        }
+      }
+
+      if (!Array.isArray(p.revisionHistory)) {
+        p.revisionHistory = [];
+      }
+    });
+  }
+
+  // 3. Ensure credits have valid status and sourceRoute
+  if (Array.isArray(db.credits)) {
+    db.credits.forEach((c) => {
+      if (!c.status) {
+        c.status = 'Verified';
+      }
+      if (!c.sourceRoute) {
+        switch (c.sourceType) {
+          case 'assignment':
+            c.sourceRoute = `/assignments/${c.sourceId}`;
+            break;
+          case 'lesson':
+            c.sourceRoute = `/learn`;
+            break;
+          case 'evidence':
+            c.sourceRoute = `/passport/evidence`;
+            break;
+          case 'assembly':
+            c.sourceRoute = `/assemblies/${c.sourceId}`;
+            break;
+          case 'workspace':
+            c.sourceRoute = `/workspaces/${c.sourceId}`;
+            break;
+          case 'reflection':
+            c.sourceRoute = `/passport`;
+            break;
+          default:
+            c.sourceRoute = `/passport/credits`;
+            break;
+        }
+      }
+      if (!Array.isArray(c.auditTrail)) {
+        c.auditTrail = [];
+      }
+    });
+  }
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -541,6 +668,7 @@ export function runMigrations(storedData: any): DemoDatabase {
   normalizeSessionRecords(migrated);
   normalizeAssemblyRecords(migrated);
   normalizeWorkspaceRecords(migrated);
+  normalizePassportAndCreditRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }

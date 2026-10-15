@@ -19,6 +19,7 @@ export interface DashboardData {
   recentNotifications: import('./domain').Notification[];
   creditSummary: {
     total: number;
+    pendingCredits?: number;
     breakdown: Record<import('./domain').CreditDimension, number>;
   };
   passportEntriesCount: number;
@@ -66,6 +67,7 @@ export interface PassportView {
   entries: import('./domain').PassportEntry[];
   credits: import('./domain').CreditTransaction[];
   totalCredits: number;
+  pendingCredits?: number;
   creditsByDimension: Record<import('./domain').CreditDimension, number>;
   verifiedEvidence: import('./domain').Evidence[];
   completedCoursesCount: number;

@@ -119,7 +119,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Verified Civic Passport/i)).toBeInTheDocument();
+      expect(screen.getByText(/Civic Passport Portfolio/i)).toBeInTheDocument();
       expect(screen.getByText(/Civic Credit Dimensions/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Learning/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Observation/i).length).toBeGreaterThanOrEqual(1);

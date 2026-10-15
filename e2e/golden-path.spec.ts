@@ -135,7 +135,7 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     // 11. Open Civic Passport & Confirm All Connected Records & Reflections
     await page.goto('/passport');
     await expect(page.getByRole('heading', { name: /Aarav Sharma/i })).toBeVisible();
-    await expect(page.getByText(/Verified Civic Passport/i)).toBeVisible();
+    await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
 
     // Confirm Activity Timeline records from this exact run
     await expect(page.getByText(/Completed: Conducting Peer Pedestrian Safety Interviews/i)).toBeVisible();

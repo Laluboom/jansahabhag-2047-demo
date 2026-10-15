@@ -742,6 +742,7 @@ export type CreditDimension =
   | 'Deliberation'
   | 'Reflection'
   | 'Contribution'
+  | 'Collaboration'
   | 'Civic Action';
 
 export type CreditSourceType =
@@ -751,7 +752,26 @@ export type CreditSourceType =
   | 'assembly'
   | 'contribution'
   | 'reflection'
-  | 'project';
+  | 'project'
+  | 'workspace'
+  | 'dissent';
+
+export interface CreditFormulaFactors {
+  appliedRule: string;
+  activity?: string;
+  quality?: string;
+  evidence?: string;
+  verification?: string;
+  significance?: string;
+}
+
+export interface CreditAuditEntry {
+  date: string;
+  action: string;
+  actorId: string;
+  actorName: string;
+  note: string;
+}
 
 export interface CreditTransaction {
   id: string;
@@ -760,8 +780,12 @@ export interface CreditTransaction {
   amount: number;
   sourceType: CreditSourceType;
   sourceId: string;
-  status: 'Pending' | 'Verified' | 'Audited';
+  sourceRoute?: string;
+  status: 'Pending' | 'Verified' | 'Audited' | 'Reversed';
   reason: string;
+  calculationExplanation?: string;
+  formulaFactors?: CreditFormulaFactors;
+  auditTrail?: CreditAuditEntry[];
   createdAt: string;
   schemaVersion: number;
 }
@@ -774,6 +798,35 @@ export type PassportCategory =
   | 'reflection'
   | 'achievement';
 
+export type VerificationState =
+  | 'self_reported'
+  | 'system_recorded'
+  | 'facilitator_reviewed'
+  | 'institution_verified'
+  | 'sample_unverified';
+
+export type ReviewState =
+  | 'pending'
+  | 'accepted'
+  | 'revision_requested'
+  | 'sample'
+  | 'unreviewed';
+
+export interface PassportAuditEntry {
+  date: string;
+  action: string;
+  actorId: string;
+  actorName: string;
+  note?: string;
+}
+
+export interface PassportVerifier {
+  id: string;
+  name: string;
+  role: string;
+  label: string;
+}
+
 export interface PassportEntry {
   id: string;
   userId: string;
@@ -785,8 +838,36 @@ export interface PassportEntry {
   evidenceIds: string[];
   sourceReferenceId: string;
   sourceReferenceType: string;
+  sourceRoute?: string;
+  authorId?: string;
+  authorName?: string;
+  verificationState: VerificationState;
+  reviewState?: ReviewState;
+  verifier?: PassportVerifier;
+  organisation?: string;
+  revisionHistory?: PassportAuditEntry[];
+  visibility?: 'public' | 'community' | 'private';
+  calculationExplanation?: string;
   isVerified: boolean;
   badgeUrl?: string;
+  schemaVersion: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreditAppeal {
+  id: string;
+  userId: string;
+  userName: string;
+  targetType: 'credit' | 'submission' | 'passport';
+  targetId: string;
+  reason: string;
+  status: 'pending_human_review' | 'under_review' | 'resolved' | 'rejected';
+  assignedReviewerName: string;
+  aiDisclaimer: string;
+  reviewerFeedback?: string;
+  createdAt: string;
+  updatedAt: string;
   schemaVersion: number;
 }
 
@@ -1098,6 +1179,7 @@ export interface DemoDatabase {
   workspaceMemberships?: WorkspaceMembership[];
   workspaceActions?: WorkspaceAction[];
   workspaceAuditEvents?: WorkspaceAuditEvent[];
+  creditAppeals?: CreditAppeal[];
 }
 
 declare module './index' {

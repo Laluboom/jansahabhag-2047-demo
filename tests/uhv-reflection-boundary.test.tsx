@@ -790,7 +790,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Verified Civic Passport')).toBeInTheDocument();
+        expect(screen.getByText(/Civic Passport Portfolio/i)).toBeInTheDocument();
       });
 
       // UHV prompt and reflection text MUST NOT appear under Civic & Ethical Reflections
