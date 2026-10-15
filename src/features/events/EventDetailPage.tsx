@@ -517,6 +517,16 @@ export const EventDetailPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Small Allocation Privacy Protection Notice */}
+        {event.allocation?.isPrivacySuppressed && (
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center gap-2 text-slate-700" data-testid="small-cohort-privacy-notice">
+            <Shield className="w-4 h-4 text-civic-indigo-600 shrink-0" />
+            <span>
+              <strong>Small Cohort Privacy Guard:</strong> In very small single-participant allocations, individual reservation status is protected from deductive identification. Only aggregate totals and authorized validation results are retained.
+            </span>
+          </div>
+        )}
+
         {/* Exception Audit Record (if approved) */}
         {event.allocation?.isException && event.allocation.exceptionAudit && (
           <div className="p-4 rounded-xl bg-purple-50/80 border border-purple-200 text-xs space-y-2" data-testid="exception-audit-box">

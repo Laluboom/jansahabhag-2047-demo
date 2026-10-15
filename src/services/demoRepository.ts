@@ -2969,12 +2969,31 @@ export class LocalDemoRepository implements DemoRepository {
   // Events & Sessions
   private projectEventForCaller(evt: Event, caller?: User | null): Event {
     const cloned: Event = JSON.parse(JSON.stringify(evt));
+    const isOwner = caller?.role === 'platform_admin';
+    const isOrganizer = caller ? caller.id === evt.organizerId : false;
+    const isStaff = caller?.role === 'programme_manager' || caller?.role === 'institution_admin';
+
     if (cloned.allocation) {
-      const isOwner = caller?.role === 'platform_admin';
-      // For participants and ordinary public callers, strip private individual occupant lists
       if (!isOwner) {
+        // Exclude private occupant arrays from public / non-owner projections
         delete (cloned.allocation as any).reservedOccupants;
         delete (cloned.allocation as any).ordinaryOccupants;
+        delete (cloned.allocation as any).confirmedOccupants;
+
+        // Sanitize sensitive exception audit details for non-staff callers
+        if (cloned.allocation.exceptionAudit && !isStaff) {
+          cloned.allocation.exceptionAudit = this.projectAuditForCaller(
+            cloned.allocation.exceptionAudit,
+            caller
+          );
+        }
+
+        // In small allocations (capacity <= 2 with a single attendee), deductive correlation
+        // between the public roster and exact reserved count would disclose eligibility.
+        // Apply privacy-safe suppression while retaining owner/organizer validation detail.
+        if (cloned.allocation.totalPlaces <= 2 && evt.attendeeUserIds.length === 1 && !isOrganizer) {
+          cloned.allocation.isPrivacySuppressed = true;
+        }
       }
     }
     return cloned;
@@ -3615,13 +3634,17 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const effectiveActiveId = db.activeUserId;
 
-    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+
+    if (actorId && actorId !== effectiveActiveId) {
       throw new Error(
         `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
       );
     }
 
-    const callerId = effectiveActiveId || actorId || 'user_admin';
+    const callerId = effectiveActiveId;
     const actor = db.users.find((u) => u.id === callerId);
 
     if (!actor || (actor.role !== 'platform_admin' && actor.role !== 'programme_manager')) {
@@ -3680,14 +3703,18 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const effectiveActiveId = db.activeUserId;
 
-    // Anti-spoofing guard: If actorId is provided and activeUserId is set, they MUST match
-    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+
+    // Anti-spoofing guard: If actorId is provided, it must match active persona
+    if (actorId && actorId !== effectiveActiveId) {
       throw new Error(
         `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
       );
     }
 
-    const callerId = effectiveActiveId || actorId || 'user_admin';
+    const callerId = effectiveActiveId;
     const actor = db.users.find((u) => u.id === callerId) || { id: callerId, role: 'participant' };
 
     // Authority guard: Only platform_admin or programme_manager can finalize allocations
@@ -3734,14 +3761,18 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const effectiveActiveId = db.activeUserId;
 
-    // Anti-spoofing guard: If actorId is provided and activeUserId is set, they MUST match
-    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+
+    // Anti-spoofing guard: If actorId is provided, it must match active persona
+    if (actorId && actorId !== effectiveActiveId) {
       throw new Error(
         `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
       );
     }
 
-    const callerId = effectiveActiveId || actorId || 'user_admin';
+    const callerId = effectiveActiveId;
     const actor = db.users.find((u) => u.id === callerId);
 
     // Authority guard: Strictly restricted to platform_admin
@@ -3783,8 +3814,23 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getAllocationAudits(allocationId?: string, actorId?: string): Promise<AllocationAuditRecord[]> {
     const db = this.getDb();
-    const callerId = actorId || db.activeUserId;
-    const caller = db.users.find((u) => u.id === callerId);
+    const effectiveActiveId = db.activeUserId;
+
+    // Cross-persona spoof guard: If actorId is provided, it MUST match the active persona
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    if (actorId && !effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" cannot be used without an active persona.`
+      );
+    }
+
+    // Bind audit reads strictly to the active persona
+    const callerId = effectiveActiveId;
+    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
 
     db.allocationAudits = db.allocationAudits || [];
     let audits = db.allocationAudits;

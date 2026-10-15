@@ -285,7 +285,7 @@ export interface AllocationState {
   totalPlaces: number;
   reservedMinimum: number; // ceil(0.33 * totalPlaces)
   ordinaryPlaces: number; // totalPlaces - reservedMinimum
-  confirmedOccupants: string[]; // user IDs
+  confirmedOccupants?: string[]; // user IDs (internal validation only)
   reservedOccupants?: string[]; // eligible user IDs occupying reserved places (internal validation only)
   ordinaryOccupants?: string[]; // occupants taking ordinary places (internal validation only)
   reservedOccupiedCount: number; // aggregate public count
@@ -296,6 +296,7 @@ export interface AllocationState {
   exceptionAudit?: AllocationAuditRecord;
   policyVersion: string;
   lastValidatedAt: string;
+  isPrivacySuppressed?: boolean; // privacy protection active for small single-occupant cohorts
 }
 
 export interface AllocationValidationResult {

@@ -151,16 +151,36 @@ export function buildAllocationState(input: BuildAllocationInput): AllocationSta
 }
 
 /**
- * Strips private individual reservation eligibility arrays (reservedOccupants, ordinaryOccupants)
- * from an AllocationState, retaining only aggregate public figures (counts, minimum, vacancies, status).
+ * Strips private individual reservation eligibility arrays (reservedOccupants, ordinaryOccupants, confirmedOccupants)
+ * and sensitive audit details from an AllocationState, retaining only aggregate public figures (counts, minimum, vacancies, status).
  */
-export function sanitizeAllocationForPublic(allocation: AllocationState): AllocationState {
+export function sanitizeAllocationForPublic(
+  allocation: AllocationState,
+  isStaffOrOwner: boolean = false
+): AllocationState {
   const sanitized: AllocationState = {
     ...allocation,
-    confirmedOccupants: [...allocation.confirmedOccupants],
   };
   delete sanitized.reservedOccupants;
   delete sanitized.ordinaryOccupants;
+  delete sanitized.confirmedOccupants;
+
+  if (sanitized.exceptionAudit && !isStaffOrOwner) {
+    const sanitizedAudit: AllocationAuditRecord = {
+      ...sanitized.exceptionAudit,
+    };
+    delete sanitizedAudit.actorId;
+    delete sanitizedAudit.reason;
+    sanitized.exceptionAudit = sanitizedAudit;
+  }
+
+  // Small allocation privacy protection:
+  // In cohorts with <= 2 places where a single occupant exists, deductive correlation
+  // can directly expose individual status. Flag privacy suppression.
+  if (sanitized.totalPlaces <= 2 && (allocation.confirmedOccupants?.length || 0) === 1) {
+    sanitized.isPrivacySuppressed = true;
+  }
+
   return sanitized;
 }
 
@@ -171,7 +191,9 @@ export function validateAllocation(allocation: AllocationState): AllocationValid
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const totalOccupants = allocation.confirmedOccupants.length;
+  const totalOccupants =
+    allocation.confirmedOccupants?.length ??
+    ((allocation.reservedOccupiedCount ?? 0) + (allocation.ordinaryOccupiedCount ?? 0));
   if (totalOccupants > allocation.totalPlaces) {
     errors.push(`Overbooking detected: ${totalOccupants} occupants exceed capacity of ${allocation.totalPlaces}.`);
   }
@@ -247,11 +269,15 @@ export function canUserRsvpAllocation(
   userId: string,
   customDeclarations?: Record<string, ReservationEligibility>
 ): RsvpCheckResult {
-  if (allocation.confirmedOccupants.includes(userId)) {
+  if (allocation.confirmedOccupants?.includes(userId)) {
     return { allowed: true };
   }
 
-  if (allocation.confirmedOccupants.length >= allocation.totalPlaces) {
+  const currentCount =
+    allocation.confirmedOccupants?.length ??
+    ((allocation.reservedOccupiedCount ?? 0) + (allocation.ordinaryOccupiedCount ?? 0));
+
+  if (currentCount >= allocation.totalPlaces) {
     return {
       allowed: false,
       reason: `Event capacity of ${allocation.totalPlaces} has been reached. Overbooking is prevented.`,
@@ -272,7 +298,7 @@ export function canUserRsvpAllocation(
     if (ordinaryFilled < allocation.ordinaryPlaces) {
       return { allowed: true, placeType: 'ordinary' };
     }
-    if (allocation.isException && allocation.confirmedOccupants.length < allocation.totalPlaces) {
+    if (allocation.isException && currentCount < allocation.totalPlaces) {
       return { allowed: true, placeType: 'ordinary' };
     }
     return {
@@ -287,7 +313,7 @@ export function canUserRsvpAllocation(
   }
 
   // If an approved exception allows ordinary users into vacant reserved places:
-  if (allocation.isException && allocation.confirmedOccupants.length < allocation.totalPlaces) {
+  if (allocation.isException && currentCount < allocation.totalPlaces) {
     return { allowed: true, placeType: 'ordinary' };
   }
 
