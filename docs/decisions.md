@@ -5,18 +5,24 @@
 ## Owner direction recorded 12 October 2026
 
 - **Delivery target:** the next implementation pass is the connected competition demo, not the first multi-user release. This settles the immediate target but not the date, presentation script, or exact functional-versus-prototype boundary in OD.1–OD.3. The Master PRD's minimum connected journey still applies.
-- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. The per-allocation formula and unfilled reserved-place rule were subsequently approved; exceptions, real-data privacy, and activity boundaries remain open. No reservation behavior is implemented or claimed compliant.
+- **Reservation policy:** the owner approved the supplement's minimum 33% women's reservation **in principle** for applicable allocated places and formal positions (OD.15). The source file still bears its original "Proposed product requirement — owner approval required" label. The per-allocation formula and unfilled reserved-place rule were subsequently approved; demo exceptions and activity scope were decided on 15 October; real-data privacy and production boundaries remain open. No reservation behavior is implemented or claimed compliant.
 
 ## Further owner direction recorded 12 October 2026
 
 - **Demo data and story:** use fictional demo data and the Jaipur pedestrian-safety story. This settles the example story in OD.2 but not the demo date or final acceptance sign-off.
 - **Demo implementation mode:** keep a clearly labelled single-browser simulation. This settles the immediate backend choice for the demo; it does **not** satisfy the Master PRD's connected multi-user journey, durable shared data, or server-side authorization requirements. Preserve those as explicit gaps and do not describe this mode as a compliant connected demo or production release. Full-system backend architecture and budget under OD.14 remain open.
-- **Reservation arithmetic:** use `ceil(0.33 × applicable allocated places)` for each applicable allocation, as proposed in Supplement §6. Do not pool places across activities. No allocation code or exception path is approved by this arithmetic choice alone.
+- **Reservation arithmetic:** use `ceil(0.33 × applicable allocated places)` for each applicable allocation, as proposed in Supplement §6. Do not pool places across activities. A later 15 October decision specifies the fictional demo scope and owner-approved exception path.
 - **Gender data for this demo:** use fictional demo data only. No real participant gender collection or retention is approved; OD.18 remains open for a real release.
 
 ## Further owner direction recorded 13 October 2026
 
-- **Unfilled reserved places:** when no eligible woman is available for a reserved place, leave that place unfilled. Do not silently transfer it to another category or pool it with a different activity. This settles the unfilled-place part of OD.17; whether a documented exception can ever be approved remains open.
+- **Unfilled reserved places:** when no eligible woman is available for a reserved place, leave that place unfilled. Do not silently transfer it to another category or pool it with a different activity. A later 15 October decision allows a documented departure only with explicit owner approval and an audit record.
+
+## Further owner direction recorded 15 October 2026
+
+- **Demo reservation scope (OD.19):** apply the 33% minimum separately to every named role and limited place in the fictional Jaipur demo. Open participation without allocated roles or places remains outside this allocation rule. Use `ceil(0.33 × allocated places)` for each applicable allocation; do not pool allocations.
+- **Documented exceptions (OD.17):** the normal rule remains that an unmet reserved place stays vacant. A departure may be demonstrated only with explicit owner approval and an audit record containing reason, approver, time, policy version and outcome. The browser-only demo can simulate this approval but cannot provide server-enforced authority or a real-world policy approval.
+- **Demo media (OD.4):** Debate Room and Youth Assembly are text-first; video may appear as a clearly labelled preview. No working video provider is required for the competition demo.
 
 ## Answered by the governing Master PRD
 
@@ -39,7 +45,7 @@ The PRD supplies requirements or safe defaults for some topics, but **does not r
 | OD.1 | Exact competition/demo date | The five-minute demonstration is a target; no calendar deadline is approved. |
 | OD.2 | **Jaipur pedestrian-safety story selected;** final script and acceptance sign-off remain open. | The minimum connected journey is specified in the Master PRD; the chosen single-browser mode cannot prove shared participation. |
 | OD.3 | Date-based functional versus prototype scope | Youth Parliament and stakeholder routing have explicit prototype allowances. Debate Room, Workspace invitation/moderation and the connected civic loop remain demo requirements. |
-| OD.4 | Whether live video is required in the competition demonstration | The product supports video with text/audio fallback; a demo provider and usage decision are not recorded. |
+| OD.4 | **Text-first demo with labelled video preview approved, 15 October 2026.** | Working video is not required for the competition demo; the full product still needs the PRD media and fallback behavior. |
 | OD.5 | Session access policy for each programme/room | Access must be scoped and configurable; the default for Workspace discoverability is private or institution-scoped. |
 | OD.6 | Founder identity fields approved for publication | Unapproved fields remain unpublished; contact form is the safer default. |
 | OD.7 | Final domain and the existing `2027` URL | Product name is `2047`; retaining, redirecting or replacing the URL is explicitly an owner choice. |
@@ -59,10 +65,10 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
 
 | ID | Open decision | What the supplement proposes or bounds |
 |---|---|---|
-| OD.15 | **Approved in principle, 12 October 2026:** adopt the minimum 33% rule across applicable allocated places and formal positions. | §§1–2 cover Parliament, Assembly, Debate Room, limited activities and delegations. Open participation without allocated places or roles is excluded. Detailed boundaries remain under OD.19. |
+| OD.15 | **Approved in principle, 12 October 2026:** adopt the minimum 33% rule across applicable allocated places and formal positions. | §§1–2 cover Parliament, Assembly, Debate Room, limited activities and delegations. Open participation without allocated places or roles is excluded. Fictional demo applicability was decided on 15 October; production applicability remains open. |
 | OD.16 | **Rounding formula and unit approved:** `ceil(0.33 × applicable allocated places)` for each applicable allocation, including 1–3 places. No pooling across activities. | §6 proposes this formula per applicable allocation. Totals and selections would need revalidation when they change. No enforcement is implemented. |
-| OD.17 | **Unfilled reserved places stay vacant.** Decide whether any documented exceptions are allowed and who may approve them. | §§5–6 disallow silent bypasses. If approved, each exception needs reason, approver, time, policy version and outcome, and must be labelled as an exception. |
+| OD.17 | **Unfilled reserved places stay vacant by default; documented departure may be simulated only with explicit owner approval and an audit record.** | §§5–6 disallow silent bypasses. Each exception needs reason, approver, time, policy version and outcome, and must be labelled as an exception. The browser demo cannot prove real owner authority. |
 | OD.18 | **Fictional data only for this demo.** Real declaration, access controls and retention remain open. | §7 prohibits inference from names, photographs, voices or proxies; aggregate compliance must not disclose individual gender information. |
-| OD.19 | Confirm any activity-specific difference, including how Assembly functional roles relate to formal positions and when an event's capacity means allocated places. | §2 distinguishes open participation from limited selections and allocated roles. These boundary cases need an explicit rule. |
+| OD.19 | **For the fictional demo, cover every named role and limited place, including Assembly functional roles and capacity-limited events/programmes.** | §2 distinguishes open participation from limited selections and allocated roles. Any later production boundary still needs a separate policy review. |
 
 **Pre-launch review:** §9 also calls for qualified legal review before public launch and does not claim that the same legal requirement applies universally. The Master PRD's legal and privacy launch gates remain open. No legal conclusion or owner approval is recorded here.
