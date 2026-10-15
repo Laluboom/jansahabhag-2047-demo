@@ -1,4 +1,14 @@
-# Autobuild handoff — 2026-10-09
+# Autobuild handoff — 2026-10-15
+
+## Current controlled pause — reservation privacy blocker
+
+The owner-directed fictional Jaipur competition demo remains in progress. The accepted isolated feature chain ends at Passport branch `agy/j-20261015-101359-krqe` (`5d9501c`). Phase 0 inventory/browser audit, five-stage method, mobile repair and that feature chain remain separate from root `autobuild` under the owner's merge control. Assembly, Workspace and Passport have independent acceptance records in `docs/audits/`; their combined and deployed behavior is not verified. The current GitHub/Vercel demo has not been updated with these branches.
+
+Reservation package 08A ran as sub-agy job `j-20261015-161440-3j0z` on account `agy-rainy` from the Passport branch. Its last isolated branch is `agy/j-20261015-161440-3j0z` (`0c32dba`), clean and unmerged. Independent build, 240 unit and 24 browser tests pass, but the one-person event UI and `getEvent`/`getEvents` response expose exact reserved-occupied counts alongside a named attendee. The `isPrivacySuppressed` flag adds a notice without suppressing the data. See [the parked review](docs/audits/PACKAGE_08A_RESERVATION_PARKED_2026-10-15.md). The Autobuild maximum of two feedback rounds was reached, so 08A is parked and 08B/08C/09 were not dispatched. No sub-agy job is running.
+
+The next session needs an explicit owner decision on whether to authorize a fresh sub-agy repair task beyond this job's feedback limit. The recommended repair retains the approved privacy rule: suppress or coarsen reserved counts in small public cohorts, keep owner-only validation detail, add a browser assertion against inference, and rerun the full suite. Do not merge 08A as accepted before that repair. The ready Assembly-role draft is `/tmp/30-assembly-role-reservation.md`; copy it into the accepted repair branch only after 08A passes. The underlying source order remains Master PRD → owner decisions → reconciliation → package plan. The full system remains a labelled single-browser English demo with fictional Jaipur data, Hindi pending bilingual review, no fixed deadline, text-first video preview, and the per-allocation `ceil(0.33 × places)` vacancy/exception decisions in `docs/decisions.md`.
+
+## Historical 9 October handoff
 
 ## Current state
 

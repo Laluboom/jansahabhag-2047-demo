@@ -17,13 +17,13 @@ Use the documents in this order when making implementation decisions:
    - Use for About Us / identity copy and presentation.
    - Public facts must still pass approval/verification requirements.
 
-The [Supplementary PRD v2.0 on 33% women's reservation](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) is a proposed extension whose policy the owner **approved in principle on 12 October 2026**. The owner later approved `ceil(0.33 × applicable allocated places)` for each applicable allocation, chose to leave unmet reserved places unfilled, and limited the immediate demo to fictional data. Exceptions, real-data privacy and activity boundaries still require decisions. It does not replace the Master PRD. Its scope and current app gaps are in the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation); its open choices and pre-launch legal review are in [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle).
+The [Supplementary PRD v2.0 on 33% women's reservation](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) is a proposed extension whose policy the owner **approved in principle on 12 October 2026**. The owner later approved `ceil(0.33 × applicable allocated places)` for each allocation, vacant reserved places by default, and fictional demo data only. On 15 October the owner included every named role and limited place in the fictional demo and allowed only an explicit simulated owner-approved, audited exception. Real-data privacy and production applicability remain open. It does not replace the Master PRD. Its scope and current app gaps are in the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation); its decisions and pre-launch legal review are in [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle).
 
 ### How to use these files for implementation
 
 1. Read the Master PRD's opening rules and relevant Part A–C section for the feature. Use this scope guide to find its priority and source location.
 2. Check the reconciliation for what the current demo actually lacks. Verify the affected screen and code before changing it; the audit is a dated comparison, not proof of current live behavior.
-3. Check product decisions before fixing policy-dependent behavior. For reservation, calculate separately for each applicable allocation and leave unmet reserved places unfilled. Exceptions, real gender-data handling and which activities allocate places remain open; do not infer those rules from the arithmetic.
+3. Check product decisions before fixing policy-dependent behavior. For the fictional demo, calculate separately for every named role and limited place, leave unmet reserved places unfilled, and allow a departure only with simulated owner approval and an audit record. Real gender-data handling and production applicability remain open; do not infer those rules from the arithmetic.
 4. Use [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) only for the historical browser-demo architecture and sequencing. The [competition demo PRD plan](docs/plans/COMPETITION_DEMO_PRD_PLAN.md) maps governing work packages and the owner's immediate labelled single-browser mode; add executable task plans only after verifying the relevant source, code and approvals.
 
 ### Conflict rule
@@ -837,7 +837,7 @@ Confirm before locking scope where applicable:
 - content/curriculum/licensing;
 - budget/hosting/team capacity assumptions.
 
-The reservation supplement adds five owner choices (OD.15–OD.19) and a pre-launch legal review; see [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle). OD.15 was approved in principle. OD.16 uses the approved per-allocation formula, and OD.17 leaves unmet reserved places vacant; exception approvals remain open. Fictional demo data is approved for the immediate mode, while real-data aspects of OD.18 and activity boundaries under OD.19 remain open. These are separate from the original 14 Master PRD questions.
+The reservation supplement adds five owner choices (OD.15–OD.19) and a pre-launch legal review; see [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle). OD.15 was approved in principle. OD.16 uses the approved per-allocation formula. OD.17 leaves unmet reserved places vacant unless a simulated owner explicitly approves and audits an exception. OD.19 covers every named role and limited place in the fictional demo. Real-data aspects of OD.18 and production applicability remain open. These are separate from the original 14 Master PRD questions.
 
 ---
 
