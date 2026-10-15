@@ -66,9 +66,11 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     // Verify rejection alert is displayed with generalized explanation (no exact category breakdown leaked)
     const alertBox = page.getByRole('alert');
     await expect(alertBox).toBeVisible();
-    await expect(alertBox.getByText(/Ordinary capacity reached: general places are fully subscribed/i)).toBeVisible();
+    await expect(alertBox.getByText(/This RSVP cannot be accepted under current allocation rules/i)).toBeVisible();
+    await expect(alertBox.getByText(/Reserved places remain held/i)).toBeVisible();
+    // Negative assertion: no mention of ordinary capacity or counts
+    await expect(alertBox.getByText(/ordinary/i)).toHaveCount(0);
     await expect(alertBox.getByText(/\(2\/2\)/)).toHaveCount(0);
-    await expect(alertBox.getByText(/Unmet reserved places stay vacant by default/i)).toBeVisible();
 
     // Verify participant authority is restricted
     await expect(page.getByText(/Authority Restricted:.*Only Platform Owner/i)).toBeVisible();
@@ -161,11 +163,34 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('Withheld');
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
 
-    const participantAudit = page.getByTestId('exception-audit-box');
-    await expect(participantAudit).toBeVisible();
-    await expect(participantAudit.getByText(/user_admin/i)).toHaveCount(0);
-    await expect(participantAudit.getByText(/Targeted candidate outreach exhausted/i)).toHaveCount(0);
-    await expect(participantAudit.getByText(/\b\d+ vacant\b/i)).toHaveCount(0);
+    // Exception audit box is completely suppressed for non-owner participants
+    await expect(page.getByTestId('exception-audit-box')).toHaveCount(0);
+
+    // 9. Negative assertion: Page reload simulation preserves suppression for participant
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
+    await expect(page.getByTestId('status-finalized-exception')).toHaveCount(0);
+    await expect(page.getByTestId('exception-audit-box')).toHaveCount(0);
+
+    // 10. Negative assertion: Persona switch to another participant (Meera Singh) also suppresses exception state
+    await page.goto('/demo-login');
+    await page.getByText('Meera Singh').first().click();
+    await page.waitForURL('**/dashboard');
+    await page.goto('/events/evt_jaipur_limited_05');
+    await page.waitForURL('**/events/evt_jaipur_limited_05');
+    await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
+    await expect(page.getByTestId('status-finalized-exception')).toHaveCount(0);
+    await expect(page.getByTestId('exception-audit-box')).toHaveCount(0);
+
+    // 11. Persona switch back to Platform Owner retains full audit and exception status
+    await page.goto('/demo-login');
+    await page.getByText('Demo Administrator').first().click();
+    await page.waitForURL('**/dashboard');
+    await page.goto('/events/evt_jaipur_limited_05');
+    await page.waitForURL('**/events/evt_jaipur_limited_05');
+    await expect(page.getByTestId('status-finalized-exception')).toBeVisible();
+    await expect(page.getByTestId('exception-audit-box')).toBeVisible();
   });
 
   test('mobile: responsive layout at 375px viewport with no horizontal overflow', async ({ page }) => {

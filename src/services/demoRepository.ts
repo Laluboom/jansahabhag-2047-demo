@@ -3836,14 +3836,12 @@ export class LocalDemoRepository implements DemoRepository {
     return audits
       .filter((a) => {
         if (isOwner) return true;
-        // In cohorts with a sole attendee, an exception approval action directly reveals that the single attendee was ineligible
-        const evt = db.events.find(
-          (e) => e.allocation?.allocationId === a.allocationId || `alloc_${e.id}` === a.allocationId
-        );
-        const attendeeCount =
-          evt?.attendeeUserIds?.length ??
-          ((a.snapshot?.ordinaryOccupiedCount ?? 0) + (a.snapshot?.reservedOccupiedCount ?? 0));
-        if (attendeeCount <= 1 && a.action === 'exception_approved') {
+        // Suppress exception audit records for ALL non-owner callers to prevent deductive inference
+        if (
+          a.action === 'exception_approved' ||
+          a.snapshot?.status === 'finalized_exception' ||
+          a.outcome?.toLowerCase().includes('exception')
+        ) {
           return false;
         }
         return true;

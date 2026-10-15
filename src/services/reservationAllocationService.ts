@@ -206,40 +206,10 @@ export function sanitizeAllocationForPublic(
     delete sanitized.status;
   }
 
-  // If there is a sole named attendee (<= 1 attendee), an exception approval directly identifies
-  // that sole individual as ineligible/ordinary. Neutralize isException and remove exceptionAudit for non-owner projections.
-  if (confirmedCount <= 1) {
-    sanitized.isException = false;
-    delete sanitized.exceptionAudit;
-  } else if (sanitized.exceptionAudit) {
-    const sanitizedAudit: AllocationAuditRecord = {
-      ...sanitized.exceptionAudit,
-    };
-    delete sanitizedAudit.actorId;
-    delete sanitizedAudit.reason;
-
-    if (sanitizedAudit.snapshot) {
-      const sanitizedSnapshot = { ...sanitizedAudit.snapshot };
-      delete sanitizedSnapshot.reservedOccupiedCount;
-      delete sanitizedSnapshot.ordinaryOccupiedCount;
-      delete sanitizedSnapshot.vacanciesCount;
-      if (
-        sanitizedSnapshot.status === 'finalized_compliant' ||
-        sanitizedSnapshot.status === 'blocked_noncompliant' ||
-        sanitizedSnapshot.status === 'finalized_exception'
-      ) {
-        delete sanitizedSnapshot.status;
-      }
-      sanitizedAudit.snapshot = sanitizedSnapshot;
-    }
-    if (sanitizedAudit.outcome) {
-      sanitizedAudit.outcome = sanitizedAudit.outcome
-        .replace(/with \d+ vacant reserved seat\(s\)\.?/i, 'under Platform Owner exception approval.')
-        .trim();
-    }
-
-    sanitized.exceptionAudit = sanitizedAudit;
-  }
+  // Suppress exception state and audit for ALL non-owner allocated-event projections
+  // to prevent deductive inference of attendee eligibility on identified cohorts.
+  sanitized.isException = false;
+  delete sanitized.exceptionAudit;
 
   return sanitized;
 }
@@ -386,9 +356,8 @@ export function canUserRsvpAllocation(
     ? `Ordinary capacity reached (${ordinaryFilled}/${allocation.ordinaryPlaces}). ` +
       `The remaining ${remainingReserved} place(s) are reserved under the 33% mandatory women's reservation policy. ` +
       `Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved.`
-    : `Ordinary capacity reached: general places are fully subscribed. ` +
-      `Remaining places are reserved under the 33% mandatory women's reservation policy. ` +
-      `Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved.`;
+    : `This RSVP cannot be accepted under current allocation rules and reserved places remain held: ` +
+      `unmet places are reserved under the 33% mandatory women's reservation policy unless an audited Platform Owner exception is approved.`;
 
   return {
     allowed: false,

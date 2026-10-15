@@ -227,11 +227,21 @@ describe('Reservation Allocation Policy Engine (Package 08A)', () => {
       expect(allocation.reservedOccupants).toHaveLength(0);
       expect(allocation.vacanciesCount).toBe(1);
 
-      // 3rd ordinary applicant attempts to RSVP
-      const rsvpAttempt = canUserRsvpAllocation(allocation, 'ord_3', customDeclarations);
-      expect(rsvpAttempt.allowed).toBe(false);
-      expect(rsvpAttempt.reason).toContain('Ordinary capacity reached');
-      expect(rsvpAttempt.reason).toContain('Unmet reserved places stay vacant by default');
+      // 3rd ordinary applicant attempts to RSVP as non-owner (generalized denial, no leak)
+      const rsvpAttemptNonOwner = canUserRsvpAllocation(allocation, 'ord_3', customDeclarations, false);
+      expect(rsvpAttemptNonOwner.allowed).toBe(false);
+      expect(rsvpAttemptNonOwner.reason).toBe(
+        "This RSVP cannot be accepted under current allocation rules and reserved places remain held: " +
+        "unmet places are reserved under the 33% mandatory women's reservation policy unless an audited Platform Owner exception is approved."
+      );
+      expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('ordinary');
+      expect(rsvpAttemptNonOwner.reason).not.toContain('(2/2)');
+
+      // Simulated Platform Owner sees exact breakdown
+      const rsvpAttemptOwner = canUserRsvpAllocation(allocation, 'ord_3', customDeclarations, true);
+      expect(rsvpAttemptOwner.allowed).toBe(false);
+      expect(rsvpAttemptOwner.reason).toContain('Ordinary capacity reached (2/2)');
+      expect(rsvpAttemptOwner.reason).toContain('Unmet reserved places stay vacant by default');
     });
 
     it('treats undeclared participants as ordinary without prompting for real gender data', () => {
