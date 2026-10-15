@@ -50,7 +50,17 @@ import {
   WorkspaceAuditEvent,
   WorkspaceActionType,
   CreditAppeal,
+  AllocationState,
+  AllocationAuditRecord,
+  AllocationStatus,
 } from '../types/domain';
+import {
+  buildAllocationState,
+  canUserRsvpAllocation,
+  finalizeAllocationState,
+  approveAllocationExceptionState,
+  POLICY_VERSION,
+} from './reservationAllocationService';
 import {
   normalizeAssemblyStage,
   normalizeAssemblyRoleName,
@@ -472,6 +482,10 @@ export class LocalDemoRepository implements DemoRepository {
     user.totalCredits = this.calculateUserCredits(db, user.id);
     this.saveDb(db);
     return JSON.parse(JSON.stringify(user));
+  }
+
+  async switchPersona(userId: string): Promise<User> {
+    return this.switchUser(userId);
   }
 
   // Dashboard
@@ -2953,15 +2967,44 @@ export class LocalDemoRepository implements DemoRepository {
   }
 
   // Events & Sessions
+  private projectEventForCaller(evt: Event, caller?: User | null): Event {
+    const cloned: Event = JSON.parse(JSON.stringify(evt));
+    if (cloned.allocation) {
+      const isOwner = caller?.role === 'platform_admin';
+      // For participants and ordinary public callers, strip private individual occupant lists
+      if (!isOwner) {
+        delete (cloned.allocation as any).reservedOccupants;
+        delete (cloned.allocation as any).ordinaryOccupants;
+      }
+    }
+    return cloned;
+  }
+
+  private projectAuditForCaller(audit: AllocationAuditRecord, caller?: User | null): AllocationAuditRecord {
+    const cloned: AllocationAuditRecord = JSON.parse(JSON.stringify(audit));
+    const isStaffOrOwner =
+      caller?.role === 'platform_admin' ||
+      caller?.role === 'institution_admin' ||
+      caller?.role === 'programme_manager';
+    if (!isStaffOrOwner) {
+      delete cloned.actorId;
+      delete cloned.reason;
+    }
+    return cloned;
+  }
+
   async getEvents(): Promise<Event[]> {
     const db = this.getDb();
-    return JSON.parse(JSON.stringify(db.events));
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    return db.events.map((e) => this.projectEventForCaller(e, activeUser));
   }
 
   async getEvent(eventId: string): Promise<Event | null> {
     const db = this.getDb();
     const evt = db.events.find((e) => e.id === eventId);
-    return evt ? JSON.parse(JSON.stringify(evt)) : null;
+    if (!evt) return null;
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    return this.projectEventForCaller(evt, activeUser);
   }
 
   async getSession(sessionId: string): Promise<Session | null> {
@@ -3377,37 +3420,159 @@ export class LocalDemoRepository implements DemoRepository {
   async rsvpEvent(
     eventId: string,
     userId: string,
-    status: 'attending' | 'maybe' | 'declined' = 'attending'
+    status: 'attending' | 'maybe' | 'declined' = 'attending',
+    actorId?: string
   ): Promise<Event> {
     const db = this.getDb();
+    const activeUserId = db.activeUserId;
+
+    // Anti-spoofing guard: Supplied actorId cannot mismatch active persona
+    if (actorId && activeUserId && actorId !== activeUserId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${activeUserId}".`
+      );
+    }
+
+    const callerId = actorId || activeUserId;
+    const caller = db.users.find((u) => u.id === callerId);
+
+    // Anti-spoofing guard: A participant cannot RSVP on behalf of another user
+    if (activeUserId && userId !== activeUserId) {
+      const isAuthorizedStaff =
+        caller?.role === 'platform_admin' || caller?.role === 'programme_manager';
+      if (!isAuthorizedStaff) {
+        throw new Error(
+          `Unauthorized RSVP spoof: Active persona "${activeUserId}" cannot RSVP on behalf of user "${userId}". ` +
+          `Only authorized platform admins or programme managers can manage other users' reservations.`
+        );
+      }
+    }
+
     const evt = db.events.find((e) => e.id === eventId);
     if (!evt) throw new Error(`Event ${eventId} not found`);
 
     const now = new Date().toISOString();
     evt.attendeeUserIds = evt.attendeeUserIds || [];
     evt.rsvpMap = evt.rsvpMap || {};
-    evt.rsvpMap[userId] = status;
+
+    if (!evt.allocation) {
+      evt.allocation = buildAllocationState({
+        allocationId: `alloc_${evt.id}`,
+        allocationType: 'event_places',
+        title: evt.title,
+        totalPlaces: evt.capacity,
+        confirmedOccupants: evt.attendeeUserIds,
+        existingStatus: 'pending',
+      });
+    }
 
     if (status === 'attending') {
+      const rsvpCheck = canUserRsvpAllocation(evt.allocation, userId);
+      if (!rsvpCheck.allowed) {
+        throw new Error(rsvpCheck.reason || 'RSVP rejected under reservation policy.');
+      }
       if (!evt.attendeeUserIds.includes(userId)) {
         evt.attendeeUserIds.push(userId);
       }
-    } else if (status === 'declined') {
+      evt.rsvpMap[userId] = 'attending';
+    } else {
       evt.attendeeUserIds = evt.attendeeUserIds.filter((id) => id !== userId);
+      if (evt.checkedInUserIds) {
+        evt.checkedInUserIds = evt.checkedInUserIds.filter((id) => id !== userId);
+      }
+      evt.rsvpMap[userId] = status;
     }
-    evt.updatedAt = now;
 
+    // Invalidate existing exception audit on attendee roster change (withdrawal or addition)
+    const priorExceptionAudit = evt.allocation.exceptionAudit;
+
+    // Recalculate allocation state with updated confirmed occupants
+    evt.allocation = buildAllocationState({
+      allocationId: evt.allocation.allocationId,
+      allocationType: 'event_places',
+      title: evt.title,
+      totalPlaces: evt.capacity,
+      confirmedOccupants: evt.attendeeUserIds,
+      existingStatus: 'pending', // Reverts to pending; prior exception cannot be silently reused!
+      existingExceptionAudit: undefined, // Cleared! Obsolete exception invalidated!
+    });
+
+    if (priorExceptionAudit) {
+      const invalidationAudit: AllocationAuditRecord = {
+        id: generateId('audit'),
+        allocationId: evt.allocation.allocationId,
+        action: 'updated',
+        actorId: callerId || 'system',
+        actorRole: caller?.role || 'system',
+        reason: `Prior exception approval (${priorExceptionAudit.id}) invalidated due to participant roster change. Renewed explicit owner approval required.`,
+        policyVersion: POLICY_VERSION,
+        outcome: 'Exception invalidated; allocation returned to pending.',
+        timestamp: now,
+        snapshot: {
+          totalPlaces: evt.allocation.totalPlaces,
+          reservedMinimum: evt.allocation.reservedMinimum,
+          reservedOccupiedCount: evt.allocation.reservedOccupiedCount,
+          ordinaryOccupiedCount: evt.allocation.ordinaryOccupiedCount,
+          vacanciesCount: evt.allocation.vacanciesCount,
+          status: evt.allocation.status,
+        },
+      };
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push(invalidationAudit);
+    }
+
+    evt.updatedAt = now;
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(evt));
+    return this.projectEventForCaller(evt, caller);
   }
 
   async checkInEvent(
     eventId: string,
-    userId: string
+    userId: string,
+    actorId?: string
   ): Promise<{ event: Event; activity?: Activity }> {
     const db = this.getDb();
+    const activeUserId = db.activeUserId;
+
+    // Anti-spoofing guard: Supplied actorId cannot mismatch active persona
+    if (actorId && activeUserId && actorId !== activeUserId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${activeUserId}".`
+      );
+    }
+
+    const callerId = actorId || activeUserId;
+    const caller = db.users.find((u) => u.id === callerId);
+
+    // Anti-spoofing guard: A caller cannot check in another user unless they are staff/mentor
+    if (activeUserId && userId !== activeUserId) {
+      const isAuthorizedStaff =
+        caller?.role === 'platform_admin' ||
+        caller?.role === 'teacher' ||
+        caller?.role === 'facilitator' ||
+        caller?.role === 'programme_manager';
+      if (!isAuthorizedStaff) {
+        throw new Error(
+          `Unauthorized check-in spoof: Active persona "${activeUserId}" cannot check in user "${userId}". ` +
+          `Check-in on behalf of other participants requires teacher, facilitator, or admin authority.`
+        );
+      }
+    }
+
     const evt = db.events.find((e) => e.id === eventId);
     if (!evt) throw new Error(`Event ${eventId} not found`);
+
+    // Guard: check-in cannot bypass RSVP and allocation controls
+    const isConfirmedAttendee =
+      evt.attendeeUserIds?.includes(userId) &&
+      (evt.rsvpMap?.[userId] === 'attending' || !evt.rsvpMap?.[userId]);
+
+    if (!isConfirmedAttendee) {
+      throw new Error(
+        `Check-in denied: User "${userId}" does not have a confirmed attending RSVP for event "${eventId}". ` +
+        `Check-in cannot bypass RSVP and seat allocation controls.`
+      );
+    }
 
     const now = new Date().toISOString();
     evt.checkedInUserIds = evt.checkedInUserIds || [];
@@ -3415,9 +3580,6 @@ export class LocalDemoRepository implements DemoRepository {
     let act: Activity | undefined;
     if (!evt.checkedInUserIds.includes(userId)) {
       evt.checkedInUserIds.push(userId);
-      if (!evt.attendeeUserIds.includes(userId)) {
-        evt.attendeeUserIds.push(userId);
-      }
       evt.updatedAt = now;
 
       // Add activity entry
@@ -3440,9 +3602,196 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     return {
-      event: JSON.parse(JSON.stringify(evt)),
+      event: this.projectEventForCaller(evt, caller),
       activity: act ? JSON.parse(JSON.stringify(act)) : undefined,
     };
+  }
+
+  async updateEventCapacity(
+    eventId: string,
+    newCapacity: number,
+    actorId?: string
+  ): Promise<Event> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId || actorId || 'user_admin';
+    const actor = db.users.find((u) => u.id === callerId);
+
+    if (!actor || (actor.role !== 'platform_admin' && actor.role !== 'programme_manager')) {
+      throw new Error(`Unauthorized: Only platform_admin or programme_manager can change event capacity.`);
+    }
+
+    const evt = db.events.find((e) => e.id === eventId);
+    if (!evt) throw new Error(`Event ${eventId} not found`);
+
+    const now = new Date().toISOString();
+    evt.capacity = newCapacity;
+
+    const priorExceptionAudit = evt.allocation?.exceptionAudit;
+
+    // Recalculate allocation state with new capacity; invalidate obsolete exception
+    evt.allocation = buildAllocationState({
+      allocationId: evt.allocation?.allocationId || `alloc_${evt.id}`,
+      allocationType: 'event_places',
+      title: evt.title,
+      totalPlaces: newCapacity,
+      confirmedOccupants: evt.attendeeUserIds || [],
+      existingStatus: 'pending',
+      existingExceptionAudit: undefined, // Obsolete exception invalidated!
+    });
+
+    if (priorExceptionAudit) {
+      const invalidationAudit: AllocationAuditRecord = {
+        id: generateId('audit'),
+        allocationId: evt.allocation.allocationId,
+        action: 'updated',
+        actorId: callerId,
+        actorRole: actor.role,
+        reason: `Prior exception approval (${priorExceptionAudit.id}) invalidated due to capacity change to ${newCapacity}. Renewed explicit owner approval required.`,
+        policyVersion: POLICY_VERSION,
+        outcome: 'Exception invalidated; allocation returned to pending.',
+        timestamp: now,
+        snapshot: {
+          totalPlaces: evt.allocation.totalPlaces,
+          reservedMinimum: evt.allocation.reservedMinimum,
+          reservedOccupiedCount: evt.allocation.reservedOccupiedCount,
+          ordinaryOccupiedCount: evt.allocation.ordinaryOccupiedCount,
+          vacanciesCount: evt.allocation.vacanciesCount,
+          status: evt.allocation.status,
+        },
+      };
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push(invalidationAudit);
+    }
+
+    evt.updatedAt = now;
+    this.saveDb(db);
+    return this.projectEventForCaller(evt, actor);
+  }
+
+  async finalizeEventAllocation(eventId: string, actorId?: string): Promise<Event> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+
+    // Anti-spoofing guard: If actorId is provided and activeUserId is set, they MUST match
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId || actorId || 'user_admin';
+    const actor = db.users.find((u) => u.id === callerId) || { id: callerId, role: 'participant' };
+
+    // Authority guard: Only platform_admin or programme_manager can finalize allocations
+    const isStaffOrAdmin = actor.role === 'platform_admin' || actor.role === 'programme_manager';
+    if (!isStaffOrAdmin) {
+      throw new Error(
+        `Unauthorized: Finalization requires platform_admin or programme_manager authority. ` +
+        `Current persona "${callerId}" (role: "${actor.role}") cannot finalize allocations.`
+      );
+    }
+
+    const evt = db.events.find((e) => e.id === eventId);
+    if (!evt) throw new Error(`Event ${eventId} not found`);
+
+    if (!evt.allocation) {
+      evt.allocation = buildAllocationState({
+        allocationId: `alloc_${evt.id}`,
+        allocationType: 'event_places',
+        title: evt.title,
+        totalPlaces: evt.capacity,
+        confirmedOccupants: evt.attendeeUserIds || [],
+        existingStatus: 'pending',
+      });
+    }
+
+    // Fails without mutating persistent state if noncompliant and no approved exception
+    const { updatedAllocation, audit } = finalizeAllocationState(evt.allocation, actor);
+
+    evt.allocation = updatedAllocation;
+    evt.updatedAt = new Date().toISOString();
+
+    db.allocationAudits = db.allocationAudits || [];
+    db.allocationAudits.push(audit);
+
+    this.saveDb(db);
+    return this.projectEventForCaller(evt, actor);
+  }
+
+  async approveEventAllocationException(
+    eventId: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ event: Event; audit: AllocationAuditRecord }> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+
+    // Anti-spoofing guard: If actorId is provided and activeUserId is set, they MUST match
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId || actorId || 'user_admin';
+    const actor = db.users.find((u) => u.id === callerId);
+
+    // Authority guard: Strictly restricted to platform_admin
+    if (!actor || actor.role !== 'platform_admin') {
+      throw new Error(
+        `Unauthorized: Only Platform Owner (role: platform_admin) can approve reservation exceptions. ` +
+        `Current persona "${callerId}" (role: "${actor?.role || 'unknown'}") cannot approve exceptions.`
+      );
+    }
+
+    const evt = db.events.find((e) => e.id === eventId);
+    if (!evt) throw new Error(`Event ${eventId} not found`);
+
+    if (!evt.allocation) {
+      evt.allocation = buildAllocationState({
+        allocationId: `alloc_${evt.id}`,
+        allocationType: 'event_places',
+        title: evt.title,
+        totalPlaces: evt.capacity,
+        confirmedOccupants: evt.attendeeUserIds || [],
+        existingStatus: 'pending',
+      });
+    }
+
+    const { updatedAllocation, audit } = approveAllocationExceptionState(evt.allocation, actor, reason);
+
+    evt.allocation = updatedAllocation;
+    evt.updatedAt = new Date().toISOString();
+
+    db.allocationAudits = db.allocationAudits || [];
+    db.allocationAudits.push(audit);
+
+    this.saveDb(db);
+    return {
+      event: this.projectEventForCaller(evt, actor),
+      audit: this.projectAuditForCaller(audit, actor),
+    };
+  }
+
+  async getAllocationAudits(allocationId?: string, actorId?: string): Promise<AllocationAuditRecord[]> {
+    const db = this.getDb();
+    const callerId = actorId || db.activeUserId;
+    const caller = db.users.find((u) => u.id === callerId);
+
+    db.allocationAudits = db.allocationAudits || [];
+    let audits = db.allocationAudits;
+    if (allocationId) {
+      audits = audits.filter((a) => a.allocationId === allocationId);
+    }
+    return audits.map((a) => this.projectAuditForCaller(a, caller));
   }
 
   // Activities

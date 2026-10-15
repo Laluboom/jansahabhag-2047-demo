@@ -120,9 +120,31 @@ export const EventsPage: React.FC = () => {
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-civic-indigo-700 bg-civic-indigo-50 px-2.5 py-0.5 rounded border border-civic-indigo-200">
-                    {evt.type.replace('_', ' ')}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-civic-indigo-700 bg-civic-indigo-50 px-2.5 py-0.5 rounded border border-civic-indigo-200">
+                      {evt.type.replace('_', ' ')}
+                    </span>
+                    {evt.allocation?.status === 'finalized_compliant' && (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        33% Compliant
+                      </span>
+                    )}
+                    {evt.allocation?.status === 'finalized_exception' && (
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                        Owner Exception
+                      </span>
+                    )}
+                    {evt.allocation?.status === 'blocked_noncompliant' && (
+                      <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                        Blocked
+                      </span>
+                    )}
+                    {evt.allocation?.status === 'unvalidated_legacy' && (
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        Legacy Unvalidated
+                      </span>
+                    )}
+                  </div>
                   <StatusChip status={evt.status} />
                 </div>
 
@@ -153,9 +175,13 @@ export const EventsPage: React.FC = () => {
               </div>
 
               <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-slate-500">
                     {evt.attendeeUserIds.length}/{evt.capacity} Registered
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    &bull; 33% Min: {evt.allocation?.reservedMinimum ?? Math.ceil(0.33 * evt.capacity)}
+                    {evt.allocation?.vacanciesCount ? ` (${evt.allocation.vacanciesCount} vacant)` : ''}
                   </span>
                   {isRegistered && (
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">

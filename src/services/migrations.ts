@@ -9,6 +9,8 @@ import {
   seedWorkspaceAuditEvents,
   canonicalWorkspaceRulebook,
 } from '../data/seed/workspaces';
+import { seedEvents } from '../data/seed/events';
+import { buildAllocationState } from './reservationAllocationService';
 
 export interface Migration {
   version: number;
@@ -648,6 +650,67 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
   return db;
 }
 
+export function normalizeEventAllocationRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+
+  db.allocationAudits = db.allocationAudits || [];
+
+  if (!Array.isArray(db.events)) {
+    db.events = [];
+  }
+
+  // Ensure small fictional demo events exist in db
+  for (const seedEvt of seedEvents) {
+    if (!db.events.some((e) => e.id === seedEvt.id)) {
+      db.events.push(JSON.parse(JSON.stringify(seedEvt)));
+    }
+  }
+
+  const legacyEventIds = new Set([
+    'evt_jaipur_assembly_01',
+    'evt_field_audit_02',
+    'evt_expert_session_03',
+    'evt_green_canopy_04',
+  ]);
+
+  db.events.forEach((evt) => {
+    evt.attendeeUserIds = Array.isArray(evt.attendeeUserIds) ? evt.attendeeUserIds : [];
+    evt.checkedInUserIds = Array.isArray(evt.checkedInUserIds) ? evt.checkedInUserIds : [];
+    evt.rsvpMap = evt.rsvpMap || {};
+
+    // Ensure checkIn cannot contain users who are not in attendeeUserIds
+    evt.checkedInUserIds = evt.checkedInUserIds.filter((uid) => evt.attendeeUserIds.includes(uid));
+
+    // Determine initial status
+    let initialStatus: import('../types/domain').AllocationStatus = 'pending';
+    if (legacyEventIds.has(evt.id)) {
+      initialStatus = 'unvalidated_legacy';
+    } else if (evt.id === 'evt_jaipur_compliant_06') {
+      initialStatus = 'finalized_compliant';
+    } else if (evt.id === 'evt_jaipur_blocked_07') {
+      initialStatus = 'blocked_noncompliant';
+    }
+
+    evt.allocation = buildAllocationState({
+      allocationId: evt.allocation?.allocationId || `alloc_${evt.id}`,
+      allocationType: 'event_places',
+      title: evt.title,
+      totalPlaces: evt.capacity,
+      confirmedOccupants: evt.attendeeUserIds,
+      existingStatus: evt.allocation?.status || initialStatus,
+      existingExceptionAudit: evt.allocation?.exceptionAudit,
+    });
+
+    if (evt.allocation.exceptionAudit) {
+      if (!db.allocationAudits!.some((a) => a.id === evt.allocation!.exceptionAudit!.id)) {
+        db.allocationAudits!.push(evt.allocation.exceptionAudit);
+      }
+    }
+  });
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -669,6 +732,7 @@ export function runMigrations(storedData: any): DemoDatabase {
   normalizeAssemblyRecords(migrated);
   normalizeWorkspaceRecords(migrated);
   normalizePassportAndCreditRecords(migrated);
+  normalizeEventAllocationRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }

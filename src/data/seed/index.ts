@@ -65,6 +65,7 @@ export const seedDatabase: DemoDatabase = {
   communityPosts: seedCommunityPosts,
   moderationCases: seedModerationCases,
   civicIssues: seedCivicIssues,
+  allocationAudits: [],
   workspaces: seedWorkspaces,
   workspaceMemberships: seedWorkspaceMemberships,
   workspaceActions: seedWorkspaceActions,

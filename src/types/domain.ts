@@ -249,6 +249,69 @@ export interface Activity {
 export type EventType = 'assembly' | 'workshop' | 'field_audit' | 'dialogue' | 'expert_session';
 export type EventStatus = 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
 
+export type ReservationEligibility = 'eligible' | 'ineligible' | 'undeclared';
+
+export type AllocationStatus =
+  | 'pending'
+  | 'finalized_compliant'
+  | 'finalized_exception'
+  | 'blocked_noncompliant'
+  | 'unvalidated_legacy';
+
+export interface AllocationAuditRecord {
+  id: string;
+  allocationId: string;
+  action: 'created' | 'updated' | 'finalized' | 'exception_approved' | 'finalization_rejected';
+  actorId?: string; // approver persona (private to staff/owner)
+  actorRole: string; // approver role (e.g. 'platform_admin')
+  reason?: string; // substantive reason (private to staff/owner)
+  policyVersion: string;
+  outcome: string;
+  timestamp: string;
+  snapshot: {
+    totalPlaces: number;
+    reservedMinimum: number;
+    reservedOccupiedCount: number;
+    ordinaryOccupiedCount: number;
+    vacanciesCount: number;
+    status: AllocationStatus;
+  };
+}
+
+export interface AllocationState {
+  allocationId: string;
+  allocationType: 'event_places' | 'named_roles' | 'cohort_places';
+  title?: string;
+  totalPlaces: number;
+  reservedMinimum: number; // ceil(0.33 * totalPlaces)
+  ordinaryPlaces: number; // totalPlaces - reservedMinimum
+  confirmedOccupants: string[]; // user IDs
+  reservedOccupants?: string[]; // eligible user IDs occupying reserved places (internal validation only)
+  ordinaryOccupants?: string[]; // occupants taking ordinary places (internal validation only)
+  reservedOccupiedCount: number; // aggregate public count
+  ordinaryOccupiedCount: number; // aggregate public count
+  vacanciesCount: number; // unfilled reserved places: reservedMinimum - reservedOccupiedCount
+  status: AllocationStatus;
+  isException: boolean;
+  exceptionAudit?: AllocationAuditRecord;
+  policyVersion: string;
+  lastValidatedAt: string;
+}
+
+export interface AllocationValidationResult {
+  isValid: boolean;
+  status: AllocationStatus;
+  canFinalize: boolean;
+  reservedMinimum: number;
+  reservedOccupiedCount: number;
+  ordinaryOccupiedCount: number;
+  vacanciesCount: number;
+  isCompliant: boolean;
+  isException: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
 export interface Event {
   id: string;
   programmeId: string;
@@ -267,6 +330,7 @@ export interface Event {
   rsvpMap?: Record<string, 'attending' | 'maybe' | 'declined'>;
   capacity: number;
   status: EventStatus;
+  allocation?: AllocationState;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -1175,6 +1239,7 @@ export interface DemoDatabase {
   civicIssues?: CivicIssue[];
   assemblyRoleActions?: AssemblyRoleAction[];
   assemblyRoleOverrideAudits?: AssemblyRoleOverrideAudit[];
+  allocationAudits?: AllocationAuditRecord[];
   workspaces?: Workspace[];
   workspaceMemberships?: WorkspaceMembership[];
   workspaceActions?: WorkspaceAction[];

@@ -45,6 +45,7 @@ export interface DemoRepository {
   getUsers(): Promise<User[]>;
   getUser(userId: string): Promise<User | null>;
   switchUser(userId: string): Promise<User>;
+  switchPersona(userId: string): Promise<User>;
 
   // Dashboard
   getDashboard(userId: string): Promise<DashboardData>;
@@ -164,8 +165,12 @@ export interface DemoRepository {
   advanceDebatePhase(sessionId: string, actorId: string, nextPhase: import('../types/domain').DebatePhase): Promise<Session>;
   postDebateContribution(input: { sessionId: string; userId: string; text: string; evidenceIds?: string[] }): Promise<Session>;
   switchSessionMode(sessionId: string, actorId: string, targetMode: import('../types/domain').SessionMode, summary?: string): Promise<Session>;
-  rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined'): Promise<Event>;
-  checkInEvent(eventId: string, userId: string): Promise<{ event: Event; activity?: Activity }>;
+  rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined', actorId?: string): Promise<Event>;
+  checkInEvent(eventId: string, userId: string, actorId?: string): Promise<{ event: Event; activity?: Activity }>;
+  updateEventCapacity(eventId: string, newCapacity: number, actorId?: string): Promise<Event>;
+  finalizeEventAllocation(eventId: string, actorId?: string): Promise<Event>;
+  approveEventAllocationException(eventId: string, reason: string, actorId?: string): Promise<{ event: Event; audit: import('../types/domain').AllocationAuditRecord }>;
+  getAllocationAudits(allocationId?: string, actorId?: string): Promise<import('../types/domain').AllocationAuditRecord[]>;
 
   // Activities
   getActivities(userId?: string): Promise<Activity[]>;
