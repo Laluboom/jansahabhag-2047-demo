@@ -124,19 +124,24 @@ export const EventsPage: React.FC = () => {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-civic-indigo-700 bg-civic-indigo-50 px-2.5 py-0.5 rounded border border-civic-indigo-200">
                       {evt.type.replace('_', ' ')}
                     </span>
-                    {evt.allocation?.status === 'finalized_compliant' && (
+                    {!evt.allocation?.isPrivacySuppressed && evt.allocation?.status === 'finalized_compliant' && (
                       <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                         33% Compliant
                       </span>
                     )}
-                    {evt.allocation?.status === 'finalized_exception' && (
+                    {!evt.allocation?.isPrivacySuppressed && evt.allocation?.status === 'finalized_exception' && (
                       <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
                         Owner Exception
                       </span>
                     )}
-                    {evt.allocation?.status === 'blocked_noncompliant' && (
+                    {!evt.allocation?.isPrivacySuppressed && evt.allocation?.status === 'blocked_noncompliant' && (
                       <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                         Blocked
+                      </span>
+                    )}
+                    {evt.allocation?.isPrivacySuppressed && (
+                      <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200" data-testid="status-protected">
+                        Protected
                       </span>
                     )}
                     {evt.allocation?.status === 'unvalidated_legacy' && (
@@ -181,7 +186,7 @@ export const EventsPage: React.FC = () => {
                   </span>
                   <span className="text-[11px] text-slate-400">
                     &bull; 33% Min: {evt.allocation?.reservedMinimum ?? Math.ceil(0.33 * evt.capacity)}
-                    {evt.allocation?.vacanciesCount ? ` (${evt.allocation.vacanciesCount} vacant)` : ''}
+                    {!evt.allocation?.isPrivacySuppressed && evt.allocation?.vacanciesCount !== undefined ? ` (${evt.allocation.vacanciesCount} vacant)` : ''}
                   </span>
                   {isRegistered && (
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">

@@ -151,34 +151,94 @@ export function buildAllocationState(input: BuildAllocationInput): AllocationSta
 }
 
 /**
+ * Determines whether an allocation cohort is small enough that exposing numeric breakdowns
+ * (reserved/ordinary/vacancies counts, status, audit snapshots) allows deductive inference
+ * of individual reservation declarations or eligibility.
+ *
+ * Consistent rule: covers cohorts with capacity <= 3 (such as capacity 2 with 1,
+ * capacity 3 with 2, capacity 3 with 1 or 3, etc.).
+ */
+export function isSmallCohortAllocation(totalPlaces: number): boolean {
+  return totalPlaces > 0 && totalPlaces <= 3;
+}
+
+/**
  * Strips private individual reservation eligibility arrays (reservedOccupants, ordinaryOccupants, confirmedOccupants)
- * and sensitive audit details from an AllocationState, retaining only aggregate public figures (counts, minimum, vacancies, status).
+ * and sensitive audit details from an AllocationState.
+ *
+ * For small cohorts (<= 3 places), also withholds exact reservedOccupiedCount, ordinaryOccupiedCount,
+ * vacanciesCount, and status for non-owner callers to prevent deductive identification of individual eligibility.
+ *
+ * Only the simulated Platform Owner (role: 'platform_admin') is authorized to receive unredacted
+ * validation details and arrays. Organizers and staff receive the sanitized public projection.
  */
 export function sanitizeAllocationForPublic(
   allocation: AllocationState,
-  isStaffOrOwner: boolean = false
+  isOwner: boolean = false
 ): AllocationState {
   const sanitized: AllocationState = {
     ...allocation,
   };
+
+  if (isOwner) {
+    return sanitized;
+  }
+
   delete sanitized.reservedOccupants;
   delete sanitized.ordinaryOccupants;
+  const confirmedCount =
+    sanitized.confirmedOccupants?.length ??
+    ((sanitized.reservedOccupiedCount ?? 0) + (sanitized.ordinaryOccupiedCount ?? 0));
   delete sanitized.confirmedOccupants;
 
-  if (sanitized.exceptionAudit && !isStaffOrOwner) {
+  // Robust public projection rule: withhold exact counts for ALL non-owner callers
+  sanitized.isPrivacySuppressed = true;
+  delete sanitized.reservedOccupiedCount;
+  delete sanitized.ordinaryOccupiedCount;
+  delete sanitized.vacanciesCount;
+
+  // Suppress status if it implies individual reservation eligibility (compliance, non-compliance, or exception)
+  if (
+    sanitized.status === 'finalized_compliant' ||
+    sanitized.status === 'blocked_noncompliant' ||
+    sanitized.status === 'finalized_exception'
+  ) {
+    delete sanitized.status;
+  }
+
+  // If there is a sole named attendee (<= 1 attendee), an exception approval directly identifies
+  // that sole individual as ineligible/ordinary. Neutralize isException and remove exceptionAudit for non-owner projections.
+  if (confirmedCount <= 1) {
+    sanitized.isException = false;
+    delete sanitized.exceptionAudit;
+  } else if (sanitized.exceptionAudit) {
     const sanitizedAudit: AllocationAuditRecord = {
       ...sanitized.exceptionAudit,
     };
     delete sanitizedAudit.actorId;
     delete sanitizedAudit.reason;
-    sanitized.exceptionAudit = sanitizedAudit;
-  }
 
-  // Small allocation privacy protection:
-  // In cohorts with <= 2 places where a single occupant exists, deductive correlation
-  // can directly expose individual status. Flag privacy suppression.
-  if (sanitized.totalPlaces <= 2 && (allocation.confirmedOccupants?.length || 0) === 1) {
-    sanitized.isPrivacySuppressed = true;
+    if (sanitizedAudit.snapshot) {
+      const sanitizedSnapshot = { ...sanitizedAudit.snapshot };
+      delete sanitizedSnapshot.reservedOccupiedCount;
+      delete sanitizedSnapshot.ordinaryOccupiedCount;
+      delete sanitizedSnapshot.vacanciesCount;
+      if (
+        sanitizedSnapshot.status === 'finalized_compliant' ||
+        sanitizedSnapshot.status === 'blocked_noncompliant' ||
+        sanitizedSnapshot.status === 'finalized_exception'
+      ) {
+        delete sanitizedSnapshot.status;
+      }
+      sanitizedAudit.snapshot = sanitizedSnapshot;
+    }
+    if (sanitizedAudit.outcome) {
+      sanitizedAudit.outcome = sanitizedAudit.outcome
+        .replace(/with \d+ vacant reserved seat\(s\)\.?/i, 'under Platform Owner exception approval.')
+        .trim();
+    }
+
+    sanitized.exceptionAudit = sanitizedAudit;
   }
 
   return sanitized;
@@ -202,11 +262,13 @@ export function validateAllocation(allocation: AllocationState): AllocationValid
   const ordinaryFilled = allocation.ordinaryOccupiedCount ?? (allocation.ordinaryOccupants?.length ?? 0);
   const isCompliant = reservedFilled >= allocation.reservedMinimum;
 
+  const vacancies = allocation.vacanciesCount ?? Math.max(0, allocation.reservedMinimum - reservedFilled);
+
   if (!isCompliant) {
-    if (allocation.vacanciesCount > 0) {
+    if (vacancies > 0) {
       warnings.push(
         `Unmet reserved minimum: ${reservedFilled} of ${allocation.reservedMinimum} reserved places filled. ` +
-        `${allocation.vacanciesCount} place(s) remain held vacant by default.`
+        `${vacancies} place(s) remain held vacant by default.`
       );
     }
   }
@@ -223,7 +285,7 @@ export function validateAllocation(allocation: AllocationState): AllocationValid
 
   const canFinalize = (isCompliant || allocation.isException) && errors.length === 0;
 
-  let currentStatus = allocation.status;
+  let currentStatus: AllocationStatus = allocation.status || 'pending';
   if (currentStatus !== 'unvalidated_legacy') {
     if (allocation.isException) {
       currentStatus = 'finalized_exception';
@@ -239,7 +301,7 @@ export function validateAllocation(allocation: AllocationState): AllocationValid
     reservedMinimum: allocation.reservedMinimum,
     reservedOccupiedCount: reservedFilled,
     ordinaryOccupiedCount: ordinaryFilled,
-    vacanciesCount: allocation.vacanciesCount,
+    vacanciesCount: vacancies,
     isCompliant,
     isException: allocation.isException,
     errors,
@@ -267,7 +329,8 @@ export interface RsvpCheckResult {
 export function canUserRsvpAllocation(
   allocation: AllocationState,
   userId: string,
-  customDeclarations?: Record<string, ReservationEligibility>
+  customDeclarations?: Record<string, ReservationEligibility>,
+  isOwner: boolean = false
 ): RsvpCheckResult {
   if (allocation.confirmedOccupants?.includes(userId)) {
     return { allowed: true };
@@ -319,12 +382,17 @@ export function canUserRsvpAllocation(
 
   // Unmet reserved places stay vacant by default
   const remainingReserved = allocation.reservedMinimum - reservedFilled;
+  const reason = isOwner
+    ? `Ordinary capacity reached (${ordinaryFilled}/${allocation.ordinaryPlaces}). ` +
+      `The remaining ${remainingReserved} place(s) are reserved under the 33% mandatory women's reservation policy. ` +
+      `Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved.`
+    : `Ordinary capacity reached: general places are fully subscribed. ` +
+      `Remaining places are reserved under the 33% mandatory women's reservation policy. ` +
+      `Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved.`;
+
   return {
     allowed: false,
-    reason:
-      `Ordinary capacity reached (${ordinaryFilled}/${allocation.ordinaryPlaces}). ` +
-      `The remaining ${remainingReserved} place(s) are reserved under the 33% mandatory women's reservation policy. ` +
-      `Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved.`,
+    reason,
   };
 }
 

@@ -54,7 +54,14 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
         demoRepository.rsvpEvent(evt!.id, 'user_aarav', 'attending')
       ).rejects.toThrowError(/Ordinary capacity reached.*reserved under the 33% mandatory/i);
 
-      // Verify no silent reserved-place transfer occurred
+      // Verify participant projection withholds vacancies in small cohort
+      const participantView = await demoRepository.getEvent(evt!.id);
+      expect(participantView!.attendeeUserIds).toEqual(['user_vikram', 'user_rohan']);
+      expect(participantView!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(participantView!.allocation?.vacanciesCount).toBeUndefined();
+
+      // Verify persistent owner view confirms no silent reserved-place transfer occurred
+      await demoRepository.switchPersona('user_admin');
       const unchanged = await demoRepository.getEvent(evt!.id);
       expect(unchanged!.attendeeUserIds).toEqual(['user_vikram', 'user_rohan']);
       expect(unchanged!.allocation?.vacanciesCount).toBe(1);
@@ -67,11 +74,16 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       await demoRepository.switchPersona('user_priya');
       const updated = await demoRepository.rsvpEvent(evt!.id, 'user_priya', 'attending');
       expect(updated.attendeeUserIds).toContain('user_priya');
-      expect(updated.allocation?.reservedOccupiedCount).toBe(1);
-      expect(updated.allocation?.vacanciesCount).toBe(0);
+      // For participant Priya, breakdown counts are withheld for privacy
+      expect(updated.allocation?.isPrivacySuppressed).toBe(true);
+      expect(updated.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(updated.allocation?.vacanciesCount).toBeUndefined();
 
-      // Switch to admin to finalize as compliant
+      // Switch to admin to verify owner retains exact counts and finalize as compliant
       await demoRepository.switchPersona('user_admin');
+      const adminEvt = await demoRepository.getEvent(evt!.id);
+      expect(adminEvt!.allocation?.reservedOccupiedCount).toBe(1);
+      expect(adminEvt!.allocation?.vacanciesCount).toBe(0);
       const finalized = await demoRepository.finalizeEventAllocation(evt!.id);
       expect(finalized.allocation?.status).toBe('finalized_compliant');
     });
@@ -83,13 +95,25 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       await demoRepository.switchPersona('user_vikram');
       const updated = await demoRepository.rsvpEvent(evt!.id, 'user_vikram', 'declined');
       expect(updated.attendeeUserIds).not.toContain('user_vikram');
-      expect(updated.allocation?.ordinaryOccupiedCount).toBe(1);
+      expect(updated.allocation?.isPrivacySuppressed).toBe(true);
+      expect(updated.allocation?.ordinaryOccupiedCount).toBeUndefined();
+
+      // Verify persistent owner count recomputed to 1
+      await demoRepository.switchPersona('user_admin');
+      const ownerEvt1 = await demoRepository.getEvent(evt!.id);
+      expect(ownerEvt1!.allocation?.ordinaryOccupiedCount).toBe(1);
 
       // Now another ordinary participant (user_aarav) CAN take the open ordinary seat
       await demoRepository.switchPersona('user_aarav');
       const reJoined = await demoRepository.rsvpEvent(evt!.id, 'user_aarav', 'attending');
       expect(reJoined.attendeeUserIds).toContain('user_aarav');
-      expect(reJoined.allocation?.ordinaryOccupiedCount).toBe(2);
+      expect(reJoined.allocation?.isPrivacySuppressed).toBe(true);
+      expect(reJoined.allocation?.ordinaryOccupiedCount).toBeUndefined();
+
+      // Verify persistent owner count recomputed to 2
+      await demoRepository.switchPersona('user_admin');
+      const ownerEvt2 = await demoRepository.getEvent(evt!.id);
+      expect(ownerEvt2!.allocation?.ordinaryOccupiedCount).toBe(2);
     });
   });
 
@@ -234,15 +258,17 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
   });
 
   describe('Privacy Protection: Hiding Individual Reservation Eligibility', () => {
-    it('strips private occupant lists for participant callers while preserving aggregate counts', async () => {
+    it('strips private occupant lists for participant callers while preserving aggregate counts on non-suppressed cohorts and withholding on small cohorts', async () => {
       await demoRepository.switchPersona('user_aarav'); // Participant
       const evt = await demoRepository.getEvent('evt_jaipur_limited_05');
 
       expect(evt).not.toBeNull();
-      // Public aggregate counts MUST be visible
-      expect(evt!.allocation?.reservedOccupiedCount).toBe(0);
-      expect(evt!.allocation?.ordinaryOccupiedCount).toBe(2);
-      expect(evt!.allocation?.vacanciesCount).toBe(1);
+      // On small cohorts (capacity <= 3), breakdown counts are withheld to prevent individual eligibility inference
+      expect(evt!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(evt!.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(evt!.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(evt!.allocation?.vacanciesCount).toBeUndefined();
+      // Public formula and totals MUST remain visible
       expect(evt!.allocation?.reservedMinimum).toBe(1);
       expect(evt!.allocation?.ordinaryPlaces).toBe(2);
 
@@ -254,12 +280,41 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       // Same privacy guarantee on getEvents() list
       const allEvents = await demoRepository.getEvents();
       const limited = allEvents.find((e) => e.id === 'evt_jaipur_limited_05');
+      expect(limited?.allocation?.isPrivacySuppressed).toBe(true);
+      expect(limited?.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(limited?.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(limited?.allocation?.vacanciesCount).toBeUndefined();
       expect(limited?.allocation?.reservedOccupants).toBeUndefined();
       expect(limited?.allocation?.ordinaryOccupants).toBeUndefined();
       expect(limited?.allocation?.confirmedOccupants).toBeUndefined();
+
+      // Robust public projection: ALL non-owner projections withhold exact counts regardless of capacity
+      const largeEvt = allEvents.find((e) => e.id === 'evt_jaipur_assembly_01');
+      expect(largeEvt?.allocation?.isPrivacySuppressed).toBe(true);
+      expect(largeEvt?.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(largeEvt?.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(largeEvt?.allocation?.vacanciesCount).toBeUndefined();
+      // Large cohort also strips private occupant arrays
+      expect(largeEvt?.allocation?.reservedOccupants).toBeUndefined();
+      expect(largeEvt?.allocation?.ordinaryOccupants).toBeUndefined();
+      expect(largeEvt?.allocation?.confirmedOccupants).toBeUndefined();
+      // Total/ordinary/reserved formula preserved
+      expect(largeEvt?.allocation?.totalPlaces).toBe(35);
+      expect(largeEvt?.allocation?.reservedMinimum).toBe(12);
+      expect(largeEvt?.allocation?.ordinaryPlaces).toBe(23);
+
+      // Owner caller retains unredacted validation detail
+      await demoRepository.switchPersona('user_admin');
+      const ownerAllEvents = await demoRepository.getEvents();
+      const ownerLargeEvt = ownerAllEvents.find((e) => e.id === 'evt_jaipur_assembly_01');
+      expect(ownerLargeEvt?.allocation?.isPrivacySuppressed).toBeUndefined();
+      expect(ownerLargeEvt?.allocation?.reservedOccupiedCount).toBeDefined();
+      expect(ownerLargeEvt?.allocation?.ordinaryOccupiedCount).toBeDefined();
+      expect(ownerLargeEvt?.allocation?.vacanciesCount).toBeDefined();
+      expect(ownerLargeEvt?.allocation?.reservedOccupants).toBeDefined();
     });
 
-    it('sanitizes public allocation projections (including exceptionAudit actorId & reason) across getEvent, getEvents, rsvpEvent, and checkInEvent', async () => {
+    it('sanitizes public allocation projections (including exceptionAudit actorId, reason & snapshot counts) across getEvent, getEvents, rsvpEvent, and checkInEvent', async () => {
       // 1. Owner approves exception with sensitive operational rationale
       await demoRepository.switchPersona('user_admin');
       const sensitiveReason = 'Targeted community outreach in Ward 24 yielded zero eligible candidates.';
@@ -269,45 +324,70 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       await demoRepository.switchPersona('user_aarav');
       const participantEvt = await demoRepository.getEvent('evt_jaipur_limited_05');
       expect(participantEvt).not.toBeNull();
-      expect(participantEvt!.allocation?.status).toBe('finalized_exception');
+      expect(participantEvt!.allocation?.isPrivacySuppressed).toBe(true);
+      // Status is suppressed for small cohort to avoid disclosing attendee eligibility
+      expect(participantEvt!.allocation?.status).toBeUndefined();
       expect(participantEvt!.allocation?.isException).toBe(true);
 
-      // Private occupant arrays MUST be undefined
+      // Private occupant arrays and counts MUST be undefined
       expect(participantEvt!.allocation?.reservedOccupants).toBeUndefined();
       expect(participantEvt!.allocation?.ordinaryOccupants).toBeUndefined();
       expect(participantEvt!.allocation?.confirmedOccupants).toBeUndefined();
+      expect(participantEvt!.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(participantEvt!.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(participantEvt!.allocation?.vacanciesCount).toBeUndefined();
 
-      // Exception audit record is visible, but sensitive fields stripped
+      // Exception audit record is visible, but sensitive fields and snapshot breakdown stripped
       expect(participantEvt!.allocation?.exceptionAudit).toBeDefined();
       expect(participantEvt!.allocation?.exceptionAudit?.id).toBeDefined();
       expect(participantEvt!.allocation?.exceptionAudit?.actorRole).toBe('platform_admin');
       expect(participantEvt!.allocation?.exceptionAudit?.policyVersion).toBe(POLICY_VERSION);
       expect(participantEvt!.allocation?.exceptionAudit?.outcome).toContain('Exception approved');
+      expect(participantEvt!.allocation?.exceptionAudit?.outcome).not.toMatch(/\b\d+ vacant\b/i);
       expect(participantEvt!.allocation?.exceptionAudit?.actorId).toBeUndefined();
       expect(participantEvt!.allocation?.exceptionAudit?.reason).toBeUndefined();
+      expect(participantEvt!.allocation?.exceptionAudit?.snapshot.reservedOccupiedCount).toBeUndefined();
+      expect(participantEvt!.allocation?.exceptionAudit?.snapshot.ordinaryOccupiedCount).toBeUndefined();
+      expect(participantEvt!.allocation?.exceptionAudit?.snapshot.vacanciesCount).toBeUndefined();
+      expect(participantEvt!.allocation?.exceptionAudit?.snapshot.status).toBeUndefined();
 
       // 3. Participant views events via getEvents()
       const allEvents = await demoRepository.getEvents();
       const listedEvt = allEvents.find((e) => e.id === 'evt_jaipur_limited_05');
+      expect(listedEvt?.allocation?.isPrivacySuppressed).toBe(true);
       expect(listedEvt?.allocation?.reservedOccupants).toBeUndefined();
       expect(listedEvt?.allocation?.ordinaryOccupants).toBeUndefined();
       expect(listedEvt?.allocation?.confirmedOccupants).toBeUndefined();
+      expect(listedEvt?.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(listedEvt?.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(listedEvt?.allocation?.vacanciesCount).toBeUndefined();
+      expect(listedEvt?.allocation?.status).toBeUndefined();
       expect(listedEvt?.allocation?.exceptionAudit?.actorId).toBeUndefined();
       expect(listedEvt?.allocation?.exceptionAudit?.reason).toBeUndefined();
+      expect(listedEvt?.allocation?.exceptionAudit?.snapshot.reservedOccupiedCount).toBeUndefined();
 
       // 4. Participant RSVPs or checks in: returned projection is sanitized
       await demoRepository.switchPersona('user_vikram');
       const rsvpResult = await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_vikram', 'declined');
+      expect(rsvpResult.allocation?.isPrivacySuppressed).toBe(true);
       expect(rsvpResult.allocation?.reservedOccupants).toBeUndefined();
       expect(rsvpResult.allocation?.ordinaryOccupants).toBeUndefined();
       expect(rsvpResult.allocation?.confirmedOccupants).toBeUndefined();
+      expect(rsvpResult.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(rsvpResult.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(rsvpResult.allocation?.vacanciesCount).toBeUndefined();
 
-      // 5. Authorized Owner view retains full validation arrays
+      // 5. Authorized Owner view retains full validation arrays and exact counts
       await demoRepository.switchPersona('user_admin');
       const ownerEvt = await demoRepository.getEvent('evt_jaipur_limited_05');
+      expect(ownerEvt?.allocation?.isPrivacySuppressed).toBeUndefined();
       expect(ownerEvt?.allocation?.reservedOccupants).toBeDefined();
       expect(ownerEvt?.allocation?.ordinaryOccupants).toBeDefined();
       expect(ownerEvt?.allocation?.confirmedOccupants).toBeDefined();
+      expect(ownerEvt?.allocation?.reservedOccupiedCount).toBeDefined();
+      expect(ownerEvt?.allocation?.ordinaryOccupiedCount).toBeDefined();
+      expect(ownerEvt?.allocation?.vacanciesCount).toBeDefined();
+      expect(ownerEvt?.allocation?.status).toBe('pending');
     });
 
     it('protects single-occupant small allocations with privacy-safe suppression while preserving owner validation detail', async () => {
@@ -320,6 +400,9 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(participantView!.allocation?.reservedOccupants).toBeUndefined();
       expect(participantView!.allocation?.ordinaryOccupants).toBeUndefined();
       expect(participantView!.allocation?.confirmedOccupants).toBeUndefined();
+      expect(participantView!.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(participantView!.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(participantView!.allocation?.vacanciesCount).toBeUndefined();
 
       // Owner caller retains full validation detail without suppression
       await demoRepository.switchPersona('user_admin');
@@ -329,6 +412,10 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(ownerView!.allocation?.reservedOccupants).toBeDefined();
       expect(ownerView!.allocation?.ordinaryOccupants).toBeDefined();
       expect(ownerView!.allocation?.confirmedOccupants).toBeDefined();
+      expect(ownerView!.allocation?.reservedOccupiedCount).toBe(0);
+      expect(ownerView!.allocation?.ordinaryOccupiedCount).toBe(1);
+      expect(ownerView!.allocation?.vacanciesCount).toBe(1);
+      expect(ownerView!.allocation?.status).toBe('blocked_noncompliant');
     });
 
     it('sanitizes allocation audit records for participant callers to prevent deriving identities', async () => {
@@ -342,6 +429,8 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       const ownerRecord = ownerAudits.find((a) => a.action === 'exception_approved');
       expect(ownerRecord?.actorId).toBe('user_admin');
       expect(ownerRecord?.reason).toBe(sensitiveReason);
+      expect(ownerRecord?.snapshot.reservedOccupiedCount).toBe(0);
+      expect(ownerRecord?.snapshot.vacanciesCount).toBe(1);
 
       // 3. Participant caller gets sanitized projection
       await demoRepository.switchPersona('user_aarav');
@@ -351,10 +440,13 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(participantRecord?.actorRole).toBe('platform_admin');
       expect(participantRecord?.policyVersion).toBe(POLICY_VERSION);
       expect(participantRecord?.outcome).toContain('Exception approved');
+      expect(participantRecord?.outcome).not.toMatch(/\b\d+ vacant\b/i);
 
       // Sensitive details stripped for participant
       expect(participantRecord?.actorId).toBeUndefined();
       expect(participantRecord?.reason).toBeUndefined();
+      expect(participantRecord?.snapshot.reservedOccupiedCount).toBeUndefined();
+      expect(participantRecord?.snapshot.vacanciesCount).toBeUndefined();
     });
   });
 
@@ -440,6 +532,122 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(reloadedEvt!.allocation?.isException).toBe(true);
       expect(reloadedEvt!.allocation?.exceptionAudit?.reason).toBe(reason);
       expect(reloadedEvt!.allocation?.policyVersion).toBe(POLICY_VERSION);
+    });
+  });
+
+  describe('Public Inference Prevention & Single Attendee Protection', () => {
+    it('withholds exact counts and arrays for capacity 4+ events with a single attendee', async () => {
+      // 1. Setup capacity 4 event with 1 attendee (user_aarav)
+      await demoRepository.switchPersona('user_admin');
+      const updated = await demoRepository.updateEventCapacity('evt_jaipur_blocked_07', 4);
+      expect(updated.capacity).toBe(4);
+      expect(updated.attendeeUserIds).toEqual(['user_aarav']);
+
+      // 2. Participant caller inspection
+      await demoRepository.switchPersona('user_priya');
+      const participantEvt = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(participantEvt).not.toBeNull();
+      expect(participantEvt!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(participantEvt!.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(participantEvt!.allocation?.ordinaryOccupiedCount).toBeUndefined();
+      expect(participantEvt!.allocation?.vacanciesCount).toBeUndefined();
+      expect(participantEvt!.allocation?.reservedOccupants).toBeUndefined();
+      expect(participantEvt!.allocation?.ordinaryOccupants).toBeUndefined();
+      expect(participantEvt!.allocation?.confirmedOccupants).toBeUndefined();
+      // Public formula preserved
+      expect(participantEvt!.allocation?.totalPlaces).toBe(4);
+      expect(participantEvt!.allocation?.reservedMinimum).toBe(2);
+      expect(participantEvt!.allocation?.ordinaryPlaces).toBe(2);
+
+      // 3. Platform Owner caller retains full validation detail
+      await demoRepository.switchPersona('user_admin');
+      const ownerEvt = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(ownerEvt!.allocation?.isPrivacySuppressed).toBeUndefined();
+      expect(ownerEvt!.allocation?.reservedOccupiedCount).toBe(0);
+      expect(ownerEvt!.allocation?.ordinaryOccupiedCount).toBe(1);
+      expect(ownerEvt!.allocation?.vacanciesCount).toBe(2);
+      expect(ownerEvt!.allocation?.reservedOccupants).toEqual([]);
+      expect(ownerEvt!.allocation?.ordinaryOccupants).toEqual(['user_aarav']);
+      expect(ownerEvt!.allocation?.confirmedOccupants).toEqual(['user_aarav']);
+    });
+
+    it('withholds exception audit on sole attendee cohorts so ineligibility cannot be inferred', async () => {
+      // evt_jaipur_blocked_07 has 1 attendee (user_aarav)
+      await demoRepository.switchPersona('user_admin');
+      await demoRepository.approveEventAllocationException('evt_jaipur_blocked_07', 'Special consultation permit');
+
+      // Owner sees exception status and full audit
+      const ownerView = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(ownerView!.allocation?.isException).toBe(true);
+      expect(ownerView!.allocation?.exceptionAudit?.reason).toBe('Special consultation permit');
+      const ownerAudits = await demoRepository.getAllocationAudits('alloc_evt_jaipur_blocked_07');
+      expect(ownerAudits.some((a) => a.action === 'exception_approved')).toBe(true);
+
+      // Participant caller MUST NOT see exception details that imply Aarav is ineligible
+      await demoRepository.switchPersona('user_priya');
+      const participantView = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(participantView!.allocation?.isException).toBe(false);
+      expect(participantView!.allocation?.exceptionAudit).toBeUndefined();
+      expect(participantView!.allocation?.status).toBeUndefined();
+
+      // getAllocationAudits withholds exception_approved for sole attendee cohorts
+      const participantAudits = await demoRepository.getAllocationAudits('alloc_evt_jaipur_blocked_07');
+      expect(participantAudits.some((a) => a.action === 'exception_approved')).toBe(false);
+    });
+
+    it('generalizes public RSVP denial messages without leaking occupancy or vacancy counts', async () => {
+      // evt_jaipur_limited_05: capacity 3, 2 ordinary attendees, 1 vacant reserved
+      await demoRepository.switchPersona('user_aarav');
+      await expect(
+        demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending')
+      ).rejects.toThrowError(/Ordinary capacity reached: general places are fully subscribed/i);
+
+      // Must NOT contain exact count leaks
+      try {
+        await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending');
+      } catch (err: any) {
+        expect(err.message).not.toContain('(2/2)');
+        expect(err.message).not.toMatch(/\b\d+ place\(s\) are reserved\b/);
+      }
+    });
+
+    it('probes 1-person and 2-person cohorts across persona switch and reload without disclosing inference', async () => {
+      // 1-person cohort: evt_jaipur_blocked_07 (capacity 2, 1 attendee)
+      await demoRepository.switchPersona('user_priya');
+      const beforeRsvp = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(beforeRsvp!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(beforeRsvp!.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(beforeRsvp!.allocation?.vacanciesCount).toBeUndefined();
+
+      // Priya (eligible) RSVPs
+      const afterRsvp = await demoRepository.rsvpEvent('evt_jaipur_blocked_07', 'user_priya', 'attending');
+      expect(afterRsvp.allocation?.isPrivacySuppressed).toBe(true);
+      expect(afterRsvp.allocation?.reservedOccupiedCount).toBeUndefined();
+      expect(afterRsvp.allocation?.vacanciesCount).toBeUndefined();
+
+      // Persona switch to organizer (user_dev) and staff (user_ananya): exact counts remain withheld
+      await demoRepository.switchPersona('user_dev');
+      const organizerView = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(organizerView!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(organizerView!.allocation?.reservedOccupiedCount).toBeUndefined();
+
+      await demoRepository.switchPersona('user_ananya');
+      const staffView = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(staffView!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(staffView!.allocation?.reservedOccupiedCount).toBeUndefined();
+
+      // Re-fetch after reload simulation
+      const reloaded = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(reloaded!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(reloaded!.allocation?.reservedOccupiedCount).toBeUndefined();
+
+      // Simulated Platform Owner sees unredacted validation numbers
+      await demoRepository.switchPersona('user_admin');
+      const ownerView = await demoRepository.getEvent('evt_jaipur_blocked_07');
+      expect(ownerView!.allocation?.isPrivacySuppressed).toBeUndefined();
+      expect(ownerView!.allocation?.reservedOccupiedCount).toBe(1);
+      expect(ownerView!.allocation?.ordinaryOccupiedCount).toBe(1);
+      expect(ownerView!.allocation?.vacanciesCount).toBe(0);
     });
   });
 });

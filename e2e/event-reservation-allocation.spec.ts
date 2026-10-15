@@ -22,14 +22,21 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByRole('heading', { level: 1, name: /Jaipur Ward 24 Youth Council/i })).toBeVisible();
     await expect(page.getByTestId('reservation-allocation-card')).toBeVisible();
 
-    // 4. Verify aggregate allocation metrics
+    // 4. Verify aggregate allocation metrics with privacy withholding for small cohorts
     await expect(page.getByTestId('metric-total-places')).toHaveText('3');
     await expect(page.getByTestId('metric-reserved-minimum')).toHaveText('1');
     await expect(page.getByTestId('metric-ordinary-places')).toHaveText('2');
-    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('2');
-    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('0');
-    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('1');
-    await expect(page.getByTestId('status-pending')).toBeVisible();
+    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
+    await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
+    await expect(page.getByTestId('small-cohort-privacy-notice')).toBeVisible();
+
+    // Negative assertion: Status chips that reveal eligibility are suppressed for participants
+    await expect(page.getByTestId('status-pending')).toHaveCount(0);
+    await expect(page.getByTestId('status-finalized-compliant')).toHaveCount(0);
+    await expect(page.getByTestId('status-blocked-noncompliant')).toHaveCount(0);
+    await expect(page.getByTestId('status-finalized-exception')).toHaveCount(0);
 
     // 5. Verify privacy protection in participant list: no individual declarations exposed
     const cohortCard = page.getByTestId('registered-cohort-card');
@@ -56,10 +63,11 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     const attendingBtn = page.getByRole('button', { name: /^Attending$/i });
     await attendingBtn.click();
 
-    // Verify rejection alert is displayed with clear non-jargon explanation
+    // Verify rejection alert is displayed with generalized explanation (no exact category breakdown leaked)
     const alertBox = page.getByRole('alert');
     await expect(alertBox).toBeVisible();
-    await expect(alertBox.getByText(/Ordinary capacity reached \(2\/2\)/i)).toBeVisible();
+    await expect(alertBox.getByText(/Ordinary capacity reached: general places are fully subscribed/i)).toBeVisible();
+    await expect(alertBox.getByText(/\(2\/2\)/)).toHaveCount(0);
     await expect(alertBox.getByText(/Unmet reserved places stay vacant by default/i)).toBeVisible();
 
     // Verify participant authority is restricted
@@ -76,9 +84,29 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     // Meera RSVPs Attending to claim the vacant reserved place
     await page.getByRole('button', { name: /^Attending$/i }).click();
 
-    // Verify success and metrics update: reserved seat filled, vacancies count is 0
+    // Verify participant view still withholds counts so observer cannot infer Meera's eligibility from before/after change
+    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
+    await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
+
+    // 9. Switch to Platform Owner (Demo Administrator) to verify exact validation details are retained
+    await page.goto('/demo-login');
+    await page.getByText('Demo Administrator').first().click();
+    await page.waitForURL('**/dashboard');
+
+    await page.goto('/events/evt_jaipur_limited_05');
+    await page.waitForURL('**/events/evt_jaipur_limited_05');
+
+    // Owner view retains unredacted exact metrics and validation status
+    await expect(page.getByTestId('metric-total-places')).toHaveText('3');
+    await expect(page.getByTestId('metric-reserved-minimum')).toHaveText('1');
+    await expect(page.getByTestId('metric-ordinary-places')).toHaveText('2');
     await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('1');
+    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('2');
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('0');
+    await expect(page.getByTestId('status-pending')).toBeVisible();
+    await expect(page.getByTestId('status-privacy-suppressed')).toHaveCount(0);
   });
 
   test('desktop: simulates Platform Owner exception approval with audit record', async ({ page }) => {
@@ -113,12 +141,31 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     // 6. Verify status updates to finalized exception
     await expect(page.getByTestId('status-finalized-exception')).toBeVisible();
 
-    // 7. Verify visible immutable audit record is displayed
+    // 7. Verify visible immutable audit record is displayed for Owner
     const auditBox = page.getByTestId('exception-audit-box');
     await expect(auditBox).toBeVisible();
     await expect(auditBox.getByText(/user_admin \(platform_admin\)/i)).toBeVisible();
     await expect(auditBox.getByText(/2026\.1-womens-reservation-33/i)).toBeVisible();
     await expect(auditBox.getByText(/Targeted candidate outreach exhausted/i)).toBeVisible();
+
+    // 8. Negative assertion: Participant view suppresses disclosing status, exact numbers, and audit details
+    await page.goto('/demo-login');
+    await page.getByText('Aarav Sharma').first().click();
+    await page.waitForURL('**/dashboard');
+
+    await page.goto('/events/evt_jaipur_limited_05');
+    await page.waitForURL('**/events/evt_jaipur_limited_05');
+
+    await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
+    await expect(page.getByTestId('status-finalized-exception')).toHaveCount(0);
+    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
+
+    const participantAudit = page.getByTestId('exception-audit-box');
+    await expect(participantAudit).toBeVisible();
+    await expect(participantAudit.getByText(/user_admin/i)).toHaveCount(0);
+    await expect(participantAudit.getByText(/Targeted candidate outreach exhausted/i)).toHaveCount(0);
+    await expect(participantAudit.getByText(/\b\d+ vacant\b/i)).toHaveCount(0);
   });
 
   test('mobile: responsive layout at 375px viewport with no horizontal overflow', async ({ page }) => {

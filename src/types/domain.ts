@@ -262,19 +262,19 @@ export interface AllocationAuditRecord {
   id: string;
   allocationId: string;
   action: 'created' | 'updated' | 'finalized' | 'exception_approved' | 'finalization_rejected';
-  actorId?: string; // approver persona (private to staff/owner)
+  actorId?: string; // approver persona (private to owner)
   actorRole: string; // approver role (e.g. 'platform_admin')
-  reason?: string; // substantive reason (private to staff/owner)
+  reason?: string; // substantive reason (private to owner)
   policyVersion: string;
   outcome: string;
   timestamp: string;
   snapshot: {
     totalPlaces: number;
     reservedMinimum: number;
-    reservedOccupiedCount: number;
-    ordinaryOccupiedCount: number;
-    vacanciesCount: number;
-    status: AllocationStatus;
+    reservedOccupiedCount?: number;
+    ordinaryOccupiedCount?: number;
+    vacanciesCount?: number;
+    status?: AllocationStatus;
   };
 }
 
@@ -288,15 +288,15 @@ export interface AllocationState {
   confirmedOccupants?: string[]; // user IDs (internal validation only)
   reservedOccupants?: string[]; // eligible user IDs occupying reserved places (internal validation only)
   ordinaryOccupants?: string[]; // occupants taking ordinary places (internal validation only)
-  reservedOccupiedCount: number; // aggregate public count
-  ordinaryOccupiedCount: number; // aggregate public count
-  vacanciesCount: number; // unfilled reserved places: reservedMinimum - reservedOccupiedCount
-  status: AllocationStatus;
+  reservedOccupiedCount?: number; // aggregate public count (withheld in small cohorts)
+  ordinaryOccupiedCount?: number; // aggregate public count (withheld in small cohorts)
+  vacanciesCount?: number; // unfilled reserved places: reservedMinimum - reservedOccupiedCount (withheld in small cohorts)
+  status?: AllocationStatus; // public status (suppressed in small cohorts if revealing)
   isException: boolean;
   exceptionAudit?: AllocationAuditRecord;
   policyVersion: string;
   lastValidatedAt: string;
-  isPrivacySuppressed?: boolean; // privacy protection active for small single-occupant cohorts
+  isPrivacySuppressed?: boolean; // privacy protection active for small cohorts
 }
 
 export interface AllocationValidationResult {

@@ -59,6 +59,8 @@ import {
   canUserRsvpAllocation,
   finalizeAllocationState,
   approveAllocationExceptionState,
+  sanitizeAllocationForPublic,
+  isSmallCohortAllocation,
   POLICY_VERSION,
 } from './reservationAllocationService';
 import {
@@ -2970,44 +2972,36 @@ export class LocalDemoRepository implements DemoRepository {
   private projectEventForCaller(evt: Event, caller?: User | null): Event {
     const cloned: Event = JSON.parse(JSON.stringify(evt));
     const isOwner = caller?.role === 'platform_admin';
-    const isOrganizer = caller ? caller.id === evt.organizerId : false;
-    const isStaff = caller?.role === 'programme_manager' || caller?.role === 'institution_admin';
 
     if (cloned.allocation) {
-      if (!isOwner) {
-        // Exclude private occupant arrays from public / non-owner projections
-        delete (cloned.allocation as any).reservedOccupants;
-        delete (cloned.allocation as any).ordinaryOccupants;
-        delete (cloned.allocation as any).confirmedOccupants;
-
-        // Sanitize sensitive exception audit details for non-staff callers
-        if (cloned.allocation.exceptionAudit && !isStaff) {
-          cloned.allocation.exceptionAudit = this.projectAuditForCaller(
-            cloned.allocation.exceptionAudit,
-            caller
-          );
-        }
-
-        // In small allocations (capacity <= 2 with a single attendee), deductive correlation
-        // between the public roster and exact reserved count would disclose eligibility.
-        // Apply privacy-safe suppression while retaining owner/organizer validation detail.
-        if (cloned.allocation.totalPlaces <= 2 && evt.attendeeUserIds.length === 1 && !isOrganizer) {
-          cloned.allocation.isPrivacySuppressed = true;
-        }
-      }
+      cloned.allocation = sanitizeAllocationForPublic(cloned.allocation, isOwner);
     }
     return cloned;
   }
 
   private projectAuditForCaller(audit: AllocationAuditRecord, caller?: User | null): AllocationAuditRecord {
     const cloned: AllocationAuditRecord = JSON.parse(JSON.stringify(audit));
-    const isStaffOrOwner =
-      caller?.role === 'platform_admin' ||
-      caller?.role === 'institution_admin' ||
-      caller?.role === 'programme_manager';
-    if (!isStaffOrOwner) {
+    const isOwner = caller?.role === 'platform_admin';
+    if (!isOwner) {
       delete cloned.actorId;
       delete cloned.reason;
+      if (cloned.snapshot) {
+        delete cloned.snapshot.reservedOccupiedCount;
+        delete cloned.snapshot.ordinaryOccupiedCount;
+        delete cloned.snapshot.vacanciesCount;
+        if (
+          cloned.snapshot.status === 'finalized_compliant' ||
+          cloned.snapshot.status === 'blocked_noncompliant' ||
+          cloned.snapshot.status === 'finalized_exception'
+        ) {
+          delete cloned.snapshot.status;
+        }
+      }
+      if (cloned.outcome) {
+        cloned.outcome = cloned.outcome
+          .replace(/with \d+ vacant reserved seat\(s\)\.?/i, 'under Platform Owner exception approval.')
+          .trim();
+      }
     }
     return cloned;
   }
@@ -3486,7 +3480,8 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     if (status === 'attending') {
-      const rsvpCheck = canUserRsvpAllocation(evt.allocation, userId);
+      const isOwner = caller?.role === 'platform_admin';
+      const rsvpCheck = canUserRsvpAllocation(evt.allocation, userId, undefined, isOwner);
       if (!rsvpCheck.allowed) {
         throw new Error(rsvpCheck.reason || 'RSVP rejected under reservation policy.');
       }
@@ -3837,7 +3832,23 @@ export class LocalDemoRepository implements DemoRepository {
     if (allocationId) {
       audits = audits.filter((a) => a.allocationId === allocationId);
     }
-    return audits.map((a) => this.projectAuditForCaller(a, caller));
+    const isOwner = caller?.role === 'platform_admin';
+    return audits
+      .filter((a) => {
+        if (isOwner) return true;
+        // In cohorts with a sole attendee, an exception approval action directly reveals that the single attendee was ineligible
+        const evt = db.events.find(
+          (e) => e.allocation?.allocationId === a.allocationId || `alloc_${e.id}` === a.allocationId
+        );
+        const attendeeCount =
+          evt?.attendeeUserIds?.length ??
+          ((a.snapshot?.ordinaryOccupiedCount ?? 0) + (a.snapshot?.reservedOccupiedCount ?? 0));
+        if (attendeeCount <= 1 && a.action === 'exception_approved') {
+          return false;
+        }
+        return true;
+      })
+      .map((a) => this.projectAuditForCaller(a, caller));
   }
 
   // Activities
