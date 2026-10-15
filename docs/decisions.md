@@ -24,6 +24,8 @@
 - **Documented exceptions (OD.17):** the normal rule remains that an unmet reserved place stays vacant. A departure may be demonstrated only with explicit owner approval and an audit record containing reason, approver, time, policy version and outcome. The browser-only demo can simulate this approval but cannot provide server-enforced authority or a real-world policy approval.
 - **Demo media (OD.4):** Debate Room and Youth Assembly are text-first; video may appear as a clearly labelled preview. No working video provider is required for the competition demo.
 - **Jaipur Workspace access (OD.5):** the fictional demo room is invite-only and private. The invited user must confirm the destination and accept before joining. This decides the Jaipur room, not every future programme or room.
+- **Competition timing (OD.1):** no fixed date or deadline has been supplied for this demo. Keep the five-minute journey as the acceptance target without claiming a dated launch commitment.
+- **Demo language (OD.8):** the fully working fictional Jaipur journey is English only for this competition demo. Mark Hindi content and interface coverage as pending bilingual review; do not present an unwired selector or machine text as reviewed Hindi. The full product's bilingual requirement remains open.
 
 ## Answered by the governing Master PRD
 
@@ -43,14 +45,14 @@ The PRD supplies requirements or safe defaults for some topics, but **does not r
 
 | ID | Open decision | What the PRD already settles |
 |---|---|---|
-| OD.1 | Exact competition/demo date | The five-minute demonstration is a target; no calendar deadline is approved. |
+| OD.1 | **No fixed competition/demo date yet, confirmed 15 October 2026.** | The five-minute demonstration remains the acceptance target; no calendar deadline is approved. |
 | OD.2 | **Jaipur pedestrian-safety story selected;** final script and acceptance sign-off remain open. | The minimum connected journey is specified in the Master PRD; the chosen single-browser mode cannot prove shared participation. |
 | OD.3 | Date-based functional versus prototype scope | Youth Parliament and stakeholder routing have explicit prototype allowances. Debate Room, Workspace invitation/moderation and the connected civic loop remain demo requirements. |
 | OD.4 | **Text-first demo with labelled video preview approved, 15 October 2026.** | Working video is not required for the competition demo; the full product still needs the PRD media and fallback behavior. |
 | OD.5 | **Fictional Jaipur Workspace is invite-only and private, 15 October 2026; other room policies remain open.** | Access must be scoped and configurable; the Workspace default remains private or institution-scoped. |
 | OD.6 | Founder identity fields approved for publication | Unapproved fields remain unpublished; contact form is the safer default. |
 | OD.7 | Final domain and the existing `2027` URL | Product name is `2047`; retaining, redirecting or replacing the URL is explicitly an owner choice. |
-| OD.8 | Hindi content owner and competition-demo language scope | English and Hindi are the product baseline; Hindi needs a named bilingual reviewer. An unwired selector is not translated content. |
+| OD.8 | **Working Jaipur competition demo in English; Hindi pending bilingual review, confirmed 15 October 2026.** | English and Hindi remain the full-product baseline; Hindi needs a named bilingual reviewer before claiming complete coverage. An unwired selector is not translated content. |
 | OD.9 | Existing non-demo data to preserve or migrate | This repository contains fictional local seed data; outside pilot data has not been inventoried. |
 | OD.10 | AI provider and approved data/cost policy | Provider abstraction, data-tier restrictions and a kill switch are required; no provider is approved. |
 | OD.11 | Available external educational/municipal integrations | Provider-neutral integration design is specified; availability and permissions are unknown. |
