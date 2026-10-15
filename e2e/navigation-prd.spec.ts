@@ -51,12 +51,13 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     await expect(page.getByRole('heading', { name: /National Youth Parliament 2047/i })).toBeVisible();
     await expect(page.getByText(/National Youth Parliament Preview/i).first()).toBeVisible();
 
-    // 3. Workspace (item 7): truthful nonfunctional preview destination
+    // 3. Workspace (item 7): interactive local simulation linked to Jaipur proposition
     await page.goto('/dashboard');
     await links.nth(6).click();
     await page.waitForURL('**/workspace');
     await expect(page.getByRole('heading', { level: 1, name: 'Workspace' })).toBeVisible();
-    await expect(page.getByText('Nonfunctional Preview Destination')).toBeVisible();
+    await expect(page.getByText(/Single-Browser Local Simulation/i)).toBeVisible();
+    await expect(page.getByText(/Jaipur Ward 24 School-Zone Safety Workspace/i)).toBeVisible();
 
     // 4. UHV / Jeevan Vidya (item 11): dedicated stream with disclaimer
     await page.goto('/dashboard');

@@ -44,7 +44,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { to: '/debate-room', label: 'Debate Room', icon: Scale, badge: 'Simulation' },
     { to: '/assemblies', label: 'Youth Assembly', icon: Vote },
     { to: '/parliament', label: 'Youth Parliament', icon: Landmark, badge: 'Prototype' },
-    { to: '/workspace', label: 'Workspace', icon: Layers, badge: 'Planned' },
+    { to: '/workspace', label: 'Workspace', icon: Layers, badge: 'Simulation' },
     { to: '/projects', label: 'Labs & Projects', icon: Target },
     { to: '/community', label: 'Community', icon: Users2 },
     { to: '/passport', label: 'Civic Passport', icon: Award },

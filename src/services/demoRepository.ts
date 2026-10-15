@@ -44,6 +44,11 @@ import {
   CANONICAL_ASSEMBLY_STAGES,
   CreditDimension,
   VerificationStatus,
+  Workspace,
+  WorkspaceMembership,
+  WorkspaceAction,
+  WorkspaceAuditEvent,
+  WorkspaceActionType,
 } from '../types/domain';
 import {
   normalizeAssemblyStage,
@@ -3705,6 +3710,811 @@ export class LocalDemoRepository implements DemoRepository {
     Object.assign(c, update, { updatedAt: new Date().toISOString() });
     this.saveDb(db);
     return JSON.parse(JSON.stringify(c));
+  }
+
+  // ==========================================
+  // Workspace Collaboration (Master PRD §A12, §A13, §A20.4, §A21)
+  // ==========================================
+
+  private toSafeWorkspaceInvitationSummary(ws: Workspace): Workspace {
+    return {
+      id: ws.id,
+      title: ws.title,
+      purpose: ws.purpose,
+      type: ws.type,
+      visibility: ws.visibility,
+      state: ws.state,
+      rulebook: ws.rulebook,
+      moderationContact: ws.moderationContact,
+      linkedPropositionId: ws.linkedPropositionId,
+      linkedAssemblyId: ws.linkedAssemblyId,
+      schemaVersion: ws.schemaVersion,
+      createdAt: ws.createdAt,
+      updatedAt: ws.updatedAt,
+      ownerId: ws.ownerId,
+      ownerName: ws.ownerName,
+      moderatorIds: [], // redacted for privacy
+      allowedParticipantCategories: ws.allowedParticipantCategories,
+      storageQuotaBytes: ws.storageQuotaBytes,
+      usedStorageBytes: ws.usedStorageBytes,
+      institutionId: ws.institutionId,
+      institutionName: ws.institutionName,
+    };
+  }
+
+  async getWorkspaces(userId?: string): Promise<Workspace[]> {
+    const db = this.getDb();
+    const workspaces = db.workspaces || [];
+    const memberships = db.workspaceMemberships || [];
+
+    if (!userId) {
+      return JSON.parse(JSON.stringify(workspaces.filter((w) => w.visibility !== 'private')));
+    }
+
+    const user = db.users.find((u) => u.id === userId);
+
+    const filtered = workspaces.filter((ws) => {
+      // Active or invited member
+      const member = memberships.find(
+        (m) => m.workspaceId === ws.id && m.userId === userId && m.state !== 'removed' && m.state !== 'left'
+      );
+      if (member) return true;
+      if (ws.ownerId === userId || (ws.moderatorIds || []).includes(userId)) return true;
+
+      // Scoped discoverability:
+      // Private workspaces are completely hidden from non-members
+      if (ws.visibility === 'private') return false;
+
+      // Institution scoped: visible only if user belongs to same institution
+      if (ws.visibility === 'institution_scoped') {
+        return !!user && !!ws.institutionId && user.institutionId === ws.institutionId;
+      }
+
+      // Public discoverable
+      return ws.visibility === 'public_discoverable';
+    });
+
+    const result = filtered.map((ws) => {
+      const isOwnerOrMod = ws.ownerId === userId || (ws.moderatorIds || []).includes(userId);
+      const member = memberships.find(
+        (m) => m.workspaceId === ws.id && m.userId === userId
+      );
+
+      if (ws.visibility === 'private' && !isOwnerOrMod && member?.state === 'invited') {
+        return this.toSafeWorkspaceInvitationSummary(ws);
+      }
+
+      return ws;
+    });
+
+    return JSON.parse(JSON.stringify(result));
+  }
+
+  async getWorkspace(workspaceId: string, callerUserId?: string): Promise<Workspace | null> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === workspaceId);
+    if (!ws) return null;
+
+    if (ws.visibility === 'private') {
+      if (!callerUserId) {
+        throw new Error(`Unauthorized: Caller identity is required to access private workspace "${ws.title}".`);
+      }
+
+      const isOwnerOrMod = ws.ownerId === callerUserId || (ws.moderatorIds || []).includes(callerUserId);
+      const membership = (db.workspaceMemberships || []).find(
+        (m) => m.workspaceId === workspaceId && m.userId === callerUserId
+      );
+
+      if (!isOwnerOrMod && !membership) {
+        throw new Error(`Unauthorized: Workspace "${ws.title}" is invite-only private and cannot be accessed without an invitation.`);
+      }
+
+      if (!isOwnerOrMod && membership?.state === 'removed') {
+        throw new Error(`Unauthorized: You have been removed from this workspace (${membership.statusReason || 'moderator action'}).`);
+      }
+
+      if (!isOwnerOrMod && membership?.state === 'left') {
+        throw new Error(`Unauthorized: You have left this workspace.`);
+      }
+
+      // Invited people may view only enough destination name/visibility/rules to decide accept or decline
+      if (!isOwnerOrMod && membership?.state === 'invited') {
+        return JSON.parse(JSON.stringify(this.toSafeWorkspaceInvitationSummary(ws)));
+      }
+    }
+
+    return JSON.parse(JSON.stringify(ws));
+  }
+
+  async getWorkspaceMemberships(workspaceId: string, callerUserId: string): Promise<WorkspaceMembership[]> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === workspaceId);
+    if (!ws) throw new Error(`Workspace ${workspaceId} not found`);
+
+    // Repository boundary: Caller must be an active or restricted member, or room owner/moderator
+    const callerMembership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === workspaceId && m.userId === callerUserId
+    );
+    const isOwnerOrMod = ws.ownerId === callerUserId || (ws.moderatorIds || []).includes(callerUserId);
+
+    if (!isOwnerOrMod && (!callerMembership || (callerMembership.state !== 'active' && callerMembership.state !== 'restricted'))) {
+      throw new Error(`Unauthorized: Member directory is only accessible to active workspace members and room moderators.`);
+    }
+
+    const memberships = (db.workspaceMemberships || []).filter((m) => m.workspaceId === workspaceId);
+    return JSON.parse(JSON.stringify(memberships));
+  }
+
+  async getWorkspaceMembership(workspaceId: string, userId: string, callerUserId?: string): Promise<WorkspaceMembership | null> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === workspaceId);
+    if (!ws) return null;
+
+    if (callerUserId) {
+      const isOwnerOrMod = ws.ownerId === callerUserId || (ws.moderatorIds || []).includes(callerUserId);
+      const isSelf = callerUserId === userId;
+      if (!isOwnerOrMod && !isSelf) {
+        throw new Error(`Unauthorized: Caller does not have permission to inspect another user's workspace membership.`);
+      }
+    } else {
+      if (ws.visibility === 'private') {
+        throw new Error(`Unauthorized: Caller identity required to query private workspace membership.`);
+      }
+    }
+
+    const m = (db.workspaceMemberships || []).find(
+      (mem) => mem.workspaceId === workspaceId && mem.userId === userId
+    );
+    return m ? JSON.parse(JSON.stringify(m)) : null;
+  }
+
+  async searchUsersForInvite(query: string, callerUserId: string, workspaceId: string): Promise<User[]> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === workspaceId);
+    if (!ws) throw new Error(`Workspace ${workspaceId} not found`);
+
+    const callerMembership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === workspaceId && m.userId === callerUserId
+    );
+    const isOwnerOrMod = ws.ownerId === callerUserId || (ws.moderatorIds || []).includes(callerUserId);
+
+    if (!isOwnerOrMod && (!callerMembership || !callerMembership.permissions.canInvite || callerMembership.state !== 'active')) {
+      throw new Error(`Unauthorized: You do not have permission to invite users to this workspace.`);
+    }
+
+    const cleanQuery = query.trim().toLowerCase().replace(/^@/, '');
+    if (!cleanQuery) return [];
+
+    const matches = db.users.filter((u) => {
+      if (u.id === callerUserId) return false;
+      const uname = (u.username || u.email.split('@')[0] || '').toLowerCase();
+      const name = u.name.toLowerCase();
+      return uname.includes(cleanQuery) || name.includes(cleanQuery);
+    });
+
+    return JSON.parse(JSON.stringify(matches));
+  }
+
+  async inviteUserToWorkspace(params: {
+    workspaceId: string;
+    inviterId: string;
+    usernameOrId: string;
+  }): Promise<WorkspaceMembership> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const inviter = db.users.find((u) => u.id === params.inviterId);
+    if (!inviter) throw new Error(`Inviter ${params.inviterId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === params.inviterId || (ws.moderatorIds || []).includes(params.inviterId);
+    const inviterMembership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === params.workspaceId && m.userId === params.inviterId
+    );
+
+    if (!isOwnerOrMod && (!inviterMembership || !inviterMembership.permissions.canInvite || inviterMembership.state !== 'active')) {
+      throw new Error(`Unauthorized: Caller lacks invite permission for this workspace.`);
+    }
+
+    const cleanTarget = params.usernameOrId.trim().replace(/^@/, '').toLowerCase();
+    const targetUser = db.users.find(
+      (u) =>
+        (u.username && u.username.toLowerCase() === cleanTarget) ||
+        u.id.toLowerCase() === cleanTarget ||
+        u.email.split('@')[0].toLowerCase() === cleanTarget
+    );
+
+    if (!targetUser) {
+      throw new Error(`User "@${params.usernameOrId.replace(/^@/, '')}" not found. Please verify the exact username.`);
+    }
+
+    if (targetUser.id === params.inviterId) {
+      throw new Error(`Self-invitation is not permitted.`);
+    }
+
+    db.workspaceMemberships = db.workspaceMemberships || [];
+    const existingIndex = db.workspaceMemberships.findIndex(
+      (m) => m.workspaceId === params.workspaceId && m.userId === targetUser.id
+    );
+
+    const now = new Date().toISOString();
+
+    if (existingIndex >= 0) {
+      const existing = db.workspaceMemberships[existingIndex];
+      if (existing.state === 'active') {
+        throw new Error(`User @${targetUser.username} is already an active member of this workspace.`);
+      }
+      if (existing.state === 'invited') {
+        throw new Error(`User @${targetUser.username} already has a pending invitation to this workspace.`);
+      }
+      if (existing.state === 'removed') {
+        if (!isOwnerOrMod) {
+          throw new Error(`Cannot invite user @${targetUser.username}: member was removed by moderation and requires moderator approval for re-entry.`);
+        }
+      }
+
+      existing.state = 'invited';
+      existing.invitedBy = params.inviterId;
+      existing.invitedAt = now;
+      existing.statusReason = undefined;
+      existing.statusChangedBy = params.inviterId;
+      existing.statusChangedAt = now;
+      existing.updatedAt = now;
+
+      db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+      db.workspaceAuditEvents.push({
+        id: generateId('aud_ws'),
+        workspaceId: params.workspaceId,
+        eventType: 'invite',
+        actorId: params.inviterId,
+        actorName: inviter.name,
+        actorRole: isOwnerOrMod ? 'moderator' : 'member',
+        targetUserId: targetUser.id,
+        targetUserName: targetUser.name,
+        reason: `Re-invited user @${targetUser.username} to workspace`,
+        timestamp: now,
+        details: { username: targetUser.username, destination: ws.title },
+        schemaVersion: 1,
+      });
+
+      this.saveDb(db);
+
+      return JSON.parse(JSON.stringify(existing));
+    }
+
+    const newMembership: WorkspaceMembership = {
+      id: generateId('wsm'),
+      workspaceId: params.workspaceId,
+      userId: targetUser.id,
+      userName: targetUser.name,
+      username: targetUser.username || targetUser.email.split('@')[0],
+      userRole: targetUser.role,
+      institutionId: targetUser.institutionId,
+      institutionName: targetUser.institutionName,
+      role: 'member',
+      state: 'invited',
+      invitedBy: params.inviterId,
+      invitedAt: now,
+      permissions: {
+        canRead: true,
+        canPost: true,
+        canUpload: true,
+        canInvite: true,
+        canScheduleMeeting: false,
+        canCreateSubroom: false,
+        canModerate: false,
+        canManageMembership: false,
+      },
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.workspaceMemberships.push(newMembership);
+
+    db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+    db.workspaceAuditEvents.push({
+      id: generateId('aud_ws'),
+      workspaceId: params.workspaceId,
+      eventType: 'invite',
+      actorId: params.inviterId,
+      actorName: inviter.name,
+      actorRole: isOwnerOrMod ? 'moderator' : 'member',
+      targetUserId: targetUser.id,
+      targetUserName: targetUser.name,
+      reason: `Invited user @${targetUser.username} to ${ws.title}`,
+      timestamp: now,
+      details: { username: targetUser.username, destination: ws.title },
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(newMembership));
+  }
+
+  async respondToWorkspaceInvite(params: {
+    workspaceId: string;
+    userId: string;
+    accept: boolean;
+    reason?: string;
+  }): Promise<WorkspaceMembership> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const user = db.users.find((u) => u.id === params.userId);
+    if (!user) throw new Error(`User ${params.userId} not found`);
+
+    db.workspaceMemberships = db.workspaceMemberships || [];
+    const membership = db.workspaceMemberships.find(
+      (m) => m.workspaceId === params.workspaceId && m.userId === params.userId
+    );
+
+    if (!membership) {
+      throw new Error(`No pending invitation found for user in workspace ${ws.title}.`);
+    }
+
+    if (membership.state !== 'invited') {
+      throw new Error(`Cannot respond to invitation: membership state is already "${membership.state}".`);
+    }
+
+    const now = new Date().toISOString();
+
+    if (params.accept) {
+      membership.state = 'active';
+      membership.joinedAt = now;
+      membership.statusReason = undefined;
+      membership.updatedAt = now;
+
+      db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+      db.workspaceAuditEvents.push({
+        id: generateId('aud_ws'),
+        workspaceId: params.workspaceId,
+        eventType: 'acceptance',
+        actorId: params.userId,
+        actorName: user.name,
+        actorRole: 'member',
+        reason: 'Accepted workspace invitation and acknowledged destination rules',
+        timestamp: now,
+        details: { workspaceId: ws.id, workspaceTitle: ws.title },
+        schemaVersion: 1,
+      });
+    } else {
+      membership.state = 'left';
+      membership.statusReason = params.reason || 'Invitation declined by user';
+      membership.updatedAt = now;
+
+      db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+      db.workspaceAuditEvents.push({
+        id: generateId('aud_ws'),
+        workspaceId: params.workspaceId,
+        eventType: 'decline',
+        actorId: params.userId,
+        actorName: user.name,
+        actorRole: 'member',
+        reason: params.reason || 'Declined workspace invitation',
+        timestamp: now,
+        details: { workspaceId: ws.id, workspaceTitle: ws.title },
+        schemaVersion: 1,
+      });
+    }
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(membership));
+  }
+
+  async acknowledgeWorkspaceRules(params: {
+    workspaceId: string;
+    userId: string;
+    version: string;
+  }): Promise<WorkspaceMembership> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const user = db.users.find((u) => u.id === params.userId);
+    if (!user) throw new Error(`User ${params.userId} not found`);
+
+    db.workspaceMemberships = db.workspaceMemberships || [];
+    let membership = db.workspaceMemberships.find(
+      (m) => m.workspaceId === params.workspaceId && m.userId === params.userId
+    );
+
+    const now = new Date().toISOString();
+
+    if (!membership) {
+      const isOwnerOrMod = ws.ownerId === params.userId || (ws.moderatorIds || []).includes(params.userId);
+      if (!isOwnerOrMod) {
+        throw new Error(`User ${params.userId} is not a member of workspace ${ws.title}.`);
+      }
+      membership = {
+        id: generateId('wsm'),
+        workspaceId: params.workspaceId,
+        userId: user.id,
+        userName: user.name,
+        username: user.username || user.email.split('@')[0],
+        userRole: user.role,
+        institutionId: user.institutionId,
+        institutionName: user.institutionName,
+        role: ws.ownerId === params.userId ? 'owner' : 'moderator',
+        state: 'active',
+        joinedAt: now,
+        permissions: {
+          canRead: true,
+          canPost: true,
+          canUpload: true,
+          canInvite: true,
+          canScheduleMeeting: true,
+          canCreateSubroom: true,
+          canModerate: true,
+          canManageMembership: true,
+        },
+        lastAcknowledgedRuleVersion: params.version,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      db.workspaceMemberships.push(membership);
+    } else {
+      membership.lastAcknowledgedRuleVersion = params.version;
+      membership.updatedAt = now;
+    }
+
+    db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+    db.workspaceAuditEvents.push({
+      id: generateId('aud_ws'),
+      workspaceId: params.workspaceId,
+      eventType: 'rule_acknowledgement',
+      actorId: params.userId,
+      actorName: user.name,
+      actorRole: membership.role,
+      reason: `Acknowledged point-of-use Rulebook version ${params.version}`,
+      timestamp: now,
+      details: { version: params.version },
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(membership));
+  }
+
+  async getWorkspaceActions(workspaceId: string, callerUserId: string): Promise<WorkspaceAction[]> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === workspaceId);
+    if (!ws) throw new Error(`Workspace ${workspaceId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === callerUserId || (ws.moderatorIds || []).includes(callerUserId);
+    const membership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === workspaceId && m.userId === callerUserId
+    );
+
+    if (!isOwnerOrMod) {
+      if (!membership || (membership.state !== 'active' && membership.state !== 'restricted')) {
+        throw new Error(`Unauthorized: Non-members and invited or removed participants cannot read workspace actions or content.`);
+      }
+    }
+
+    const actions = (db.workspaceActions || []).filter((a) => a.workspaceId === workspaceId);
+    return JSON.parse(JSON.stringify(actions));
+  }
+
+  async createWorkspaceAction(params: {
+    workspaceId: string;
+    authorId: string;
+    actionType: WorkspaceActionType;
+    title: string;
+    content: string;
+    sourceLink?: WorkspaceAction['sourceLink'];
+    tags?: string[];
+  }): Promise<WorkspaceAction> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const author = db.users.find((u) => u.id === params.authorId);
+    if (!author) throw new Error(`Author ${params.authorId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === params.authorId || (ws.moderatorIds || []).includes(params.authorId);
+    const membership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === params.workspaceId && m.userId === params.authorId
+    );
+
+    if (!isOwnerOrMod) {
+      if (!membership) {
+        throw new Error(`Unauthorized: You are not a member of this workspace.`);
+      }
+      if (membership.state === 'invited') {
+        throw new Error(`Invited users cannot post until active membership is accepted.`);
+      }
+      if (membership.state === 'restricted') {
+        throw new Error(`Restricted members cannot create posts or actions (${membership.statusReason || 'moderator restriction'}).`);
+      }
+      if (membership.state === 'removed' || membership.state === 'left') {
+        throw new Error(`Removed users cannot access or post to this workspace.`);
+      }
+      if (!membership.permissions.canPost) {
+        throw new Error(`Unauthorized: Member does not have posting permissions in this workspace.`);
+      }
+    }
+
+    const currentRuleVersion = ws.rulebook?.version || 'v1.0';
+    const ackVersion = membership?.lastAcknowledgedRuleVersion;
+    if (ackVersion !== currentRuleVersion && !isOwnerOrMod) {
+      throw new Error(`Rule acknowledgement required: Workspace rules updated to ${currentRuleVersion}. Please acknowledge rules before posting.`);
+    }
+
+    const trimmedTitle = params.title.trim();
+    const trimmedContent = params.content.trim();
+    if (trimmedTitle.length < 3) {
+      throw new Error(`Action title must be at least 3 characters.`);
+    }
+    if (trimmedContent.length < 5) {
+      throw new Error(`Action content must contain substantive detail (at least 5 characters).`);
+    }
+
+    const now = new Date().toISOString();
+    const newAction: WorkspaceAction = {
+      id: generateId('act_ws'),
+      workspaceId: params.workspaceId,
+      authorId: params.authorId,
+      authorName: author.name,
+      authorUsername: author.username || author.email.split('@')[0],
+      authorRole: isOwnerOrMod ? (ws.ownerId === params.authorId ? 'owner' : 'moderator') : (membership?.role || 'member'),
+      actionType: params.actionType,
+      title: trimmedTitle,
+      content: trimmedContent,
+      sourceLink: params.sourceLink,
+      tags: params.tags || [],
+      status: 'active',
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.workspaceActions = db.workspaceActions || [];
+    db.workspaceActions.push(newAction);
+
+    db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+    db.workspaceAuditEvents.push({
+      id: generateId('aud_ws'),
+      workspaceId: params.workspaceId,
+      eventType: 'post',
+      actorId: params.authorId,
+      actorName: author.name,
+      actorRole: newAction.authorRole,
+      targetActionId: newAction.id,
+      reason: `Created workspace action (${params.actionType}): "${trimmedTitle}"`,
+      timestamp: now,
+      details: { title: trimmedTitle, actionType: params.actionType },
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(newAction));
+  }
+
+  async moderateWorkspaceAction(params: {
+    workspaceId: string;
+    moderatorId: string;
+    actionId: string;
+    action: 'freeze' | 'remove' | 'unfreeze';
+    reason: string;
+  }): Promise<WorkspaceAction> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === params.moderatorId || (ws.moderatorIds || []).includes(params.moderatorId);
+    if (!isOwnerOrMod) {
+      throw new Error(`Unauthorized: Scoped moderation violation. User ${params.moderatorId} is not a designated moderator of workspace "${ws.title}". Unrelated moderators cannot intervene.`);
+    }
+
+    const trimmedReason = params.reason.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error(`A valid reason is required for moderation action (at least 3 characters).`);
+    }
+
+    db.workspaceActions = db.workspaceActions || [];
+    const action = db.workspaceActions.find((a) => a.id === params.actionId && a.workspaceId === params.workspaceId);
+    if (!action) throw new Error(`Workspace action ${params.actionId} not found`);
+
+    const moderator = db.users.find((u) => u.id === params.moderatorId);
+    const now = new Date().toISOString();
+
+    if (params.action === 'freeze') {
+      action.status = 'frozen';
+    } else if (params.action === 'remove') {
+      action.status = 'removed';
+    } else {
+      action.status = 'active';
+    }
+
+    action.moderationReason = trimmedReason;
+    action.moderatedBy = params.moderatorId;
+    action.moderatedAt = now;
+    action.updatedAt = now;
+
+    db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+    db.workspaceAuditEvents.push({
+      id: generateId('aud_ws'),
+      workspaceId: params.workspaceId,
+      eventType: 'moderation',
+      actorId: params.moderatorId,
+      actorName: moderator?.name || 'Moderator',
+      actorRole: 'moderator',
+      targetActionId: params.actionId,
+      reason: `${params.action.toUpperCase()} action: ${trimmedReason}`,
+      timestamp: now,
+      details: { actionId: params.actionId, newStatus: action.status, reason: trimmedReason },
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(action));
+  }
+
+  async moderateWorkspaceMember(params: {
+    workspaceId: string;
+    moderatorId: string;
+    targetUserId: string;
+    newStatus: 'restricted' | 'removed' | 'active';
+    reason: string;
+  }): Promise<WorkspaceMembership> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === params.moderatorId || (ws.moderatorIds || []).includes(params.moderatorId);
+    if (!isOwnerOrMod) {
+      throw new Error(`Unauthorized: Scoped moderation violation. User ${params.moderatorId} is not a designated moderator of workspace "${ws.title}".`);
+    }
+
+    if (params.targetUserId === ws.ownerId) {
+      throw new Error(`Unauthorized: The workspace owner cannot be removed or restricted.`);
+    }
+
+    const trimmedReason = params.reason.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error(`A valid reason is required for member moderation (at least 3 characters).`);
+    }
+
+    db.workspaceMemberships = db.workspaceMemberships || [];
+    const membership = db.workspaceMemberships.find(
+      (m) => m.workspaceId === params.workspaceId && m.userId === params.targetUserId
+    );
+    if (!membership) {
+      throw new Error(`Member ${params.targetUserId} not found in workspace ${ws.title}.`);
+    }
+
+    const moderator = db.users.find((u) => u.id === params.moderatorId);
+    const now = new Date().toISOString();
+
+    membership.state = params.newStatus;
+    membership.statusReason = trimmedReason;
+    membership.statusChangedBy = params.moderatorId;
+    membership.statusChangedAt = now;
+    membership.updatedAt = now;
+
+    if (params.newStatus === 'restricted' || params.newStatus === 'removed') {
+      membership.permissions.canPost = false;
+      membership.permissions.canUpload = false;
+      membership.permissions.canInvite = false;
+    } else if (params.newStatus === 'active') {
+      membership.permissions.canPost = true;
+      membership.permissions.canUpload = true;
+      membership.permissions.canInvite = true;
+      membership.statusReason = undefined;
+    }
+
+    db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+    db.workspaceAuditEvents.push({
+      id: generateId('aud_ws'),
+      workspaceId: params.workspaceId,
+      eventType: params.newStatus === 'removed' ? 'removal' : params.newStatus === 'restricted' ? 'restriction' : 'reentry',
+      actorId: params.moderatorId,
+      actorName: moderator?.name || 'Moderator',
+      actorRole: 'moderator',
+      targetUserId: params.targetUserId,
+      targetUserName: membership.userName,
+      reason: `${params.newStatus.toUpperCase()}: ${trimmedReason}`,
+      timestamp: now,
+      details: { newStatus: params.newStatus, reason: trimmedReason },
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(membership));
+  }
+
+  async reportWorkspaceContent(params: {
+    workspaceId: string;
+    reporterId: string;
+    targetActionId?: string;
+    targetUserId?: string;
+    reason: string;
+  }): Promise<WorkspaceAuditEvent> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
+    if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
+
+    const reporter = db.users.find((u) => u.id === params.reporterId);
+    if (!reporter) throw new Error(`Reporter ${params.reporterId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === params.reporterId || (ws.moderatorIds || []).includes(params.reporterId);
+    const membership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === params.workspaceId && m.userId === params.reporterId
+    );
+    if (!isOwnerOrMod && (!membership || (membership.state !== 'active' && membership.state !== 'restricted'))) {
+      throw new Error(`Unauthorized: Only active workspace participants can file content reports.`);
+    }
+
+    const trimmedReason = params.reason.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error(`A valid reason is required for submitting a report (at least 3 characters).`);
+    }
+
+    const now = new Date().toISOString();
+    const auditEvent: WorkspaceAuditEvent = {
+      id: generateId('aud_ws'),
+      workspaceId: params.workspaceId,
+      eventType: 'report',
+      actorId: params.reporterId,
+      actorName: reporter.name,
+      actorRole: membership?.role || 'member',
+      targetActionId: params.targetActionId,
+      targetUserId: params.targetUserId,
+      reason: trimmedReason,
+      timestamp: now,
+      details: { reportedBy: reporter.username || reporter.name, targetActionId: params.targetActionId },
+      schemaVersion: 1,
+    };
+
+    db.workspaceAuditEvents = db.workspaceAuditEvents || [];
+    db.workspaceAuditEvents.push(auditEvent);
+
+    db.moderationCases = db.moderationCases || [];
+    db.moderationCases.push({
+      id: generateId('mod_ws'),
+      reporterId: params.reporterId,
+      targetType: 'post',
+      targetId: params.targetActionId || params.workspaceId,
+      reason: trimmedReason,
+      severity: 'medium',
+      status: 'open',
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(auditEvent));
+  }
+
+  async getWorkspaceAuditEvents(workspaceId: string, callerUserId: string): Promise<WorkspaceAuditEvent[]> {
+    const db = this.getDb();
+    const ws = (db.workspaces || []).find((w) => w.id === workspaceId);
+    if (!ws) throw new Error(`Workspace ${workspaceId} not found`);
+
+    const isOwnerOrMod = ws.ownerId === callerUserId || (ws.moderatorIds || []).includes(callerUserId);
+    const membership = (db.workspaceMemberships || []).find(
+      (m) => m.workspaceId === workspaceId && m.userId === callerUserId
+    );
+    if (!isOwnerOrMod && (!membership || (membership.state !== 'active' && membership.state !== 'restricted'))) {
+      throw new Error(`Unauthorized: Audit trail is only accessible to active members and room moderators.`);
+    }
+
+    const events = (db.workspaceAuditEvents || [])
+      .filter((e) => e.workspaceId === workspaceId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    return JSON.parse(JSON.stringify(events));
   }
 
   // Demo operations

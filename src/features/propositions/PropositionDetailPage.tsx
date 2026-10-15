@@ -294,6 +294,13 @@ export const PropositionDetailPage: React.FC = () => {
               <span>Revisions ({proposition.revisions.length})</span>
             </Button>
           </Link>
+
+          <Link to="/workspace/ws_jaipur_school_safety" data-testid="link-to-workspace">
+            <Button size="sm" variant="primary" className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />
+              <span>School-Zone Workspace</span>
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -733,6 +740,33 @@ export const PropositionDetailPage: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </Card>
+
+          {/* Linked Scoped Workspace Card */}
+          <Card className="border-civic-teal-200 bg-civic-teal-50/30 p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-civic-teal-900 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-civic-teal-700" />
+                <span>Proposition Deliberation Workspace</span>
+              </h3>
+              <span className="text-[10px] font-semibold text-civic-teal-800 bg-civic-teal-100 px-2 py-0.5 rounded border border-civic-teal-200">
+                Invite-Only Private
+              </span>
+            </div>
+            <p className="text-xs text-slate-600">
+              An invite-only private workspace is linked to this proposition for Ward 24 school-zone traffic safety implementation planning, action notes, and auditable peer moderation.
+            </p>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] text-slate-500">
+                Workspace: <strong>Jaipur Ward 24 School-Zone Safety Workspace</strong> (v1.0 rulebook)
+              </span>
+              <Link to="/workspace/ws_jaipur_school_safety">
+                <Button size="sm" className="text-xs flex items-center gap-1.5 bg-civic-teal-600 hover:bg-civic-teal-700 text-white">
+                  <span>Open Workspace</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
           </Card>
 
           {/* Routing History & Civic Accountability */}

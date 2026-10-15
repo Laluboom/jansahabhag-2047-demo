@@ -5,7 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { DesktopSidebar } from '../src/components/layout/DesktopSidebar';
 import { AppShell } from '../src/components/layout/AppShell';
 import { DebateRoomPreviewPage } from '../src/components/layout/DebateRoomPreviewPage';
-import { WorkspacePreviewPage } from '../src/components/layout/WorkspacePreviewPage';
+import { WorkspacePage } from '../src/features/workspaces/WorkspacePage';
 import { HelpRulebooksPage } from '../src/components/layout/HelpRulebooksPage';
 import { CoursesPage } from '../src/features/learning/CoursesPage';
 import { AssignmentsPage } from '../src/features/assignments/AssignmentsPage';
@@ -70,7 +70,7 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     // Verify status badges for preview/planned modules
     expect(links[3]).toHaveTextContent('Simulation'); // Debate Room
     expect(links[5]).toHaveTextContent('Prototype'); // Youth Parliament
-    expect(links[6]).toHaveTextContent('Planned'); // Workspace
+    expect(links[6]).toHaveTextContent('Simulation'); // Workspace
     expect(links[10]).toHaveTextContent('Stream'); // UHV / Jeevan Vidya
 
     // Verify utilities are kept outside the learner navigation sequence
@@ -164,7 +164,7 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     unmount();
   });
 
-  it('Requirement 2: Debate Room renders interactive simulation and Workspace renders nonfunctional preview destination', async () => {
+  it('Requirement 2: Debate Room and Workspace render interactive simulations', async () => {
     // Debate Room interactive local simulation
     const { rerender } = render(
       <MemoryRouter>
@@ -176,16 +176,16 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     expect(screen.getByText(/State is only shared among personas within this browser/i)).toBeInTheDocument();
     expect(screen.getByText(/Immediate installation of tabletop pedestrian crosswalks/i)).toBeInTheDocument();
 
-    // Workspace preview
+    // Workspace interactive simulation
     rerender(
       <MemoryRouter>
-        <WorkspacePreviewPage />
+        <WorkspacePage />
       </MemoryRouter>
     );
-    expect(screen.getByRole('heading', { name: /^Workspace/i })).toBeInTheDocument();
-    expect(screen.getByText(/Planned Demo Module/i)).toBeInTheDocument();
-    expect(screen.getByText(/Nonfunctional Preview Destination/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /View Demo Projects/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Workspace/i })).toBeInTheDocument();
+    expect(screen.getByText(/Jaipur Ward 24 School-Zone Safety Workspace/i)).toBeInTheDocument();
+    expect(screen.getByText(/Single-Browser Local Simulation/i)).toBeInTheDocument();
+    expect(screen.getByText(/Team Notes & Actions/i)).toBeInTheDocument();
 
     // Help & Rulebooks
     rerender(

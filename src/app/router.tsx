@@ -59,6 +59,7 @@ const StakeholdersPage = lazy(() => import('../features/previews/StakeholdersPag
 const StudioPage = lazy(() => import('../features/previews/StudioPage').then((m) => ({ default: m.StudioPage })));
 const DebateRoomPreviewPage = lazy(() => import('../components/layout/DebateRoomPreviewPage').then((m) => ({ default: m.DebateRoomPreviewPage })));
 const WorkspacePreviewPage = lazy(() => import('../components/layout/WorkspacePreviewPage').then((m) => ({ default: m.WorkspacePreviewPage })));
+const WorkspacePage = lazy(() => import('../features/workspaces/WorkspacePage').then((m) => ({ default: m.WorkspacePage })));
 const HelpRulebooksPage = lazy(() => import('../components/layout/HelpRulebooksPage').then((m) => ({ default: m.HelpRulebooksPage })));
 
 const InstitutionDashboardPage = lazy(() => import('../features/institutions/InstitutionDashboardPage').then((m) => ({ default: m.InstitutionDashboardPage })));
@@ -423,13 +424,29 @@ export const router = createBrowserRouter([
         path: 'workspace',
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
-            <WorkspacePreviewPage />
+            <WorkspacePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'workspace/:id',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WorkspacePage />
           </Suspense>
         ),
       },
       {
         path: 'workspaces',
         element: <Navigate to="/workspace" replace />,
+      },
+      {
+        path: 'workspaces/:id',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WorkspacePage />
+          </Suspense>
+        ),
       },
       {
         path: 'uhv',

@@ -15,6 +15,7 @@ export interface User {
   name: string;
   role: UserRole;
   email: string;
+  username?: string;
   avatar: string;
   institutionId: string;
   institutionName: string;
@@ -889,6 +890,180 @@ export interface CivicIssue {
   updatedAt: string;
 }
 
+// ==========================================
+// Workspace Collaboration Domain Types (Master PRD §A12, §A13, §A20.4, §A21)
+// ==========================================
+
+export type WorkspaceType =
+  | 'institution'
+  | 'cross_institution'
+  | 'project_topic'
+  | 'username_invited'
+  | 'open_interest';
+
+export type WorkspaceVisibility = 'private' | 'institution_scoped' | 'public_discoverable';
+
+export type WorkspaceLifecycleState =
+  | 'DRAFT'
+  | 'PENDING_APPROVAL'
+  | 'ACTIVE'
+  | 'PAUSED'
+  | 'RESTRICTED'
+  | 'ARCHIVED';
+
+export type WorkspaceMembershipState =
+  | 'invited'
+  | 'requested'
+  | 'approved'
+  | 'active'
+  | 'restricted'
+  | 'removed'
+  | 'left';
+
+export type WorkspaceRole = 'owner' | 'moderator' | 'member';
+
+export interface WorkspacePermissionSet {
+  canRead: boolean;
+  canPost: boolean;
+  canUpload: boolean;
+  canInvite: boolean;
+  canScheduleMeeting: boolean;
+  canCreateSubroom: boolean;
+  canModerate: boolean;
+  canManageMembership: boolean;
+}
+
+export interface WorkspaceRule {
+  id: string;
+  title: string;
+  content: string;
+  isSafeguarding?: boolean;
+}
+
+export interface WorkspaceRulebook {
+  version: string;
+  title: string;
+  lastUpdated: string;
+  materialChangeNotice?: string;
+  rules: WorkspaceRule[];
+}
+
+export interface WorkspaceMembership {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  userName: string;
+  username: string;
+  userRole: UserRole;
+  institutionId?: string;
+  institutionName?: string;
+  role: WorkspaceRole;
+  state: WorkspaceMembershipState;
+  invitedBy?: string;
+  invitedAt?: string;
+  joinedAt?: string;
+  statusReason?: string;
+  statusChangedBy?: string;
+  statusChangedAt?: string;
+  permissions: WorkspacePermissionSet;
+  lastAcknowledgedRuleVersion?: string;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorkspaceActionType =
+  | 'announcement'
+  | 'team_note'
+  | 'task'
+  | 'thread'
+  | 'resource';
+
+export type WorkspaceActionStatus = 'active' | 'frozen' | 'removed';
+
+export interface WorkspaceAction {
+  id: string;
+  workspaceId: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorRole: WorkspaceRole;
+  actionType: WorkspaceActionType;
+  title: string;
+  content: string;
+  sourceLink?: {
+    type: 'proposition' | 'assembly' | 'evidence' | 'external';
+    id: string;
+    label: string;
+    url?: string;
+  };
+  tags?: string[];
+  status: WorkspaceActionStatus;
+  moderationReason?: string;
+  moderatedBy?: string;
+  moderatedAt?: string;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorkspaceAuditEventType =
+  | 'invite'
+  | 'acceptance'
+  | 'decline'
+  | 'post'
+  | 'report'
+  | 'moderation'
+  | 'removal'
+  | 'restriction'
+  | 'reentry'
+  | 'rule_acknowledgement';
+
+export interface WorkspaceAuditEvent {
+  id: string;
+  workspaceId: string;
+  eventType: WorkspaceAuditEventType;
+  actorId: string;
+  actorName: string;
+  actorRole: string;
+  targetUserId?: string;
+  targetUserName?: string;
+  targetActionId?: string;
+  reason?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  schemaVersion: number;
+}
+
+export interface Workspace {
+  id: string;
+  title: string;
+  purpose: string;
+  type: WorkspaceType;
+  visibility: WorkspaceVisibility;
+  state: WorkspaceLifecycleState;
+  institutionId?: string;
+  institutionName?: string;
+  ownerId: string;
+  ownerName: string;
+  moderatorIds: string[];
+  allowedParticipantCategories: string[];
+  linkedPropositionId?: string;
+  linkedAssemblyId?: string;
+  rulebook: WorkspaceRulebook;
+  moderationContact: {
+    name: string;
+    role: string;
+    emailOrChannel: string;
+    safeguardingLead?: string;
+  };
+  storageQuotaBytes?: number;
+  usedStorageBytes?: number;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DemoDatabase {
   schemaVersion: number;
   activeUserId: string;
@@ -919,6 +1094,10 @@ export interface DemoDatabase {
   civicIssues?: CivicIssue[];
   assemblyRoleActions?: AssemblyRoleAction[];
   assemblyRoleOverrideAudits?: AssemblyRoleOverrideAudit[];
+  workspaces?: Workspace[];
+  workspaceMemberships?: WorkspaceMembership[];
+  workspaceActions?: WorkspaceAction[];
+  workspaceAuditEvents?: WorkspaceAuditEvent[];
 }
 
 declare module './index' {

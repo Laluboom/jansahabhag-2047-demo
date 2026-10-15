@@ -23,6 +23,11 @@ import {
   CommunityPost,
   ModerationCase,
   CivicIssue,
+  Workspace,
+  WorkspaceMembership,
+  WorkspaceAction,
+  WorkspaceAuditEvent,
+  WorkspaceActionType,
 } from '../types/domain';
 import {
   DashboardData,
@@ -202,6 +207,48 @@ export interface DemoRepository {
   // Moderation
   getModerationCases(): Promise<ModerationCase[]>;
   updateModerationCase(caseId: string, update: Partial<ModerationCase>): Promise<ModerationCase>;
+
+  // Workspace Collaboration (Master PRD §A12, §A13, §A20.4, §A21)
+  getWorkspaces(userId?: string): Promise<Workspace[]>;
+  getWorkspace(workspaceId: string, callerUserId?: string): Promise<Workspace | null>;
+  getWorkspaceMemberships(workspaceId: string, callerUserId: string): Promise<WorkspaceMembership[]>;
+  getWorkspaceMembership(workspaceId: string, userId: string, callerUserId?: string): Promise<WorkspaceMembership | null>;
+  searchUsersForInvite(query: string, callerUserId: string, workspaceId: string): Promise<User[]>;
+  inviteUserToWorkspace(params: { workspaceId: string; inviterId: string; usernameOrId: string }): Promise<WorkspaceMembership>;
+  respondToWorkspaceInvite(params: { workspaceId: string; userId: string; accept: boolean; reason?: string }): Promise<WorkspaceMembership>;
+  acknowledgeWorkspaceRules(params: { workspaceId: string; userId: string; version: string }): Promise<WorkspaceMembership>;
+  getWorkspaceActions(workspaceId: string, callerUserId: string): Promise<WorkspaceAction[]>;
+  createWorkspaceAction(params: {
+    workspaceId: string;
+    authorId: string;
+    actionType: WorkspaceActionType;
+    title: string;
+    content: string;
+    sourceLink?: WorkspaceAction['sourceLink'];
+    tags?: string[];
+  }): Promise<WorkspaceAction>;
+  moderateWorkspaceAction(params: {
+    workspaceId: string;
+    moderatorId: string;
+    actionId: string;
+    action: 'freeze' | 'remove' | 'unfreeze';
+    reason: string;
+  }): Promise<WorkspaceAction>;
+  moderateWorkspaceMember(params: {
+    workspaceId: string;
+    moderatorId: string;
+    targetUserId: string;
+    newStatus: 'restricted' | 'removed' | 'active';
+    reason: string;
+  }): Promise<WorkspaceMembership>;
+  reportWorkspaceContent(params: {
+    workspaceId: string;
+    reporterId: string;
+    targetActionId?: string;
+    targetUserId?: string;
+    reason: string;
+  }): Promise<WorkspaceAuditEvent>;
+  getWorkspaceAuditEvents(workspaceId: string, callerUserId: string): Promise<WorkspaceAuditEvent[]>;
 
   // Demo operations
   resetDemo(): Promise<void>;

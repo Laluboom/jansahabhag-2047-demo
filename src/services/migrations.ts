@@ -2,6 +2,13 @@ import { DemoDatabase, AssemblyStage, AssemblyRoleType, AssemblyRolePower } from
 import { CURRENT_SCHEMA_VERSION, getFreshSeedDatabase } from '../data/seed';
 import { seedSessions } from '../data/seed/events';
 import { canonicalAssemblyRulebook } from '../data/seed/assemblies';
+import {
+  seedWorkspaces,
+  seedWorkspaceMemberships,
+  seedWorkspaceActions,
+  seedWorkspaceAuditEvents,
+  canonicalWorkspaceRulebook,
+} from '../data/seed/workspaces';
 
 export interface Migration {
   version: number;
@@ -456,6 +463,64 @@ export function normalizeAssemblyRecords(db: DemoDatabase): DemoDatabase {
   return db;
 }
 
+export function normalizeWorkspaceRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+
+  // 1. Ensure all users have unique username
+  if (Array.isArray(db.users)) {
+    db.users.forEach((u) => {
+      if (!u.username) {
+        if (u.email && u.email.includes('@')) {
+          u.username = u.email.split('@')[0];
+        } else {
+          u.username = u.id.replace('user_', '');
+        }
+      }
+    });
+  }
+
+  // 2. Ensure workspaces array exists and is populated
+  if (!Array.isArray(db.workspaces) || db.workspaces.length === 0) {
+    db.workspaces = JSON.parse(JSON.stringify(seedWorkspaces));
+  } else {
+    db.workspaces.forEach((ws) => {
+      if (ws.id === 'ws_jaipur_school_safety') {
+        ws.visibility = 'private';
+      }
+      if (!ws.rulebook) {
+        ws.rulebook = JSON.parse(JSON.stringify(canonicalWorkspaceRulebook));
+      }
+      if (!Array.isArray(ws.moderatorIds) || ws.moderatorIds.length === 0) {
+        ws.moderatorIds = [ws.ownerId];
+      }
+    });
+  }
+
+  // 3. Ensure memberships array exists and is populated
+  if (!Array.isArray(db.workspaceMemberships) || db.workspaceMemberships.length === 0) {
+    db.workspaceMemberships = JSON.parse(JSON.stringify(seedWorkspaceMemberships));
+  } else {
+    db.workspaceMemberships.forEach((m) => {
+      if (!m.username) {
+        const u = db.users?.find((user) => user.id === m.userId);
+        m.username = u?.username || m.userId.replace('user_', '');
+      }
+    });
+  }
+
+  // 4. Ensure workspaceActions array exists and is populated
+  if (!Array.isArray(db.workspaceActions) || db.workspaceActions.length === 0) {
+    db.workspaceActions = JSON.parse(JSON.stringify(seedWorkspaceActions));
+  }
+
+  // 5. Ensure workspaceAuditEvents array exists and is populated
+  if (!Array.isArray(db.workspaceAuditEvents) || db.workspaceAuditEvents.length === 0) {
+    db.workspaceAuditEvents = JSON.parse(JSON.stringify(seedWorkspaceAuditEvents));
+  }
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -475,6 +540,7 @@ export function runMigrations(storedData: any): DemoDatabase {
   const migrated = normalizeUhvRecords(storedData);
   normalizeSessionRecords(migrated);
   normalizeAssemblyRecords(migrated);
+  normalizeWorkspaceRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }
