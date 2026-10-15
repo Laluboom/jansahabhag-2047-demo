@@ -104,29 +104,29 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026/session*');
 
     // 7. Deliberation: Add Substantive Contribution
-    await page.getByRole('button', { name: /4\. Deliberation/i }).click();
-    await expect(page.getByRole('heading', { name: /Deliberation/i, level: 2 })).toBeVisible();
-    const contribInput = page.getByPlaceholder(/Enter your inquiry, argument, or amendment/i);
+    const contribInput = page.getByPlaceholder(/Enter your substantive inquiry or argument citing evidence/i);
     await contribInput.fill('How will the proposed raised tabletop crossing handle storm water drainage during heavy monsoon rains without pooling near the pedestrian walkway?');
     await page.getByRole('button', { name: /Submit Contribution/i }).click();
-    await expect(page.getByText(/Substantive contribution submitted/i)).toBeVisible();
+    await expect(page.getByText(/Substantive contribution submitted!/i)).toBeVisible();
 
-    // 8. Revisions: Submit Amendment
-    await page.getByRole('button', { name: /6\. Revisions & Amendments/i }).click();
-    await expect(page.getByRole('heading', { name: /Revisions & Amendments/i, level: 2 })).toBeVisible();
-    const summaryInput = page.getByPlaceholder(/e\.g\. Added IRC 1:15 approach ramp gradient/i);
-    await summaryInput.fill('Add mandatory roadside curb drainage flumes to prevent monsoon pooling.');
-    await page.getByRole('button', { name: /Submit Revision/i }).click();
-    await expect(page.getByText(/Add mandatory roadside curb drainage flumes/i)).toBeVisible();
+    // 8. Shape: Submit Proposition Amendment
+    await page.getByRole('button', { name: /Stage 5.*Shape/i }).click();
+    await expect(page.getByText(/Shapers Lead: Proposition Call & Synthesis/i)).toBeVisible();
+    const rationaleInput = page.getByPlaceholder(/Revision rationale/i);
+    await rationaleInput.fill('Add mandatory roadside curb drainage flumes to prevent monsoon pooling.');
+    await page.getByRole('button', { name: /Submit Amendment/i }).click();
+    await expect(page.getByText(/Revision v.*recorded successfully/i)).toBeVisible();
 
-    // 9. Outcome: Finalise Proposition Resolution (no conditional skips)
-    await page.getByRole('button', { name: /8\. Final Outcome/i }).click();
-    await expect(page.getByRole('heading', { name: /Final Outcome/i, level: 2 })).toBeVisible();
-    const finaliseBtn = page.getByRole('button', { name: /Finalise Chamber Resolution/i });
+    // 9. Final Assembly: Finalise Proposition Resolution
+    await page.getByRole('button', { name: /Stage 6.*Final Assembly/i }).click();
+    await expect(page.getByText(/Final Assembly: Deliberation Outcome/i)).toBeVisible();
+    await page.getByRole('button', { name: 'QUALIFIED SUPPORT' }).click();
+    const finaliseBtn = page.getByRole('button', { name: /Finalise Assembly Resolution/i });
     await finaliseBtn.click();
+    await expect(page.getByText(/Resolution finalised and permanently locked/i)).toBeVisible();
 
-    // 10. Reflection: Write Civic Reflection (auto-advanced to stage 9)
-    await expect(page.getByRole('heading', { name: /Civic Reflection/i, level: 2 })).toBeVisible();
+    // 10. Reflection: Write Civic Reflection
+    await expect(page.getByText(/Civic Reflection & Ethical Values/i)).toBeVisible();
     const reflectionInput = page.getByPlaceholder(/Write your honest reflections/i);
     await reflectionInput.fill('Participating in this assembly reinforced that democratic deliberation requires listening closely to conflicting priorities—such as driver speed versus child pedestrian safety—and finding evidence-backed civic consensus.');
     await page.getByRole('button', { name: /Submit Reflection/i }).click();
@@ -140,7 +140,7 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     // Confirm Activity Timeline records from this exact run
     await expect(page.getByText(/Completed: Conducting Peer Pedestrian Safety Interviews/i)).toBeVisible();
     await expect(page.getByText(/Verified: Pedestrian Flow Interview with 5 Peers/i)).toBeVisible();
-    await expect(page.getByText(/Appointed Assembly Questioner/i)).toBeVisible();
+    await expect(page.getByText(/Appointed Assembly Shaper/i)).toBeVisible();
     await expect(page.getByText(/Substantive Contribution: Question/i)).toBeVisible();
     await expect(page.getByText(/Assembly Resolution: QUALIFIED_SUPPORT/i)).toBeVisible();
 

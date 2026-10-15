@@ -1,6 +1,7 @@
-import { DemoDatabase } from '../types/domain';
+import { DemoDatabase, AssemblyStage, AssemblyRoleType, AssemblyRolePower } from '../types/domain';
 import { CURRENT_SCHEMA_VERSION, getFreshSeedDatabase } from '../data/seed';
 import { seedSessions } from '../data/seed/events';
+import { canonicalAssemblyRulebook } from '../data/seed/assemblies';
 
 export interface Migration {
   version: number;
@@ -192,6 +193,15 @@ export const migrations: Migration[] = [
       return normalizeUhvRecords(prev);
     },
   },
+  {
+    version: 3,
+    migrate: (prev: any) => {
+      const db = normalizeUhvRecords(prev);
+      normalizeSessionRecords(db);
+      normalizeAssemblyRecords(db);
+      return db;
+    },
+  },
 ];
 
 export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
@@ -292,6 +302,160 @@ export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
   return db;
 }
 
+export function normalizeAssemblyStage(stage: string): AssemblyStage {
+  if (!stage) return 'frame';
+  const s = String(stage).toLowerCase();
+  if (s === 'frame') return 'frame';
+  if (s === 'think') return 'think';
+  if (s === 'enable') return 'enable';
+  if (s === 'troubleshoot') return 'troubleshoot';
+  if (s === 'shape') return 'shape';
+  if (s === 'final_assembly') return 'final_assembly';
+
+  // Legacy mappings
+  if (s === 'orientation' || s === 'question') return 'frame';
+  if (s === 'evidence_review' || s === 'deliberation') return 'think';
+  if (s === 'proposition_draft' || s === 'revision') return 'shape';
+  if (s === 'support_dissent' || s === 'outcome' || s === 'reflection') return 'final_assembly';
+
+  return 'frame';
+}
+
+export function normalizeAssemblyRoleName(roleName: string): AssemblyRoleType {
+  if (!roleName) return 'Thinker';
+  const r = String(roleName).trim();
+  if (r === 'Thinker' || r === 'Enabler' || r === 'Troubleshooter' || r === 'Shaper') {
+    return r;
+  }
+  // Legacy role names
+  if (r.toLowerCase().includes('questioner')) return 'Thinker';
+  if (r.toLowerCase().includes('evidence')) return 'Enabler';
+  if (r.toLowerCase().includes('advocate')) return 'Troubleshooter';
+  if (r.toLowerCase().includes('synthesiser') || r.toLowerCase().includes('synthesizer')) return 'Shaper';
+  if (r.toLowerCase().includes('community')) return 'Troubleshooter';
+  if (r.toLowerCase().includes('rapporteur')) return 'Shaper';
+
+  return 'Thinker';
+}
+
+export function getRolePowerForName(roleName: AssemblyRoleType): AssemblyRolePower {
+  switch (roleName) {
+    case 'Thinker':
+      return 'Question Setter';
+    case 'Enabler':
+      return 'Feasibility Check';
+    case 'Troubleshooter':
+      return 'Red Flag';
+    case 'Shaper':
+      return 'Proposition Call';
+    default:
+      return 'Question Setter';
+  }
+}
+
+export function normalizeAssemblyRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+
+  // 1. Normalize Assemblies
+  if (Array.isArray(db.assemblies)) {
+    db.assemblies.forEach((assembly) => {
+      assembly.currentStage = normalizeAssemblyStage(assembly.currentStage);
+      assembly.chairId = assembly.chairId || assembly.facilitatorId || 'user_rohan';
+      if (!assembly.rulebook) {
+        assembly.rulebook = JSON.parse(JSON.stringify(canonicalAssemblyRulebook));
+      }
+      if (!Array.isArray(assembly.roleActions)) {
+        assembly.roleActions = [];
+      }
+      if (!Array.isArray(assembly.roleOverrideAudits)) {
+        assembly.roleOverrideAudits = [];
+      }
+      if (!Array.isArray(assembly.speakingQueue)) {
+        assembly.speakingQueue = [];
+      }
+      if (Array.isArray(assembly.participantUserIds) && assembly.participantUserIds.length === 3) {
+        assembly.isThreePersonMiniMode = true;
+      }
+    });
+  }
+
+  // 2. Normalize Assembly Roles
+  if (Array.isArray(db.assemblyRoles)) {
+    db.assemblyRoles.forEach((role) => {
+      role.roleName = normalizeAssemblyRoleName(role.roleName);
+      role.power = role.power || getRolePowerForName(role.roleName);
+      if (!Array.isArray(role.responsibilities) || role.responsibilities.length === 0) {
+        if (role.roleName === 'Thinker') {
+          role.responsibilities = [
+            'Introduce substantive perspectives, explain the problem, question assumptions and add domain evidence.',
+          ];
+        } else if (role.roleName === 'Enabler') {
+          role.responsibilities = [
+            'Examine resources, implementation route, institutional ownership, capability and feasibility.',
+          ];
+        } else if (role.roleName === 'Troubleshooter') {
+          role.responsibilities = [
+            'Stress-test assumptions, identify harms, edge cases, incentives and unintended consequences; propose mitigations.',
+          ];
+        } else {
+          role.responsibilities = [
+            'Synthesize agreement, qualified support, disagreement and candidate wording into draft proposition.',
+          ];
+        }
+      }
+      if (!Array.isArray(role.promptSuggestions) || role.promptSuggestions.length === 0) {
+        role.promptSuggestions = [
+          `Focus inquiry and perspective as ${role.roleName} in the youth deliberative chamber.`,
+        ];
+      }
+    });
+  }
+
+  // 3. Normalize Contributions
+  if (Array.isArray(db.contributions)) {
+    db.contributions.forEach((contrib) => {
+      contrib.stage = normalizeAssemblyStage(contrib.stage);
+    });
+  }
+
+  // 4. Normalize Propositions
+  if (Array.isArray(db.propositions)) {
+    db.propositions.forEach((prop) => {
+      if (!Array.isArray(prop.assumptions) || prop.assumptions.length === 0) {
+        prop.assumptions = [
+          'IRC-99:1988 guidelines apply to raised pedestrian tabletop crossings on urban arterial corridors.',
+          'Jaipur Municipal Corporation Greater has jurisdiction over Ward 24 road safety interventions.',
+        ];
+      }
+      if (!Array.isArray(prop.evidenceBasis) || prop.evidenceBasis.length === 0) {
+        prop.evidenceBasis = (prop.evidenceIds || []).map((id) => `Evidence reference: ${id}`);
+      }
+      if (!Array.isArray(prop.participantResponses)) {
+        prop.participantResponses = [];
+      }
+      prop.reviewerState = prop.reviewerState || 'draft';
+      prop.publicationVisibility = prop.publicationVisibility || 'internal_chamber';
+      if (!Array.isArray(prop.routingHistory) || prop.routingHistory.length === 0) {
+        prop.routingHistory = [
+          {
+            id: `route_sim_${prop.id}`,
+            stage: 'shape',
+            routedTo: 'Simulated Civic Review Desk - Ward 24 (Demo Prototype)',
+            status: 'simulated_routing',
+            timestamp: prop.updatedAt || new Date().toISOString(),
+            note: 'Local simulation prototype only - no real external stakeholder submission claimed.',
+          },
+        ];
+      }
+      if (!Array.isArray(prop.dissent)) {
+        prop.dissent = [];
+      }
+    });
+  }
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -307,9 +471,12 @@ export function runMigrations(storedData: any): DemoDatabase {
 
   const storedVersion = Number(storedData.schemaVersion) || 0;
 
-  // Apply version 2 migration if upgrading from version 1 or earlier, or normalize
+  // Apply migrations sequentially or normalize
   const migrated = normalizeUhvRecords(storedData);
   normalizeSessionRecords(migrated);
+  normalizeAssemblyRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }
+
+export const migrateDatabase = runMigrations;

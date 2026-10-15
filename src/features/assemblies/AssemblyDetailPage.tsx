@@ -35,15 +35,12 @@ import {
 } from 'lucide-react';
 
 const ALL_STAGES: AssemblyStage[] = [
-  'orientation',
-  'question',
-  'evidence_review',
-  'deliberation',
-  'proposition_draft',
-  'revision',
-  'support_dissent',
-  'outcome',
-  'reflection',
+  'frame',
+  'think',
+  'enable',
+  'troubleshoot',
+  'shape',
+  'final_assembly',
 ];
 
 export const AssemblyDetailPage: React.FC = () => {
@@ -204,12 +201,12 @@ export const AssemblyDetailPage: React.FC = () => {
           <p className="text-sm sm:text-base text-slate-800 italic font-medium">"{assembly.question}"</p>
         </div>
 
-        {/* 9 Stages Roadmap Timeline */}
+        {/* 6 Stages Roadmap Timeline */}
         <div className="space-y-2 pt-2 border-t border-slate-100">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-            Assembly Deliberation Pathway (9 Stages)
+            Assembly Deliberation Pathway (6 Stages)
           </span>
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-1.5 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 text-center">
             {ALL_STAGES.map((st, i) => {
               const isCurrent = assembly.currentStage === st;
               const isPassed = ALL_STAGES.indexOf(assembly.currentStage) > i;
@@ -314,7 +311,7 @@ export const AssemblyDetailPage: React.FC = () => {
               You have not joined this Assembly yet
             </h3>
             <p className="text-xs text-amber-700 mt-0.5">
-              Click below to join, receive your allocated role (e.g. Questioner), earn 10 Deliberation Credits, and enter the chamber.
+              Click below to join, receive your allocated role (e.g. Thinker), earn 10 Deliberation Credits, and enter the chamber.
             </p>
           </div>
           <Button

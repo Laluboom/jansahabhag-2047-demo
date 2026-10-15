@@ -391,7 +391,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       const contrib = await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
         userId: 'user_aarav',
-        stage: 'deliberation',
+        stage: 'think',
         type: 'question',
         text: 'How will stormwater drainage be incorporated beneath the tabletop crossing?',
       });

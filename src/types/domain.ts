@@ -398,17 +398,127 @@ export interface Session {
 }
 
 export type AssemblyStage =
-  | 'orientation'
-  | 'question'
-  | 'evidence_review'
-  | 'deliberation'
-  | 'proposition_draft'
-  | 'revision'
-  | 'support_dissent'
-  | 'outcome'
-  | 'reflection';
+  | 'frame'
+  | 'think'
+  | 'enable'
+  | 'troubleshoot'
+  | 'shape'
+  | 'final_assembly';
+
+export const CANONICAL_ASSEMBLY_STAGES: {
+  stage: AssemblyStage;
+  label: string;
+  number: number;
+  coreQuestion: string;
+  desc: string;
+}[] = [
+  {
+    stage: 'frame',
+    label: 'Frame',
+    number: 1,
+    coreQuestion: 'What is the specific issue, scope, and boundary?',
+    desc: 'Define the specific issue, question, scope, constraints and terms.',
+  },
+  {
+    stage: 'think',
+    label: 'Think',
+    number: 2,
+    coreQuestion: 'What should we understand?',
+    desc: 'Thinkers share substantive perspectives, domain evidence and question assumptions.',
+  },
+  {
+    stage: 'enable',
+    label: 'Enable',
+    number: 3,
+    coreQuestion: 'What would make it possible?',
+    desc: 'Enablers examine resources, implementation route, ownership and feasibility.',
+  },
+  {
+    stage: 'troubleshoot',
+    label: 'Troubleshoot',
+    number: 4,
+    coreQuestion: 'What could go wrong?',
+    desc: 'Troubleshooters surface risks, edge cases, harms and mitigations (Red Flags).',
+  },
+  {
+    stage: 'shape',
+    label: 'Shape',
+    number: 5,
+    coreQuestion: 'What should we take forward?',
+    desc: 'Shapers synthesize draft wording, support areas and unresolved disagreements.',
+  },
+  {
+    stage: 'final_assembly',
+    label: 'Final Assembly',
+    number: 6,
+    coreQuestion: 'Where does the full assembly stand?',
+    desc: 'Full assembly reviews, amends, responds and records support profile, dissent and outcome.',
+  },
+];
 
 export type AssemblyStatus = 'upcoming' | 'active' | 'deliberating' | 'concluded' | 'archived';
+
+export type AssemblyRoleType =
+  | 'Thinker'
+  | 'Enabler'
+  | 'Troubleshooter'
+  | 'Shaper';
+
+export const CANONICAL_ASSEMBLY_ROLES: AssemblyRoleType[] = [
+  'Thinker',
+  'Enabler',
+  'Troubleshooter',
+  'Shaper',
+];
+
+export type AssemblyRolePower =
+  | 'Question Setter'
+  | 'Feasibility Check'
+  | 'Red Flag'
+  | 'Proposition Call';
+
+export interface AssemblyRoleAction {
+  id: string;
+  assemblyId: string;
+  userId: string;
+  userName: string;
+  roleName: AssemblyRoleType;
+  power: AssemblyRolePower;
+  title: string;
+  description: string;
+  status: 'pending_response' | 'addressed' | 'acknowledged';
+  responseObligation: string;
+  responseNote?: string;
+  respondedBy?: string;
+  respondedAt?: string;
+  timestamp: string;
+}
+
+export interface AssemblyRoleOverrideAudit {
+  id: string;
+  assemblyId: string;
+  userId: string;
+  userName: string;
+  previousRole: AssemblyRoleType;
+  newRole: AssemblyRoleType;
+  reason: string;
+  overriddenBy: string;
+  overriddenByName: string;
+  timestamp: string;
+}
+
+export interface AssemblyRulebookRule {
+  title: string;
+  content: string;
+}
+
+export interface AssemblyRulebook {
+  version: string;
+  title: string;
+  rules: AssemblyRulebookRule[];
+  acknowledgedUserIds?: string[];
+  materialChangeNotice?: string;
+}
 
 export interface Assembly {
   id: string;
@@ -423,27 +533,31 @@ export interface Assembly {
   status: AssemblyStatus;
   participantUserIds: string[];
   facilitatorId: string;
+  chairId?: string;
   evidenceIds: string[];
   propositionId?: string;
+  rulebook?: AssemblyRulebook;
+  speakingQueue?: SpeakingQueueEntry[];
+  activeSpeakerId?: string | null;
+  roleActions?: AssemblyRoleAction[];
+  roleOverrideAudits?: AssemblyRoleOverrideAudit[];
+  isThreePersonMiniMode?: boolean;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
 }
-
-export type AssemblyRoleType =
-  | 'Questioner'
-  | 'Evidence Analyst'
-  | 'Civic Advocate'
-  | 'Synthesiser'
-  | 'Community Voice'
-  | 'Rapporteur';
 
 export interface AssemblyRole {
   id: string;
   assemblyId: string;
   userId: string;
   roleName: AssemblyRoleType;
+  secondaryRoleName?: AssemblyRoleType;
+  lens?: string;
   responsibilities: string[];
+  power: AssemblyRolePower;
+  powerActionDescription?: string;
+  responseObligation?: string;
   badgeIcon?: string;
   promptSuggestions: string[];
   schemaVersion: number;
@@ -481,12 +595,47 @@ export type PropositionOutcome =
   | 'SPLIT_DECISION'
   | 'INSUFFICIENT_BASIS';
 
+export type ParticipantResponseState =
+  | 'Support'
+  | 'Support with reservations'
+  | 'Dissent'
+  | 'Abstain / insufficient basis';
+
+export interface ParticipantPropositionResponse {
+  id: string;
+  propositionId: string;
+  userId: string;
+  userName: string;
+  userRole?: AssemblyRoleType;
+  responseState: ParticipantResponseState;
+  reasonOrReservations?: string;
+  version: number;
+  timestamp: string;
+  history?: {
+    version: number;
+    responseState: ParticipantResponseState;
+    reasonOrReservations?: string;
+    timestamp: string;
+  }[];
+}
+
+export interface PropositionRoutingEntry {
+  id: string;
+  stage: string;
+  routedTo: string;
+  status: 'simulated_routing' | 'received_by_chamber';
+  timestamp: string;
+  note: string;
+}
+
 export interface DissentRecord {
   id: string;
   userId: string;
   userName: string;
   reason: string;
   suggestedAmendment: string;
+  versionRecorded?: number;
+  timestamp?: string;
 }
 
 export interface SupportProfile {
@@ -499,8 +648,11 @@ export interface SupportProfile {
 export interface PropositionRevision {
   version: number;
   updatedBy: string;
+  authorId?: string;
+  authorRole?: string;
   changesSummary: string;
   timestamp: string;
+  isAiGenerated?: boolean;
 }
 
 export interface Proposition {
@@ -517,6 +669,12 @@ export interface Proposition {
   dissent: DissentRecord[];
   supportProfile: SupportProfile;
   evidenceIds: string[];
+  evidenceBasis?: string[];
+  assumptions: string[];
+  participantResponses: ParticipantPropositionResponse[];
+  reviewerState: 'draft' | 'under_review' | 'reviewed' | 'finalised';
+  publicationVisibility: 'internal_chamber' | 'assembly_members' | 'public_civic_record';
+  routingHistory: PropositionRoutingEntry[];
   outcome: PropositionOutcome;
   version: number;
   revisions: PropositionRevision[];
@@ -759,6 +917,8 @@ export interface DemoDatabase {
   communityPosts: CommunityPost[];
   moderationCases: ModerationCase[];
   civicIssues?: CivicIssue[];
+  assemblyRoleActions?: AssemblyRoleAction[];
+  assemblyRoleOverrideAudits?: AssemblyRoleOverrideAudit[];
 }
 
 declare module './index' {

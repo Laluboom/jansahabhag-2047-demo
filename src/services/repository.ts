@@ -82,13 +82,16 @@ export interface DemoRepository {
   getAssembly(assemblyId: string): Promise<Assembly | null>;
   getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]>;
   getUserAssemblyRole(assemblyId: string, userId: string): Promise<AssemblyRole | null>;
-  joinAssembly(assemblyId: string, userId: string): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
+  joinAssembly(assemblyId: string, userId: string, preferredRole?: import('../types/domain').AssemblyRoleType): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
+  overrideAssemblyRole(assemblyId: string, actorId: string, targetUserId: string, newRole: import('../types/domain').AssemblyRoleType, reason: string): Promise<AssemblyRole>;
   getContributions(assemblyId: string): Promise<Contribution[]>;
   addAssemblyContribution(input: AssemblyContributionInput): Promise<Contribution>;
   getProposition(propositionId: string): Promise<Proposition | null>;
   updateProposition(input: {
     propositionId: string;
     updatedBy: string;
+    actorId?: string;
+    authorRole?: string;
     changesSummary?: string;
     question?: string;
     problem?: string;
@@ -99,11 +102,39 @@ export interface DemoRepository {
     nextStep?: string;
     unresolvedQuestions?: string[];
     evidenceIds?: string[];
+    evidenceBasis?: string[];
+    assumptions?: string[];
+    reviewerState?: 'draft' | 'under_review' | 'reviewed' | 'finalised';
+    publicationVisibility?: 'internal_chamber' | 'assembly_members' | 'public_civic_record';
     dissent?: import('../types/domain').DissentRecord[];
     supportProfile?: import('../types/domain').SupportProfile;
+    isAiGenerated?: boolean;
   }): Promise<Proposition>;
-  finaliseProposition(input: PropositionFinalisationInput): Promise<Proposition>;
-  updateAssemblyStage(assemblyId: string, stage: import('../types/domain').AssemblyStage): Promise<Assembly>;
+  recordPropositionResponse(input: {
+    propositionId: string;
+    userId: string;
+    responseState: import('../types/domain').ParticipantResponseState;
+    reasonOrReservations?: string;
+  }): Promise<Proposition>;
+  finaliseProposition(input: PropositionFinalisationInput & { actorId?: string }): Promise<Proposition>;
+  updateAssemblyStage(assemblyId: string, stage: import('../types/domain').AssemblyStage, actorId?: string): Promise<Assembly>;
+  executeRolePowerAction(input: {
+    assemblyId: string;
+    userId: string;
+    power: import('../types/domain').AssemblyRolePower;
+    title: string;
+    description: string;
+    responseObligation?: string;
+  }): Promise<import('../types/domain').AssemblyRoleAction>;
+  respondToRolePowerAction(input: {
+    assemblyId: string;
+    actionId: string;
+    userId: string;
+    responseNote: string;
+  }): Promise<import('../types/domain').AssemblyRoleAction>;
+  requestAssemblySpeakingTurn(assemblyId: string, userId: string): Promise<Assembly>;
+  recognizeAssemblySpeaker(assemblyId: string, actorId: string, targetUserId: string): Promise<Assembly>;
+  releaseAssemblySpeaker(assemblyId: string, actorId: string): Promise<Assembly>;
 
   // Projects
   getProjects(programmeId?: string): Promise<Project[]>;

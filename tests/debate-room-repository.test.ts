@@ -375,7 +375,7 @@ describe('Debate Room & Shared Live Session Repository Operations', () => {
 
       // Verify linked assembly stage & proposition are preserved without overwrite
       const assembly = await repository.getAssembly('assembly_jaipur_pedestrian_2026');
-      expect(assembly?.currentStage).toBe('deliberation');
+      expect(assembly?.currentStage).toBe('think');
       const proposition = await repository.getProposition('prop_jaipur_pedestrian_01');
       expect(proposition?.question).toContain('Jaipur Municipal Corporation');
 

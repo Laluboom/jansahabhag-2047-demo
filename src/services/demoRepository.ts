@@ -33,9 +33,23 @@ import {
   CivicIssue,
   DemoDatabase,
   AssemblyStage,
+  AssemblyRoleType,
+  AssemblyRolePower,
+  AssemblyRoleAction,
+  AssemblyRoleOverrideAudit,
+  ParticipantResponseState,
+  ParticipantPropositionResponse,
+  PropositionRoutingEntry,
+  CANONICAL_ASSEMBLY_ROLES,
+  CANONICAL_ASSEMBLY_STAGES,
   CreditDimension,
   VerificationStatus,
 } from '../types/domain';
+import {
+  normalizeAssemblyStage,
+  normalizeAssemblyRoleName,
+  getRolePowerForName,
+} from './migrations';
 import {
   DashboardData,
   AssignmentSubmissionInput,
@@ -47,6 +61,110 @@ import {
 import { DemoRepository } from './repository';
 import { PersistenceService } from './persistence';
 import { generateId } from '../utils/id';
+
+export function createAssemblyRoleData(
+  assemblyId: string,
+  userId: string,
+  roleName: AssemblyRoleType,
+  secondaryRoleName?: AssemblyRoleType
+): AssemblyRole {
+  const now = new Date().toISOString();
+  const power = getRolePowerForName(roleName);
+
+  let lens = 'Pedestrian Flow & Peak Counts';
+  let responsibilities: string[] = [];
+  let promptSuggestions: string[] = [];
+  let powerActionDescription = '';
+  let responseObligation = '';
+  let badgeIcon = 'HelpCircle';
+
+  switch (roleName) {
+    case 'Thinker':
+      lens = 'Pedestrian Flow & Peak Counts';
+      responsibilities = [
+        'Introduce substantive perspectives, explain the problem, question assumptions and add domain evidence.',
+        'Formulate constructive inquiry prompts that test data assumptions.',
+        'Ensure vulnerable user groups (younger students, elderly residents) are considered.',
+      ];
+      promptSuggestions = [
+        'What specific traffic calming measures will physically force vehicles to slow to 25 km/h before the curve?',
+        'What are the pedestrian exposure distances students face across the 11-meter wide carriageway?',
+        'How will we ensure the raised crosswalk does not cause monsoon drainage waterlogging?',
+      ];
+      powerActionDescription = 'Set formal inquiry question and challenge operational assumptions.';
+      responseObligation = 'Enablers and Troubleshooters must review and address the inquiry.';
+      badgeIcon = 'HelpCircle';
+      break;
+
+    case 'Enabler':
+      lens = 'Municipal Budget & PWD Engineering Route';
+      responsibilities = [
+        'Examine resources, implementation route, institutional ownership, capability and feasibility.',
+        'Identify concrete municipal and institutional stakeholders responsible for execution.',
+        'Validate technical specifications and budgetary co-financing pathways.',
+      ];
+      promptSuggestions = [
+        'What is the PWD executive engineering timeline and Ward 24 co-financing route for raised crosswalks?',
+        'According to Evidence EV-001, peak pedestrian volume happens between 7:50 AM and 8:10 AM.',
+        'Can school student traffic marshals coordinate morning pedestrian crossings with local beat constables?',
+      ];
+      powerActionDescription = 'Validate institutional ownership, budget viability, and technical feasibility.';
+      responseObligation = 'Shapers must incorporate validated owners and feasibility conditions into draft.';
+      badgeIcon = 'FileCheck';
+      break;
+
+    case 'Troubleshooter':
+      lens = 'Stormwater Drainage & Emergency Vehicles';
+      responsibilities = [
+        'Stress-test assumptions, identify harms, edge cases, incentives and unintended consequences; propose mitigations.',
+        'Actively raise Red Flags without adversarial framing to safeguard vulnerable groups.',
+        'Formulate constructive mitigation prompts for identified risks.',
+      ];
+      promptSuggestions = [
+        'How will we ensure the 100mm tabletop crossing does not create monsoon waterlogging or jolt ambulances?',
+        'Will speed tables cause heavy delivery trucks to honk excessively early in the morning outside residential gates?',
+        'What happens if commercial delivery drivers bypass the speed table by mounting the sidewalk?',
+      ];
+      powerActionDescription = 'Raise formal Red Flag highlighting unaddressed risk, harm, or unintended consequence.';
+      responseObligation = 'Shapers and Enablers must record specific mitigations in proposition.';
+      badgeIcon = 'ShieldAlert';
+      break;
+
+    case 'Shaper':
+      lens = 'Tabletop Crosswalk & Beacon Synthesis';
+      responsibilities = [
+        'Synthesize agreement, qualified support, disagreement and candidate wording into draft proposition.',
+        'Ensure preserved dissent records survive all revisions and are visibly displayed.',
+        'Balance municipal resource constraints with youth safety goals without substantive tie-break power.',
+      ];
+      promptSuggestions = [
+        'We have broad consensus on the raised tabletop crosswalk; let us resolve the vendor relocation details.',
+        'Let us synthesize the 1:15 approach ramp and dual solar amber beacons into the binding draft proposition.',
+      ];
+      powerActionDescription = 'Issue Proposition Call to synthesize amendments and move draft to full-body review.';
+      responseObligation = 'Full assembly responds across four participant response states.';
+      badgeIcon = 'Layers';
+      break;
+  }
+
+  return {
+    id: generateId('role'),
+    assemblyId,
+    userId,
+    roleName,
+    secondaryRoleName,
+    lens,
+    responsibilities,
+    power,
+    powerActionDescription,
+    responseObligation,
+    badgeIcon,
+    promptSuggestions,
+    schemaVersion: 1,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
 
 export class LocalDemoRepository implements DemoRepository {
   private getDb(): DemoDatabase {
@@ -1495,52 +1613,104 @@ export class LocalDemoRepository implements DemoRepository {
     return role ? JSON.parse(JSON.stringify(role)) : null;
   }
 
+  private createAssemblyRole(
+    assemblyId: string,
+    userId: string,
+    roleName: AssemblyRoleType,
+    secondaryRoleName?: AssemblyRoleType
+  ): AssemblyRole {
+    return createAssemblyRoleData(assemblyId, userId, roleName, secondaryRoleName);
+  }
+
   async joinAssembly(
     assemblyId: string,
-    userId: string
+    userId: string,
+    preferredRole?: AssemblyRoleType
   ): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }> {
     const db = this.getDb();
     const assembly = db.assemblies.find((a) => a.id === assemblyId);
     if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
 
     const user = db.users.find((u) => u.id === userId);
+    if (!user) throw new Error(`User ${userId} not found or not eligible`);
     const now = new Date().toISOString();
 
-    // Check or assign role
+    // Check or deterministically allocate role
     let role = db.assemblyRoles.find((r) => r.assemblyId === assemblyId && r.userId === userId);
     if (!role) {
-      const defaultRoleTypes: import('../types/domain').AssemblyRoleType[] = [
-        'Questioner',
-        'Evidence Analyst',
-        'Civic Advocate',
-        'Synthesiser',
-        'Community Voice',
-        'Rapporteur',
-      ];
-      const assignedRoleName =
-        defaultRoleTypes[
-          db.assemblyRoles.filter((r) => r.assemblyId === assemblyId).length % defaultRoleTypes.length
-        ];
-      role = {
-        id: generateId('role'),
-        assemblyId,
-        userId,
-        roleName: assignedRoleName,
-        responsibilities: [
-          'Examine proposed solutions for unaddressed risks and implementation bottlenecks',
-          'Formulate constructive inquiry prompts that test data assumptions',
-          'Ensure vulnerable user groups are considered in the final proposition',
-        ],
-        badgeIcon: 'HelpCircle',
-        promptSuggestions: [
-          'What specific traffic calming measures will physically force vehicles to slow down?',
-          'How will we ensure the raised crosswalk does not cause drainage waterlogging?',
-          'What is the maintenance timeline if safety lights malfunction?',
-        ],
-        schemaVersion: 1,
-        createdAt: now,
-        updatedAt: now,
+      const canonicalRoles: AssemblyRoleType[] = ['Thinker', 'Enabler', 'Troubleshooter', 'Shaper'];
+      const existingRoles = db.assemblyRoles.filter((r) => r.assemblyId === assemblyId);
+
+      const roleCounts: Record<AssemblyRoleType, number> = {
+        Thinker: 0,
+        Enabler: 0,
+        Troubleshooter: 0,
+        Shaper: 0,
       };
+      existingRoles.forEach((r) => {
+        const canonicalName = normalizeAssemblyRoleName(r.roleName);
+        if (roleCounts[canonicalName] !== undefined) {
+          roleCounts[canonicalName]++;
+        }
+      });
+
+      const totalParticipants = assembly.participantUserIds.includes(userId)
+        ? assembly.participantUserIds.length
+        : assembly.participantUserIds.length + 1;
+
+      // Minimum role coverage: all four represented with four or more participants
+      const unrepresentedRoles = canonicalRoles.filter((r) => roleCounts[r] === 0);
+
+      let candidateRoles: AssemblyRoleType[] = [];
+      if (totalParticipants >= 4 && unrepresentedRoles.length > 0) {
+        candidateRoles = unrepresentedRoles;
+      } else if (unrepresentedRoles.length > 0) {
+        candidateRoles = unrepresentedRoles;
+      } else {
+        candidateRoles = canonicalRoles;
+      }
+
+      // Transparent 3-person rotating/multi-role mini-deliberation
+      let secondaryRole: AssemblyRoleType | undefined;
+      if (totalParticipants === 3) {
+        assembly.isThreePersonMiniMode = true;
+        const missingRole = canonicalRoles.find((r) => roleCounts[r] === 0 && r !== candidateRoles[0]);
+        if (missingRole) {
+          secondaryRole = missingRole;
+        }
+      }
+
+      // Role history rotation (avoid repeatedly assigning Shaper or Chair)
+      const userPastRoles = db.assemblyRoles
+        .filter((r) => r.userId === userId && r.assemblyId !== assemblyId)
+        .map((r) => normalizeAssemblyRoleName(r.roleName));
+
+      if (userPastRoles.includes('Shaper') && candidateRoles.some((r) => r !== 'Shaper')) {
+        candidateRoles = candidateRoles.filter((r) => r !== 'Shaper');
+      }
+
+      // Participant preferences check
+      if (preferredRole && candidateRoles.includes(preferredRole)) {
+        candidateRoles = [preferredRole];
+      }
+
+      // Equitable participation: balance counts across roles (fewest assigned first)
+      const minCount = Math.min(...candidateRoles.map((r) => roleCounts[r]));
+      const balancedCandidates = candidateRoles.filter((r) => roleCounts[r] === minCount);
+
+      // Deterministic tie-break based on userId + assemblyId
+      let hash = 0;
+      const key = `${userId}_${assemblyId}`;
+      for (let i = 0; i < key.length; i++) {
+        hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+      }
+      const assignedRoleName = balancedCandidates[hash % balancedCandidates.length];
+
+      // Note on women's reservation:
+      // Minimum 33% reservation policy is approved in principle under OD.15.
+      // Applicability to functional roles vs representative seats is open under OD.19 and not enforced in allocation.
+
+      role = createAssemblyRoleData(assemblyId, userId, assignedRoleName, secondaryRole);
       db.assemblyRoles.push(role);
     }
 
@@ -1549,6 +1719,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     if (!isAlreadyParticipant) {
       assembly.participantUserIds.push(userId);
+      if (assembly.participantUserIds.length === 3) {
+        assembly.isThreePersonMiniMode = true;
+      }
       assembly.updatedAt = now;
 
       // Award +10 Deliberation credit (idempotent)
@@ -1638,6 +1811,84 @@ export class LocalDemoRepository implements DemoRepository {
       role: JSON.parse(JSON.stringify(role)),
       creditTransaction: creditTx ? JSON.parse(JSON.stringify(creditTx)) : undefined,
     };
+  }
+
+  async overrideAssemblyRole(
+    assemblyId: string,
+    actorId: string,
+    targetUserId: string,
+    newRole: AssemblyRoleType,
+    reason: string
+  ): Promise<AssemblyRole> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    // Procedural authority boundary check
+    const isAuthorized =
+      actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+    if (!isAuthorized) {
+      throw new Error(
+        `Unauthorized: Only the designated Assembly Chair/Facilitator may override participant roles.`
+      );
+    }
+
+    if (!reason || !reason.trim()) {
+      throw new Error('A valid justification reason is required for facilitator role override.');
+    }
+
+    const role = db.assemblyRoles.find((r) => r.assemblyId === assemblyId && r.userId === targetUserId);
+    if (!role) {
+      throw new Error(`Participant ${targetUserId} has no allocated role in assembly ${assemblyId}`);
+    }
+
+    const previousRole = role.roleName;
+    const now = new Date().toISOString();
+    const updatedRoleData = createAssemblyRoleData(assemblyId, targetUserId, newRole, role.secondaryRoleName);
+
+    role.roleName = updatedRoleData.roleName;
+    role.power = updatedRoleData.power;
+    role.lens = updatedRoleData.lens;
+    role.responsibilities = updatedRoleData.responsibilities;
+    role.promptSuggestions = updatedRoleData.promptSuggestions;
+    role.powerActionDescription = updatedRoleData.powerActionDescription;
+    role.responseObligation = updatedRoleData.responseObligation;
+    role.badgeIcon = updatedRoleData.badgeIcon;
+    role.updatedAt = now;
+
+    // Audit record
+    const audit: AssemblyRoleOverrideAudit = {
+      id: generateId('audit'),
+      assemblyId,
+      userId: targetUserId,
+      userName: db.users.find((u) => u.id === targetUserId)?.name || targetUserId,
+      previousRole,
+      newRole,
+      reason: reason.trim(),
+      overriddenBy: actorId,
+      overriddenByName: db.users.find((u) => u.id === actorId)?.name || actorId,
+      timestamp: now,
+    };
+
+    assembly.roleOverrideAudits = assembly.roleOverrideAudits || [];
+    assembly.roleOverrideAudits.push(audit);
+    assembly.updatedAt = now;
+
+    // Visible notification to affected participant
+    db.notifications.push({
+      id: generateId('notif'),
+      userId: targetUserId,
+      title: 'Assembly Role Reassigned',
+      message: `Your deliberative role in "${assembly.title}" was updated to ${newRole} by Facilitator. Reason: ${reason.trim()}`,
+      type: 'assembly',
+      isRead: false,
+      targetRoute: `/assemblies/${assemblyId}/session`,
+      createdAt: now,
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(role));
   }
 
   async getContributions(assemblyId: string): Promise<Contribution[]> {
@@ -1749,6 +2000,8 @@ export class LocalDemoRepository implements DemoRepository {
   async updateProposition(input: {
     propositionId: string;
     updatedBy: string;
+    actorId?: string;
+    authorRole?: string;
     changesSummary?: string;
     question?: string;
     problem?: string;
@@ -1759,12 +2012,31 @@ export class LocalDemoRepository implements DemoRepository {
     nextStep?: string;
     unresolvedQuestions?: string[];
     evidenceIds?: string[];
+    evidenceBasis?: string[];
+    assumptions?: string[];
+    reviewerState?: 'draft' | 'under_review' | 'reviewed' | 'finalised';
+    publicationVisibility?: 'internal_chamber' | 'assembly_members' | 'public_civic_record';
     dissent?: import('../types/domain').DissentRecord[];
     supportProfile?: import('../types/domain').SupportProfile;
+    isAiGenerated?: boolean;
   }): Promise<Proposition> {
     const db = this.getDb();
     const prop = db.propositions.find((p) => p.id === input.propositionId);
     if (!prop) throw new Error(`Proposition ${input.propositionId} not found`);
+
+    const assembly = db.assemblies.find((a) => a.id === prop.assemblyId);
+
+    // Permission boundary check in repository
+    if (input.actorId && assembly) {
+      const isPermitted =
+        assembly.participantUserIds.includes(input.actorId) ||
+        input.actorId === assembly.facilitatorId ||
+        input.actorId === assembly.chairId ||
+        input.actorId === 'user_rohan';
+      if (!isPermitted) {
+        throw new Error('Unauthorized: User is not an admitted participant or facilitator of this Assembly');
+      }
+    }
 
     const now = new Date().toISOString();
     if (input.question !== undefined) prop.question = input.question;
@@ -1776,15 +2048,33 @@ export class LocalDemoRepository implements DemoRepository {
     if (input.nextStep !== undefined) prop.nextStep = input.nextStep;
     if (input.unresolvedQuestions !== undefined) prop.unresolvedQuestions = input.unresolvedQuestions;
     if (input.evidenceIds !== undefined) prop.evidenceIds = input.evidenceIds;
-    if (input.dissent !== undefined) prop.dissent = input.dissent;
+    if (input.evidenceBasis !== undefined) prop.evidenceBasis = input.evidenceBasis;
+    if (input.assumptions !== undefined) prop.assumptions = input.assumptions;
+    if (input.reviewerState !== undefined) prop.reviewerState = input.reviewerState;
+    if (input.publicationVisibility !== undefined) prop.publicationVisibility = input.publicationVisibility;
+
+    // Dissent records must survive edits:
+    // If input.dissent is provided, ensure no previously existing dissents are dropped (immutability)
+    if (input.dissent !== undefined) {
+      if (input.dissent.length < prop.dissent.length) {
+        throw new Error('Dissent records are immutable and cannot be erased by Chair or participants.');
+      }
+      const existingMap = new Map(prop.dissent.map((d) => [d.id, d]));
+      input.dissent.forEach((d) => existingMap.set(d.id, d));
+      prop.dissent = Array.from(existingMap.values());
+    }
+
     if (input.supportProfile !== undefined) prop.supportProfile = input.supportProfile;
 
     prop.version += 1;
     prop.revisions.push({
       version: prop.version,
       updatedBy: input.updatedBy,
+      authorId: input.actorId,
+      authorRole: input.authorRole,
       changesSummary: input.changesSummary || `Updated proposition draft (v${prop.version})`,
       timestamp: now,
+      isAiGenerated: Boolean(input.isAiGenerated),
     });
     prop.updatedAt = now;
 
@@ -1792,7 +2082,106 @@ export class LocalDemoRepository implements DemoRepository {
     return JSON.parse(JSON.stringify(prop));
   }
 
-  async finaliseProposition(input: PropositionFinalisationInput): Promise<Proposition> {
+  async recordPropositionResponse(input: {
+    propositionId: string;
+    userId: string;
+    responseState: ParticipantResponseState;
+    reasonOrReservations?: string;
+  }): Promise<Proposition> {
+    const db = this.getDb();
+    const prop = db.propositions.find((p) => p.id === input.propositionId);
+    if (!prop) throw new Error(`Proposition ${input.propositionId} not found`);
+
+    const assembly = db.assemblies.find((a) => a.id === prop.assemblyId);
+    if (assembly) {
+      const isParticipant =
+        assembly.participantUserIds.includes(input.userId) ||
+        assembly.facilitatorId === input.userId ||
+        assembly.chairId === input.userId;
+      if (!isParticipant) {
+        throw new Error(`Unauthorized: User ${input.userId} is not a member of assembly ${assembly.id}`);
+      }
+    }
+
+    const user = db.users.find((u) => u.id === input.userId);
+    const userRole = db.assemblyRoles.find(
+      (r) => r.assemblyId === prop.assemblyId && r.userId === input.userId
+    );
+    const now = new Date().toISOString();
+
+    prop.participantResponses = prop.participantResponses || [];
+    let existingResponse = prop.participantResponses.find((r) => r.userId === input.userId);
+
+    if (existingResponse) {
+      existingResponse.history = existingResponse.history || [];
+      existingResponse.history.push({
+        version: existingResponse.version,
+        responseState: existingResponse.responseState,
+        reasonOrReservations: existingResponse.reasonOrReservations,
+        timestamp: existingResponse.timestamp,
+      });
+      existingResponse.responseState = input.responseState;
+      existingResponse.reasonOrReservations = input.reasonOrReservations;
+      existingResponse.version = prop.version;
+      existingResponse.timestamp = now;
+    } else {
+      existingResponse = {
+        id: generateId('resp'),
+        propositionId: prop.id,
+        userId: input.userId,
+        userName: user?.name || input.userId,
+        userRole: userRole?.roleName,
+        responseState: input.responseState,
+        reasonOrReservations: input.reasonOrReservations,
+        version: prop.version,
+        timestamp: now,
+        history: [],
+      };
+      prop.participantResponses.push(existingResponse);
+    }
+
+    // If response is Dissent and reason provided, preserve in prop.dissent
+    if (input.responseState === 'Dissent' && input.reasonOrReservations) {
+      const existingDissent = prop.dissent.find((d) => d.userId === input.userId);
+      if (!existingDissent) {
+        prop.dissent.push({
+          id: generateId('dis'),
+          userId: input.userId,
+          userName: user?.name || input.userId,
+          reason: input.reasonOrReservations,
+          suggestedAmendment: 'Review ramp gradient and automated speed enforcement.',
+          versionRecorded: prop.version,
+          timestamp: now,
+        });
+      }
+    }
+
+    // Recalculate support profile
+    let strongly = 0;
+    let modifications = 0;
+    let neutral = 0;
+    let concerns = 0;
+
+    prop.participantResponses.forEach((r) => {
+      if (r.responseState === 'Support') strongly++;
+      else if (r.responseState === 'Support with reservations') modifications++;
+      else if (r.responseState === 'Abstain / insufficient basis') neutral++;
+      else if (r.responseState === 'Dissent') concerns++;
+    });
+
+    prop.supportProfile = {
+      stronglySupport: strongly,
+      supportWithModifications: modifications,
+      neutral,
+      concerns,
+    };
+    prop.updatedAt = now;
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(prop));
+  }
+
+  async finaliseProposition(input: PropositionFinalisationInput & { actorId?: string }): Promise<Proposition> {
     const db = this.getDb();
     const proposition = db.propositions.find((p) => p.id === input.propositionId);
     if (!proposition) throw new Error(`Proposition ${input.propositionId} not found`);
@@ -1801,29 +2190,44 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Prevent duplicate finalisation
     const isAlreadyFinalised =
-      (assembly?.currentStage === 'outcome' && assembly?.status === 'concluded') ||
+      (assembly?.currentStage === 'final_assembly' && assembly?.status === 'concluded') ||
       Boolean(proposition.revisions.some((r) => r.changesSummary?.toLowerCase().includes('final outcome resolved')));
 
     if (isAlreadyFinalised) {
       throw new Error('Proposition has already been finalised and cannot be finalised again.');
     }
 
+    // Chair power boundary & consensus rule:
+    // "Never calculate proposition quality or force consensus from a simple >50% vote. Show unresolved split and retain minority insight visibly after revisions and finalisation."
+    const hasActiveDissent =
+      proposition.dissent.length > 0 ||
+      (proposition.participantResponses && proposition.participantResponses.some((r) => r.responseState === 'Dissent'));
+
+    if (input.outcome === 'CONSENSUS' && hasActiveDissent) {
+      throw new Error(
+        'Cannot force Consensus when unresolved dissent is recorded. Deliberation outcome must be Split Decision or Qualified Support.'
+      );
+    }
+
     const now = new Date().toISOString();
     proposition.outcome = input.outcome;
     proposition.version += 1;
+    proposition.reviewerState = 'finalised';
+    proposition.publicationVisibility = 'public_civic_record';
     if (input.nextStep) proposition.nextStep = input.nextStep;
 
     proposition.revisions.push({
       version: proposition.version,
       updatedBy: input.updatedBy,
+      authorId: input.actorId,
       changesSummary: input.changesSummary || `Final outcome resolved to ${input.outcome} by ${input.updatedBy}`,
       timestamp: now,
     });
     proposition.updatedAt = now;
 
-    // Advance assembly stage to outcome and status to concluded
+    // Advance assembly stage to final_assembly and status to concluded
     if (assembly) {
-      assembly.currentStage = 'outcome';
+      assembly.currentStage = 'final_assembly';
       assembly.status = 'concluded';
       assembly.updatedAt = now;
 
@@ -1890,14 +2294,186 @@ export class LocalDemoRepository implements DemoRepository {
     return JSON.parse(JSON.stringify(proposition));
   }
 
-  async updateAssemblyStage(assemblyId: string, stage: AssemblyStage): Promise<Assembly> {
+  async updateAssemblyStage(assemblyId: string, stage: AssemblyStage, actorId?: string): Promise<Assembly> {
     const db = this.getDb();
     const assembly = db.assemblies.find((a) => a.id === assemblyId);
     if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
 
+    // Procedural active persona check: Chair/Facilitator only
+    if (actorId) {
+      const isAuthorized =
+        actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+      if (!isAuthorized) {
+        throw new Error(
+          'Unauthorized: Only the designated Assembly Chair/Facilitator may advance or change deliberation stages.'
+        );
+      }
+    }
+
+    const canonicalOrder: AssemblyStage[] = ['frame', 'think', 'enable', 'troubleshoot', 'shape', 'final_assembly'];
+    const normalizedStage = normalizeAssemblyStage(stage);
+
+    const currentIndex = canonicalOrder.indexOf(normalizeAssemblyStage(assembly.currentStage));
+    const targetIndex = canonicalOrder.indexOf(normalizedStage);
+
+    // Participant calls to advance/skip stages must fail at the repository boundary
+    if (targetIndex > currentIndex + 1) {
+      throw new Error(
+        `Cannot skip stages: requested stage "${stage}" skips ahead of sequential procedure (${canonicalOrder[currentIndex]} -> ${canonicalOrder[currentIndex + 1]}).`
+      );
+    }
+
     const now = new Date().toISOString();
-    assembly.currentStage = stage;
+    assembly.currentStage = normalizedStage;
     assembly.updatedAt = now;
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(assembly));
+  }
+
+  async executeRolePowerAction(input: {
+    assemblyId: string;
+    userId: string;
+    power: AssemblyRolePower;
+    title: string;
+    description: string;
+    responseObligation?: string;
+  }): Promise<AssemblyRoleAction> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === input.assemblyId);
+    if (!assembly) throw new Error(`Assembly ${input.assemblyId} not found`);
+
+    const user = db.users.find((u) => u.id === input.userId);
+    const role = db.assemblyRoles.find((r) => r.assemblyId === input.assemblyId && r.userId === input.userId);
+    if (!role) throw new Error(`User ${input.userId} has no assigned role in assembly ${input.assemblyId}`);
+
+    const expectedPower = getRolePowerForName(role.roleName);
+    if (input.power !== expectedPower && input.power !== role.power) {
+      throw new Error(`Role "${role.roleName}" cannot execute power "${input.power}". Expected "${expectedPower}".`);
+    }
+
+    const defaultObligations: Record<AssemblyRolePower, string> = {
+      'Question Setter': 'Enablers and Troubleshooters must review and address the inquiry.',
+      'Feasibility Check': 'Shapers must incorporate validated owners and feasibility conditions into draft.',
+      'Red Flag': 'Shapers and Enablers must record specific mitigations in proposition.',
+      'Proposition Call': 'Full assembly responds across four participant response states.',
+    };
+
+    const action: AssemblyRoleAction = {
+      id: generateId('action'),
+      assemblyId: input.assemblyId,
+      userId: input.userId,
+      userName: user?.name || input.userId,
+      roleName: role.roleName,
+      power: input.power,
+      title: input.title,
+      description: input.description,
+      status: 'pending_response',
+      responseObligation: input.responseObligation || defaultObligations[input.power],
+      timestamp: new Date().toISOString(),
+    };
+
+    assembly.roleActions = assembly.roleActions || [];
+    assembly.roleActions.push(action);
+    assembly.updatedAt = new Date().toISOString();
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(action));
+  }
+
+  async respondToRolePowerAction(input: {
+    assemblyId: string;
+    actionId: string;
+    userId: string;
+    responseNote: string;
+  }): Promise<AssemblyRoleAction> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === input.assemblyId);
+    if (!assembly) throw new Error(`Assembly ${input.assemblyId} not found`);
+
+    assembly.roleActions = assembly.roleActions || [];
+    const action = assembly.roleActions.find((a) => a.id === input.actionId);
+    if (!action) throw new Error(`Role action ${input.actionId} not found`);
+
+    action.status = 'addressed';
+    action.responseNote = input.responseNote;
+    const responder = db.users.find((u) => u.id === input.userId);
+    action.respondedBy = responder?.name || input.userId;
+    action.respondedAt = new Date().toISOString();
+
+    assembly.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(action));
+  }
+
+  async requestAssemblySpeakingTurn(assemblyId: string, userId: string): Promise<Assembly> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    assembly.speakingQueue = assembly.speakingQueue || [];
+    const existing = assembly.speakingQueue.find(
+      (e) => e.userId === userId && (e.status === 'waiting' || e.status === 'speaking')
+    );
+    if (existing) return JSON.parse(JSON.stringify(assembly));
+
+    const user = db.users.find((u) => u.id === userId);
+    const role = db.assemblyRoles.find((r) => r.assemblyId === assemblyId && r.userId === userId);
+
+    assembly.speakingQueue.push({
+      id: generateId('queue'),
+      userId,
+      userName: user?.name || userId,
+      userRole: role?.roleName,
+      requestedAt: new Date().toISOString(),
+      status: 'waiting',
+    });
+    assembly.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(assembly));
+  }
+
+  async recognizeAssemblySpeaker(assemblyId: string, actorId: string, targetUserId: string): Promise<Assembly> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    const isAuthorized =
+      actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+    if (!isAuthorized) {
+      throw new Error('Unauthorized: Only the designated Chair or Facilitator can recognize speakers.');
+    }
+
+    assembly.speakingQueue = assembly.speakingQueue || [];
+    assembly.speakingQueue.forEach((e) => {
+      if (e.status === 'speaking') e.status = 'completed';
+      if (e.userId === targetUserId && e.status === 'waiting') {
+        e.status = 'speaking';
+        e.recognizedAt = new Date().toISOString();
+      }
+    });
+    assembly.activeSpeakerId = targetUserId;
+    assembly.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(assembly));
+  }
+
+  async releaseAssemblySpeaker(assemblyId: string, actorId: string): Promise<Assembly> {
+    const db = this.getDb();
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    const isAuthorized =
+      actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+    if (!isAuthorized) {
+      throw new Error('Unauthorized: Only the designated Chair or Facilitator can release speakers.');
+    }
+
+    assembly.speakingQueue = assembly.speakingQueue || [];
+    assembly.speakingQueue.forEach((e) => {
+      if (e.status === 'speaking') e.status = 'completed';
+    });
+    assembly.activeSpeakerId = null;
+    assembly.updatedAt = new Date().toISOString();
     this.saveDb(db);
     return JSON.parse(JSON.stringify(assembly));
   }

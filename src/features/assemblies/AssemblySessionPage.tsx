@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
@@ -9,9 +9,15 @@ import {
   Contribution,
   Evidence,
   AssemblyStage,
+  CANONICAL_ASSEMBLY_STAGES,
+  CANONICAL_ASSEMBLY_ROLES,
+  AssemblyRoleType,
+  AssemblyRolePower,
+  AssemblyRoleAction,
   ContributionType,
   Proposition,
   PropositionOutcome,
+  ParticipantResponseState,
   DissentRecord,
   Reflection,
   User,
@@ -45,25 +51,54 @@ import {
   Compass,
   FileText,
   Lock,
+  BookOpen,
+  UserCheck,
+  Mic,
+  MicOff,
+  Volume2,
+  Flag,
+  Check,
+  Info,
+  AlertCircle,
+  X,
+  Plus,
 } from 'lucide-react';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, formatDateTime } from '../../utils/formatters';
 
-const STAGES: { stage: AssemblyStage; label: string; number: number; desc: string }[] = [
-  { stage: 'orientation', label: 'Orientation', number: 1, desc: 'Chamber rules, democratic principles & role briefing' },
-  { stage: 'question', label: 'Central Question', number: 2, desc: 'Problem framing, community scope & constraints' },
-  { stage: 'evidence_review', label: 'Evidence Review', number: 3, desc: 'Audited counts, photos, sensor logs & field data' },
-  { stage: 'deliberation', label: 'Deliberation', number: 4, desc: 'Evidence-based debate & constructive peer inquiry' },
-  { stage: 'proposition_draft', label: 'Proposition Draft', number: 5, desc: 'Structured civic proposition & action specifications' },
-  { stage: 'revision', label: 'Revisions & Amendments', number: 6, desc: 'Iterative amendments and version history' },
-  { stage: 'support_dissent', label: 'Support & Dissent', number: 7, desc: 'Consensus mapping and preserved minority viewpoints' },
-  { stage: 'outcome', label: 'Final Outcome', number: 8, desc: 'Binding outcome resolution & municipal deputation' },
-  { stage: 'reflection', label: 'Civic Reflection', number: 9, desc: 'Reflective learning, ethical values & Passport update' },
-];
+const ROLE_POWER_MAP: Record<AssemblyRoleType, { power: AssemblyRolePower; obligation: string; prompt: string }> = {
+  Thinker: {
+    power: 'Question Setter',
+    obligation: 'Enablers and Troubleshooters must review and address the inquiry.',
+    prompt: 'Set a constructive, evidence-based inquiry challenging assumptions about this issue...',
+  },
+  Enabler: {
+    power: 'Feasibility Check',
+    obligation: 'Shapers must incorporate validated owners and feasibility conditions into draft.',
+    prompt: 'Specify concrete engineering, budgetary, or statutory feasibility conditions...',
+  },
+  Troubleshooter: {
+    power: 'Red Flag',
+    obligation: 'Shapers and Enablers must record specific mitigations in proposition.',
+    prompt: 'Raise an evidence-grounded risk, unintended consequence, or safety hazard...',
+  },
+  Shaper: {
+    power: 'Proposition Call',
+    obligation: 'Full assembly responds across four participant response states.',
+    prompt: 'Draft or synthesize a balanced proposition amendment for assembly review...',
+  },
+};
 
 export const AssemblySessionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const stageFromUrl = searchParams.get('stage') as AssemblyStage | null;
+  const stageFromUrlRaw = searchParams.get('stage');
+  const stageFromUrl: AssemblyStage | null = (
+    stageFromUrlRaw === 'reflection' || stageFromUrlRaw === 'outcome' || stageFromUrlRaw === 'resolution'
+      ? 'final_assembly'
+      : (stageFromUrlRaw && CANONICAL_ASSEMBLY_STAGES.some((s) => s.stage === stageFromUrlRaw)
+          ? (stageFromUrlRaw as AssemblyStage)
+          : null)
+  );
   const { currentUser } = useAuthStore();
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
   const navigate = useNavigate();
@@ -76,21 +111,22 @@ export const AssemblySessionPage: React.FC = () => {
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([]);
   const [proposition, setProposition] = useState<Proposition | null>(null);
   const [reflections, setReflections] = useState<Reflection[]>([]);
+  const [linkedSession, setLinkedSession] = useState<Session | null>(null);
 
-  // Stage state (URL query param -> assembly.currentStage -> default deliberation)
-  const [activeStage, setActiveStage] = useState<AssemblyStage>(stageFromUrl || 'deliberation');
+  // Active Stage
+  const [activeStage, setActiveStage] = useState<AssemblyStage>(stageFromUrl || 'frame');
+  const [stageChangeError, setStageChangeError] = useState<string | null>(null);
 
-  const handleSetStage = (stage: AssemblyStage) => {
-    setActiveStage(stage);
-    setSearchParams({ stage }, { replace: true });
-  };
+  // Mobile Role Filter
+  const [mobileRoleFilter, setMobileRoleFilter] = useState<AssemblyRoleType | 'ALL'>('ALL');
 
-  // Sync if URL stage changes
-  useEffect(() => {
-    if (stageFromUrl && stageFromUrl !== activeStage) {
-      setActiveStage(stageFromUrl);
-    }
-  }, [stageFromUrl]);
+  // Modals & Panels
+  const [showRulebookModal, setShowRulebookModal] = useState(false);
+  const [showRolesModal, setShowRolesModal] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+
+  // Rulebook Acknowledgment
+  const [rulebookNoticeDismissed, setRulebookNoticeDismissed] = useState(false);
 
   // Contribution Form State
   const [newContribText, setNewContribText] = useState('');
@@ -98,6 +134,21 @@ export const AssemblySessionPage: React.FC = () => {
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>([]);
   const [isSubmittingContrib, setIsSubmittingContrib] = useState(false);
   const [contribSuccessMsg, setContribSuccessMsg] = useState<string | null>(null);
+
+  // Role Power Action Form State
+  const [powerActionTitle, setPowerActionTitle] = useState('');
+  const [powerActionDesc, setPowerActionDesc] = useState('');
+  const [isSubmittingPower, setIsSubmittingPower] = useState(false);
+  const [powerSuccessMsg, setPowerSuccessMsg] = useState<string | null>(null);
+  const [respondingToActionId, setRespondingToActionId] = useState<string | null>(null);
+  const [actionResponseNote, setActionResponseNote] = useState('');
+  const [isSubmittingActionResponse, setIsSubmittingActionResponse] = useState(false);
+
+  // Final Assembly Response Voting
+  const [myResponseState, setMyResponseState] = useState<ParticipantResponseState>('Support');
+  const [myResponseReason, setMyResponseReason] = useState('');
+  const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
+  const [responseSuccessMsg, setResponseSuccessMsg] = useState<string | null>(null);
 
   // Revision Form State
   const [revisionSummary, setRevisionSummary] = useState('');
@@ -115,6 +166,13 @@ export const AssemblySessionPage: React.FC = () => {
   const [isFinalisingOutcome, setIsFinalisingOutcome] = useState(false);
   const [finalisationError, setFinalisationError] = useState<string | null>(null);
 
+  // Role Override State (Chair/Facilitator)
+  const [overrideTargetUserId, setOverrideTargetUserId] = useState('');
+  const [overrideNewRole, setOverrideNewRole] = useState<AssemblyRoleType>('Thinker');
+  const [overrideReason, setOverrideReason] = useState('');
+  const [isSubmittingOverride, setIsSubmittingOverride] = useState(false);
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+
   // Reflection Form State
   const [reflectionText, setReflectionText] = useState('');
   const [selectedValues, setSelectedValues] = useState<string[]>([
@@ -124,9 +182,20 @@ export const AssemblySessionPage: React.FC = () => {
   ]);
   const [isSubmittingReflection, setIsSubmittingReflection] = useState(false);
   const [reflectionSuccess, setReflectionSuccess] = useState(false);
-  const [linkedSession, setLinkedSession] = useState<Session | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleSetStage = (stage: AssemblyStage) => {
+    setActiveStage(stage);
+    setSearchParams({ stage }, { replace: true });
+    setStageChangeError(null);
+  };
+
+  useEffect(() => {
+    if (stageFromUrl && stageFromUrl !== activeStage) {
+      setActiveStage(stageFromUrl);
+    }
+  }, [stageFromUrl]);
 
   useEffect(() => {
     async function load() {
@@ -153,7 +222,9 @@ export const AssemblySessionPage: React.FC = () => {
         }
 
         if (asm) {
-          if (!stageFromUrl && !activeStage) {
+          if (stageFromUrl) {
+            setActiveStage(stageFromUrl);
+          } else if (!stageFromUrlRaw && !activeStage) {
             setActiveStage(asm.currentStage);
           }
           const pUsers = allUsers.filter((u) => asm.participantUserIds.includes(u.id));
@@ -172,6 +243,13 @@ export const AssemblySessionPage: React.FC = () => {
             if (prop) {
               setAmendedPropositionText((prev) => prev || prop.proposition);
               setSelectedOutcome(prop.outcome);
+
+              // Pre-fill user's existing response if any
+              const existingResp = prop.participantResponses?.find((resp) => resp.userId === currentUser.id);
+              if (existingResp) {
+                setMyResponseState(existingResp.responseState);
+                setMyResponseReason(existingResp.reasonOrReservations || '');
+              }
             }
           }
         }
@@ -185,27 +263,80 @@ export const AssemblySessionPage: React.FC = () => {
   }, [id, currentUser, refreshKey]);
 
   const effectiveStage = activeStage;
+  const currentStageIndex = CANONICAL_ASSEMBLY_STAGES.findIndex((s) => s.stage === effectiveStage);
 
-  // Stage Stepping
-  const currentStageIndex = STAGES.findIndex((s) => s.stage === effectiveStage);
+  // Procedural Authority: Check if active persona is Chair or Facilitator
+  const isChair = Boolean(
+    currentUser &&
+      assembly &&
+      (assembly.chairId === currentUser.id ||
+        assembly.facilitatorId === currentUser.id ||
+        currentUser.role === 'facilitator')
+  );
 
-  const goToNextStage = async () => {
-    if (currentStageIndex < STAGES.length - 1) {
-      const next = STAGES[currentStageIndex + 1].stage;
-      handleSetStage(next);
-      if (id && assembly && currentUser?.role === 'facilitator') {
-        await demoRepository.updateAssemblyStage(id, next);
+  // Chair Stage Advance / Return
+  const handleAdvanceStage = async () => {
+    if (!id || !assembly || !currentUser) return;
+    setStageChangeError(null);
+    if (currentStageIndex < CANONICAL_ASSEMBLY_STAGES.length - 1) {
+      const nextStage = CANONICAL_ASSEMBLY_STAGES[currentStageIndex + 1].stage;
+      try {
+        await demoRepository.updateAssemblyStage(id, nextStage, currentUser.id);
+        handleSetStage(nextStage);
+        triggerRefresh();
+      } catch (err: any) {
+        setStageChangeError(err?.message || 'Failed to advance stage');
       }
     }
   };
 
-  const goToPrevStage = () => {
+  const handleReturnStage = async () => {
+    if (!id || !assembly || !currentUser) return;
+    setStageChangeError(null);
     if (currentStageIndex > 0) {
-      handleSetStage(STAGES[currentStageIndex - 1].stage);
+      const prevStage = CANONICAL_ASSEMBLY_STAGES[currentStageIndex - 1].stage;
+      try {
+        await demoRepository.updateAssemblyStage(id, prevStage, currentUser.id);
+        handleSetStage(prevStage);
+        triggerRefresh();
+      } catch (err: any) {
+        setStageChangeError(err?.message || 'Failed to return stage');
+      }
     }
   };
 
-  // Add Contribution
+  // Participant Speaking Queue
+  const handleRequestSpeakingTurn = async () => {
+    if (!id || !currentUser) return;
+    try {
+      await demoRepository.requestAssemblySpeakingTurn(id, currentUser.id);
+      triggerRefresh();
+    } catch (err) {
+      console.error('Failed to request speaking turn', err);
+    }
+  };
+
+  const handleRecognizeSpeaker = async (targetUserId: string) => {
+    if (!id || !currentUser) return;
+    try {
+      await demoRepository.recognizeAssemblySpeaker(id, currentUser.id, targetUserId);
+      triggerRefresh();
+    } catch (err) {
+      console.error('Failed to recognize speaker', err);
+    }
+  };
+
+  const handleReleaseSpeaker = async () => {
+    if (!id || !currentUser) return;
+    try {
+      await demoRepository.releaseAssemblySpeaker(id, currentUser.id);
+      triggerRefresh();
+    } catch (err) {
+      console.error('Failed to release speaker', err);
+    }
+  };
+
+  // Substantive Contribution
   const handleAddContribution = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!id || !currentUser || !newContribText.trim()) return;
@@ -235,7 +366,81 @@ export const AssemblySessionPage: React.FC = () => {
     }
   };
 
-  // Submit Proposition Revision
+  // Role Power Execution
+  const handleExecuteRolePower = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !currentUser || !userRole || !powerActionTitle.trim() || !powerActionDesc.trim()) return;
+
+    setIsSubmittingPower(true);
+    setPowerSuccessMsg(null);
+    try {
+      await demoRepository.executeRolePowerAction({
+        assemblyId: id,
+        userId: currentUser.id,
+        power: userRole.power,
+        title: powerActionTitle.trim(),
+        description: powerActionDesc.trim(),
+      });
+
+      setPowerActionTitle('');
+      setPowerActionDesc('');
+      setPowerSuccessMsg(`Exercised ${userRole.power}! Response obligation sent to chamber.`);
+      triggerRefresh();
+      setTimeout(() => setPowerSuccessMsg(null), 4000);
+    } catch (err: any) {
+      console.error('Failed to execute role power', err);
+    } finally {
+      setIsSubmittingPower(false);
+    }
+  };
+
+  // Respond to Peer Role Action
+  const handleRespondToRoleAction = async (actionId: string) => {
+    if (!id || !currentUser || !actionResponseNote.trim()) return;
+    setIsSubmittingActionResponse(true);
+    try {
+      await demoRepository.respondToRolePowerAction({
+        assemblyId: id,
+        actionId,
+        userId: currentUser.id,
+        responseNote: actionResponseNote.trim(),
+      });
+      setActionResponseNote('');
+      setRespondingToActionId(null);
+      triggerRefresh();
+    } catch (err) {
+      console.error('Failed to respond to role action', err);
+    } finally {
+      setIsSubmittingActionResponse(false);
+    }
+  };
+
+  // Participant Response State Casting (Final Assembly)
+  const handleRecordResponseState = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proposition || !currentUser) return;
+
+    setIsSubmittingResponse(true);
+    setResponseSuccessMsg(null);
+    try {
+      const updated = await demoRepository.recordPropositionResponse({
+        propositionId: proposition.id,
+        userId: currentUser.id,
+        responseState: myResponseState,
+        reasonOrReservations: myResponseReason.trim() || undefined,
+      });
+      setProposition(updated);
+      setResponseSuccessMsg(`Recorded response: "${myResponseState}". Profile updated.`);
+      triggerRefresh();
+      setTimeout(() => setResponseSuccessMsg(null), 4000);
+    } catch (err) {
+      console.error('Failed to record proposition response', err);
+    } finally {
+      setIsSubmittingResponse(false);
+    }
+  };
+
+  // Proposition Revision
   const handleSubmitRevision = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!proposition || !currentUser || !amendedPropositionText.trim()) return;
@@ -246,12 +451,12 @@ export const AssemblySessionPage: React.FC = () => {
       const updated = await demoRepository.updateProposition({
         propositionId: proposition.id,
         updatedBy: currentUser.name,
-        changesSummary: revisionSummary.trim() || `Proposed revision v${proposition.version + 1} during Chamber Revision session`,
+        changesSummary: revisionSummary.trim() || `Proposed revision v${proposition.version + 1} during Chamber session`,
         proposition: amendedPropositionText.trim(),
       });
       setProposition(updated);
       setRevisionSummary('');
-      setRevisionSuccessMsg(`Revision v${updated.version} recorded successfully in proposition history!`);
+      setRevisionSuccessMsg(`Revision v${updated.version} recorded successfully! Dissent records preserved.`);
       triggerRefresh();
       setTimeout(() => setRevisionSuccessMsg(null), 4000);
     } catch (err) {
@@ -261,7 +466,7 @@ export const AssemblySessionPage: React.FC = () => {
     }
   };
 
-  // Submit Dissent Record
+  // Formal Dissent Submission
   const handleAddDissent = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!proposition || !currentUser || !dissentReason.trim()) return;
@@ -274,6 +479,8 @@ export const AssemblySessionPage: React.FC = () => {
         userName: currentUser.name,
         reason: dissentReason.trim(),
         suggestedAmendment: dissentAmendment.trim() || 'No explicit amendment provided.',
+        versionRecorded: proposition.version,
+        timestamp: new Date().toISOString(),
       };
 
       const updated = await demoRepository.updateProposition({
@@ -294,7 +501,7 @@ export const AssemblySessionPage: React.FC = () => {
     }
   };
 
-  // Finalise Outcome
+  // Outcome Finalisation
   const handleFinaliseOutcome = async () => {
     if (!proposition || !assembly || !currentUser) return;
     setIsFinalisingOutcome(true);
@@ -309,7 +516,6 @@ export const AssemblySessionPage: React.FC = () => {
       });
       setProposition(finalised);
       triggerRefresh();
-      goToNextStage(); // Move to reflection stage
     } catch (err: any) {
       setFinalisationError(err?.message || 'Failed to finalise proposition');
     } finally {
@@ -317,7 +523,32 @@ export const AssemblySessionPage: React.FC = () => {
     }
   };
 
-  // Submit Reflection
+  // Facilitator Role Override
+  const handleRoleOverride = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !currentUser || !overrideTargetUserId || !overrideReason.trim()) return;
+
+    setIsSubmittingOverride(true);
+    setOverrideError(null);
+    try {
+      await demoRepository.overrideAssemblyRole(
+        id,
+        currentUser.id,
+        overrideTargetUserId,
+        overrideNewRole,
+        overrideReason.trim()
+      );
+      setShowOverrideModal(false);
+      setOverrideReason('');
+      triggerRefresh();
+    } catch (err: any) {
+      setOverrideError(err?.message || 'Failed to override role');
+    } finally {
+      setIsSubmittingOverride(false);
+    }
+  };
+
+  // Reflection Submission
   const handleSubmitReflection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id || !currentUser || !reflectionText.trim()) return;
@@ -392,8 +623,19 @@ export const AssemblySessionPage: React.FC = () => {
 
   const isFinalised =
     assembly.status === 'concluded' ||
-    assembly.currentStage === 'outcome' ||
     Boolean(proposition?.revisions.some((r) => r.changesSummary?.toLowerCase().includes('final outcome resolved')));
+
+  // Filter delegates by functional zone
+  const getZoneParticipants = (roleName: AssemblyRoleType) => {
+    return participants.filter((p) => {
+      const r = allRoles.find((role) => role.userId === p.id);
+      return r?.roleName === roleName || r?.secondaryRoleName === roleName;
+    });
+  };
+
+  const speakingQueue = assembly.speakingQueue || [];
+  const activeSpeakerEntry = speakingQueue.find((s) => s.status === 'speaking');
+  const roleActions = assembly.roleActions || [];
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
@@ -412,8 +654,13 @@ export const AssemblySessionPage: React.FC = () => {
                 Youth Chamber in Session
               </span>
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-                Stage {currentStageIndex + 1}/9: {STAGES[currentStageIndex].label}
+                Stage {currentStageIndex + 1}/6: {CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.label}
               </span>
+              {isChair && (
+                <span className="text-[10px] font-bold text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
+                  Chair / Facilitator Active
+                </span>
+              )}
             </div>
             <h1 className="text-base sm:text-lg font-bold font-heading text-white truncate mt-0.5">
               {assembly.title}
@@ -421,12 +668,47 @@ export const AssemblySessionPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Rulebook Quick Access */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowRulebookModal(true)}
+            className="bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 text-xs"
+          >
+            <BookOpen className="w-3.5 h-3.5 mr-1 text-civic-teal-400" />
+            <span>Rulebook ({assembly.rulebook?.version ? (assembly.rulebook.version.startsWith('v') ? assembly.rulebook.version : `v${assembly.rulebook.version}`) : 'v1.0'})</span>
+          </Button>
+
+          {/* Roles & Powers Sheet */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowRolesModal(true)}
+            className="bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 text-xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1 text-civic-saffron-400" />
+            <span>Roles & Powers</span>
+          </Button>
+
+          {/* Facilitator Override Action */}
+          {isChair && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowOverrideModal(true)}
+              className="bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700 text-xs"
+            >
+              <UserCheck className="w-3.5 h-3.5 mr-1" />
+              <span>Role Override Audit</span>
+            </Button>
+          )}
+
           {proposition && (
             <Link to={`/propositions/${proposition.id}`}>
               <Button size="sm" variant="outline" className="bg-slate-800 text-white border-slate-700 hover:bg-slate-700 text-xs">
                 <Layers className="w-3.5 h-3.5 mr-1" />
-                <span>Proposition Record</span>
+                <span>Proposition</span>
               </Button>
             </Link>
           )}
@@ -434,18 +716,53 @@ export const AssemblySessionPage: React.FC = () => {
           <Link to="/passport">
             <Button size="sm" variant="outline" className="bg-slate-800 text-civic-saffron-400 border-slate-700 hover:bg-slate-700 text-xs">
               <Award className="w-3.5 h-3.5 mr-1" />
-              <span>Civic Passport</span>
+              <span>Passport</span>
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Shared Session Reciprocal Link & Single-Browser Notice (Master PRD §A7, Scope G) */}
+      {/* Material Rulebook Notice Banner if applicable */}
+      {assembly.rulebook?.materialChangeNotice && !rulebookNoticeDismissed && (
+        <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-950 flex items-center justify-between text-xs shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Rulebook Notice (v{assembly.rulebook.version}):</strong> {assembly.rulebook.materialChangeNotice}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setRulebookNoticeDismissed(true)}
+            className="h-7 text-[11px] border-amber-300 bg-white text-amber-900"
+          >
+            Acknowledge
+          </Button>
+        </div>
+      )}
+
+      {/* Mini-Deliberation Mode Banner (3-person / uneven coverage) */}
+      {assembly.isThreePersonMiniMode && (
+        <div className="p-3 rounded-xl border border-civic-indigo-200 bg-civic-indigo-50 text-civic-indigo-950 flex items-center justify-between text-xs shadow-xs">
+          <div className="flex items-center gap-2">
+            <Scale className="w-4 h-4 text-civic-indigo-700 shrink-0" />
+            <span>
+              <strong>3-Person Mini-Deliberation Mode Active:</strong> All 4 functional roles are preserved via transparent rotating secondary allocations.
+            </span>
+          </div>
+          <span className="text-[10px] uppercase font-bold text-civic-indigo-800 bg-civic-indigo-100 px-2 py-0.5 rounded border border-civic-indigo-200">
+            Multi-Role Rotation
+          </span>
+        </div>
+      )}
+
+      {/* Shared Session Reciprocal Link & Single-Browser Notice */}
       <div className="p-3.5 rounded-xl border border-civic-teal-200 bg-civic-teal-50/70 text-civic-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-center gap-2">
           <Scale className="w-4 h-4 text-civic-teal-700 shrink-0" />
           <span>
-            <strong>Linked Shared Session:</strong> {linkedSession ? linkedSession.id : 'sess_jaipur_01'} | Engine Mode: <strong>Youth Assembly</strong>. State is only shared among personas within this browser.
+            <strong>Linked Shared Session: {linkedSession ? linkedSession.id : 'sess_jaipur_01'}</strong> | <strong>Engine Mode: Youth Assembly</strong> — Fictional simulation. State is only shared among personas within this browser.
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -458,531 +775,581 @@ export const AssemblySessionPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3-Column Main Deliberation Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left 3 Columns: 9 Stages Nav + Role Briefing */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Stages Navigation Card */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-                Chamber Stages (9)
-              </h2>
-              <span className="text-[11px] font-mono text-civic-teal-700 font-bold">
-                {currentStageIndex + 1}/9
-              </span>
+      {/* CANONICAL SIX-STAGE TIMELINE BAR */}
+      <Card className="border-slate-200 p-3 bg-white">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs">
+          <span className="font-bold uppercase tracking-wider text-slate-500">
+            Canonical Deliberation Pathway (6 Stages)
+          </span>
+          {isChair ? (
+            <span className="text-[11px] font-semibold text-civic-teal-800 bg-civic-teal-50 px-2 py-0.5 rounded border border-civic-teal-200">
+              Chair Controls Stage Progression
+            </span>
+          ) : (
+            <span className="text-[11px] text-slate-400">
+              Chamber Current: <strong>{CANONICAL_ASSEMBLY_STAGES.find((s) => s.stage === assembly.currentStage)?.label}</strong>
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2">
+          {CANONICAL_ASSEMBLY_STAGES.map((st, i) => {
+            const isCurrent = effectiveStage === st.stage;
+            const isChamberStage = assembly.currentStage === st.stage;
+            const isPassed = CANONICAL_ASSEMBLY_STAGES.findIndex((s) => s.stage === assembly.currentStage) > i;
+
+            return (
+              <button
+                key={st.stage}
+                type="button"
+                onClick={() => handleSetStage(st.stage)}
+                className={`p-2.5 rounded-xl border text-left transition-all ${
+                  isCurrent
+                    ? 'bg-civic-teal-600 text-white border-civic-teal-700 shadow-xs font-bold'
+                    : isChamberStage
+                    ? 'bg-civic-teal-50 text-civic-teal-900 border-civic-teal-300 font-semibold'
+                    : isPassed
+                    ? 'bg-slate-50 text-slate-700 border-slate-200'
+                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-bold">Stage {st.number}</span>
+                  {isChamberStage && <span className="w-2 h-2 rounded-full bg-civic-teal-400 animate-pulse" />}
+                </div>
+                <div className="font-heading text-xs truncate mt-0.5">{st.label}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        {stageChangeError && (
+          <div className="mt-2 p-2 rounded bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>{stageChangeError}</span>
+          </div>
+        )}
+
+        {/* Chair Procedural Controls Bar */}
+        {isChair && (
+          <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 text-xs">
+            <span className="text-slate-600 font-medium">
+              Chamber Stage: <strong>{assembly.currentStage.replace('_', ' ')}</strong>
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleReturnStage}
+                disabled={currentStageIndex === 0}
+                className="h-7 text-xs"
+              >
+                <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+                <span>Return Stage</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={handleAdvanceStage}
+                disabled={currentStageIndex === CANONICAL_ASSEMBLY_STAGES.length - 1}
+                className="h-7 text-xs"
+              >
+                <span>Advance Stage</span>
+                <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              </Button>
             </div>
+          </div>
+        )}
+      </Card>
 
-            <div className="space-y-1">
-              {STAGES.map((st) => {
-                const isCurrent = effectiveStage === st.stage;
-                const isPassed = currentStageIndex > STAGES.findIndex((s) => s.stage === st.stage);
+      {/* MOBILE ROLE ZONE FILTER TABS (Visible on small screens) */}
+      <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setMobileRoleFilter('ALL')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap border ${
+            mobileRoleFilter === 'ALL'
+              ? 'bg-slate-800 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-200'
+          }`}
+        >
+          All 4 Zones
+        </button>
+        {CANONICAL_ASSEMBLY_ROLES.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setMobileRoleFilter(r)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap border ${
+              mobileRoleFilter === r
+                ? 'bg-civic-indigo-600 text-white border-civic-indigo-700'
+                : 'bg-white text-slate-700 border-slate-200'
+            }`}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
 
-                return (
-                  <button
-                    key={st.stage}
-                    type="button"
-                    onClick={() => handleSetStage(st.stage)}
-                    className={`w-full text-left flex items-center justify-between p-2 rounded-lg text-xs transition-all ${
-                      isCurrent
-                        ? 'bg-civic-teal-600 text-white font-bold shadow-xs'
-                        : isPassed
-                        ? 'bg-civic-teal-50/70 text-civic-teal-900 font-medium hover:bg-civic-teal-100/50'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span className="truncate">
-                      {st.number}. {st.label}
-                    </span>
-                    {isCurrent ? (
-                      <Compass className="w-3.5 h-3.5 text-white shrink-0" />
-                    ) : isPassed ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-civic-teal-600 shrink-0" />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
+      {/* FOUR VISUALLY BALANCED FUNCTIONAL ROLE ZONES (Desktop 4-quadrant layout / Mobile filtered) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5">
+        {CANONICAL_ASSEMBLY_ROLES.map((roleName) => {
+          if (mobileRoleFilter !== 'ALL' && mobileRoleFilter !== roleName) {
+            return null;
+          }
 
-          {/* User Allocated Role Card */}
-          {userRole && (
-            <Card className="border-civic-indigo-200 bg-civic-indigo-50/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-civic-indigo-900">
-                  Your Role: {userRole.roleName}
-                </span>
-                <Sparkles className="w-4 h-4 text-civic-indigo-600" />
+          const zoneDelegates = getZoneParticipants(roleName);
+          const isMyZone = userRole?.roleName === roleName || userRole?.secondaryRoleName === roleName;
+          const powerInfo = ROLE_POWER_MAP[roleName];
+
+          return (
+            <Card
+              key={roleName}
+              className={`p-3.5 flex flex-col justify-between space-y-3 transition-all ${
+                isMyZone
+                  ? 'border-civic-indigo-400 bg-civic-indigo-50/30 ring-1 ring-civic-indigo-400/50'
+                  : 'border-slate-200 bg-white'
+              }`}
+            >
+              <div>
+                {/* Balanced Role Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-heading font-bold text-sm text-slate-900">{roleName}</span>
+                    {isMyZone && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-civic-indigo-600 text-white font-bold">
+                        Your Zone
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {zoneDelegates.length} {zoneDelegates.length === 1 ? 'Delegate' : 'Delegates'}
+                  </span>
+                </div>
+
+                {/* Role Responsibility & Power */}
+                <div className="pt-2 space-y-1.5 text-xs">
+                  <div className="text-slate-600">
+                    <span className="font-semibold text-slate-700 block">Advancing Power:</span>
+                    <span className="text-civic-indigo-800 font-bold">{powerInfo.power}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-tight">
+                    {powerInfo.obligation}
+                  </p>
+                </div>
+
+                {/* Delegates List in Zone */}
+                <div className="pt-2 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Active Delegates:
+                  </span>
+                  {zoneDelegates.length === 0 ? (
+                    <div className="p-2 rounded bg-slate-50 border border-slate-200/80 text-[11px] text-slate-400 italic text-center">
+                      Awaiting delegate assignment
+                    </div>
+                  ) : (
+                    <div className="space-y-1 max-h-[140px] overflow-y-auto pr-0.5">
+                      {zoneDelegates.map((d) => (
+                        <div
+                          key={d.id}
+                          className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs"
+                        >
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Avatar src={d.avatar} alt={d.name} size="sm" />
+                            <span className="font-medium text-slate-900 truncate">
+                              {d.name} {d.id === currentUser?.id && '(You)'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                As <strong>{userRole.roleName}</strong>, probe infrastructure feasibility and test assumptions using field evidence.
-              </p>
+              {/* Action Button for User in this Zone */}
+              {isMyZone && (
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="text-[10px] text-civic-teal-700 font-medium">
+                    Issue-advancing power ready: <strong>{userRole.power}</strong>
+                  </div>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
 
-              <div className="space-y-1.5 pt-1 border-t border-civic-indigo-100">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Role Inquiries:
+      {/* MAIN TWO-COLUMN WORKSPACE: LEFT = INTERACTIVE STAGE & ROLE POWERS, RIGHT = SPEAKING QUEUE & EVIDENCE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* LEFT 8 COLUMNS: INTERACTIVE STAGE WORKSPACE */}
+        <div className="lg:col-span-8 space-y-4">
+          <Card className="border-slate-200 p-5 sm:p-6 space-y-5 bg-white shadow-sm min-h-[500px]">
+            {/* Stage Title Header */}
+            <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-3 gap-2">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-700">
+                  Stage {currentStageIndex + 1} of 6
                 </span>
-                <div className="space-y-1">
-                  {userRole.promptSuggestions.slice(0, 2).map((prompt, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setNewContribText(prompt)}
-                      className="p-2 rounded bg-white border border-civic-indigo-200 text-[11px] text-slate-700 italic cursor-pointer hover:border-civic-indigo-500 hover:bg-civic-indigo-50 transition-colors"
-                      title="Click to copy into contribution box"
-                    >
-                      "{prompt}"
+                <h2 className="text-xl font-bold font-heading text-slate-900">
+                  {CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.label}
+                </h2>
+              </div>
+              <div className="text-right text-xs text-slate-500 max-w-sm">
+                <span className="italic block font-medium text-slate-700">
+                  "{CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.coreQuestion}"
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.desc}
+                </span>
+              </div>
+            </div>
+
+            {/* STAGE 1: FRAME */}
+            {effectiveStage === 'frame' && (
+              <div className="space-y-4 text-xs text-slate-700">
+                <div className="p-4 rounded-xl bg-civic-teal-50 border border-civic-teal-200 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-civic-teal-800">
+                    Central Deliberation Question
+                  </span>
+                  <h3 className="text-base font-bold font-heading text-slate-900">
+                    "{assembly.question}"
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    {assembly.description}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+                    <strong className="text-slate-900 block font-heading">Location & Scope</strong>
+                    <p className="text-slate-600">{assembly.location} & Navchetna School perimeter.</p>
+                  </div>
+                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+                    <strong className="text-slate-900 block font-heading">Target Stakeholders</strong>
+                    <p className="text-slate-600">800+ student pedestrians, morning walkers, bus passengers, local shopkeepers.</p>
+                  </div>
+                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+                    <strong className="text-slate-900 block font-heading">Engineering Boundary</strong>
+                    <p className="text-slate-600">Road width: 11m, IRC ramp slope: 1:15, monsoon drain capacity maintenance.</p>
+                  </div>
+                </div>
+
+                {/* Rulebook notice */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-civic-teal-700" />
+                    <span>Attached Rulebook: <strong>{assembly.rulebook?.title || 'Assembly Rulebook v1.0'}</strong></span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowRulebookModal(true)}
+                    className="text-xs h-7"
+                  >
+                    View Rulebook
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 2: THINK */}
+            {effectiveStage === 'think' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-civic-indigo-50 border border-civic-indigo-200 text-civic-indigo-950 space-y-1">
+                  <strong className="font-heading text-sm block">Thinkers Lead: Question Setting & Deep Domain Inquiry</strong>
+                  <p className="text-slate-700">
+                    Thinkers frame constructive inquiries and probe underlying assumptions using verified ground evidence.
+                  </p>
+                </div>
+
+                {/* Substantive Contributions Stream */}
+                <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                  {contributions.filter((c) => c.stage === 'think' || c.stage === 'frame').map((c) => (
+                    <div key={c.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900">{c.userName}</span>
+                        <span className="text-[10px] text-slate-400 capitalize">{c.type}</span>
+                      </div>
+                      <p className="text-slate-700">{c.text}</p>
+                      {c.evidenceIds?.length > 0 && (
+                        <div className="text-[10px] text-civic-teal-700 font-semibold">
+                          Cites evidence: {c.evidenceIds.join(', ')}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
-            </Card>
-          )}
-        </div>
+            )}
 
-        {/* Center 6 Columns: Interactive Stage Workspace */}
-        <div className="lg:col-span-6 space-y-4">
-          <Card className="border-slate-200 p-5 sm:p-6 space-y-5 bg-white min-h-[540px] flex flex-col justify-between">
-            {/* Stage Title Header */}
-            <div>
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-700">
-                    Stage {currentStageIndex + 1} of 9
-                  </span>
-                  <h2 className="text-xl font-bold font-heading text-slate-900">
-                    {STAGES[currentStageIndex].label}
-                  </h2>
-                </div>
-                <span className="text-xs text-slate-500 max-w-xs text-right hidden sm:inline">
-                  {STAGES[currentStageIndex].desc}
-                </span>
-              </div>
-
-              {/* STAGE 1: ORIENTATION */}
-              {effectiveStage === 'orientation' && (
-                <div className="space-y-4 pt-4 text-xs text-slate-700">
-                  <div className="p-4 rounded-xl bg-civic-indigo-50 border border-civic-indigo-200 space-y-2">
-                    <h3 className="text-sm font-bold text-civic-indigo-950 flex items-center gap-1.5 font-heading">
-                      <Scale className="w-4 h-4 text-civic-indigo-600" />
-                      Principles of Deliberative Youth Assemblies
-                    </h3>
-                    <p className="leading-relaxed">
-                      This is a non-adversarial democratic chamber. Unlike parliamentary debate where sides compete to defeat one another, our objective is mutual inquiry, ground evidence synthesis, and co-creating a sustainable municipal proposition.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
-                      <strong className="text-slate-900 block">1. Evidence-First Dialogue</strong>
-                      <p className="text-[11px] text-slate-600">Claims should cite verified observation logs, speed counts, or photos.</p>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
-                      <strong className="text-slate-900 block">2. Constructive Inquiry</strong>
-                      <p className="text-[11px] text-slate-600">Question assumptions to strengthen the engineering and civic viability.</p>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
-                      <strong className="text-slate-900 block">3. Preserving Dissent</strong>
-                      <p className="text-[11px] text-slate-600">Minority concerns are formally recorded and preserved alongside the proposition.</p>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
-                      <strong className="text-slate-900 block">4. Binding Municipal Delivery</strong>
-                      <p className="text-[11px] text-slate-600">Final resolutions are formally deputed to Nagar Nigam Ward Committees.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* STAGE 2: QUESTION */}
-              {effectiveStage === 'question' && (
-                <div className="space-y-4 pt-4 text-xs text-slate-700">
-                  <div className="p-4 rounded-xl bg-civic-teal-50 border border-civic-teal-200 space-y-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-civic-teal-800">
-                      Central Deliberation Focus
-                    </span>
-                    <h3 className="text-base font-bold font-heading text-slate-900">
-                      "{assembly.question}"
-                    </h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-lg border border-slate-200 space-y-1">
-                      <strong className="text-slate-900 text-xs">Target Zone & Scope</strong>
-                      <p className="text-slate-600">Navchetna School perimeter (Madhyam Marg & Shipra Path intersection), Ward 24, Mansarovar.</p>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-200 space-y-1">
-                      <strong className="text-slate-900 text-xs">Affected Community Stakeholders</strong>
-                      <p className="text-slate-600">800+ daily student walkers (ages 6–18), elderly morning walkers, city bus commuters, and local vendors.</p>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-200 space-y-1">
-                      <strong className="text-slate-900 text-xs">Engineering Constraints</strong>
-                      <p className="text-slate-600">Road width: 11 meters; Peak speed: 42 km/h; Monsoon drainage flow requirements.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* STAGE 3: EVIDENCE REVIEW */}
-              {effectiveStage === 'evidence_review' && (
-                <div className="space-y-3 pt-4 text-xs">
-                  <p className="text-slate-600">
-                    Review and verify all field audits submitted by student researchers before drafting proposals:
+            {/* STAGE 3: ENABLE */}
+            {effectiveStage === 'enable' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-1">
+                  <strong className="font-heading text-sm block">Enablers Lead: Feasibility Check & Resource Verification</strong>
+                  <p className="text-slate-700">
+                    Enablers test municipal statutory authority, ward budget allocations, and IRC 1:15 slope gradient compliance.
                   </p>
-                  <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
-                    {evidenceList.map((ev) => (
-                      <div key={ev.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[10px] font-bold text-civic-teal-800 bg-civic-teal-50 px-2 py-0.5 rounded border border-civic-teal-200">
-                            {ev.id}
-                          </span>
-                          <StatusChip status={ev.verificationStatus} />
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-xs">{ev.title}</h4>
-                        <p className="text-slate-600 text-[11px]">{ev.description}</p>
-                        <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-200/60">
-                          <span>Owner: {ev.ownerName}</span>
-                          <span>Location: {ev.location || 'Navchetna Zone'}</span>
-                        </div>
-                      </div>
-                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+                    <strong className="text-slate-900 block font-heading">Engineering Criteria</strong>
+                    <p className="text-slate-600">Tabletop crossing elevated to 150mm curb level; 300mm embedded PVC drain cross-pipe.</p>
+                  </div>
+                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
+                    <strong className="text-slate-900 block font-heading">Funding & Ownership</strong>
+                    <p className="text-slate-600">Nagar Nigam Ward Committee discretionary road-safety budget line item.</p>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* STAGE 4: DELIBERATION STREAM & FORM */}
-              {effectiveStage === 'deliberation' && (
-                <div className="space-y-4 pt-4">
-                  {/* Contribution Stream */}
-                  <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
-                    {contributions.map((c) => {
-                      const isMine = c.userId === currentUser?.id;
+            {/* STAGE 4: TROUBLESHOOT */}
+            {effectiveStage === 'troubleshoot' && (
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-950 space-y-1">
+                  <strong className="font-heading text-sm block">Troubleshooters Lead: Red Flags & Risk Cataloging</strong>
+                  <p className="text-slate-700">
+                    Troubleshooters challenge propositions with worst-case traffic scenarios, heavy monsoons, and vendor displacement risks.
+                  </p>
+                </div>
 
-                      return (
-                        <div
-                          key={c.id}
-                          className={`p-3.5 rounded-xl border text-xs space-y-1.5 transition-all ${
-                            isMine
-                              ? 'border-civic-indigo-300 bg-civic-indigo-50/40 shadow-2xs'
-                              : 'border-slate-200 bg-white'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 font-heading">
-                                {c.userName}
-                              </span>
-                              {isMine ? (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-civic-indigo-600 text-white font-bold">
-                                  Your Contribution
-                                </span>
-                              ) : (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 capitalize">
-                                  Scripted Peer &bull; {c.type}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-slate-400">
-                              Stage: {c.stage.replace('_', ' ')}
-                            </span>
-                          </div>
-
-                          <p className="text-slate-800 leading-relaxed">{c.text}</p>
-
-                          {c.evidenceIds.length > 0 && (
-                            <div className="flex items-center gap-1 text-[10px] text-civic-teal-700 font-semibold pt-1">
-                              <FileCheck2 className="w-3 h-3" />
-                              <span>Cites Evidence: {c.evidenceIds.join(', ')}</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                {proposition && proposition.risks && (
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px] block">
+                      Logged Chamber Risks ({proposition.risks.length}):
+                    </span>
+                    <ul className="space-y-1.5">
+                      {proposition.risks.map((r, i) => (
+                        <li key={i} className="p-2.5 rounded-lg bg-rose-50/40 border border-rose-200 text-slate-800 flex items-start gap-2">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                          <span>{r}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
+                )}
+              </div>
+            )}
 
-                  {contribSuccessMsg && (
-                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{contribSuccessMsg}</span>
+            {/* STAGE 5: SHAPE */}
+            {effectiveStage === 'shape' && proposition && (
+              <div className="space-y-4 text-xs">
+                <div className="p-3.5 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200 text-slate-950 space-y-1">
+                  <strong className="font-heading text-sm block">Shapers Lead: Proposition Call & Synthesis</strong>
+                  <p className="text-slate-700">
+                    Synthesizing peer inputs into a structured proposition draft with actionable next steps.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 uppercase text-[11px]">
+                      Structured Civic Proposition (v{proposition.version})
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-500">
+                      {proposition.revisions.length} Revisions Recorded
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white border border-slate-200 text-slate-900 font-medium whitespace-pre-line leading-relaxed">
+                    {proposition.proposition}
+                  </div>
+                </div>
+
+                {/* Proposition Revision Form */}
+                <form onSubmit={handleSubmitRevision} className="space-y-3 pt-2 border-t border-slate-100">
+                  <span className="font-bold text-slate-800 block">Propose Structured Amendment:</span>
+                  <Textarea
+                    value={amendedPropositionText}
+                    onChange={(e) => setAmendedPropositionText(e.target.value)}
+                    rows={4}
+                    placeholder="Amend the proposition text..."
+                    required
+                  />
+                  <Input
+                    placeholder="Revision rationale (e.g. Added approach ramp gradient criteria)..."
+                    value={revisionSummary}
+                    onChange={(e) => setRevisionSummary(e.target.value)}
+                    required
+                  />
+                  {revisionSuccessMsg && (
+                    <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+                      {revisionSuccessMsg}
                     </div>
                   )}
+                  <div className="flex justify-end">
+                    <Button size="sm" variant="primary" type="submit" isLoading={isSubmittingRevision}>
+                      <span>Submit Amendment (v{proposition.version + 1})</span>
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
 
-                  {/* Add Contribution Form */}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleAddContribution(e);
-                    }}
-                    className="pt-3 border-t border-slate-100 space-y-3"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <label className="text-xs font-bold text-slate-800 font-heading">
-                        Add Substantive Deliberation Contribution
-                      </label>
-                      <select
-                        value={contribType}
-                        onChange={(e) => setContribType(e.target.value as ContributionType)}
-                        className="text-xs px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-slate-700"
-                      >
-                        <option value="question">Constructive Question</option>
-                        <option value="argument">Evidence-Based Argument</option>
-                        <option value="counter_point">Counter Point</option>
-                        <option value="synthesis">Synthesis & Amendment</option>
-                      </select>
+            {/* STAGE 6: FINAL ASSEMBLY */}
+            {(effectiveStage === 'final_assembly' || stageFromUrlRaw === 'reflection') && (
+              <div className="space-y-5 text-xs">
+                {proposition && (
+                  <>
+                    <div className="p-3.5 rounded-xl bg-civic-teal-50 border border-civic-teal-200 text-civic-teal-950 space-y-1">
+                      <strong className="font-heading text-sm block">Final Assembly: Deliberation Outcome & Response Voting</strong>
+                      <p className="text-slate-700">
+                        Each delegate registers one of four canonical responses. Dissent records are permanently retained alongside the outcome.
+                      </p>
                     </div>
 
-                    <Textarea
-                      placeholder="Enter your inquiry, argument, or amendment citing evidence (e.g. #ev_aarav_traffic_count_01)..."
-                      value={newContribText}
-                      onChange={(e) => setNewContribText(e.target.value)}
-                      rows={3}
-                      required
+                {/* Four Participant Response States Voting Form */}
+                <Card className="border-civic-indigo-200 bg-civic-indigo-50/30 p-4 space-y-3">
+                  <span className="font-bold font-heading text-sm text-slate-900 block">
+                    Cast Your Response to Proposition v{proposition.version}
+                  </span>
+
+                  <form onSubmit={handleRecordResponseState} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                      {(['Support', 'Support with reservations', 'Dissent', 'Abstain / insufficient basis'] as ParticipantResponseState[]).map(
+                        (state) => (
+                          <button
+                            key={state}
+                            type="button"
+                            onClick={() => setMyResponseState(state)}
+                            className={`p-2.5 rounded-xl border text-left transition-all text-xs font-semibold ${
+                              myResponseState === state
+                                ? 'bg-civic-indigo-600 text-white border-civic-indigo-700 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {state}
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    <Input
+                      placeholder="Optional reasoning or reservations..."
+                      value={myResponseReason}
+                      onChange={(e) => setMyResponseReason(e.target.value)}
                     />
 
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-civic-saffron-600" />
-                        <span>Awards <strong>+5 Deliberation Credits</strong></span>
-                      </span>
-
-                      <Button
-                        size="sm"
-                        variant="teal"
-                        type="button"
-                        onClick={handleAddContribution}
-                        isLoading={isSubmittingContrib}
-                        disabled={newContribText.trim().length < 5}
-                      >
-                        <Send className="w-3.5 h-3.5 mr-1" />
-                        <span>Submit Contribution</span>
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* STAGE 5: PROPOSITION DRAFT */}
-              {effectiveStage === 'proposition_draft' && proposition && (
-                <div className="space-y-4 pt-4 text-xs text-slate-800">
-                  <div className="p-4 rounded-xl bg-civic-teal-50/40 border border-civic-teal-200 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-civic-teal-900 uppercase tracking-wider text-[11px]">
-                        Draft Civic Proposition (v{proposition.version})
-                      </span>
-                      <span className="text-xs px-2 py-0.5 rounded bg-white border font-bold">
-                        Outcome: {proposition.outcome}
-                      </span>
-                    </div>
-                    <div className="whitespace-pre-line leading-relaxed font-medium text-slate-900">
-                      {proposition.proposition}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
-                      <strong className="text-slate-900 block">Problem Identified</strong>
-                      <p className="text-[11px] text-slate-600">{proposition.problem}</p>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
-                      <strong className="text-slate-900 block">Core Deliberative Insight</strong>
-                      <p className="text-[11px] text-slate-600">{proposition.insight}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-lg border border-slate-200 space-y-1">
-                    <strong className="text-slate-900 block">Next Implementation Step</strong>
-                    <p className="text-slate-600">{proposition.nextStep}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* STAGE 6: REVISION & AMENDMENTS */}
-              {effectiveStage === 'revision' && proposition && (
-                <div className="space-y-4 pt-4 text-xs">
-                  {revisionSuccessMsg && (
-                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>{revisionSuccessMsg}</span>
-                    </div>
-                  )}
-
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSubmitRevision(e);
-                    }}
-                    className="space-y-3"
-                  >
-                    <div>
-                      <label className="text-xs font-bold text-slate-800 block mb-1">
-                        Edit / Amend Proposed Action Specifications (v{proposition.version + 1}):
-                      </label>
-                      <Textarea
-                        value={amendedPropositionText}
-                        onChange={(e) => setAmendedPropositionText(e.target.value)}
-                        rows={5}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-slate-700 block mb-1">
-                        Revision Summary & Rationale:
-                      </label>
-                      <Input
-                        placeholder="e.g. Added IRC 1:15 approach ramp gradient and monsoon cross-drainage pipe"
-                        value={revisionSummary}
-                        onChange={(e) => setRevisionSummary(e.target.value)}
-                        required
-                      />
-                    </div>
+                    {responseSuccessMsg && (
+                      <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                        {responseSuccessMsg}
+                      </div>
+                    )}
 
                     <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        type="button"
-                        onClick={handleSubmitRevision}
-                        isLoading={isSubmittingRevision}
-                      >
-                        <span>Submit Revision (v{proposition.version + 1})</span>
-                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      <Button size="sm" variant="primary" type="submit" isLoading={isSubmittingResponse}>
+                        <span>Record Response</span>
                       </Button>
                     </div>
                   </form>
+                </Card>
 
-                  {/* Revisions History List */}
-                  <div className="pt-3 border-t border-slate-100 space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                      Revision Trail ({proposition.revisions.length})
-                    </span>
-                    <div className="space-y-1.5">
-                      {proposition.revisions.map((rev) => (
-                        <div key={rev.version} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-[11px]">
-                          <div>
-                            <span className="font-bold text-civic-indigo-700 mr-2">v{rev.version}</span>
-                            <span className="text-slate-800 font-medium">{rev.changesSummary}</span>
-                          </div>
-                          <span className="text-slate-400">{formatDate(rev.timestamp)}</span>
-                        </div>
-                      ))}
-                    </div>
+                {/* Chamber Responses Profile */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <span className="text-lg font-bold text-emerald-700 block">{proposition.supportProfile?.stronglySupport || 0}</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Support</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-civic-teal-50 border border-civic-teal-200">
+                    <span className="text-lg font-bold text-civic-teal-700 block">{proposition.supportProfile?.supportWithModifications || 0}</span>
+                    <span className="text-[10px] text-slate-500 font-medium">With Reservations</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                    <span className="text-lg font-bold text-rose-700 block">{proposition.dissent?.length || 0}</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Preserved Dissent</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-lg font-bold text-slate-700 block">{proposition.supportProfile?.neutral || 0}</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Abstain / Insufficient</span>
                   </div>
                 </div>
-              )}
 
-              {/* STAGE 7: SUPPORT & DISSENT */}
-              {effectiveStage === 'support_dissent' && proposition && (
-                <div className="space-y-4 pt-4 text-xs">
-                  {/* Support Profile */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-3 gap-2 text-center">
-                    <div>
-                      <span className="text-base font-extrabold text-emerald-600 block">{proposition.supportProfile.stronglySupport}</span>
-                      <span className="text-[10px] text-slate-500">Strongly Support</span>
-                    </div>
-                    <div>
-                      <span className="text-base font-extrabold text-civic-teal-600 block">{proposition.supportProfile.supportWithModifications}</span>
-                      <span className="text-[10px] text-slate-500">With Amendments</span>
-                    </div>
-                    <div>
-                      <span className="text-base font-extrabold text-rose-600 block">{proposition.dissent.length}</span>
-                      <span className="text-[10px] text-slate-500">Preserved Dissent</span>
-                    </div>
+                {/* Preserved Dissent Records Section */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-civic-indigo-600" />
+                      <span>Preserved Dissent Records ({proposition.dissent?.length || 0})</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Never erased across revisions</span>
                   </div>
 
-                  {/* Preserved Dissent Records */}
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-civic-indigo-600" />
-                      <span>Preserved Dissent Records ({proposition.dissent.length})</span>
-                    </span>
-
-                    {proposition.dissent.map((d) => (
+                    {proposition.dissent?.map((d) => (
                       <div key={d.id} className="p-3 rounded-lg bg-rose-50/40 border border-rose-200 text-xs space-y-1">
-                        <strong className="text-slate-900 block">Dissent by {d.userName}:</strong>
+                        <strong className="text-slate-900 block">Dissent by {d.userName} (v{d.versionRecorded || proposition.version}):</strong>
                         <p className="text-slate-700 italic">"{d.reason}"</p>
-                        <p className="text-[11px] text-civic-indigo-700"><strong>Amendment:</strong> {d.suggestedAmendment}</p>
+                        <p className="text-[11px] text-civic-indigo-700"><strong>Suggested Amendment:</strong> {d.suggestedAmendment}</p>
                       </div>
                     ))}
                   </div>
 
-                  {/* Add Dissent Record Form */}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleAddDissent(e);
-                    }}
-                    className="pt-3 border-t border-slate-100 space-y-2.5"
-                  >
-                    <span className="text-xs font-bold text-slate-800 block">Record Formal Dissent / Minority Viewpoint:</span>
+                  {/* Add Dissent Form */}
+                  <form onSubmit={handleAddDissent} className="space-y-2 pt-2">
+                    <span className="font-semibold text-slate-700 block">Record Formal Dissent:</span>
                     <Input
-                      placeholder="Reason for dissent or remaining concern..."
+                      placeholder="Reason for dissent..."
                       value={dissentReason}
                       onChange={(e) => setDissentReason(e.target.value)}
                       required
                     />
                     <Input
-                      placeholder="Suggested amendment to resolve this dissent..."
+                      placeholder="Suggested amendment..."
                       value={dissentAmendment}
                       onChange={(e) => setDissentAmendment(e.target.value)}
                     />
                     <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                        onClick={handleAddDissent}
-                        isLoading={isSubmittingDissent}
-                      >
-                        <span>Record Dissent</span>
+                      <Button size="sm" variant="outline" type="submit" isLoading={isSubmittingDissent}>
+                        <span>Preserve Dissent Record</span>
                       </Button>
                     </div>
                   </form>
                 </div>
-              )}
 
-              {/* STAGE 8: OUTCOME FINALISATION */}
-              {effectiveStage === 'outcome' && proposition && (
-                <div className="space-y-4 pt-4 text-xs text-slate-700">
+                {/* Outcome Finalisation Section */}
+                <div className="pt-3 border-t border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">
+                      Outcome Resolution (4 Canonical Outcomes)
+                    </span>
+                    <span className="text-[11px] font-bold text-civic-teal-800 bg-civic-teal-50 px-2 py-0.5 rounded border border-civic-teal-200">
+                      Current: {proposition.outcome}
+                    </span>
+                  </div>
+
                   {isFinalised ? (
-                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
-                      <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
-                        <Lock className="w-4 h-4 text-emerald-600" />
-                        <span>Outcome Locked: {proposition.outcome}</span>
-                      </div>
-                      <p className="text-emerald-800">
-                        This chamber resolution has been finalised and permanently recorded (v{proposition.version}). Duplicate finalisation is prevented.
-                      </p>
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <span>Resolution finalised and permanently locked: <strong>{proposition.outcome}</strong> (v{proposition.version}). Duplicate finalisation prevented.</span>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <p className="text-slate-600">
-                        Declare and finalise the consensus outcome of this chamber based on support records and preserved dissent:
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {(['CONSENSUS', 'QUALIFIED_SUPPORT', 'SPLIT_DECISION', 'INSUFFICIENT_BASIS'] as PropositionOutcome[]).map((oc) => (
                           <button
                             key={oc}
                             type="button"
                             onClick={() => setSelectedOutcome(oc)}
-                            className={`p-3 rounded-lg border text-left transition-all ${
+                            className={`p-2.5 rounded-xl border text-center transition-all text-xs font-semibold ${
                               selectedOutcome === oc
-                                ? 'bg-civic-teal-600 text-white border-civic-teal-700 font-bold shadow-xs'
-                                : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                                ? 'bg-civic-teal-600 text-white border-civic-teal-700 shadow-xs'
+                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                             }`}
                           >
-                            <span className="block text-xs font-heading">{oc.replace('_', ' ')}</span>
+                            {oc.replace('_', ' ')}
                           </button>
                         ))}
                       </div>
 
                       {finalisationError && (
-                        <div className="p-3 rounded bg-rose-50 border border-rose-200 text-rose-700">
+                        <div className="p-2.5 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs">
                           {finalisationError}
                         </div>
                       )}
 
-                      <div className="pt-2 flex justify-end">
+                      <div className="flex justify-end">
                         <Button
                           size="md"
                           variant="primary"
@@ -991,207 +1358,378 @@ export const AssemblySessionPage: React.FC = () => {
                           onClick={handleFinaliseOutcome}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                          <span>Finalise Chamber Resolution</span>
+                          <span>Finalise Assembly Resolution</span>
                         </Button>
                       </div>
                     </div>
                   )}
                 </div>
+              </>
+            )}
+
+            {/* Civic Reflection & Ethical Values */}
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">
+                  Civic Reflection & Ethical Values
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  Post-deliberation reflective learning
+                </span>
+              </div>
+
+              {reflectionSuccess ? (
+                <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-civic-teal-800">
+                    <CheckCircle2 className="w-4 h-4 text-civic-teal-600" />
+                    <span>Civic Reflection Recorded!</span>
+                  </div>
+                  <p className="text-slate-600">
+                    Your reflective essay has been added to your Passport history and <strong>+5 Reflection Credits</strong> have been awarded.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitReflection} className="space-y-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                      Reflective Values Guided:
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['Trust (Vishwas)', 'Empathy (Samvedana)', 'Evidence-First', 'Respect for Dissent', 'Universal Human Values'].map((val) => {
+                        const isSelected = selectedValues.includes(val);
+                        return (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => {
+                              setSelectedValues(
+                                isSelected
+                                  ? selectedValues.filter((v) => v !== val)
+                                  : [...selectedValues, val]
+                              );
+                            }}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
+                              isSelected
+                                ? 'bg-civic-indigo-100 text-civic-indigo-800 border-civic-indigo-300'
+                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            #{val}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">
+                      Your Reflection Essay:
+                    </label>
+                    <Textarea
+                      placeholder="Write your honest reflections on navigating disagreement, respecting dissent, and achieving evidence-based community consensus..."
+                      value={reflectionText}
+                      onChange={(e) => setReflectionText(e.target.value)}
+                      rows={3}
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-slate-500">
+                      Earns +5 Reflection Credits in Passport
+                    </span>
+                    <Button size="sm" variant="teal" type="submit" isLoading={isSubmittingReflection}>
+                      <span>Submit Reflection (+5)</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                    </Button>
+                  </div>
+                </form>
               )}
 
-              {/* STAGE 9: REFLECTION */}
-              {effectiveStage === 'reflection' && (
-                <div className="space-y-4 pt-4 text-xs">
-                  {reflectionSuccess ? (
-                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 text-emerald-900">
-                      <div className="flex items-center gap-2 font-bold text-sm">
-                        <Sparkles className="w-4 h-4 text-emerald-600" />
-                        <span>Civic Reflection Recorded!</span>
+              {/* Past Reflections */}
+              {reflections.length > 0 && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                    Saved Civic Reflection History
+                  </span>
+                  {reflections.map((refl) => (
+                    <div key={refl.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                      <p className="text-slate-800 italic text-xs">"{refl.text}"</p>
+                      <div className="flex gap-1 pt-1 flex-wrap">
+                        {refl.valuesHighlighted?.map((v) => (
+                          <span key={v} className="text-[10px] text-civic-indigo-700 font-semibold">#{v}</span>
+                        ))}
                       </div>
-                      <p>
-                        Your reflective essay has been added to your Passport history and <strong>+5 Reflection Credits</strong> have been awarded.
-                      </p>
-                      <Link to="/passport">
-                        <Button size="sm" variant="teal" className="mt-2">
-                          <span>View Civic Passport</span>
-                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                        </Button>
-                      </Link>
                     </div>
-                  ) : (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmitReflection(e);
-                      }}
-                      className="space-y-3"
-                    >
-                      <div className="p-3 rounded-lg bg-civic-indigo-50/70 border border-civic-indigo-200 text-slate-800 space-y-1">
-                        <strong className="text-civic-indigo-950 block">Reflective Prompt:</strong>
-                        <p className="italic">
-                          "How did this deliberative process help balance varying stakeholder needs (students, commercial drivers, police)? What universal human values guided your perspective?"
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-                          Universal Values Highlighted:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {[
-                            'Trust (Vishwas)',
-                            'Empathy (Samvedana)',
-                            'Evidence-First',
-                            'Universal Safety',
-                            'Civic Responsibility',
-                            'Courage (Sahasa)',
-                          ].map((val) => {
-                            const isSel = selectedValues.includes(val);
-                            return (
-                              <button
-                                key={val}
-                                type="button"
-                                onClick={() => toggleValue(val)}
-                                className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
-                                  isSel
-                                    ? 'bg-civic-indigo-600 text-white border-civic-indigo-700 font-semibold shadow-2xs'
-                                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
-                                }`}
-                              >
-                                #{val}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold text-slate-800 block mb-1">
-                          Your Reflection Essay:
-                        </label>
-                        <Textarea
-                          placeholder="Write your honest reflections on navigating disagreement, respecting dissent, and achieving evidence-based community consensus..."
-                          value={reflectionText}
-                          onChange={(e) => setReflectionText(e.target.value)}
-                          rows={4}
-                          required
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[11px] text-slate-500">
-                          Earns +5 Reflection Credits in Passport
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="teal"
-                          type="button"
-                          onClick={handleSubmitReflection}
-                          isLoading={isSubmittingReflection}
-                        >
-                          <span>Submit Reflection (+5)</span>
-                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                        </Button>
-                      </div>
-                    </form>
-                  )}
-
-                  {/* Past Reflections */}
-                  {reflections.length > 0 && (
-                    <div className="pt-4 border-t border-slate-100 space-y-2">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                        Saved Reflections in History
-                      </span>
-                      {reflections.map((refl) => (
-                        <div key={refl.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-                          <p className="text-slate-800 italic">"{refl.text}"</p>
-                          <div className="flex gap-1 pt-1">
-                            {refl.valuesHighlighted.map((v) => (
-                              <span key={v} className="text-[10px] text-civic-indigo-700 font-semibold">#{v}</span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Stepping Controls Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-4">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={goToPrevStage}
-                disabled={currentStageIndex === 0}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                <span>Previous Stage</span>
-              </Button>
-
-              <div className="text-xs text-slate-500">
-                Stage {currentStageIndex + 1} of {STAGES.length}
+            {/* CONTRIBUTION FORM (Accessible in all stages) */}
+            <form onSubmit={handleAddContribution} className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-xs font-bold text-slate-800 font-heading">
+                  Submit Deliberative Contribution to {CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.label}
+                </label>
+                <select
+                  value={contribType}
+                  onChange={(e) => setContribType(e.target.value as ContributionType)}
+                  className="text-xs px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-slate-700"
+                >
+                  <option value="question">Constructive Question</option>
+                  <option value="argument">Evidence-Based Argument</option>
+                  <option value="counter_point">Counter Point</option>
+                  <option value="synthesis">Synthesis & Amendment</option>
+                </select>
               </div>
 
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={goToNextStage}
-                disabled={currentStageIndex === STAGES.length - 1}
-              >
-                <span>Next Stage</span>
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+              <Textarea
+                placeholder="Enter your substantive inquiry or argument citing evidence..."
+                value={newContribText}
+                onChange={(e) => setNewContribText(e.target.value)}
+                rows={2}
+                required
+              />
+
+              {contribSuccessMsg && (
+                <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+                  {contribSuccessMsg}
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-500">
+                  Awards <strong>+5 Deliberation Credits</strong>
+                </span>
+                <Button
+                  size="sm"
+                  variant="teal"
+                  type="submit"
+                  isLoading={isSubmittingContrib}
+                  disabled={newContribText.trim().length < 5}
+                >
+                  <Send className="w-3.5 h-3.5 mr-1" />
+                  <span>Submit Contribution</span>
+                </Button>
+              </div>
+            </form>
+          </Card>
+
+          {/* ACTIVE ROLE POWERS & PERSISTED ACTIONS STREAM */}
+          <Card className="border-slate-200 p-5 space-y-4 bg-white shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-civic-saffron-600" />
+                <h3 className="text-sm font-bold font-heading text-slate-900">
+                  Active Issue-Advancing Role Actions ({roleActions.length})
+                </h3>
+              </div>
+              <span className="text-[11px] text-slate-400">Response obligations recorded</span>
+            </div>
+
+            {/* Exercise Power Form for User */}
+            {userRole && (
+              <form onSubmit={handleExecuteRolePower} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900">
+                    Exercise Your Role Power: <span className="text-civic-indigo-700">{userRole.power}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500">Role: {userRole.roleName}</span>
+                </div>
+                <Input
+                  placeholder="Action title (e.g. Inquire on monsoon drainage capacity)..."
+                  value={powerActionTitle}
+                  onChange={(e) => setPowerActionTitle(e.target.value)}
+                  required
+                />
+                <Textarea
+                  placeholder={ROLE_POWER_MAP[userRole.roleName]?.prompt || 'Details on this action...'}
+                  value={powerActionDesc}
+                  onChange={(e) => setPowerActionDesc(e.target.value)}
+                  rows={2}
+                  required
+                />
+                {powerSuccessMsg && (
+                  <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+                    {powerSuccessMsg}
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <Button size="sm" variant="primary" type="submit" isLoading={isSubmittingPower}>
+                    <span>Execute {userRole.power}</span>
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* List of Role Actions */}
+            <div className="space-y-3">
+              {roleActions.length === 0 ? (
+                <p className="text-xs text-slate-400 italic text-center py-2">
+                  No role power actions executed yet in this session.
+                </p>
+              ) : (
+                roleActions.map((act) => (
+                  <div key={act.id} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900">{act.title}</span>
+                        <span className="text-[10px] font-semibold text-civic-indigo-800 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-200">
+                          {act.power} &bull; {act.roleName}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        act.status === 'addressed'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {act.status.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                    <p className="text-slate-700">{act.description}</p>
+
+                    <div className="p-2 rounded bg-slate-50 text-[11px] text-slate-600 border border-slate-200/70">
+                      <strong>Obligation:</strong> {act.responseObligation}
+                    </div>
+
+                    {act.responseNote ? (
+                      <div className="p-2 rounded bg-emerald-50 text-[11px] text-emerald-900 border border-emerald-200">
+                        <strong>Response by {act.respondedBy}:</strong> "{act.responseNote}"
+                      </div>
+                    ) : respondingToActionId === act.id ? (
+                      <div className="pt-2 space-y-2">
+                        <Input
+                          placeholder="Your response addressing this obligation..."
+                          value={actionResponseNote}
+                          onChange={(e) => setActionResponseNote(e.target.value)}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setRespondingToActionId(null)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            isLoading={isSubmittingActionResponse}
+                            onClick={() => handleRespondToRoleAction(act.id)}
+                          >
+                            Submit Response
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end pt-1">
+                        <Button size="sm" variant="outline" onClick={() => setRespondingToActionId(act.id)}>
+                          <span>Respond to Obligation</span>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </Card>
         </div>
 
-        {/* Right 3 Columns: People & Chamber Evidence Pool */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Deliberators Card */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 font-heading">
-                <Users className="w-3.5 h-3.5 text-civic-indigo-600" />
-                <span>Chamber Members ({participants.length})</span>
-              </h3>
+        {/* RIGHT 4 COLUMNS: SPEAKING QUEUE & EVIDENCE POOL */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Active Speaking Queue Card */}
+          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <Mic className="w-4 h-4 text-civic-teal-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
+                  Speaking Queue ({speakingQueue.filter((s) => s.status !== 'completed' && s.status !== 'cancelled').length})
+                </h3>
+              </div>
+              {activeSpeakerEntry && (
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                  <Volume2 className="w-3 h-3" />
+                  Live Speaker
+                </span>
+              )}
             </div>
 
-            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-              {participants.map((p) => {
-                const r = allRoles.find((role) => role.userId === p.id);
-                const isMe = p.id === currentUser?.id;
-
-                return (
-                  <div
-                    key={p.id}
-                    className={`p-2 rounded-lg border flex items-center justify-between text-[11px] ${
-                      isMe ? 'bg-civic-indigo-50 border-civic-indigo-200' : 'bg-slate-50 border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <Avatar src={p.avatar} alt={p.name} size="sm" />
-                      <span className="font-semibold text-slate-900 truncate">
-                        {p.name} {isMe && '(You)'}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-civic-indigo-700 font-semibold shrink-0">
-                      {r ? r.roleName : 'Delegate'}
-                    </span>
+            {/* Current Active Speaker Display */}
+            {activeSpeakerEntry ? (
+              <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-200 text-xs space-y-1">
+                <span className="text-[10px] uppercase font-bold text-emerald-800 block">Current Floor:</span>
+                <div className="font-bold text-slate-900 text-sm flex items-center justify-between">
+                  <span>{activeSpeakerEntry.userName}</span>
+                  <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                    {activeSpeakerEntry.userRole || 'Delegate'}
+                  </span>
+                </div>
+                {isChair && (
+                  <div className="pt-2">
+                    <Button size="sm" variant="outline" onClick={handleReleaseSpeaker} className="w-full text-xs h-7">
+                      Release Floor
+                    </Button>
                   </div>
-                );
-              })}
+                )}
+              </div>
+            ) : (
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-400 italic text-center">
+                Floor open. No active speaker recognized.
+              </div>
+            )}
+
+            {/* Waiting Queue List */}
+            <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-0.5">
+              {speakingQueue.filter((s) => s.status === 'waiting').length === 0 ? (
+                <p className="text-[11px] text-slate-400 text-center py-1">Queue is empty.</p>
+              ) : (
+                speakingQueue.filter((s) => s.status === 'waiting').map((entry, idx) => (
+                  <div key={entry.id} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900">
+                        {idx + 1}. {entry.userName}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block">{entry.userRole}</span>
+                    </div>
+                    {isChair && (
+                      <Button
+                        size="sm"
+                        variant="teal"
+                        onClick={() => handleRecognizeSpeaker(entry.userId)}
+                        className="h-6 text-[10px] px-2"
+                      >
+                        Recognize
+                      </Button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Request Turn Button */}
+            <div className="pt-2 border-t border-slate-100">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRequestSpeakingTurn}
+                className="w-full text-xs"
+              >
+                <Mic className="w-3.5 h-3.5 mr-1" />
+                <span>Request Speaking Turn</span>
+              </Button>
             </div>
           </Card>
 
           {/* Chamber Evidence Pool */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 font-heading">
-                <FileCheck2 className="w-3.5 h-3.5 text-civic-teal-600" />
-                <span>Evidence Pool ({evidenceList.length})</span>
-              </h3>
+          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <FileCheck2 className="w-4 h-4 text-civic-teal-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
+                  Evidence Pool ({evidenceList.length})
+                </h3>
+              </div>
+              <span className="text-[10px] text-slate-400">Click to cite</span>
             </div>
 
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
@@ -1203,7 +1741,7 @@ export const AssemblySessionPage: React.FC = () => {
                       setSelectedEvidenceIds([...selectedEvidenceIds, ev.id]);
                     }
                   }}
-                  className={`p-2 rounded-lg border text-[11px] space-y-1 cursor-pointer transition-colors ${
+                  className={`p-2.5 rounded-xl border text-xs space-y-1 cursor-pointer transition-colors ${
                     selectedEvidenceIds.includes(ev.id)
                       ? 'bg-civic-teal-50 border-civic-teal-300'
                       : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
@@ -1211,17 +1749,180 @@ export const AssemblySessionPage: React.FC = () => {
                   title="Click to cite in contribution"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-civic-teal-800 font-bold">{ev.id}</span>
+                    <span className="font-mono text-[10px] text-civic-teal-800 font-bold bg-civic-teal-50 px-1.5 py-0.2 rounded border border-civic-teal-200">
+                      {ev.id}
+                    </span>
                     <StatusChip status={ev.verificationStatus} />
                   </div>
-                  <p className="font-semibold text-slate-800 truncate">{ev.title}</p>
+                  <h4 className="font-bold text-slate-900 truncate">{ev.title}</h4>
+                  <p className="text-[11px] text-slate-600 line-clamp-2">{ev.description}</p>
                 </div>
               ))}
             </div>
           </Card>
         </div>
       </div>
+
+      {/* RULEBOOK MODAL / DRAWER */}
+      {showRulebookModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="max-w-2xl w-full bg-white p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-civic-teal-600" />
+                <h3 className="text-base font-bold font-heading text-slate-900">
+                  {assembly.rulebook?.title || 'Assembly Deliberation Rulebook'} (v{assembly.rulebook?.version || '1.0'})
+                </h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowRulebookModal(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
+              {assembly.rulebook?.rules?.map((rule, idx) => (
+                <div key={idx} className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                  <h4 className="font-bold text-slate-900">{rule.title}</h4>
+                  <p>{rule.content}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t flex justify-end">
+              <Button size="sm" variant="primary" onClick={() => setShowRulebookModal(false)}>
+                Close Rulebook
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ROLES & POWERS REFERENCE MODAL */}
+      {showRolesModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="max-w-3xl w-full bg-white p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-civic-saffron-600" />
+                <h3 className="text-base font-bold font-heading text-slate-900">
+                  Four Non-Hierarchical Assembly Functional Roles & Powers
+                </h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowRolesModal(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {CANONICAL_ASSEMBLY_ROLES.map((r) => {
+                const info = ROLE_POWER_MAP[r];
+                return (
+                  <div key={r} className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-slate-900 font-heading">{r}</span>
+                      <span className="text-[10px] font-bold text-civic-indigo-800 bg-civic-indigo-100 px-2 py-0.5 rounded">
+                        Power: {info.power}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed">{info.prompt}</p>
+                    <div className="p-2 rounded bg-white border border-slate-200/80 text-[11px] text-slate-700">
+                      <strong>Response Obligation:</strong> {info.obligation}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-3 border-t flex justify-end">
+              <Button size="sm" variant="primary" onClick={() => setShowRolesModal(false)}>
+                Done
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ROLE OVERRIDE AUDIT MODAL (Chair/Facilitator Only) */}
+      {showOverrideModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full bg-white p-6 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-amber-600" />
+                <h3 className="text-base font-bold font-heading text-slate-900">
+                  Facilitator Role Reallocation
+                </h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowOverrideModal(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <form onSubmit={handleRoleOverride} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Target Delegate:</label>
+                <select
+                  value={overrideTargetUserId}
+                  onChange={(e) => setOverrideTargetUserId(e.target.value)}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white"
+                  required
+                >
+                  <option value="">Select participant delegate...</option>
+                  {participants.map((p) => {
+                    const r = allRoles.find((role) => role.userId === p.id);
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.name} (Current: {r?.roleName || 'Delegate'})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Reallocate To Role:</label>
+                <select
+                  value={overrideNewRole}
+                  onChange={(e) => setOverrideNewRole(e.target.value as AssemblyRoleType)}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white"
+                >
+                  {CANONICAL_ASSEMBLY_ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {r} ({ROLE_POWER_MAP[r].power})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Audit Reason (Mandatory):</label>
+                <Textarea
+                  placeholder="Justify why this role re-assignment is necessary for equitable balance or deliberation..."
+                  value={overrideReason}
+                  onChange={(e) => setOverrideReason(e.target.value)}
+                  rows={3}
+                  required
+                />
+              </div>
+
+              {overrideError && (
+                <div className="p-2 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                  {overrideError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button size="sm" variant="outline" onClick={() => setShowOverrideModal(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="primary" type="submit" isLoading={isSubmittingOverride}>
+                  Confirm Override & Record Audit
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
-
