@@ -1,31 +1,31 @@
 # Phase 0 Complete Browser Route Evidence — Final Fictional Jaipur Demo Branch
 
-**Date:** 16 October 2026  
-**Governing Authority:** [Master PRD Archive v3.1](../../docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A §A2  
-**Executable Test Suite:** [e2e/phase0-browser-route-evidence.spec.ts](../../e2e/phase0-browser-route-evidence.spec.ts) (Automated Playwright Suite)  
-**Related Audit Records:** [PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md](PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md), [PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md)  
+**Date:** 16 October 2026
+**Governing Authority:** [Master PRD Archive v3.1](../../docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A §A2
+**Executable Test Suite:** [e2e/phase0-browser-route-evidence.spec.ts](../../e2e/phase0-browser-route-evidence.spec.ts) (Automated Playwright Suite)
+**Related Audit Records:** [PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md](PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md), [PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md)
 **Execution Context:** Package 10B browser verification in isolated worktree (`j-20261016-151430-7j62`)
 
 ---
 
 ## 1. Executive Summary & Verification Boundary
 
-This document completes the **Phase 0 browser route and control verification** for JanSahabhag 2047 on the final fictional Jaipur demonstration branch.
+This document records the **Phase 0 browser route verification and representative control checks** for JanSahabhag 2047 on the final fictional Jaipur demonstration branch.
 
 ### 1.1 Scope & Verification Boundary
 All **60 declared router path patterns** in [src/app/router.tsx](../../src/app/router.tsx) were visited in an automated Playwright Chromium browser session across both **desktop (1280x800)** and **mobile (375x667)** viewports.
 
-Every pattern was evaluated against four runtime invariants:
+Every pattern was evaluated for the first three runtime checks below; the fourth is a sampled control check:
 1. **Render or Redirect:** Route renders the expected component without crash or error boundary fallback, or cleanly executes declarative redirects.
 2. **Absence of Infinite Spinners:** No persistent full-page loading fallback spinner (`.animate-spin.rounded-full.h-8.w-8`) remains after asynchronous mock data resolution.
 3. **No Horizontal Layout Overflow:** Page content respects the viewport boundary (`scrollWidth <= innerWidth + 2px`), preventing horizontal drift on mobile and desktop.
-4. **Meaningful Visible Controls:** Controls, action buttons, filter tabs, or forms were verified or marked as **Not Verified** or **Change** where functionality is simulated or client-only.
+4. **Visible Control Sample:** A named text target was looked for on each route. The test requires at least 55 of 60 targets per viewport; it does not prove every listed action works. Seven representative interactive flows are tested separately.
 
 ### 1.2 Boundary Disclaimer: Simulation Invariants vs Production Authority
 > [!IMPORTANT]
 > **Local Branch Verification Disclaimer:**
 > All browser tests recorded herein were executed locally in headless Chromium against the interactive single-browser React/Vite demonstration using client `localStorage`.
-> 
+>
 > 1. **No Production Backend:** There are zero HTTP REST, GraphQL, or WebSocket servers. Data mutations and mock delays are client-side simulations.
 > 2. **Client-Side Simulation Only:** Route access, persona switching, and role perspectives are simulated in browser memory; no cryptographic tokens or server RBAC guards are enforced.
 > 3. **No Claim Regarding Older Deployed Site:** This local browser run verifies branch `agy/j-20261016-151430-7j62` and does **not** certify or reflect the older deployed Vercel site (`c4e0861` observed 12 October 2026). Public deployment remains subject to separate user-controlled publication.
@@ -36,13 +36,14 @@ Every pattern was evaluated against four runtime invariants:
 
 | Metric | Result | Status |
 |---|---|---|
-| **Total Router Path Patterns Audited** | **60 of 60** | **100% Complete** |
+| **Router Path Patterns Visited** | **60 of 60** | **Render, spinner, and overflow checks complete** |
+| **Visible Control Targets** | **At least 55 of 60 per viewport required by test** | **Exact observed count and absent targets were not recorded; remaining controls are Not Verified** |
 | **Desktop Viewport Run (1280x800)** | 60 Passed / 0 Failed | **Pass** (Clean render, 0 spinners, 0 overflow) |
 | **Mobile Viewport Run (375x667)** | 60 Passed / 0 Failed | **Pass** (Clean render, 0 spinners, 0 overflow) |
 | **Privileged & Persona-Scoped Flow** | 4 Checks Passed / 0 Failed | **Pass** (Admin banner, Workspace denial, 33% quota denial, Chair advance) |
 | **Interactive Controls & Lifecycle Flow** | 7 Checks Passed / 0 Failed | **Pass** (Lang switch, Mobile drawer trap, Autosave submit, Debate turn reload, Parliament modal, Admin filter, 404 return) |
 | **Representative Screenshots Saved** | **20 PNG captures** | **Verified in `docs/audits/phase0-screenshots/`** |
-| **Total Playwright Test Duration** | **36.9s** | **All 4 Test Cases Passed** |
+| **Independent Playwright Rerun** | **4 cases passed (40.8s)** | **Local branch, 16 October 2026** |
 
 ---
 
@@ -50,7 +51,7 @@ Every pattern was evaluated against four runtime invariants:
 
 Every path pattern from `src/app/router.tsx` was verified in Chromium at seeded representative URLs:
 
-| # | Path Pattern | Tested URL | Persona & Viewport | Render / Redirect | Infinite Spinner | Layout Overflow | Primary Control Observed & State | Test Suite Link | Screenshot Link | Disposition |
+| # | Path Pattern | Tested URL | Persona & Viewport | Render / Redirect | Infinite Spinner | Layout Overflow | Primary Control Target & State (behavior only where separately tested) | Test Suite Link | Screenshot Link | Disposition |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 1 | `/demo-login` | `/demo-login` | Public (1280x800, 375x667) | Rendered | None | Pass (0px) | 7 Persona selection cards, `Enter JanSahabhag` CTA | [Test](../../e2e/phase0-browser-route-evidence.spec.ts#L17) | [01-desktop-demo-login.png](phase0-screenshots/01-desktop-demo-login.png) | **Change** (Demo OIDC mock) |
 | 2 | `/` | `/` | Aarav Sharma (1280x800, 375x667) | Redirects to `/dashboard` | None | Pass (0px) | Declarative index redirect | [Test](../../e2e/phase0-browser-route-evidence.spec.ts#L18) | — | **Keep** |
@@ -120,25 +121,25 @@ Every path pattern from `src/app/router.tsx` was verified in Chromium at seeded 
 Executable Playwright evidence in [e2e/phase0-browser-route-evidence.spec.ts](../../e2e/phase0-browser-route-evidence.spec.ts#L170-L233) evaluates allowed and denied behaviors:
 
 ### 4.1 UI Simulation vs Server Authorization (`/admin/dashboard`)
-- **Direct Navigation as Youth Participant (Aarav Sharma):** Direct URL visit renders `State Command` with prominent amber simulation banner:  
+- **Direct Navigation as Youth Participant (Aarav Sharma):** Direct URL visit renders `State Command` with prominent amber simulation banner:
   `Simulated Session Role: Platform Admin (Aarav Sharma) — Role Switching Active`
 - **Switch to Programme Manager (Dev Patel):** Banner and header reflect Dev Patel's perspective without page crash.
 - **Finding:** Access control is cosmetic and informational only. The client application contains **no router guards or HTTP session validation**. A production launch requires server-side cryptographic JWT / session authentication.
 
 ### 4.2 Private Workspace Access Denial (`/workspace/ws_jaipur_school_safety`)
-- **Denied Persona (Dev Patel):** Dev Patel is not an invited member. The view renders an explicit denial card:  
-  `Access Denied / Repository Error — This collaboration workspace is invite-only private and cannot be accessed without an invitation from room owners.`  
-  All substantive action buttons (`Create Team Action / Note`, member invite inputs) are suppressed.  
+- **Denied Persona (Dev Patel):** Dev Patel is not an invited member. The view renders an explicit denial card:
+  `Access Denied / Repository Error — This collaboration workspace is invite-only private and cannot be accessed without an invitation from room owners.`
+  All substantive action buttons (`Create Team Action / Note`, member invite inputs) are suppressed.
   *Screenshot captured:* [17-desktop-workspace-denied-dev.png](phase0-screenshots/17-desktop-workspace-denied-dev.png)
 - **Allowed Persona (Aarav Sharma):** Aarav is an active seeded member. Heading `Jaipur Ward 24 School-Zone Safety Workspace` and `Team Notes & Actions` tab render cleanly.
 - **Finding:** Client-side invite check operates correctly for single-browser simulation. Production requires server-signed invitation tokens and encrypted room channels.
 
 ### 4.3 33% Mandatory Reservation Quota Denial (`/events/evt_jaipur_limited_05`)
-- **Participant Persona (Aarav Sharma, male):** Small 3-seat demo event with 1 seat reserved for women and 2 ordinary seats already occupied. Clicking `Attending` triggers an immediate neutral restriction alert:  
+- **Participant Persona (Aarav Sharma, male):** Small 3-seat demo event with 1 seat reserved for women and 2 ordinary seats already occupied. Clicking `Attending` triggers an immediate neutral restriction alert:
   `RSVP / Allocation Restriction — This RSVP cannot be accepted under current allocation rules. Ordinary places are fully allocated, and remaining capacity is reserved under statutory 33% minimum allocation policy.`
-- **Privacy Preservation:** The restriction alert conveys denial neutrally without exposing attendee gender or demographic records. Clicking the dismissal button (`×`) closes the alert cleanly.  
+- **Privacy Preservation:** The restriction alert conveys denial neutrally without exposing attendee gender or demographic records. Clicking the dismissal button (`×`) closes the alert cleanly.
   *Screenshot captured:* [18-desktop-event-reservation-denied.png](phase0-screenshots/18-desktop-event-reservation-denied.png)
-- **Finding:** Reservation algorithm complies with Master PRD §3 / §A14 small-cohort privacy standards. Server-side allocation locking is required for concurrent multi-device transactions.
+- **Finding:** The client simulation denies this RSVP without displaying attendee demographics. This browser check does not establish legal or production compliance; server-side allocation locking and privacy review remain necessary for a multi-user release.
 
 ### 4.4 Youth Assembly Stage Progression Control (`/assemblies/.../session`)
 - **Participant Persona (Aarav Sharma, Thinker):** `Advance Stage` button is hidden from DOM. Participant can submit stage contributions and dissent.
@@ -156,7 +157,7 @@ Automated assertions in [e2e/phase0-browser-route-evidence.spec.ts](../../e2e/ph
    - Switch back to English (`data-testid="lang-option-en"`); badge cleanly unmounts.
 2. **Mobile Sidebar Drawer & Focus Trap:**
    - At 375x667 viewport, clicking `data-testid="mobile-menu-toggle"` opens `[role="dialog"][aria-label="Navigation drawer"]`.
-   - Pressing `Escape` key closes the drawer and restores page focus.  
+   - Pressing `Escape` key closes the drawer and restores page focus.
    *Screenshot captured:* [19-mobile-navigation-drawer.png](phase0-screenshots/19-mobile-navigation-drawer.png)
 3. **Field Observation Draft Autosave & Submission:**
    - Navigating to `/assignments/asg_obs_03/submit`, typing field notes triggers local debounce autosave notice: `Draft autosaved locally`.
@@ -215,4 +216,3 @@ Across the 60 audited route entries:
   2. *Live Video / Audio Infrastructure:* Connecting WebRTC / LiveKit / Agora behind the current text-first Debate Room.
   3. *Municipal Routing & Ticketing:* Formal API connector for municipal defect escalation.
   4. *Legal Age Verification & Guardian Consent:* Statutorily required verification workflows for participants aged 15–17.
-
