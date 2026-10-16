@@ -348,7 +348,21 @@ export const EventDetailPage: React.FC = () => {
             )}
             <div className="min-w-0">
               <span className="font-bold block text-slate-900 truncate">{event.location}</span>
-              <span className="text-slate-500">{event.isVirtual ? 'Online Video Chamber' : 'In-Person Civic Venue'}</span>
+              <span className="text-slate-500 flex items-center gap-1.5 flex-wrap">
+                {event.isVirtual ? (
+                  <>
+                    <span>Online Video Chamber</span>
+                    <span
+                      data-testid="video-preview-tag"
+                      className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200"
+                    >
+                      Labelled Preview (OD.4)
+                    </span>
+                  </>
+                ) : (
+                  'In-Person Civic Venue'
+                )}
+              </span>
             </div>
           </div>
 

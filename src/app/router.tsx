@@ -341,6 +341,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'credits',
+        element: <Navigate to="/passport/credits" replace />,
+      },
+      {
         path: 'passport/evidence',
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
@@ -410,6 +414,22 @@ export const router = createBrowserRouter([
       // Canonical Navigation Previews & Dedicated Streams (Master PRD §1, §A4)
       {
         path: 'debate-room',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DebateRoomPreviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'debate-room/:id',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DebateRoomPreviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'events/:id/debate-room',
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
             <DebateRoomPreviewPage />

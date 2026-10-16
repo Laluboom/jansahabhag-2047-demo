@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { demoRepository } from '../../services/demoRepository';
 import {
@@ -29,6 +29,8 @@ import {
   BookOpen,
   Send,
   ArrowRight,
+  ArrowLeft,
+  Radio,
   ShieldAlert,
   Vote,
   FileText,
@@ -52,6 +54,8 @@ const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
 export const DebateRoomPreviewPage: React.FC = () => {
   const { currentUser } = useAuthStore();
   const navigate = useNavigate();
+  const { id: routeSessionId } = useParams<{ id?: string }>();
+  const targetSessionId = routeSessionId || 'sess_jaipur_01';
 
   const [session, setSession] = useState<Session | null>(null);
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([]);
@@ -96,14 +100,14 @@ export const DebateRoomPreviewPage: React.FC = () => {
   const loadSessionData = async () => {
     try {
       setIsLoading(true);
-      const sess = await demoRepository.getSession('sess_jaipur_01');
+      const sess = await demoRepository.getSession(targetSessionId);
       setSession(sess);
 
       const [evidence, users, reflections] = await Promise.all([
         demoRepository.getEvidenceList(),
         demoRepository.getUsers(),
-        currentUser
-          ? demoRepository.getSessionReflections('sess_jaipur_01', currentUser.id)
+        currentUser && sess
+          ? demoRepository.getSessionReflections(sess.id, currentUser.id)
           : Promise.resolve([]),
       ]);
       setEvidenceList(evidence);
@@ -124,7 +128,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
     setSelectedRoleForCapacity(null);
     setSelectedRoleForAudits(null);
     loadSessionData();
-  }, [currentUser?.id]);
+  }, [currentUser?.id, targetSessionId]);
 
   // Reservation Allocation Handlers (08C1 APIs)
   const handleFinalizeRole = async (roleName: string) => {
@@ -283,13 +287,45 @@ export const DebateRoomPreviewPage: React.FC = () => {
     }
   };
 
-  if (isLoading || !session || !currentUser) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading debate chamber">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-civic-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm text-slate-500">Loading Jaipur Pedestrian Safety Debate Room...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!session || !currentUser) {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto py-4">
+        <Link
+          to="/events"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Events</span>
+        </Link>
+        <Card className="p-8 text-center space-y-4 border-slate-200">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <Radio className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold font-heading text-slate-900">Debate Room Session Not Found</h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            {currentUser
+              ? 'The requested debate room session does not exist or has not been scheduled yet.'
+              : 'Please sign in or select a demo persona to enter the text-first debate room.'}
+          </p>
+          <div className="pt-2 flex justify-center gap-3">
+            <Link to="/events">
+              <Button size="sm" variant="primary">
+                View All Events & Chambers
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -591,9 +627,17 @@ export const DebateRoomPreviewPage: React.FC = () => {
       {/* Header with Title and Mode Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-civic-indigo-700 mb-1">
-            <Scale className="w-4 h-4" />
-            <span>Shared Live Session Engine — Mode: Debate Room</span>
+          <div className="flex items-center gap-2 flex-wrap text-xs font-semibold uppercase tracking-wider text-civic-indigo-700 mb-1">
+            <div className="flex items-center gap-1.5">
+              <Scale className="w-4 h-4" />
+              <span>Shared Live Session Engine — Mode: Debate Room</span>
+            </div>
+            <span
+              className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 normal-case tracking-normal"
+              data-testid="video-preview-badge"
+            >
+              Video Preview: Text-First Active (OD.4)
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
             Jaipur Youth Pedestrian Safety Debate Room

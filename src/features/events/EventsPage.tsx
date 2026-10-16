@@ -175,6 +175,14 @@ export const EventsPage: React.FC = () => {
                       <MapPin className="w-3.5 h-3.5 text-slate-400" />
                     )}
                     <span className="truncate">{evt.location}</span>
+                    {evt.isVirtual && (
+                      <span
+                        data-testid="event-virtual-preview-tag"
+                        className="text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded ml-1 shrink-0"
+                      >
+                        Preview
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
