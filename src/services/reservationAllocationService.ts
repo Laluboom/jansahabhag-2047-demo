@@ -87,6 +87,15 @@ export const ALLOCATION_SURFACES_INVENTORY = {
     'debate_room_browser_journey',
     'combined_cross_module_reservation_ui',
   ],
+  package11Coverage: [
+    'youth_parliament_preview_delegation_illustration',
+    'youth_parliament_fictional_jaipur_3place_scenarios',
+    'youth_parliament_point_of_use_rulebook',
+    'youth_parliament_illustrative_notice_540_members',
+    'comprehensive_module_rulebook_coverage_audit',
+  ],
+  parliamentPreviewStatus:
+    'Clickable prototype preview only. Demonstrates fictional 3-seat Jaipur delegation calculation via shared allocation service without live member appointment or backend selection enforcement.',
   programmeCohortStatus: 'No place allocation or cohort quota logic currently exists on Programme entities.',
 } as const;
 
@@ -940,3 +949,166 @@ export function projectSessionForCaller(
 
   return cloned;
 }
+
+export interface ParliamentDelegationCandidate {
+  id: string;
+  name: string;
+  declaredGenderCategory: string;
+  eligibility: ReservationEligibility;
+  seatType: 'reserved' | 'ordinary' | 'vacant';
+}
+
+export interface ParliamentDelegationIllustrationData {
+  scenario: 'compliant' | 'noncompliant' | 'overbooked_ordinary';
+  allocation: AllocationState;
+  validation: AllocationValidationResult;
+  candidates: ParliamentDelegationCandidate[];
+  summaryNote: string;
+}
+
+/**
+ * Builds a fictional 3-seat Jaipur delegation scenario for the Youth Parliament preview.
+ * Dynamically calculated by the shared reservation allocation service.
+ * Demonstrates:
+ * 1. Approved formula: ceil(0.33 * 3) = 1 reserved seat minimum, 2 ordinary seats.
+ * 2. Compliant scenario: 1 eligible (Priya Sharma) + 2 general (Aarav Sharma, Vikram Malhotra) -> Compliant.
+ * 3. Non-compliant scenario: 0 eligible + 2 general (Aarav, Vikram) -> 1 reserved seat held vacant by default.
+ * 4. Overbooked ordinary scenario: Attempting to fill Seat 3 with an ordinary candidate (Rohan Mehta) -> Blocked by validation without Platform Owner exception.
+ */
+export function buildParliamentDelegationIllustration(
+  scenario: 'compliant' | 'noncompliant' | 'overbooked_ordinary'
+): ParliamentDelegationIllustrationData {
+  const totalPlaces = 3;
+
+  if (scenario === 'compliant') {
+    const confirmedOccupants = ['user_priya', 'user_aarav', 'user_vikram'];
+    const allocation = buildAllocationState({
+      allocationId: 'alloc_parliament_jaipur_delegation_demo',
+      allocationType: 'cohort_places',
+      totalPlaces,
+      title: 'Jaipur Youth Delegation to Youth Parliament (3 Seats — Compliant Scenario)',
+      confirmedOccupants,
+      existingStatus: 'pending',
+    });
+    const validation = validateAllocation(allocation);
+
+    return {
+      scenario,
+      allocation,
+      validation,
+      candidates: [
+        {
+          id: 'user_priya',
+          name: 'Priya Sharma (Youth Delegate, Jaipur)',
+          declaredGenderCategory: 'Declared Woman (Eligible for Reserved Place)',
+          eligibility: 'eligible',
+          seatType: 'reserved',
+        },
+        {
+          id: 'user_aarav',
+          name: 'Aarav Sharma (Youth Delegate, Jaipur)',
+          declaredGenderCategory: 'General / Ineligible for Reserved Place',
+          eligibility: 'ineligible',
+          seatType: 'ordinary',
+        },
+        {
+          id: 'user_vikram',
+          name: 'Vikram Malhotra (Youth Delegate, Jaipur)',
+          declaredGenderCategory: 'General / Ineligible for Reserved Place',
+          eligibility: 'ineligible',
+          seatType: 'ordinary',
+        },
+      ],
+      summaryNote:
+        'Compliant allocation: 1 of 1 mandatory reserved place is occupied by an eligible candidate (Priya Sharma). General capacity (2/2) is fully occupied.',
+    };
+  }
+
+  if (scenario === 'noncompliant') {
+    const confirmedOccupants = ['user_aarav', 'user_vikram'];
+    const allocation = buildAllocationState({
+      allocationId: 'alloc_parliament_jaipur_delegation_demo',
+      allocationType: 'cohort_places',
+      totalPlaces,
+      title: 'Jaipur Youth Delegation to Youth Parliament (3 Seats — Non-Compliant Scenario)',
+      confirmedOccupants,
+      existingStatus: 'pending',
+    });
+    const validation = validateAllocation(allocation);
+
+    return {
+      scenario,
+      allocation,
+      validation,
+      candidates: [
+        {
+          id: 'user_aarav',
+          name: 'Aarav Sharma (Youth Delegate, Jaipur)',
+          declaredGenderCategory: 'General / Ineligible for Reserved Place',
+          eligibility: 'ineligible',
+          seatType: 'ordinary',
+        },
+        {
+          id: 'user_vikram',
+          name: 'Vikram Malhotra (Youth Delegate, Jaipur)',
+          declaredGenderCategory: 'General / Ineligible for Reserved Place',
+          eligibility: 'ineligible',
+          seatType: 'ordinary',
+        },
+        {
+          id: 'vacant_seat_3',
+          name: 'Seat 3 — Reserved Place (Held Vacant by Default)',
+          declaredGenderCategory: 'Unfilled Reserved Vacancy',
+          eligibility: 'undeclared',
+          seatType: 'vacant',
+        },
+      ],
+      summaryNote:
+        'Non-compliant allocation: 0 of 1 reserved place filled. Under the approved policy, the unmet reserved place remains vacant by default and cannot be automatically assigned to general candidates.',
+    };
+  }
+
+  // overbooked_ordinary: 3 ordinary occupants without an approved owner exception
+  const confirmedOccupants = ['user_aarav', 'user_vikram', 'user_rohan'];
+  const allocation = buildAllocationState({
+    allocationId: 'alloc_parliament_jaipur_delegation_demo',
+    allocationType: 'cohort_places',
+    totalPlaces,
+    title: 'Jaipur Youth Delegation to Youth Parliament (3 Seats — Blocked Ordinary Overbooking Attempt)',
+    confirmedOccupants,
+    existingStatus: 'pending',
+  });
+  const validation = validateAllocation(allocation);
+
+  return {
+    scenario,
+    allocation,
+    validation,
+    candidates: [
+      {
+        id: 'user_aarav',
+        name: 'Aarav Sharma (Youth Delegate, Jaipur)',
+        declaredGenderCategory: 'General / Ineligible for Reserved Place',
+        eligibility: 'ineligible',
+        seatType: 'ordinary',
+      },
+      {
+        id: 'user_vikram',
+        name: 'Vikram Malhotra (Youth Delegate, Jaipur)',
+        declaredGenderCategory: 'General / Ineligible for Reserved Place',
+        eligibility: 'ineligible',
+        seatType: 'ordinary',
+      },
+      {
+        id: 'user_rohan',
+        name: 'Rohan Mehta (General Candidate — Blocked without Platform Owner Exception)',
+        declaredGenderCategory: 'General / Ineligible for Reserved Place',
+        eligibility: 'ineligible',
+        seatType: 'ordinary',
+      },
+    ],
+    summaryNote:
+      'Blocked non-compliant attempt: Ordinary capacity exceeded (3/2). Reserved places cannot be transferred to ordinary participants without an approved Platform Owner exception.',
+  };
+}
+

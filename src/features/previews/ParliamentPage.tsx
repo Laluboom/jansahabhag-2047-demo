@@ -11,11 +11,22 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
-  Volume2,
+  BookOpen,
+  Scale,
+  ShieldAlert,
+  EyeOff,
 } from 'lucide-react';
+import {
+  POLICY_VERSION,
+  buildParliamentDelegationIllustration,
+} from '../../services/reservationAllocationService';
 
 export const ParliamentPage: React.FC = () => {
   const [selectedMotionModal, setSelectedMotionModal] = useState<boolean>(false);
+  const [delegationScenario, setDelegationScenario] = useState<'compliant' | 'noncompliant' | 'overbooked_ordinary'>('compliant');
+
+  const illustration = buildParliamentDelegationIllustration(delegationScenario);
+  const { allocation, validation, candidates, summaryNote } = illustration;
 
   const motions = [
     {
@@ -108,6 +119,297 @@ export const ParliamentPage: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* Point-of-Use Explicit Notice on Illustrative 540-Member Plenary Metrics */}
+      <div
+        className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5 shadow-sm"
+        data-testid="parliament-illustrative-notice"
+      >
+        <div className="flex items-center gap-2 font-bold text-amber-900">
+          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+          <span>Illustrative Chamber Notice (PRD Competition-Demo Prototype Allowance)</span>
+        </div>
+        <p className="leading-relaxed text-amber-900/90">
+          <strong>Notice on 540-Member Plenary Metrics:</strong> The 540-member plenary chamber, 28-state representation,
+          and national apex metrics displayed above are illustrative prototype figures only. They have <strong>not been validated
+          or enforced</strong> under the 33% Women&apos;s Reservation Policy. Real-data collection, national delegate selection,
+          and production parliamentary enforcement workflows remain unbuilt.
+        </p>
+      </div>
+
+      {/* Point-of-Use Reservation Policy & Rulebook Statement */}
+      <Card className="p-6 border-slate-200 bg-white space-y-4" data-testid="parliament-reservation-rulebook">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-civic-saffron-600" />
+            <CardTitle className="text-base font-bold text-slate-900">
+              Youth Parliament Reservation Policy & Point-of-Use Rulebook (§§1–10)
+            </CardTitle>
+          </div>
+          <span className="text-xs font-mono font-semibold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-100 self-start sm:self-auto">
+            Policy {POLICY_VERSION}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-900">
+              <Scale className="w-4 h-4 text-civic-saffron-600" />
+              <span>Formula: ceil(0.33 &times; planned places)</span>
+            </div>
+            <p className="leading-relaxed text-slate-600">
+              Approved per-allocation formula calculated separately without cross-chamber or cross-cohort pooling.
+              For a 3-member delegation, the mandatory minimum is <code className="font-mono font-bold text-slate-900">ceil(0.33 &times; 3) = 1</code> reserved place.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-900">
+              <ShieldAlert className="w-4 h-4 text-amber-600" />
+              <span>Reserved Vacancy Default</span>
+            </div>
+            <p className="leading-relaxed text-slate-600">
+              Unfilled reserved places remain held vacant by default. General/ordinary candidates cannot claim reserved vacancies
+              without an explicit, immutable, Platform Owner audited exception.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-900">
+              <EyeOff className="w-4 h-4 text-civic-teal-600" />
+              <span>Privacy & Non-Inference</span>
+            </div>
+            <p className="leading-relaxed text-slate-600">
+              Eligibility is based strictly on explicit fictional declarations (<code className="font-mono">eligible</code>, <code className="font-mono">ineligible</code>, <code className="font-mono">undeclared</code>).
+              Never infer eligibility from names, portraits, voices, or proxies. In small cohorts (1–3 places), individual declarations are protected from deductive inference.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Prototype Boundary Notice</span>
+            </div>
+            <p className="leading-relaxed text-slate-600">
+              This Youth Parliament page is an exploratory clickable prototype preview. The delegation allocation below is an illustrative calculation
+              and does <strong>not</strong> appoint real members or enforce a live parliamentary selection system.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Fictional Jaipur Youth Delegation Allocation Illustration */}
+      <Card className="p-6 border-slate-200 bg-white space-y-5" data-testid="parliament-delegation-illustration">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <DemoPreviewBadge size="sm" label="Fictional Demo Allocation" />
+              <span className="text-[11px] font-mono font-semibold text-slate-500">
+                Shared Engine: reservationAllocationService.ts
+              </span>
+            </div>
+            <CardTitle className="text-base font-bold text-slate-900 mt-1">
+              Fictional Jaipur Youth Delegation Allocation (Illustrative 3-Seat Prototype)
+            </CardTitle>
+            <p className="text-xs text-slate-500">
+              Simulated 3-place seat allocation to the apex chamber, demonstrating how the shared reservation allocation service calculates quotas and validates compliance without hard-coded claims.
+            </p>
+          </div>
+        </div>
+
+        {/* Scenario Switcher Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-600 mr-1">Select Fictional Scenario:</span>
+          <Button
+            size="sm"
+            variant={delegationScenario === 'compliant' ? 'primary' : 'outline'}
+            onClick={() => setDelegationScenario('compliant')}
+            data-testid="scenario-btn-compliant"
+            className="text-xs"
+          >
+            Scenario A: Compliant (1 Reserved + 2 General)
+          </Button>
+          <Button
+            size="sm"
+            variant={delegationScenario === 'noncompliant' ? 'primary' : 'outline'}
+            onClick={() => setDelegationScenario('noncompliant')}
+            data-testid="scenario-btn-noncompliant"
+            className="text-xs"
+          >
+            Scenario B: Non-Compliant (Reserved Vacancy Default)
+          </Button>
+          <Button
+            size="sm"
+            variant={delegationScenario === 'overbooked_ordinary' ? 'primary' : 'outline'}
+            onClick={() => setDelegationScenario('overbooked_ordinary')}
+            data-testid="scenario-btn-overbooked"
+            className="text-xs"
+          >
+            Scenario C: Blocked Ordinary Overbooking Attempt
+          </Button>
+        </div>
+
+        {/* Dynamic Calculation Breakdown */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <span className="text-[10px] uppercase text-slate-500 font-bold block">Planned Places</span>
+            <span className="text-lg font-bold text-slate-900 font-heading block mt-0.5" data-testid="metric-total-places">
+              {allocation.totalPlaces}
+            </span>
+            <span className="text-[10px] text-slate-500 block">Jaipur Delegation</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <span className="text-[10px] uppercase text-slate-500 font-bold block">Approved Formula</span>
+            <span className="text-sm font-bold text-civic-saffron-700 font-mono block mt-1.5" data-testid="metric-formula">
+              ceil(0.33 &times; 3) = 1
+            </span>
+            <span className="text-[10px] text-slate-500 block">Mandatory Min: 1</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <span className="text-[10px] uppercase text-slate-500 font-bold block">Reserved Filled</span>
+            <span
+              className={`text-lg font-bold font-heading block mt-0.5 ${
+                allocation.reservedOccupiedCount! >= allocation.reservedMinimum
+                  ? 'text-emerald-600'
+                  : 'text-amber-600'
+              }`}
+              data-testid="metric-reserved-filled"
+            >
+              {allocation.reservedOccupiedCount} / {allocation.reservedMinimum}
+            </span>
+            <span className="text-[10px] text-slate-500 block">
+              {allocation.reservedOccupiedCount! >= allocation.reservedMinimum ? 'Quota Met' : 'Unmet Quota'}
+            </span>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <span className="text-[10px] uppercase text-slate-500 font-bold block">Reserved Vacancies</span>
+            <span
+              className={`text-lg font-bold font-heading block mt-0.5 ${
+                allocation.vacanciesCount! > 0 ? 'text-amber-700' : 'text-slate-700'
+              }`}
+              data-testid="metric-vacancies"
+            >
+              {allocation.vacanciesCount}
+            </span>
+            <span className="text-[10px] text-slate-500 block">Held Vacant by Default</span>
+          </div>
+        </div>
+
+        {/* Validation Outcome Card derived dynamically from shared service */}
+        <div
+          className={`p-4 rounded-xl border space-y-2 text-xs ${
+            validation.isCompliant
+              ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+              : delegationScenario === 'noncompliant'
+              ? 'bg-amber-50/80 border-amber-200 text-amber-950'
+              : 'bg-rose-50/80 border-rose-200 text-rose-950'
+          }`}
+          data-testid="service-validation-outcome"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {validation.isCompliant ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              )}
+              <span className="font-bold text-sm" data-testid="validation-status-badge">
+                {validation.isCompliant
+                  ? 'VALIDATION OUTCOME: COMPLIANT'
+                  : delegationScenario === 'noncompliant'
+                  ? 'VALIDATION OUTCOME: UNMET RESERVED MINIMUM (1 VACANCY)'
+                  : 'VALIDATION OUTCOME: BLOCKED NON-COMPLIANT'}
+              </span>
+            </div>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/70 border border-current">
+              Status: {validation.status}
+            </span>
+          </div>
+
+          <p className="leading-relaxed text-xs" data-testid="service-summary-note">
+            {summaryNote}
+          </p>
+
+          {validation.warnings.length > 0 && (
+            <div className="p-2.5 rounded-lg bg-amber-100/70 border border-amber-300 text-amber-900 space-y-1">
+              <span className="font-bold block text-[11px]">Service Warning:</span>
+              <p className="text-[11px] leading-relaxed">{validation.warnings.join(' ')}</p>
+            </div>
+          )}
+
+          {validation.errors.length > 0 && (
+            <div className="p-2.5 rounded-lg bg-rose-100/70 border border-rose-300 text-rose-900 space-y-1">
+              <span className="font-bold block text-[11px]">Service Error:</span>
+              <p className="text-[11px] leading-relaxed">{validation.errors.join(' ')}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Fictional Seat Roster Table */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+            <span>Fictional Delegation Candidates (Seat by Seat Allocation)</span>
+            <span className="text-[11px] text-slate-500">Explicit Declarations Only &bull; No Portrait/Proxy Inference</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {candidates.map((cand, idx) => (
+              <div
+                key={cand.id}
+                className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${
+                  cand.seatType === 'reserved'
+                    ? 'bg-emerald-50/50 border-emerald-200'
+                    : cand.seatType === 'vacant'
+                    ? 'bg-amber-50/50 border-dashed border-amber-300'
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+                data-testid={`seat-card-${idx + 1}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold uppercase text-slate-500">
+                    Seat #{idx + 1}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      cand.seatType === 'reserved'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : cand.seatType === 'vacant'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {cand.seatType === 'reserved'
+                      ? 'Reserved Seat'
+                      : cand.seatType === 'vacant'
+                      ? 'Held Vacant'
+                      : 'General Seat'}
+                  </span>
+                </div>
+
+                <div className="font-bold text-slate-900">{cand.name}</div>
+                <div className="text-[11px] text-slate-600">
+                  <span>Declaration: </span>
+                  <span className="font-mono text-[10px] font-semibold">{cand.declaredGenderCategory}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Prototype & Shared Service Disclaimer Footer */}
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500 flex items-center justify-between flex-wrap gap-2">
+          <span>
+            <strong>Prototype Preview Limitation:</strong> Illustrative calculation only. Real member appointment and parliamentary delegation selection remain unbuilt.
+          </span>
+          <span className="font-mono text-[10px] text-slate-400">
+            Validated via reservationAllocationService.ts
+          </span>
+        </div>
+      </Card>
+
 
       {/* Motions Order of Business */}
       <div className="space-y-4">
