@@ -37,7 +37,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
     });
   });
 
-  it('renders AssemblyDetailPage with 9-stage roadmap and join state', async () => {
+  it('renders AssemblyDetailPage with 6-stage roadmap and join state', async () => {
     render(
       <MemoryRouter initialEntries={['/assemblies/assembly_jaipur_pedestrian_2026']}>
         <Routes>
@@ -48,13 +48,13 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeInTheDocument();
-      expect(screen.getByText(/Assembly Deliberation Pathway \(9 Stages\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/Assembly Deliberation Pathway \(6 Stages\)/i)).toBeInTheDocument();
       expect(screen.getByText(/Chamber Evidence Pool/i)).toBeInTheDocument();
       expect(screen.getByText(/Chamber Deliberators/i)).toBeInTheDocument();
     });
   });
 
-  it('renders AssemblySessionPage with 9 stages navigation, role briefing, and interactive workspace', async () => {
+  it('renders AssemblySessionPage with 6 stages navigation, role briefing, and interactive workspace', async () => {
     // First join assembly
     await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
 
@@ -68,9 +68,10 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Youth Chamber in Session/i)).toBeInTheDocument();
-      expect(screen.getByText(/Chamber Stages \(9\)/i)).toBeInTheDocument();
-      expect(screen.getByText(/Your Role: Questioner/i)).toBeInTheDocument();
-      expect(screen.getByText(/Add Substantive Deliberation Contribution/i)).toBeInTheDocument();
+      expect(screen.getByText(/Canonical Deliberation Pathway \(6 Stages\)/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Thinker/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Shaper/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/Submit Deliberative Contribution/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Submit Contribution/i })).toBeInTheDocument();
     });
   });
@@ -118,7 +119,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Verified Civic Passport/i)).toBeInTheDocument();
+      expect(screen.getByText(/Civic Passport Portfolio/i)).toBeInTheDocument();
       expect(screen.getByText(/Civic Credit Dimensions/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Learning/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Observation/i).length).toBeGreaterThanOrEqual(1);

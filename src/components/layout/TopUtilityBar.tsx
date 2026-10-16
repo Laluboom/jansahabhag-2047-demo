@@ -68,9 +68,13 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
         {onToggleMobileMenu && (
           <button
             type="button"
+            id="mobile-menu-toggle"
             onClick={onToggleMobileMenu}
             className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-civic-indigo-500"
             aria-label="Toggle navigation menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation-drawer"
+            data-testid="mobile-menu-toggle"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -108,13 +112,14 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
       {/* Right utility items */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Language Selector */}
-        <div className="relative">
+        <div className="relative flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-civic-indigo-500"
             aria-label="Select language"
             aria-expanded={isLangDropdownOpen}
+            data-testid="language-selector-btn"
           >
             <Globe className="w-3.5 h-3.5 text-slate-500" />
             <span className="hidden md:inline uppercase font-semibold">
@@ -122,6 +127,14 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             </span>
             <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
+          {activeLanguage === 'hi' && (
+            <span
+              className="hidden lg:inline-flex items-center text-[10px] font-semibold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200"
+              data-testid="hindi-pending-review-badge"
+            >
+              Hindi Pending Review
+            </span>
+          )}
 
           {isLangDropdownOpen && (
             <>
@@ -129,7 +142,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setIsLangDropdownOpen(false)}
               />
-              <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95">
+              <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95">
                 <div className="px-3 py-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
                   Demo Languages
                 </div>
@@ -144,11 +157,12 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                       'w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors',
                       activeLanguage === lang.code && 'bg-civic-indigo-50/70 text-civic-indigo-700 font-semibold'
                     )}
+                    data-testid={`lang-option-${lang.code}`}
                   >
                     <span>{lang.label}</span>
                     {lang.isDemo && (
                       <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 font-normal">
-                        Simulated
+                        {lang.code === 'hi' ? 'Pending Review' : 'Simulated'}
                       </span>
                     )}
                   </button>

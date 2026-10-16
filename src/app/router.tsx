@@ -57,6 +57,10 @@ const PolicyLabPage = lazy(() => import('../features/previews/PolicyLabPage').th
 const ParliamentPage = lazy(() => import('../features/previews/ParliamentPage').then((m) => ({ default: m.ParliamentPage })));
 const StakeholdersPage = lazy(() => import('../features/previews/StakeholdersPage').then((m) => ({ default: m.StakeholdersPage })));
 const StudioPage = lazy(() => import('../features/previews/StudioPage').then((m) => ({ default: m.StudioPage })));
+const DebateRoomPreviewPage = lazy(() => import('../components/layout/DebateRoomPreviewPage').then((m) => ({ default: m.DebateRoomPreviewPage })));
+const WorkspacePreviewPage = lazy(() => import('../components/layout/WorkspacePreviewPage').then((m) => ({ default: m.WorkspacePreviewPage })));
+const WorkspacePage = lazy(() => import('../features/workspaces/WorkspacePage').then((m) => ({ default: m.WorkspacePage })));
+const HelpRulebooksPage = lazy(() => import('../components/layout/HelpRulebooksPage').then((m) => ({ default: m.HelpRulebooksPage })));
 
 const InstitutionDashboardPage = lazy(() => import('../features/institutions/InstitutionDashboardPage').then((m) => ({ default: m.InstitutionDashboardPage })));
 const ParticipantsPage = lazy(() => import('../features/institutions/ParticipantsPage').then((m) => ({ default: m.ParticipantsPage })));
@@ -337,6 +341,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'credits',
+        element: <Navigate to="/passport/credits" replace />,
+      },
+      {
         path: 'passport/evidence',
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
@@ -401,6 +409,88 @@ export const router = createBrowserRouter([
             <StudioPage />
           </Suspense>
         ),
+      },
+
+      // Canonical Navigation Previews & Dedicated Streams (Master PRD §1, §A4)
+      {
+        path: 'debate-room',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DebateRoomPreviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'debate-room/:id',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DebateRoomPreviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'events/:id/debate-room',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DebateRoomPreviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'debates',
+        element: <Navigate to="/debate-room" replace />,
+      },
+      {
+        path: 'workspace',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WorkspacePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'workspace/:id',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WorkspacePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'workspaces',
+        element: <Navigate to="/workspace" replace />,
+      },
+      {
+        path: 'workspaces/:id',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WorkspacePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'uhv',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <CoursesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'uhv/learn',
+        element: <Navigate to="/uhv" replace />,
+      },
+      {
+        path: 'help',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <HelpRulebooksPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'settings',
+        element: <Navigate to="/profile" replace />,
       },
 
       // Institution

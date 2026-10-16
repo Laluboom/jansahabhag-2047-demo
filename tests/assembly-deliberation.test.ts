@@ -23,7 +23,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
 
       const result = await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
       expect(result.assembly.participantUserIds).toContain('user_aarav');
-      expect(result.role.roleName).toBe('Questioner');
+      expect(result.role.roleName).toBe('Shaper');
       expect(result.role.responsibilities.length).toBeGreaterThan(0);
       expect(result.role.promptSuggestions.length).toBeGreaterThan(0);
 
@@ -45,7 +45,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
         (p) => p.sourceReferenceId === 'assembly_jaipur_pedestrian_2026' && p.category === 'deliberation'
       );
       expect(passportEntry).toBeDefined();
-      expect(passportEntry?.title).toContain('Questioner');
+      expect(passportEntry?.title).toContain('Shaper');
       expect(passportEntry?.creditsAwarded).toBe(10);
       expect(passportEntry?.isVerified).toBe(true);
 
@@ -85,7 +85,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
         repository.addAssemblyContribution({
           assemblyId: 'assembly_jaipur_pedestrian_2026',
           userId: 'user_aarav',
-          stage: 'deliberation',
+          stage: 'think',
           type: 'question',
           text: '   ',
         })
@@ -98,7 +98,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       const contrib = await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
         userId: 'user_aarav',
-        stage: 'deliberation',
+        stage: 'think',
         type: 'question',
         text: 'How will stormwater drainage be incorporated beneath the tabletop crossing on Madhyam Marg?',
         evidenceIds: ['ev_aarav_traffic_count_01'],
@@ -209,7 +209,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       // Verify assembly state
       const assembly = await repository.getAssembly('assembly_jaipur_pedestrian_2026');
       expect(assembly?.status).toBe('concluded');
-      expect(assembly?.currentStage).toBe('outcome');
+      expect(assembly?.currentStage).toBe('final_assembly');
 
       // Verify notifications sent to participants
       const notifs = await repository.getNotifications('user_aarav');
@@ -231,9 +231,9 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       await repository.finaliseProposition({
         propositionId: 'prop_jaipur_pedestrian_01',
         assemblyId: 'assembly_jaipur_pedestrian_2026',
-        outcome: 'CONSENSUS',
+        outcome: 'QUALIFIED_SUPPORT',
         updatedBy: 'Rohan Joshi',
-        changesSummary: 'Final consensus outcome declared',
+        changesSummary: 'Final qualified support outcome declared',
       });
 
       // Attempt second finalisation on same proposition / concluded assembly
@@ -294,7 +294,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
         userId: 'user_aarav',
-        stage: 'deliberation',
+        stage: 'think',
         type: 'question',
         text: 'Testing ledger total calculation.',
       });

@@ -143,8 +143,8 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
 
     // 1. Assembly Session Workspace on Mobile
     await page.goto('/assemblies/assembly_jaipur_pedestrian_2026/session');
-    await expect(page.getByRole('heading', { name: /Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeVisible();
-    await expect(page.getByText(/Chamber Stages/i).first()).toBeVisible();
+    await expect(page.getByText(/Canonical Deliberation Pathway \(6 Stages\)/i).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'All 4 Zones' })).toBeVisible();
 
     // 2. Admin Dashboard on Mobile
     await page.goto('/admin/dashboard');

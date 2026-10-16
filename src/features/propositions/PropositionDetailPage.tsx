@@ -26,6 +26,8 @@ import {
   Lock,
   Plus,
   Trash2,
+  Users,
+  Compass,
 } from 'lucide-react';
 import { formatDateTime, formatDate } from '../../utils/formatters';
 
@@ -98,7 +100,7 @@ export const PropositionDetailPage: React.FC = () => {
           }
 
           if (currentUser) {
-            const reflList = await demoRepository.getReflections(currentUser.id);
+            const reflList = await demoRepository.getCivicReflections(currentUser.id);
             setReflections(reflList.filter((r) => r.contextId === prop.assemblyId || r.contextId === prop.id));
           }
         }
@@ -292,6 +294,13 @@ export const PropositionDetailPage: React.FC = () => {
               <span>Revisions ({proposition.revisions.length})</span>
             </Button>
           </Link>
+
+          <Link to="/workspace/ws_jaipur_school_safety" data-testid="link-to-workspace">
+            <Button size="sm" variant="primary" className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />
+              <span>School-Zone Workspace</span>
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -304,6 +313,12 @@ export const PropositionDetailPage: React.FC = () => {
             </span>
             <span className="text-xs text-slate-400">
               Updated: {formatDate(proposition.updatedAt)}
+            </span>
+            <span className="text-[10px] font-semibold uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+              State: {proposition.reviewerState || 'reviewed'}
+            </span>
+            <span className="text-[10px] font-semibold uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+              {(proposition.publicationVisibility || 'assembly_members').replace('_', ' ')}
             </span>
           </div>
           <span className={`text-xs px-3 py-1 rounded-md font-bold uppercase border ${
@@ -608,6 +623,55 @@ export const PropositionDetailPage: React.FC = () => {
             </Card>
           </div>
 
+          {/* Explicit Assumptions Tested */}
+          {proposition.assumptions && proposition.assumptions.length > 0 && (
+            <Card className="border-slate-200 p-5 space-y-2 bg-white">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <HelpCircle className="w-4 h-4 text-civic-teal-600" />
+                <span>Explicit Chamber Assumptions Tested</span>
+              </h3>
+              <ul className="space-y-1.5 text-xs text-slate-700">
+                {proposition.assumptions.map((asm, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-civic-teal-600 font-bold">&bull;</span>
+                    <span>{asm}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Participant Response Breakdown */}
+          {proposition.participantResponses && proposition.participantResponses.length > 0 && (
+            <Card className="border-slate-200 p-5 space-y-3 bg-white">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-civic-indigo-600" />
+                <span>Delegate Responses Across 4 Response States ({proposition.participantResponses.length})</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {proposition.participantResponses.map((pr) => (
+                  <div key={pr.id} className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-slate-900">{pr.userName}</span>
+                      {pr.userRole && <span className="text-[10px] text-slate-500 block">{pr.userRole}</span>}
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      pr.responseState === 'Support'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : pr.responseState === 'Support with reservations'
+                        ? 'bg-civic-teal-100 text-civic-teal-800'
+                        : pr.responseState === 'Dissent'
+                        ? 'bg-rose-100 text-rose-800'
+                        : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {pr.responseState}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Traceable Cites Evidence Pool */}
           {evidenceList.length > 0 && (
             <Card className="border-slate-200 p-5 space-y-3 bg-white">
@@ -676,6 +740,63 @@ export const PropositionDetailPage: React.FC = () => {
                 </Button>
               </div>
             </form>
+          </Card>
+
+          {/* Linked Scoped Workspace Card */}
+          <Card className="border-civic-teal-200 bg-civic-teal-50/30 p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-civic-teal-900 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-civic-teal-700" />
+                <span>Proposition Deliberation Workspace</span>
+              </h3>
+              <span className="text-[10px] font-semibold text-civic-teal-800 bg-civic-teal-100 px-2 py-0.5 rounded border border-civic-teal-200">
+                Invite-Only Private
+              </span>
+            </div>
+            <p className="text-xs text-slate-600">
+              An invite-only private workspace is linked to this proposition for Ward 24 school-zone traffic safety implementation planning, action notes, and auditable peer moderation.
+            </p>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] text-slate-500">
+                Workspace: <strong>Jaipur Ward 24 School-Zone Safety Workspace</strong> (v1.0 rulebook)
+              </span>
+              <Link to="/workspace/ws_jaipur_school_safety">
+                <Button size="sm" className="text-xs flex items-center gap-1.5 bg-civic-teal-600 hover:bg-civic-teal-700 text-white">
+                  <span>Open Workspace</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          {/* Routing History & Civic Accountability */}
+          <Card className="border-slate-200 p-5 space-y-3 bg-white">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <Compass className="w-4 h-4 text-civic-teal-600" />
+                <span>Proposition Routing & Accountability Trail</span>
+              </h3>
+              <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                Simulation Only
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Single-browser simulation: This proposition routing trail models civic agency handover without claiming live submission to municipal authorities.
+            </p>
+            <div className="space-y-2">
+              {(proposition.routingHistory || []).map((entry) => (
+                <div key={entry.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-900 block">{entry.routedTo}</span>
+                    <span className="text-[11px] text-slate-600">{entry.note}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block">{formatDate(entry.timestamp)}</span>
+                    <span className="text-[10px] text-civic-teal-700 font-medium capitalize">{entry.stage}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </Card>
 
           {/* Outcome Finalisation Controls */}

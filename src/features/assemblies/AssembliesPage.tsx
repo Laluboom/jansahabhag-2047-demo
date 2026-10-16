@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Layers,
   FileCheck2,
+  Scale,
 } from 'lucide-react';
 
 export const AssembliesPage: React.FC = () => {
@@ -146,7 +147,15 @@ export const AssembliesPage: React.FC = () => {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-800 bg-civic-teal-50 px-2.5 py-0.5 rounded-full border border-civic-teal-200">
                     Stage: {asm.currentStage.replace('_', ' ')}
                   </span>
-                  <StatusChip status={asm.status} />
+                  <div className="flex items-center gap-1.5">
+                    {asm.roleAllocations && (
+                      <span className="text-[10px] font-bold text-civic-indigo-800 bg-civic-indigo-50 px-2 py-0.5 rounded-full border border-civic-indigo-200 flex items-center gap-1" data-testid="assembly-reservation-pill">
+                        <Scale className="w-3 h-3 text-civic-indigo-600" />
+                        <span>33% Role Reservation</span>
+                      </span>
+                    )}
+                    <StatusChip status={asm.status} />
+                  </div>
                 </div>
 
                 <div>

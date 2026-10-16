@@ -132,13 +132,12 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(subCredit?.dimension).toBe('Contribution');
       expect(subCredit?.amount).toBe(10);
 
-      // Check dashboard credit breakdown has Contribution
+      // Check dashboard and passport track pending credits before facilitator review (Package 07)
       const dashboard = await repository.getDashboard('user_aarav');
-      expect(dashboard.creditSummary.breakdown.Contribution).toBeGreaterThanOrEqual(10);
+      expect(dashboard.creditSummary.pendingCredits).toBeGreaterThanOrEqual(10);
 
-      // Check passport creditsByDimension has Contribution
       const passport = await repository.getPassport('user_aarav');
-      expect(passport.creditsByDimension.Contribution).toBeGreaterThanOrEqual(10);
+      expect(passport.pendingCredits).toBeGreaterThanOrEqual(10);
 
       // Check teacher notification
       const teacherNotifs = await repository.getNotifications('user_kavita');
@@ -155,7 +154,7 @@ describe('DemoRepository Domain Service Implementation', () => {
         assignmentId: 'asg_obs_03',
         userId: 'user_aarav',
         content: 'Initial notes.',
-        evidenceIds: [],
+        evidenceIds: ['ev_aarav_traffic_count_01'],
       });
       const creditsAfterFirst = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
       expect(creditsAfterFirst).toBe(initialCredits + 10);
@@ -181,6 +180,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(draft.status).toBe('draft');
 
       // 2. Teacher cannot review a draft submission
+      await repository.switchUser('user_kavita');
       await expect(
         repository.reviewSubmission({
           submissionId: draft.id,
@@ -191,6 +191,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       ).rejects.toThrow(/Cannot review a draft submission/i);
 
       // 3. Participant submits the draft
+      await repository.switchUser('user_aarav');
       const submitted = await repository.submitAssignment({
         assignmentId: 'asg_obs_03',
         userId: 'user_aarav',
@@ -200,6 +201,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(submitted.status).toBe('submitted');
 
       // 4. Teacher requests revision
+      await repository.switchUser('user_kavita');
       const revised = await repository.reviewSubmission({
         submissionId: submitted.id,
         reviewerId: 'user_kavita',
@@ -209,6 +211,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(revised.status).toBe('revision_requested');
 
       // 5. Revision requested can be edited back to draft or resubmitted
+      await repository.switchUser('user_aarav');
       const redraft = await repository.saveAssignmentDraft({
         assignmentId: 'asg_obs_03',
         userId: 'user_aarav',
@@ -225,6 +228,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(resubmitted.status).toBe('submitted');
 
       // 6. Teacher verifies the submission
+      await repository.switchUser('user_kavita');
       const verified = await repository.reviewSubmission({
         submissionId: submitted.id,
         reviewerId: 'user_kavita',
@@ -235,6 +239,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(verified.status).toBe('verified');
 
       // 7. Verified submission cannot be mutated by saveAssignmentDraft or submitAssignment
+      await repository.switchUser('user_aarav');
       await expect(
         repository.saveAssignmentDraft({
           assignmentId: 'asg_obs_03',
@@ -251,24 +256,37 @@ describe('DemoRepository Domain Service Implementation', () => {
         })
       ).rejects.toThrow(/Cannot modify submission with status 'verified'/i);
 
-      // 8. Verified submission cannot be reverted to revision_requested by teacher
+      // 8. Participant cannot self-review or self-reverse a reviewer decision
+      await repository.switchUser('user_aarav');
       await expect(
         repository.reviewSubmission({
           submissionId: submitted.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'user_aarav',
           status: 'revision_requested',
-          teacherFeedback: 'Attempt to revert verified state',
+          teacherFeedback: 'Unauthorized participant self-reversal',
         })
-      ).rejects.toThrow(/Cannot change status of an already verified submission/i);
+      ).rejects.toThrow(/only teachers may review submissions/i);
 
-      // 9. Repeated verification call on already verified submission is idempotent
-      const duplicateReview = await repository.reviewSubmission({
+      // 9. Authorized fictional mentor can move accepted to revision_requested with attributed audit reconciliation
+      await repository.switchUser('user_kavita');
+      const reversedReview = await repository.reviewSubmission({
         submissionId: submitted.id,
         reviewerId: 'user_kavita',
-        status: 'verified',
-        teacherFeedback: 'Duplicate review check',
+        status: 'revision_requested',
+        teacherFeedback: 'Substantive revision required on ward boundary data',
       });
-      expect(duplicateReview.status).toBe('verified');
+      expect(reversedReview.status).toBe('revision_requested');
+
+      // 10. Repeated review call with identical state is idempotent
+      const duplicateReversal = await repository.reviewSubmission({
+        submissionId: submitted.id,
+        reviewerId: 'user_kavita',
+        status: 'revision_requested',
+        teacherFeedback: 'Substantive revision required on ward boundary data',
+      });
+      expect(duplicateReversal.status).toBe('revision_requested');
+
+      await repository.switchUser('user_aarav');
     });
 
     it('full revision and verification cycle: submission -> revision request -> resubmit -> verify', async () => {
@@ -294,6 +312,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(submission.status).toBe('submitted');
 
       // 2. Teacher requests revision
+      await repository.switchUser('user_kavita');
       const revision = await repository.reviewSubmission({
         submissionId: submission.id,
         reviewerId: 'user_kavita',
@@ -309,6 +328,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(revNotif).toBeDefined();
 
       // 3. Participant edits and resubmits
+      await repository.switchUser('user_aarav');
       const resubmitted = await repository.submitAssignment({
         assignmentId: 'asg_obs_03',
         userId: 'user_aarav',
@@ -321,6 +341,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       const creditsBeforeVerify = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
 
       // 4. Teacher verifies submission
+      await repository.switchUser('user_kavita');
       const verified = await repository.reviewSubmission({
         submissionId: submission.id,
         reviewerId: 'user_kavita',
@@ -349,6 +370,8 @@ describe('DemoRepository Domain Service Implementation', () => {
       // Check user totalCredits derived from ledger
       const user = await repository.getUser('user_aarav');
       expect(user?.totalCredits).toBe(creditsAfterVerify);
+
+      await repository.switchUser('user_aarav');
     });
 
     it('cross-persona visibility: teacher sees all student submissions while participant sees only their own', async () => {
@@ -358,23 +381,27 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(aaravSubs[0].userId).toBe('user_aarav');
 
       // Teacher view for asg_obs_01 (sees Aarav, Priya, Meera submissions)
+      await repository.switchUser('user_kavita');
       const allAsg1Subs = await repository.getSubmissions(undefined, 'asg_obs_01');
       expect(allAsg1Subs.length).toBeGreaterThanOrEqual(3);
       const studentIds = allAsg1Subs.map((s) => s.userId);
       expect(studentIds).toContain('user_aarav');
       expect(studentIds).toContain('user_priya');
       expect(studentIds).toContain('user_meera');
+
+      await repository.switchUser('user_aarav');
     });
   });
 
   describe('Deliberation & Assemblies', () => {
     it('adding an assembly contribution adds 5 deliberation credits and activity entry', async () => {
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
       const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
 
       const contrib = await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
         userId: 'user_aarav',
-        stage: 'deliberation',
+        stage: 'think',
         type: 'question',
         text: 'How will stormwater drainage be incorporated beneath the tabletop crossing?',
       });
@@ -414,12 +441,14 @@ describe('DemoRepository Domain Service Implementation', () => {
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
       const sub = (await repository.getSubmissions('user_aarav', 'asg_obs_03'))[0];
+      await repository.switchUser('user_kavita');
       await repository.reviewSubmission({
         submissionId: sub.id,
         reviewerId: 'user_kavita',
         status: 'revision_requested',
         teacherFeedback: 'Need further fieldwork evidence.',
       });
+      await repository.switchUser('user_aarav');
       dashboard = await repository.getDashboard('user_aarav');
       expect(dashboard.nextStep?.type).toBe('revision');
       expect(dashboard.nextStep?.title).toContain('Revise:');

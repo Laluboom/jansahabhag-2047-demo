@@ -119,12 +119,15 @@ export const ProjectsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <span className="text-xs font-bold text-civic-indigo-700 uppercase tracking-wider block mb-1">
+            Labs & Projects
+          </span>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
             <Target className="w-7 h-7 text-civic-saffron-600" />
             <span>Youth Civic Action Projects</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Student-led micro-initiatives translating deliberation into municipal pedestrian safety action.
+            Simulated student-led micro-initiatives translating deliberation into pedestrian safety action in this fictional browser demo.
           </p>
         </div>
 
@@ -132,6 +135,63 @@ export const ProjectsPage: React.FC = () => {
           <Plus className="w-4 h-4 mr-1.5" />
           <span>Start Initiative</span>
         </Button>
+      </div>
+
+      {/* Demo Disclosure Banner */}
+      <div className="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
+        <strong>Fictional Browser Demo:</strong> All project initiatives, innovation lab previews, and milestone records are synthetic demo data.
+      </div>
+
+      {/* Connected Civic Innovation Labs Previews (Master PRD §1, Item 8) */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            Connected Civic Innovation Labs
+          </p>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
+            Demo Previews
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link
+            to="/labs/ideas"
+            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-civic-indigo-300 hover:shadow-xs transition-all group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 group-hover:text-civic-indigo-600">
+              <span>Idea Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-civic-indigo-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+              Grassroots pedestrian safety inventions & street prototypes.
+            </p>
+          </Link>
+
+          <Link
+            to="/labs/research"
+            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-civic-teal-300 hover:shadow-xs transition-all group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 group-hover:text-civic-teal-600">
+              <span>Research Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-civic-teal-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+              Empirical traffic census datasets & conflict telemetry.
+            </p>
+          </Link>
+
+          <Link
+            to="/labs/policy"
+            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-civic-saffron-300 hover:shadow-xs transition-all group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 group-hover:text-civic-saffron-600">
+              <span>Policy Lab</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-civic-saffron-600 group-hover:translate-x-0.5 transition-all" />
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+              Model municipal crosswalk bylaws & school zone design codes.
+            </p>
+          </Link>
+        </div>
       </div>
 
       {/* Summary Stats Cards */}
@@ -160,23 +220,23 @@ export const ProjectsPage: React.FC = () => {
 
         <Card className="p-4 border-slate-200">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Active in Field
+            Active in Field (Demo)
           </span>
           <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading mt-1 block">
             {projects.filter((p) => p.status === 'active' || p.status === 'milestone_review').length}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">Underway with ULB</span>
+          <span className="text-[10px] text-slate-500 mt-0.5 block">Simulated ULB tracking</span>
         </Card>
 
         <Card className="p-4 border-slate-200">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Completed Actions
+            Completed Actions (Demo)
           </span>
           <span className="text-2xl font-extrabold text-civic-teal-700 font-heading mt-1 block">
             {projects.filter((p) => p.status === 'completed').length}
           </span>
           <span className="text-[10px] text-civic-teal-600 font-medium mt-0.5 block">
-            Verified implementation
+            Simulated completion
           </span>
         </Card>
       </div>

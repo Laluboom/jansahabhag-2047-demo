@@ -15,6 +15,7 @@ export interface User {
   name: string;
   role: UserRole;
   email: string;
+  username?: string;
   avatar: string;
   institutionId: string;
   institutionName: string;
@@ -143,14 +144,17 @@ export interface RubricItem {
   description: string;
 }
 
+export type AssignmentType = 'civic_assignment' | 'uhv_reflection';
+
 export interface Assignment {
   id: string;
   courseId: string;
   lessonId?: string;
+  assignmentType?: AssignmentType;
   title: string;
   prompt: string;
   rubric: RubricItem[];
-  requiredEvidenceType: EvidenceType;
+  requiredEvidenceType?: EvidenceType;
   creditsReward: number;
   status: 'draft' | 'active' | 'archived';
   dueDate?: string;
@@ -164,7 +168,8 @@ export type SubmissionStatus =
   | 'submitted'
   | 'under_review'
   | 'verified'
-  | 'revision_requested';
+  | 'revision_requested'
+  | 'completed';
 
 export interface Submission {
   id: string;
@@ -173,14 +178,25 @@ export interface Submission {
   content: string;
   evidenceIds: string[];
   status: SubmissionStatus;
+  isUhvReflection?: boolean;
+  visibility?: 'private' | 'shared_with_mentor';
   teacherFeedback?: string;
   reviewerId?: string;
   reviewedAt?: string;
   score?: number;
   submittedAt?: string;
+  receiptId?: string;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EvidenceFileInfo {
+  name: string;
+  size: number;
+  type: string;
+  dataUrl?: string;
+  demoLabel?: string;
 }
 
 export interface Evidence {
@@ -197,6 +213,9 @@ export interface Evidence {
   tags: string[];
   mediaUrl?: string;
   metadata?: Record<string, string | number | boolean>;
+  assignmentId?: string;
+  observationTime?: string;
+  fileInfo?: EvidenceFileInfo;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -230,6 +249,77 @@ export interface Activity {
 export type EventType = 'assembly' | 'workshop' | 'field_audit' | 'dialogue' | 'expert_session';
 export type EventStatus = 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
 
+export type ReservationEligibility = 'eligible' | 'ineligible' | 'undeclared';
+
+export type AllocationStatus =
+  | 'pending'
+  | 'finalized_compliant'
+  | 'finalized_exception'
+  | 'blocked_noncompliant'
+  | 'unvalidated_legacy';
+
+export interface AllocationAuditRecord {
+  id: string;
+  allocationId: string;
+  action:
+    | 'created'
+    | 'updated'
+    | 'finalized'
+    | 'exception_approved'
+    | 'finalization_rejected'
+    | 'exception_invalidated';
+  actorId?: string; // approver persona (private to owner)
+  actorName?: string; // approver display name (private to owner)
+  actorRole: string; // approver role (e.g. 'platform_admin')
+  reason?: string; // substantive reason (private to owner)
+  policyVersion: string;
+  outcome: string;
+  timestamp: string;
+  snapshot: {
+    totalPlaces: number;
+    reservedMinimum: number;
+    reservedOccupiedCount?: number;
+    ordinaryOccupiedCount?: number;
+    vacanciesCount?: number;
+    status?: AllocationStatus;
+  };
+}
+
+export interface AllocationState {
+  allocationId: string;
+  allocationType: 'event_places' | 'named_roles' | 'cohort_places';
+  title?: string;
+  totalPlaces: number;
+  reservedMinimum: number; // ceil(0.33 * totalPlaces)
+  ordinaryPlaces: number; // totalPlaces - reservedMinimum
+  confirmedOccupants?: string[]; // user IDs (internal validation only)
+  reservedOccupants?: string[]; // eligible user IDs occupying reserved places (internal validation only)
+  ordinaryOccupants?: string[]; // occupants taking ordinary places (internal validation only)
+  reservedOccupiedCount?: number; // aggregate public count (withheld in small cohorts)
+  ordinaryOccupiedCount?: number; // aggregate public count (withheld in small cohorts)
+  vacanciesCount?: number; // unfilled reserved places: reservedMinimum - reservedOccupiedCount (withheld in small cohorts)
+  status?: AllocationStatus; // public status (suppressed in small cohorts if revealing)
+  isException: boolean;
+  exceptionAudit?: AllocationAuditRecord;
+  policyVersion: string;
+  lastValidatedAt: string;
+  isPrivacySuppressed?: boolean; // privacy protection active for small cohorts
+}
+
+export interface AllocationValidationResult {
+  isValid: boolean;
+  status: AllocationStatus;
+  canFinalize: boolean;
+  reservedMinimum: number;
+  reservedOccupiedCount: number;
+  ordinaryOccupiedCount: number;
+  vacanciesCount: number;
+  isCompliant: boolean;
+  isException: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
 export interface Event {
   id: string;
   programmeId: string;
@@ -248,6 +338,7 @@ export interface Event {
   rsvpMap?: Record<string, 'attending' | 'maybe' | 'declined'>;
   capacity: number;
   status: EventStatus;
+  allocation?: AllocationState;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -265,6 +356,123 @@ export interface SessionResource {
   type: string;
 }
 
+export type SessionMode =
+  | 'standard_meeting'
+  | 'debate_room'
+  | 'youth_assembly'
+  | 'youth_parliament'
+  | 'workshop';
+
+export interface SessionRosterEntry {
+  userId: string;
+  name: string;
+  role: string;
+  joinedAt: string;
+  isSpeaking?: boolean;
+}
+
+export interface SessionModeTransition {
+  id: string;
+  fromMode: SessionMode;
+  toMode: SessionMode;
+  timestamp: string;
+  initiatedBy: string;
+  summary?: string;
+}
+
+export type DebatePhase =
+  | 'DRAFT'
+  | 'SCHEDULED'
+  | 'OPEN'
+  | 'MOTION_CONFIRMED'
+  | 'OPENING_STATEMENTS'
+  | 'DISCUSSION'
+  | 'REBUTTAL_OR_QUESTIONS'
+  | 'CLOSING_STATEMENTS'
+  | 'REFLECTION'
+  | 'CLOSED'
+  | 'REPORT_PUBLISHED';
+
+export const DEBATE_PHASES: DebatePhase[] = [
+  'DRAFT',
+  'SCHEDULED',
+  'OPEN',
+  'MOTION_CONFIRMED',
+  'OPENING_STATEMENTS',
+  'DISCUSSION',
+  'REBUTTAL_OR_QUESTIONS',
+  'CLOSING_STATEMENTS',
+  'REFLECTION',
+  'CLOSED',
+  'REPORT_PUBLISHED',
+];
+
+export interface SpeakingQueueEntry {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole?: string;
+  requestedAt: string;
+  recognizedAt?: string;
+  status: 'waiting' | 'speaking' | 'completed' | 'cancelled';
+}
+
+export interface DebateContribution {
+  id: string;
+  userId: string;
+  userName: string;
+  phase: DebatePhase;
+  timestamp: string;
+  text: string;
+  evidenceIds?: string[];
+}
+
+export interface DebateRulebookRule {
+  title: string;
+  content: string;
+}
+
+export interface DebateRulebook {
+  version: string;
+  title: string;
+  rules: DebateRulebookRule[];
+}
+
+export interface DebateRoomData {
+  motion: string;
+  linkedQuestion?: string;
+  propositionId?: string;
+  currentPhase: DebatePhase;
+  speakingQueue: SpeakingQueueEntry[];
+  activeSpeakerId?: string | null;
+  contributions: DebateContribution[];
+  evidenceIds: string[];
+  rulebook: DebateRulebook;
+  acknowledgedUserIds?: string[];
+  reflectionPrompt?: string;
+  roleAllocations?: Record<string, AllocationState>;
+  rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
+}
+
+export type CanonicalDebateRole =
+  | 'Facilitator'
+  | 'Questioner'
+  | 'Evidence Analyst'
+  | 'Civic Advocate'
+  | 'Community Voice'
+  | 'Synthesiser'
+  | 'Rapporteur';
+
+export const CANONICAL_DEBATE_ROLES: CanonicalDebateRole[] = [
+  'Facilitator',
+  'Questioner',
+  'Evidence Analyst',
+  'Civic Advocate',
+  'Community Voice',
+  'Synthesiser',
+  'Rapporteur',
+];
+
 export interface Session {
   id: string;
   eventId: string;
@@ -273,23 +481,140 @@ export interface Session {
   agenda: SessionAgendaItem[];
   resources: SessionResource[];
   notesSummary?: string;
+  currentMode: SessionMode;
+  facilitatorId: string;
+  roster: SessionRosterEntry[];
+  modeTransitions: SessionModeTransition[];
+  debateData?: DebateRoomData;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
+  roleAllocations?: Record<string, AllocationState>;
+  rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
 }
 
 export type AssemblyStage =
-  | 'orientation'
-  | 'question'
-  | 'evidence_review'
-  | 'deliberation'
-  | 'proposition_draft'
-  | 'revision'
-  | 'support_dissent'
-  | 'outcome'
-  | 'reflection';
+  | 'frame'
+  | 'think'
+  | 'enable'
+  | 'troubleshoot'
+  | 'shape'
+  | 'final_assembly';
+
+export const CANONICAL_ASSEMBLY_STAGES: {
+  stage: AssemblyStage;
+  label: string;
+  number: number;
+  coreQuestion: string;
+  desc: string;
+}[] = [
+  {
+    stage: 'frame',
+    label: 'Frame',
+    number: 1,
+    coreQuestion: 'What is the specific issue, scope, and boundary?',
+    desc: 'Define the specific issue, question, scope, constraints and terms.',
+  },
+  {
+    stage: 'think',
+    label: 'Think',
+    number: 2,
+    coreQuestion: 'What should we understand?',
+    desc: 'Thinkers share substantive perspectives, domain evidence and question assumptions.',
+  },
+  {
+    stage: 'enable',
+    label: 'Enable',
+    number: 3,
+    coreQuestion: 'What would make it possible?',
+    desc: 'Enablers examine resources, implementation route, ownership and feasibility.',
+  },
+  {
+    stage: 'troubleshoot',
+    label: 'Troubleshoot',
+    number: 4,
+    coreQuestion: 'What could go wrong?',
+    desc: 'Troubleshooters surface risks, edge cases, harms and mitigations (Red Flags).',
+  },
+  {
+    stage: 'shape',
+    label: 'Shape',
+    number: 5,
+    coreQuestion: 'What should we take forward?',
+    desc: 'Shapers synthesize draft wording, support areas and unresolved disagreements.',
+  },
+  {
+    stage: 'final_assembly',
+    label: 'Final Assembly',
+    number: 6,
+    coreQuestion: 'Where does the full assembly stand?',
+    desc: 'Full assembly reviews, amends, responds and records support profile, dissent and outcome.',
+  },
+];
 
 export type AssemblyStatus = 'upcoming' | 'active' | 'deliberating' | 'concluded' | 'archived';
+
+export type AssemblyRoleType =
+  | 'Thinker'
+  | 'Enabler'
+  | 'Troubleshooter'
+  | 'Shaper';
+
+export const CANONICAL_ASSEMBLY_ROLES: AssemblyRoleType[] = [
+  'Thinker',
+  'Enabler',
+  'Troubleshooter',
+  'Shaper',
+];
+
+export type AssemblyRolePower =
+  | 'Question Setter'
+  | 'Feasibility Check'
+  | 'Red Flag'
+  | 'Proposition Call';
+
+export interface AssemblyRoleAction {
+  id: string;
+  assemblyId: string;
+  userId: string;
+  userName: string;
+  roleName: AssemblyRoleType;
+  power: AssemblyRolePower;
+  title: string;
+  description: string;
+  status: 'pending_response' | 'addressed' | 'acknowledged';
+  responseObligation: string;
+  responseNote?: string;
+  respondedBy?: string;
+  respondedAt?: string;
+  timestamp: string;
+}
+
+export interface AssemblyRoleOverrideAudit {
+  id: string;
+  assemblyId: string;
+  userId: string;
+  userName: string;
+  previousRole: AssemblyRoleType;
+  newRole: AssemblyRoleType;
+  reason: string;
+  overriddenBy: string;
+  overriddenByName: string;
+  timestamp: string;
+}
+
+export interface AssemblyRulebookRule {
+  title: string;
+  content: string;
+}
+
+export interface AssemblyRulebook {
+  version: string;
+  title: string;
+  rules: AssemblyRulebookRule[];
+  acknowledgedUserIds?: string[];
+  materialChangeNotice?: string;
+}
 
 export interface Assembly {
   id: string;
@@ -304,27 +629,34 @@ export interface Assembly {
   status: AssemblyStatus;
   participantUserIds: string[];
   facilitatorId: string;
+  chairId?: string;
   evidenceIds: string[];
   propositionId?: string;
+  rulebook?: AssemblyRulebook;
+  speakingQueue?: SpeakingQueueEntry[];
+  activeSpeakerId?: string | null;
+  roleActions?: AssemblyRoleAction[];
+  roleOverrideAudits?: AssemblyRoleOverrideAudit[];
+  isThreePersonMiniMode?: boolean;
+  coChairId?: string;
+  roleAllocations?: Record<string, AllocationState>;
+  rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
 }
-
-export type AssemblyRoleType =
-  | 'Questioner'
-  | 'Evidence Analyst'
-  | 'Civic Advocate'
-  | 'Synthesiser'
-  | 'Community Voice'
-  | 'Rapporteur';
 
 export interface AssemblyRole {
   id: string;
   assemblyId: string;
   userId: string;
   roleName: AssemblyRoleType;
+  secondaryRoleName?: AssemblyRoleType;
+  lens?: string;
   responsibilities: string[];
+  power: AssemblyRolePower;
+  powerActionDescription?: string;
+  responseObligation?: string;
   badgeIcon?: string;
   promptSuggestions: string[];
   schemaVersion: number;
@@ -362,12 +694,47 @@ export type PropositionOutcome =
   | 'SPLIT_DECISION'
   | 'INSUFFICIENT_BASIS';
 
+export type ParticipantResponseState =
+  | 'Support'
+  | 'Support with reservations'
+  | 'Dissent'
+  | 'Abstain / insufficient basis';
+
+export interface ParticipantPropositionResponse {
+  id: string;
+  propositionId: string;
+  userId: string;
+  userName: string;
+  userRole?: AssemblyRoleType;
+  responseState: ParticipantResponseState;
+  reasonOrReservations?: string;
+  version: number;
+  timestamp: string;
+  history?: {
+    version: number;
+    responseState: ParticipantResponseState;
+    reasonOrReservations?: string;
+    timestamp: string;
+  }[];
+}
+
+export interface PropositionRoutingEntry {
+  id: string;
+  stage: string;
+  routedTo: string;
+  status: 'simulated_routing' | 'received_by_chamber';
+  timestamp: string;
+  note: string;
+}
+
 export interface DissentRecord {
   id: string;
   userId: string;
   userName: string;
   reason: string;
   suggestedAmendment: string;
+  versionRecorded?: number;
+  timestamp?: string;
 }
 
 export interface SupportProfile {
@@ -380,8 +747,11 @@ export interface SupportProfile {
 export interface PropositionRevision {
   version: number;
   updatedBy: string;
+  authorId?: string;
+  authorRole?: string;
   changesSummary: string;
   timestamp: string;
+  isAiGenerated?: boolean;
 }
 
 export interface Proposition {
@@ -398,6 +768,12 @@ export interface Proposition {
   dissent: DissentRecord[];
   supportProfile: SupportProfile;
   evidenceIds: string[];
+  evidenceBasis?: string[];
+  assumptions: string[];
+  participantResponses: ParticipantPropositionResponse[];
+  reviewerState: 'draft' | 'under_review' | 'reviewed' | 'finalised';
+  publicationVisibility: 'internal_chamber' | 'assembly_members' | 'public_civic_record';
+  routingHistory: PropositionRoutingEntry[];
   outcome: PropositionOutcome;
   version: number;
   revisions: PropositionRevision[];
@@ -442,7 +818,7 @@ export interface Project {
   updatedAt: string;
 }
 
-export type ReflectionContextType = 'course' | 'assignment' | 'assembly' | 'project' | 'general';
+export type ReflectionContextType = 'course' | 'assignment' | 'assembly' | 'project' | 'session' | 'general';
 
 export interface Reflection {
   id: string;
@@ -464,6 +840,7 @@ export type CreditDimension =
   | 'Deliberation'
   | 'Reflection'
   | 'Contribution'
+  | 'Collaboration'
   | 'Civic Action';
 
 export type CreditSourceType =
@@ -473,7 +850,26 @@ export type CreditSourceType =
   | 'assembly'
   | 'contribution'
   | 'reflection'
-  | 'project';
+  | 'project'
+  | 'workspace'
+  | 'dissent';
+
+export interface CreditFormulaFactors {
+  appliedRule: string;
+  activity?: string;
+  quality?: string;
+  evidence?: string;
+  verification?: string;
+  significance?: string;
+}
+
+export interface CreditAuditEntry {
+  date: string;
+  action: string;
+  actorId: string;
+  actorName: string;
+  note: string;
+}
 
 export interface CreditTransaction {
   id: string;
@@ -482,8 +878,12 @@ export interface CreditTransaction {
   amount: number;
   sourceType: CreditSourceType;
   sourceId: string;
-  status: 'Pending' | 'Verified' | 'Audited';
+  sourceRoute?: string;
+  status: 'Pending' | 'Verified' | 'Audited' | 'Reversed';
   reason: string;
+  calculationExplanation?: string;
+  formulaFactors?: CreditFormulaFactors;
+  auditTrail?: CreditAuditEntry[];
   createdAt: string;
   schemaVersion: number;
 }
@@ -496,6 +896,35 @@ export type PassportCategory =
   | 'reflection'
   | 'achievement';
 
+export type VerificationState =
+  | 'self_reported'
+  | 'system_recorded'
+  | 'facilitator_reviewed'
+  | 'institution_verified'
+  | 'sample_unverified';
+
+export type ReviewState =
+  | 'pending'
+  | 'accepted'
+  | 'revision_requested'
+  | 'sample'
+  | 'unreviewed';
+
+export interface PassportAuditEntry {
+  date: string;
+  action: string;
+  actorId: string;
+  actorName: string;
+  note?: string;
+}
+
+export interface PassportVerifier {
+  id: string;
+  name: string;
+  role: string;
+  label: string;
+}
+
 export interface PassportEntry {
   id: string;
   userId: string;
@@ -507,8 +936,36 @@ export interface PassportEntry {
   evidenceIds: string[];
   sourceReferenceId: string;
   sourceReferenceType: string;
+  sourceRoute?: string;
+  authorId?: string;
+  authorName?: string;
+  verificationState: VerificationState;
+  reviewState?: ReviewState;
+  verifier?: PassportVerifier;
+  organisation?: string;
+  revisionHistory?: PassportAuditEntry[];
+  visibility?: 'public' | 'community' | 'private';
+  calculationExplanation?: string;
   isVerified: boolean;
   badgeUrl?: string;
+  schemaVersion: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreditAppeal {
+  id: string;
+  userId: string;
+  userName: string;
+  targetType: 'credit' | 'submission' | 'passport';
+  targetId: string;
+  reason: string;
+  status: 'pending_human_review' | 'under_review' | 'resolved' | 'rejected';
+  assignedReviewerName: string;
+  aiDisclaimer: string;
+  reviewerFeedback?: string;
+  createdAt: string;
+  updatedAt: string;
   schemaVersion: number;
 }
 
@@ -612,6 +1069,180 @@ export interface CivicIssue {
   updatedAt: string;
 }
 
+// ==========================================
+// Workspace Collaboration Domain Types (Master PRD §A12, §A13, §A20.4, §A21)
+// ==========================================
+
+export type WorkspaceType =
+  | 'institution'
+  | 'cross_institution'
+  | 'project_topic'
+  | 'username_invited'
+  | 'open_interest';
+
+export type WorkspaceVisibility = 'private' | 'institution_scoped' | 'public_discoverable';
+
+export type WorkspaceLifecycleState =
+  | 'DRAFT'
+  | 'PENDING_APPROVAL'
+  | 'ACTIVE'
+  | 'PAUSED'
+  | 'RESTRICTED'
+  | 'ARCHIVED';
+
+export type WorkspaceMembershipState =
+  | 'invited'
+  | 'requested'
+  | 'approved'
+  | 'active'
+  | 'restricted'
+  | 'removed'
+  | 'left';
+
+export type WorkspaceRole = 'owner' | 'moderator' | 'member';
+
+export interface WorkspacePermissionSet {
+  canRead: boolean;
+  canPost: boolean;
+  canUpload: boolean;
+  canInvite: boolean;
+  canScheduleMeeting: boolean;
+  canCreateSubroom: boolean;
+  canModerate: boolean;
+  canManageMembership: boolean;
+}
+
+export interface WorkspaceRule {
+  id: string;
+  title: string;
+  content: string;
+  isSafeguarding?: boolean;
+}
+
+export interface WorkspaceRulebook {
+  version: string;
+  title: string;
+  lastUpdated: string;
+  materialChangeNotice?: string;
+  rules: WorkspaceRule[];
+}
+
+export interface WorkspaceMembership {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  userName: string;
+  username: string;
+  userRole: UserRole;
+  institutionId?: string;
+  institutionName?: string;
+  role: WorkspaceRole;
+  state: WorkspaceMembershipState;
+  invitedBy?: string;
+  invitedAt?: string;
+  joinedAt?: string;
+  statusReason?: string;
+  statusChangedBy?: string;
+  statusChangedAt?: string;
+  permissions: WorkspacePermissionSet;
+  lastAcknowledgedRuleVersion?: string;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorkspaceActionType =
+  | 'announcement'
+  | 'team_note'
+  | 'task'
+  | 'thread'
+  | 'resource';
+
+export type WorkspaceActionStatus = 'active' | 'frozen' | 'removed';
+
+export interface WorkspaceAction {
+  id: string;
+  workspaceId: string;
+  authorId: string;
+  authorName: string;
+  authorUsername: string;
+  authorRole: WorkspaceRole;
+  actionType: WorkspaceActionType;
+  title: string;
+  content: string;
+  sourceLink?: {
+    type: 'proposition' | 'assembly' | 'evidence' | 'external';
+    id: string;
+    label: string;
+    url?: string;
+  };
+  tags?: string[];
+  status: WorkspaceActionStatus;
+  moderationReason?: string;
+  moderatedBy?: string;
+  moderatedAt?: string;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorkspaceAuditEventType =
+  | 'invite'
+  | 'acceptance'
+  | 'decline'
+  | 'post'
+  | 'report'
+  | 'moderation'
+  | 'removal'
+  | 'restriction'
+  | 'reentry'
+  | 'rule_acknowledgement';
+
+export interface WorkspaceAuditEvent {
+  id: string;
+  workspaceId: string;
+  eventType: WorkspaceAuditEventType;
+  actorId: string;
+  actorName: string;
+  actorRole: string;
+  targetUserId?: string;
+  targetUserName?: string;
+  targetActionId?: string;
+  reason?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  schemaVersion: number;
+}
+
+export interface Workspace {
+  id: string;
+  title: string;
+  purpose: string;
+  type: WorkspaceType;
+  visibility: WorkspaceVisibility;
+  state: WorkspaceLifecycleState;
+  institutionId?: string;
+  institutionName?: string;
+  ownerId: string;
+  ownerName: string;
+  moderatorIds: string[];
+  allowedParticipantCategories: string[];
+  linkedPropositionId?: string;
+  linkedAssemblyId?: string;
+  rulebook: WorkspaceRulebook;
+  moderationContact: {
+    name: string;
+    role: string;
+    emailOrChannel: string;
+    safeguardingLead?: string;
+  };
+  storageQuotaBytes?: number;
+  usedStorageBytes?: number;
+  schemaVersion: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DemoDatabase {
   schemaVersion: number;
   activeUserId: string;
@@ -640,4 +1271,19 @@ export interface DemoDatabase {
   communityPosts: CommunityPost[];
   moderationCases: ModerationCase[];
   civicIssues?: CivicIssue[];
+  assemblyRoleActions?: AssemblyRoleAction[];
+  assemblyRoleOverrideAudits?: AssemblyRoleOverrideAudit[];
+  allocationAudits?: AllocationAuditRecord[];
+  userDeclarations?: Record<string, ReservationEligibility>;
+  workspaces?: Workspace[];
+  workspaceMemberships?: WorkspaceMembership[];
+  workspaceActions?: WorkspaceAction[];
+  workspaceAuditEvents?: WorkspaceAuditEvent[];
+  creditAppeals?: CreditAppeal[];
+}
+
+declare module './index' {
+  interface PassportView {
+    pendingCredits?: number;
+  }
 }

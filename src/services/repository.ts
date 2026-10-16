@@ -23,6 +23,14 @@ import {
   CommunityPost,
   ModerationCase,
   CivicIssue,
+  Workspace,
+  WorkspaceMembership,
+  WorkspaceAction,
+  WorkspaceAuditEvent,
+  WorkspaceActionType,
+  CreditAppeal,
+  AllocationState,
+  AllocationAuditRecord,
 } from '../types/domain';
 import {
   DashboardData,
@@ -39,6 +47,7 @@ export interface DemoRepository {
   getUsers(): Promise<User[]>;
   getUser(userId: string): Promise<User | null>;
   switchUser(userId: string): Promise<User>;
+  switchPersona(userId: string): Promise<User>;
 
   // Dashboard
   getDashboard(userId: string): Promise<DashboardData>;
@@ -79,16 +88,41 @@ export interface DemoRepository {
 
   // Assemblies & Deliberation
   getAssemblies(userId?: string): Promise<Assembly[]>;
-  getAssembly(assemblyId: string): Promise<Assembly | null>;
+  getAssembly(assemblyId: string, actorId?: string): Promise<Assembly | null>;
   getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]>;
   getUserAssemblyRole(assemblyId: string, userId: string): Promise<AssemblyRole | null>;
-  joinAssembly(assemblyId: string, userId: string): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
+  joinAssembly(assemblyId: string, userId: string, preferredRole?: import('../types/domain').AssemblyRoleType): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
+  overrideAssemblyRole(
+    assemblyId: string,
+    actorId: string,
+    targetUserId: string,
+    newRole: import('../types/domain').AssemblyRoleType | string,
+    reason: string,
+    newSecondaryRole?: import('../types/domain').AssemblyRoleType | null
+  ): Promise<AssemblyRole>;
+  leaveAssembly(assemblyId: string, userId: string, actorId?: string): Promise<{ assembly: Assembly }>;
+  getAssemblyRoleAllocations(assemblyId: string, actorId?: string): Promise<Record<string, AllocationState>>;
+  finalizeAssemblyRoleAllocation(assemblyId: string, roleName: string, actorId?: string): Promise<Assembly>;
+  approveAssemblyRoleException(
+    assemblyId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ assembly: Assembly; audit: AllocationAuditRecord }>;
+  updateAssemblyRoleCapacity(
+    assemblyId: string,
+    roleName: string,
+    newTotalPlaces: number,
+    actorId?: string
+  ): Promise<Assembly>;
   getContributions(assemblyId: string): Promise<Contribution[]>;
   addAssemblyContribution(input: AssemblyContributionInput): Promise<Contribution>;
   getProposition(propositionId: string): Promise<Proposition | null>;
   updateProposition(input: {
     propositionId: string;
     updatedBy: string;
+    actorId?: string;
+    authorRole?: string;
     changesSummary?: string;
     question?: string;
     problem?: string;
@@ -99,11 +133,39 @@ export interface DemoRepository {
     nextStep?: string;
     unresolvedQuestions?: string[];
     evidenceIds?: string[];
+    evidenceBasis?: string[];
+    assumptions?: string[];
+    reviewerState?: 'draft' | 'under_review' | 'reviewed' | 'finalised';
+    publicationVisibility?: 'internal_chamber' | 'assembly_members' | 'public_civic_record';
     dissent?: import('../types/domain').DissentRecord[];
     supportProfile?: import('../types/domain').SupportProfile;
+    isAiGenerated?: boolean;
   }): Promise<Proposition>;
-  finaliseProposition(input: PropositionFinalisationInput): Promise<Proposition>;
-  updateAssemblyStage(assemblyId: string, stage: import('../types/domain').AssemblyStage): Promise<Assembly>;
+  recordPropositionResponse(input: {
+    propositionId: string;
+    userId: string;
+    responseState: import('../types/domain').ParticipantResponseState;
+    reasonOrReservations?: string;
+  }): Promise<Proposition>;
+  finaliseProposition(input: PropositionFinalisationInput & { actorId?: string }): Promise<Proposition>;
+  updateAssemblyStage(assemblyId: string, stage: import('../types/domain').AssemblyStage, actorId?: string): Promise<Assembly>;
+  executeRolePowerAction(input: {
+    assemblyId: string;
+    userId: string;
+    power: import('../types/domain').AssemblyRolePower;
+    title: string;
+    description: string;
+    responseObligation?: string;
+  }): Promise<import('../types/domain').AssemblyRoleAction>;
+  respondToRolePowerAction(input: {
+    assemblyId: string;
+    actionId: string;
+    userId: string;
+    responseNote: string;
+  }): Promise<import('../types/domain').AssemblyRoleAction>;
+  requestAssemblySpeakingTurn(assemblyId: string, userId: string): Promise<Assembly>;
+  recognizeAssemblySpeaker(assemblyId: string, actorId: string, targetUserId: string): Promise<Assembly>;
+  releaseAssemblySpeaker(assemblyId: string, actorId: string): Promise<Assembly>;
 
   // Projects
   getProjects(programmeId?: string): Promise<Project[]>;
@@ -119,8 +181,50 @@ export interface DemoRepository {
   getEvent(eventId: string): Promise<Event | null>;
   getSession(sessionId: string): Promise<Session | null>;
   getSessionByEvent(eventId: string): Promise<Session | null>;
-  rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined'): Promise<Event>;
-  checkInEvent(eventId: string, userId: string): Promise<{ event: Event; activity?: Activity }>;
+  acknowledgeRulebook(sessionId: string, userId: string): Promise<Session>;
+  requestSpeakingTurn(sessionId: string, userId: string): Promise<Session>;
+  cancelSpeakingTurn(sessionId: string, userId: string): Promise<Session>;
+  recognizeSpeakingTurn(sessionId: string, actorId: string, targetUserId: string): Promise<Session>;
+  advanceSpeakingTurn(sessionId: string, actorId: string): Promise<Session>;
+  advanceDebatePhase(sessionId: string, actorId: string, nextPhase: import('../types/domain').DebatePhase): Promise<Session>;
+  postDebateContribution(input: { sessionId: string; userId: string; text: string; evidenceIds?: string[] }): Promise<Session>;
+  switchSessionMode(sessionId: string, actorId: string, targetMode: import('../types/domain').SessionMode, summary?: string): Promise<Session>;
+  rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined', actorId?: string): Promise<Event>;
+  checkInEvent(eventId: string, userId: string, actorId?: string): Promise<{ event: Event; activity?: Activity }>;
+  updateEventCapacity(eventId: string, newCapacity: number, actorId?: string): Promise<Event>;
+  finalizeEventAllocation(eventId: string, actorId?: string): Promise<Event>;
+  approveEventAllocationException(eventId: string, reason: string, actorId?: string): Promise<{ event: Event; audit: import('../types/domain').AllocationAuditRecord }>;
+  getAllocationAudits(allocationId?: string, actorId?: string): Promise<import('../types/domain').AllocationAuditRecord[]>;
+
+  // Session & Debate Room Role Allocations (Package 08C1)
+  getSessionRoleAllocations(sessionId: string, actorId?: string): Promise<Record<string, AllocationState>>;
+  assignSessionRole(sessionId: string, userId: string, roleName: string, actorId?: string): Promise<Session>;
+  withdrawSessionRole(sessionId: string, userId: string, actorId?: string): Promise<Session>;
+  replaceSessionRole(sessionId: string, currentUserId: string, newUserId: string, roleName: string, actorId?: string): Promise<Session>;
+  changeSessionRole(sessionId: string, userId: string, newRole: string, actorId?: string): Promise<Session>;
+  finalizeSessionRoleAllocation(sessionId: string, roleName: string, actorId?: string): Promise<Session>;
+  updateSessionRoleCapacity(sessionId: string, roleName: string, newTotalPlaces: number, actorId?: string): Promise<Session>;
+  approveSessionRoleException(
+    sessionId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ session: Session; audit: AllocationAuditRecord }>;
+
+  // Aliases for Debate Room role allocations
+  getDebateRoleAllocations(sessionId: string, actorId?: string): Promise<Record<string, AllocationState>>;
+  assignDebateRole(sessionId: string, userId: string, roleName: string, actorId?: string): Promise<Session>;
+  withdrawDebateRole(sessionId: string, userId: string, actorId?: string): Promise<Session>;
+  replaceDebateRole(sessionId: string, currentUserId: string, newUserId: string, roleName: string, actorId?: string): Promise<Session>;
+  changeDebateRole(sessionId: string, userId: string, newRole: string, actorId?: string): Promise<Session>;
+  finalizeDebateRoleAllocation(sessionId: string, roleName: string, actorId?: string): Promise<Session>;
+  updateDebateRoleCapacity(sessionId: string, roleName: string, newTotalPlaces: number, actorId?: string): Promise<Session>;
+  approveDebateRoleException(
+    sessionId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ session: Session; audit: AllocationAuditRecord }>;
 
   // Activities
   getActivities(userId?: string): Promise<Activity[]>;
@@ -128,12 +232,23 @@ export interface DemoRepository {
 
   // Reflections
   getReflections(userId?: string): Promise<Reflection[]>;
+  getCivicReflections(userId?: string): Promise<Reflection[]>;
+  getUhvReflections(userId?: string): Promise<Reflection[]>;
+  getReflection(reflectionId: string): Promise<Reflection | null>;
+  getSessionReflections(sessionId: string, userId?: string): Promise<Reflection[]>;
   addReflection(reflection: Omit<Reflection, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Reflection>;
 
   // Passport & Credits
   getPassport(userId: string): Promise<PassportView>;
   getCredits(userId: string): Promise<CreditTransaction[]>;
   addCredit(transaction: Omit<CreditTransaction, 'id' | 'schemaVersion' | 'createdAt'>): Promise<CreditTransaction>;
+  requestCreditAppeal(params: {
+    userId: string;
+    targetType: 'credit' | 'submission' | 'passport';
+    targetId: string;
+    reason: string;
+  }): Promise<CreditAppeal>;
+  getCreditAppeals(userId?: string): Promise<CreditAppeal[]>;
 
   // Notifications
   getNotifications(userId: string): Promise<Notification[]>;
@@ -159,6 +274,48 @@ export interface DemoRepository {
   // Moderation
   getModerationCases(): Promise<ModerationCase[]>;
   updateModerationCase(caseId: string, update: Partial<ModerationCase>): Promise<ModerationCase>;
+
+  // Workspace Collaboration (Master PRD §A12, §A13, §A20.4, §A21)
+  getWorkspaces(userId?: string): Promise<Workspace[]>;
+  getWorkspace(workspaceId: string, callerUserId?: string): Promise<Workspace | null>;
+  getWorkspaceMemberships(workspaceId: string, callerUserId: string): Promise<WorkspaceMembership[]>;
+  getWorkspaceMembership(workspaceId: string, userId: string, callerUserId?: string): Promise<WorkspaceMembership | null>;
+  searchUsersForInvite(query: string, callerUserId: string, workspaceId: string): Promise<User[]>;
+  inviteUserToWorkspace(params: { workspaceId: string; inviterId: string; usernameOrId: string }): Promise<WorkspaceMembership>;
+  respondToWorkspaceInvite(params: { workspaceId: string; userId: string; accept: boolean; reason?: string }): Promise<WorkspaceMembership>;
+  acknowledgeWorkspaceRules(params: { workspaceId: string; userId: string; version: string }): Promise<WorkspaceMembership>;
+  getWorkspaceActions(workspaceId: string, callerUserId: string): Promise<WorkspaceAction[]>;
+  createWorkspaceAction(params: {
+    workspaceId: string;
+    authorId: string;
+    actionType: WorkspaceActionType;
+    title: string;
+    content: string;
+    sourceLink?: WorkspaceAction['sourceLink'];
+    tags?: string[];
+  }): Promise<WorkspaceAction>;
+  moderateWorkspaceAction(params: {
+    workspaceId: string;
+    moderatorId: string;
+    actionId: string;
+    action: 'freeze' | 'remove' | 'unfreeze';
+    reason: string;
+  }): Promise<WorkspaceAction>;
+  moderateWorkspaceMember(params: {
+    workspaceId: string;
+    moderatorId: string;
+    targetUserId: string;
+    newStatus: 'restricted' | 'removed' | 'active';
+    reason: string;
+  }): Promise<WorkspaceMembership>;
+  reportWorkspaceContent(params: {
+    workspaceId: string;
+    reporterId: string;
+    targetActionId?: string;
+    targetUserId?: string;
+    reason: string;
+  }): Promise<WorkspaceAuditEvent>;
+  getWorkspaceAuditEvents(workspaceId: string, callerUserId: string): Promise<WorkspaceAuditEvent[]>;
 
   // Demo operations
   resetDemo(): Promise<void>;

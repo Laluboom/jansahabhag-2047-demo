@@ -19,8 +19,23 @@ import { seedNotifications } from './notifications';
 import { seedCommunityGroups, seedCommunityPosts } from './community';
 import { seedModerationCases } from './moderation';
 import { seedCivicIssues } from './issues';
+import {
+  seedWorkspaces,
+  seedWorkspaceMemberships,
+  seedWorkspaceActions,
+  seedWorkspaceAuditEvents,
+  canonicalWorkspaceRulebook,
+} from './workspaces';
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export {
+  seedWorkspaces,
+  seedWorkspaceMemberships,
+  seedWorkspaceActions,
+  seedWorkspaceAuditEvents,
+  canonicalWorkspaceRulebook,
+};
+
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export const seedDatabase: DemoDatabase = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -50,6 +65,11 @@ export const seedDatabase: DemoDatabase = {
   communityPosts: seedCommunityPosts,
   moderationCases: seedModerationCases,
   civicIssues: seedCivicIssues,
+  allocationAudits: [],
+  workspaces: seedWorkspaces,
+  workspaceMemberships: seedWorkspaceMemberships,
+  workspaceActions: seedWorkspaceActions,
+  workspaceAuditEvents: seedWorkspaceAuditEvents,
 };
 
 export function getFreshSeedDatabase(): DemoDatabase {

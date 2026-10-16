@@ -59,17 +59,16 @@ export class PersistenceService {
     database.schemaVersion = CURRENT_SCHEMA_VERSION;
 
     if (!this.isStorageAvailable()) {
-      inMemoryDatabase = JSON.parse(JSON.stringify(database));
-      return true;
+      return false;
     }
 
     try {
       const serialized = JSON.stringify(database);
       window.localStorage.setItem(STORAGE_KEY, serialized);
+      inMemoryDatabase = null;
       return true;
     } catch (err) {
-      console.error('PersistenceService: Storage failure (quota or disabled). Falling back to in-memory.', err);
-      inMemoryDatabase = JSON.parse(JSON.stringify(database));
+      console.error('PersistenceService: Storage failure (quota exceeded or storage disabled).', err);
       return false;
     }
   }

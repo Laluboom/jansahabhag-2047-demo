@@ -6,11 +6,14 @@ import { demoRepository } from '../../services/demoRepository';
 import {
   Assembly,
   AssemblyRole,
+  AssemblyRoleType,
   Evidence,
   Contribution,
   Proposition,
   User,
   AssemblyStage,
+  AllocationState,
+  AllocationAuditRecord,
 } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -32,18 +35,21 @@ import {
   MapPin,
   Clock,
   BookOpen,
+  Scale,
+  Shield,
+  ShieldAlert,
+  AlertCircle,
+  Info,
+  X,
 } from 'lucide-react';
 
 const ALL_STAGES: AssemblyStage[] = [
-  'orientation',
-  'question',
-  'evidence_review',
-  'deliberation',
-  'proposition_draft',
-  'revision',
-  'support_dissent',
-  'outcome',
-  'reflection',
+  'frame',
+  'think',
+  'enable',
+  'troubleshoot',
+  'shape',
+  'final_assembly',
 ];
 
 export const AssemblyDetailPage: React.FC = () => {
@@ -61,6 +67,16 @@ export const AssemblyDetailPage: React.FC = () => {
   const [proposition, setProposition] = useState<Proposition | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Reservation Allocation & Owner Exception State
+  const [selectedRoleForException, setSelectedRoleForException] = useState<string | null>(null);
+  const [exceptionReason, setExceptionReason] = useState('');
+  const [isSubmittingException, setIsSubmittingException] = useState(false);
+  const [exceptionError, setExceptionError] = useState<string | null>(null);
+  const [isFinalizingRole, setIsFinalizingRole] = useState<string | null>(null);
+  const [roleActionError, setRoleActionError] = useState<string | null>(null);
+  const [roleActionSuccess, setRoleActionSuccess] = useState<string | null>(null);
+  const [showRulebookModal, setShowRulebookModal] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -104,17 +120,64 @@ export const AssemblyDetailPage: React.FC = () => {
     load();
   }, [id, currentUser, refreshKey]);
 
-  const handleJoinAssembly = async () => {
+  const handleJoinAssembly = async (preferredRole?: AssemblyRoleType) => {
     if (!id || !currentUser) return;
     setIsJoining(true);
+    setRoleActionError(null);
     try {
-      await demoRepository.joinAssembly(id, currentUser.id);
+      await demoRepository.joinAssembly(id, currentUser.id, preferredRole);
       triggerRefresh();
       navigate(`/assemblies/${id}/session`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to join assembly', err);
+      setRoleActionError(err?.message || 'Failed to join assembly');
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleFinalizeRole = async (roleName: string) => {
+    if (!id || !currentUser) return;
+    setIsFinalizingRole(roleName);
+    setRoleActionError(null);
+    setRoleActionSuccess(null);
+    try {
+      const updated = await demoRepository.finalizeAssemblyRoleAllocation(id, roleName, currentUser.id);
+      setAssembly(updated);
+      setRoleActionSuccess(`Role allocation "${roleName}" successfully finalized.`);
+      triggerRefresh();
+    } catch (err: any) {
+      setRoleActionError(err?.message || 'Failed to finalize role allocation');
+    } finally {
+      setIsFinalizingRole(null);
+    }
+  };
+
+  const handleApproveException = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !currentUser || !selectedRoleForException) return;
+    if (exceptionReason.trim().length < 5) {
+      setExceptionError('A substantive reason of at least 5 characters is required.');
+      return;
+    }
+    setIsSubmittingException(true);
+    setExceptionError(null);
+    try {
+      const result = await demoRepository.approveAssemblyRoleException(
+        id,
+        selectedRoleForException,
+        exceptionReason.trim(),
+        currentUser.id
+      );
+      setAssembly(result.assembly);
+      setSelectedRoleForException(null);
+      setExceptionReason('');
+      setRoleActionSuccess(`Platform Owner exception approved for "${selectedRoleForException}".`);
+      triggerRefresh();
+    } catch (err: any) {
+      setExceptionError(err?.message || 'Failed to approve exception');
+    } finally {
+      setIsSubmittingException(false);
     }
   };
 
@@ -204,12 +267,12 @@ export const AssemblyDetailPage: React.FC = () => {
           <p className="text-sm sm:text-base text-slate-800 italic font-medium">"{assembly.question}"</p>
         </div>
 
-        {/* 9 Stages Roadmap Timeline */}
+        {/* 6 Stages Roadmap Timeline */}
         <div className="space-y-2 pt-2 border-t border-slate-100">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-            Assembly Deliberation Pathway (9 Stages)
+            Assembly Deliberation Pathway (6 Stages)
           </span>
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-1.5 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 text-center">
             {ALL_STAGES.map((st, i) => {
               const isCurrent = assembly.currentStage === st;
               const isPassed = ALL_STAGES.indexOf(assembly.currentStage) > i;
@@ -257,7 +320,7 @@ export const AssemblyDetailPage: React.FC = () => {
                 size="md"
                 variant="primary"
                 isLoading={isJoining}
-                onClick={handleJoinAssembly}
+                onClick={() => handleJoinAssembly()}
                 className="shadow-xs"
               >
                 <Sparkles className="w-4 h-4 mr-1.5" />
@@ -267,6 +330,262 @@ export const AssemblyDetailPage: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* Action Feedback Banners */}
+      {roleActionError && (
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between gap-2" data-testid="assembly-role-action-error">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{roleActionError}</span>
+          </div>
+          <button onClick={() => setRoleActionError(null)} className="text-rose-500 hover:text-rose-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {roleActionSuccess && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between gap-2" data-testid="assembly-role-action-success">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{roleActionSuccess}</span>
+          </div>
+          <button onClick={() => setRoleActionSuccess(null)} className="text-emerald-500 hover:text-emerald-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Point-of-Use Reservation Rulebook Banner */}
+      <Card className="border-civic-indigo-200 bg-gradient-to-r from-civic-indigo-50/70 via-white to-civic-indigo-50/40 p-5 space-y-3" data-testid="assembly-reservation-rulebook-banner">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Scale className="w-5 h-5 text-civic-indigo-700" />
+            <div>
+              <h2 className="text-sm sm:text-base font-bold font-heading text-slate-900">
+                Point-of-Use Assembly Reservation Rulebook & Role Quotas
+              </h2>
+              <p className="text-xs text-slate-500">
+                Policy Version: <span className="font-mono font-semibold text-civic-indigo-900">2026.1-womens-reservation-33</span> &bull; Mandatory 33% per named functional and procedural role allocation
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setShowRulebookModal(true)} data-testid="open-assembly-rulebook-btn">
+            <BookOpen className="w-3.5 h-3.5 mr-1 text-civic-indigo-600" />
+            <span>Read Point-of-Use Rules</span>
+          </Button>
+        </div>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Every named Assembly role (Thinker, Enabler, Troubleshooter, Shaper, Chair, Co-Chair, and Facilitator) operates under a separate 33% mandatory women's reservation quota calculated as <code className="font-mono bg-slate-100 px-1 py-0.5 rounded font-semibold text-slate-800">ceil(0.33 &times; allocatedPlaces)</code>. Cross-role pooling is prohibited; unmet reserved role places stay vacant by default. The only exception path is an explicit, simulated Platform Owner approval (<code className="font-mono bg-purple-50 text-purple-800 px-1 py-0.5 rounded">platform_admin</code>) with substantive reason and permanent audit trail.
+        </p>
+        <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 border-t border-civic-indigo-100">
+          <span>&bull; Fictional Jaipur Prototype: one-browser simulation only.</span>
+          <span>&bull; No real gender collection or server authority is claimed.</span>
+          <span>&bull; Small cohorts (&le; 3 places): individual status is privacy-suppressed from public view.</span>
+        </div>
+      </Card>
+
+      {/* Named Role Allocations Grid & Aggregate Status Card */}
+      {assembly.roleAllocations && (
+        <Card className="border-slate-200 p-6 space-y-6 bg-white shadow-sm" data-testid="assembly-reservation-allocations-card">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-civic-indigo-50 border border-civic-indigo-100 flex items-center justify-center text-civic-indigo-600">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold font-heading text-slate-900">
+                  Named Assembly Role Allocations & Compliance Status
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Separate non-pooled quotas for 4 functional zones + procedural roles (Chair, Facilitator)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-600">Active Persona:</span>
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 border text-slate-800" data-testid="active-persona-role-indicator">
+                {currentUser?.name || 'Guest'} ({currentUser?.role || 'delegate'})
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="assembly-role-allocations-grid">
+            {Object.entries(assembly.roleAllocations).map(([roleKey, alloc]) => {
+              const isOwner = currentUser?.role === 'platform_admin';
+              const isSuppressed = alloc.isPrivacySuppressed;
+
+              return (
+                <div
+                  key={roleKey}
+                  className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 flex flex-col justify-between"
+                  data-testid={`role-allocation-card-${roleKey.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold font-heading text-slate-900">
+                        {roleKey}
+                      </span>
+                      <div>
+                        {isSuppressed ? (
+                          <span
+                            className="px-2 py-0.5 text-[11px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1"
+                            data-testid="status-privacy-suppressed"
+                          >
+                            <Shield className="w-3 h-3 text-civic-indigo-600" />
+                            <span>Protected</span>
+                          </span>
+                        ) : (
+                          <>
+                            {alloc.status === 'finalized_compliant' && (
+                              <span
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1"
+                                data-testid="status-finalized-compliant"
+                              >
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>Compliant</span>
+                              </span>
+                            )}
+                            {alloc.status === 'finalized_exception' && (
+                              <span
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1"
+                                data-testid="status-finalized-exception"
+                              >
+                                <ShieldAlert className="w-3 h-3 text-purple-600" />
+                                <span>Exception Approved</span>
+                              </span>
+                            )}
+                            {alloc.status === 'blocked_noncompliant' && (
+                              <span
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1"
+                                data-testid="status-blocked-noncompliant"
+                              >
+                                <AlertCircle className="w-3 h-3 text-rose-600" />
+                                <span>Blocked</span>
+                              </span>
+                            )}
+                            {alloc.status === 'unvalidated_legacy' && (
+                              <span
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1"
+                                data-testid="status-unvalidated-legacy"
+                              >
+                                <Info className="w-3 h-3 text-amber-600" />
+                                <span>Legacy Record</span>
+                              </span>
+                            )}
+                            {(!alloc.status || alloc.status === 'pending') && (
+                              <span
+                                className="px-2 py-0.5 text-[11px] font-bold rounded bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1"
+                                data-testid="status-pending"
+                              >
+                                <Clock className="w-3 h-3 text-slate-500" />
+                                <span>Pending</span>
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Metrics grid for this role */}
+                    <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
+                      <div className="p-2 rounded-lg bg-white border border-slate-200">
+                        <span className="text-[10px] text-slate-400 block">Total</span>
+                        <span className="font-bold font-mono text-slate-900" data-testid={`metric-total-${roleKey.toLowerCase().replace(/\s+/g, '-')}`}>{alloc.totalPlaces}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-civic-indigo-50/60 border border-civic-indigo-100">
+                        <span className="text-[10px] text-civic-indigo-700 block">33% Min</span>
+                        <span className="font-bold font-mono text-civic-indigo-900" data-testid={`metric-reserved-${roleKey.toLowerCase().replace(/\s+/g, '-')}`}>{alloc.reservedMinimum}</span>
+                      </div>
+                      <div className="p-2 rounded-lg bg-white border border-slate-200">
+                        <span className="text-[10px] text-slate-400 block">Ordinary</span>
+                        <span className="font-bold font-mono text-slate-900">{alloc.ordinaryPlaces}</span>
+                      </div>
+                    </div>
+
+                    {/* Occupancy and Vacancies */}
+                    <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-xs space-y-1">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-500">Reserved Occupants:</span>
+                        <span className="font-semibold text-slate-800">
+                          {alloc.reservedOccupiedCount !== undefined ? alloc.reservedOccupiedCount : 'Withheld (Privacy)'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-500">Ordinary Occupants:</span>
+                        <span className="font-semibold text-slate-800">
+                          {alloc.ordinaryOccupiedCount !== undefined ? alloc.ordinaryOccupiedCount : 'Withheld (Privacy)'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-500">Held Vacancies:</span>
+                        <span className="font-semibold text-slate-800">
+                          {alloc.vacanciesCount !== undefined ? `${alloc.vacanciesCount} vacant` : 'Withheld (Privacy)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Exception Audit Box if exception approved and visible to caller */}
+                    {alloc.isException && alloc.exceptionAudit && (
+                      <div className="p-2.5 rounded-lg bg-purple-50 border border-purple-200 text-xs text-purple-900 space-y-1" data-testid="role-exception-audit-box">
+                        <div className="flex items-center gap-1 font-bold text-[11px]">
+                          <ShieldAlert className="w-3.5 h-3.5 text-purple-700" />
+                          <span>Platform Owner Exception Audit</span>
+                        </div>
+                        <p className="text-[11px] italic bg-white/70 p-1.5 rounded border border-purple-100">
+                          "{alloc.exceptionAudit.reason}"
+                        </p>
+                        <div className="text-[10px] text-purple-700">
+                          Approver: <span className="font-semibold">{alloc.exceptionAudit.actorId || 'Platform Owner'}</span> ({alloc.exceptionAudit.actorRole})
+                        </div>
+                        <div className="text-[10px] text-purple-600 font-mono">
+                          {alloc.exceptionAudit.policyVersion} &bull; {alloc.exceptionAudit.outcome}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Role Action Controls */}
+                  <div className="pt-2 border-t border-slate-200/60 flex flex-wrap gap-1.5 justify-end">
+                    {isOwner ? (
+                      <>
+                        {alloc.status !== 'finalized_compliant' && alloc.status !== 'finalized_exception' && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setSelectedRoleForException(roleKey);
+                              setExceptionReason('');
+                              setExceptionError(null);
+                            }}
+                            data-testid={`approve-role-exception-${roleKey.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            <span>Approve Exception</span>
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          isLoading={isFinalizingRole === roleKey}
+                          onClick={() => handleFinalizeRole(roleKey)}
+                          data-testid={`finalize-role-${roleKey.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          <span>Finalize</span>
+                        </Button>
+                      </>
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">
+                        Validation governed by Platform Owner
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Role Card for Participant */}
       {userRole ? (
@@ -314,14 +633,14 @@ export const AssemblyDetailPage: React.FC = () => {
               You have not joined this Assembly yet
             </h3>
             <p className="text-xs text-amber-700 mt-0.5">
-              Click below to join, receive your allocated role (e.g. Questioner), earn 10 Deliberation Credits, and enter the chamber.
+              Click below to join, receive your allocated role (e.g. Thinker), earn 10 Deliberation Credits, and enter the chamber.
             </p>
           </div>
           <Button
             size="sm"
             variant="primary"
             isLoading={isJoining}
-            onClick={handleJoinAssembly}
+            onClick={() => handleJoinAssembly()}
           >
             <span>Join Now (+10 Credits)</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1" />
@@ -451,6 +770,120 @@ export const AssemblyDetailPage: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Platform Owner Exception Approval Modal */}
+      {selectedRoleForException && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" data-testid="assembly-exception-modal">
+          <Card className="max-w-lg w-full bg-white p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-purple-600" />
+                <h3 className="text-base font-bold font-heading text-slate-900">
+                  Approve Platform Owner Exception: {selectedRoleForException}
+                </h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setSelectedRoleForException(null)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Under Policy <span className="font-mono font-semibold">2026.1-womens-reservation-33</span>, unmet reserved places stay vacant by default. Approving this exception permits the allocation for <span className="font-semibold text-slate-800">"{selectedRoleForException}"</span> to proceed. This decision is permanently audited and visibly marked as an exception.
+            </p>
+
+            <form onSubmit={handleApproveException} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Substantive Justification Reason (min 5 characters):
+                </label>
+                <textarea
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 font-sans"
+                  placeholder="e.g. Fictional pilot test: specific candidate with domain expertise assigned to ensure deliberative proceedings..."
+                  rows={3}
+                  value={exceptionReason}
+                  onChange={(e) => setExceptionReason(e.target.value)}
+                  data-testid="assembly-exception-reason-input"
+                  required
+                />
+              </div>
+
+              {exceptionError && (
+                <div className="p-2.5 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs" data-testid="assembly-exception-error">
+                  {exceptionError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button size="sm" variant="outline" onClick={() => setSelectedRoleForException(null)} data-testid="cancel-assembly-exception-btn">
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  type="submit"
+                  isLoading={isSubmittingException}
+                  data-testid="submit-assembly-exception-btn"
+                >
+                  Confirm & Audit Exception
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Point-of-Use Rulebook Modal */}
+      {showRulebookModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="max-w-2xl w-full bg-white p-6 space-y-4 max-h-[90vh] overflow-y-auto" data-testid="assembly-rulebook-modal">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Scale className="w-5 h-5 text-civic-indigo-600" />
+                <h3 className="text-base font-bold font-heading text-slate-900">
+                  Youth Assembly Reservation & Allocation Rulebook
+                </h3>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowRulebookModal(false)} aria-label="Close Rulebook" data-testid="close-assembly-rulebook-btn">
+                <X className="w-4 h-4 mr-1" />
+                <span>Close Rulebook</span>
+              </Button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <h4 className="font-bold text-slate-900">Rule 1: Independent 33% Quota Per Named Role</h4>
+                <p>Every named Assembly role (Thinker, Enabler, Troubleshooter, Shaper, Chair, Co-Chair, Facilitator, secondary roles) calculates its minimum reserved places as <code className="font-mono bg-white px-1 py-0.5 rounded border">ceil(0.33 &times; totalPlaces)</code>. No cross-role or cross-event pooling is allowed.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <h4 className="font-bold text-slate-900">Rule 2: Unmet Places Stay Vacant</h4>
+                <p>If eligible participants do not fill reserved places, those places remain vacant by default. General participants cannot take reserved places unless an authorized Platform Owner exception is recorded.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <h4 className="font-bold text-slate-900">Rule 3: Singular Named Roles (Chair / Facilitator)</h4>
+                <p>For singular 1-place roles, the formula yields 1 reserved place. Ineligible or undeclared candidates cannot be confirmed without Platform Owner exception approval.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <h4 className="font-bold text-slate-900">Rule 4: Automatic Invalidation on Roster or Capacity Change</h4>
+                <p>Any participant join, role reassignment, withdrawal, or capacity change immediately invalidates any prior Platform Owner exception for affected roles, reverting status to pending for re-validation.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <h4 className="font-bold text-slate-900">Rule 5: Small-Cohort Privacy Protection</h4>
+                <p>For cohorts of 3 or fewer places, public/participant projections withhold breakdown metrics to prevent deductive inference of individual declarations.</p>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <h4 className="font-bold text-slate-900">Rule 6: Platform Owner Authority Guard</h4>
+                <p>Only authenticated Platform Owners (<code className="font-mono bg-white px-1 py-0.5 rounded border">platform_admin</code>) can approve exceptions. Facilitator or participant override attempts are strictly rejected.</p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t flex justify-end">
+              <Button size="sm" variant="primary" onClick={() => setShowRulebookModal(false)}>
+                Close Rulebook
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

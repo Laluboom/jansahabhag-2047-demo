@@ -19,10 +19,10 @@ export const AchievementsPage: React.FC = () => {
       try {
         const [p, rList] = await Promise.all([
           demoRepository.getPassport(currentUser.id),
-          demoRepository.getReflections(currentUser.id),
+          demoRepository.getCivicReflections(currentUser.id),
         ]);
         setPassport(p);
-        setReflections(rList);
+        setReflections(rList.filter((r) => r.contextType !== 'session'));
       } catch (err) {
         console.error('Failed to load achievements data', err);
       } finally {
@@ -42,7 +42,9 @@ export const AchievementsPage: React.FC = () => {
 
   const hasObservation = (passport?.creditsByDimension.Observation || 0) >= 5;
   const hasDeliberation = (passport?.creditsByDimension.Deliberation || 0) >= 10;
-  const hasReflection = reflections.length > 0 || (passport?.creditsByDimension.Reflection || 0) >= 5;
+  const hasReflection =
+    reflections.filter((r) => r.contextType !== 'session').length > 0 ||
+    (passport?.creditsByDimension.Reflection || 0) >= 5;
   const hasLearning = (passport?.creditsByDimension.Learning || 0) >= 15;
   const hasCivicAction = (passport?.creditsByDimension['Civic Action'] || 0) >= 10;
 
@@ -65,15 +67,15 @@ export const AchievementsPage: React.FC = () => {
     },
     {
       id: 'b3',
-      title: 'Ethical & Reflective Thinker',
-      desc: 'Recorded universal human values reflections in Civic Passport (+5 Reflection).',
+      title: 'Civic Deliberative Reflector',
+      desc: 'Recorded civic and ethical reflections in Civic Passport (+5 Reflection).',
       earned: hasReflection,
       category: 'Reflection',
       icon: Sparkles,
     },
     {
       id: 'b4',
-      title: 'Universal Values Explorer',
+      title: 'Civic Knowledge Explorer',
       desc: 'Completed civic foundations and ethics learning modules (+15 Learning).',
       earned: hasLearning,
       category: 'Learning',

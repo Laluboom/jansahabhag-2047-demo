@@ -159,9 +159,11 @@ describe('Task 05 Demo Audit & Core Invariants Tests', () => {
         assignmentId: 'asg_obs_03',
         userId: 'user_aarav',
         content: 'Initial field notes',
+        evidenceIds: ['ev_aarav_interview_05'],
       });
 
-      // Verify submission
+      // Verify submission as teacher
+      await demoRepository.switchUser('user_kavita');
       await demoRepository.reviewSubmission({
         submissionId: sub.id,
         reviewerId: 'user_kavita',
@@ -169,7 +171,8 @@ describe('Task 05 Demo Audit & Core Invariants Tests', () => {
         teacherFeedback: 'Verified by teacher.',
       });
 
-      // Attempt to overwrite verified submission should throw
+      // Switch back to participant and attempt to overwrite verified submission should throw
+      await demoRepository.switchUser('user_aarav');
       await expect(
         demoRepository.saveAssignmentDraft({
           assignmentId: 'asg_obs_03',
