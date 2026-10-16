@@ -9,7 +9,15 @@ import {
   Evidence,
   User,
   Reflection,
+  AllocationAuditRecord,
 } from '../../types/domain';
+import { DebateReservationRulebookBanner } from '../debate/DebateReservationRulebookBanner';
+import { DebateReservationRulebookModal } from '../debate/DebateReservationRulebookModal';
+import { DebateRoleAllocationsCard } from '../debate/DebateRoleAllocationsCard';
+import { DebateExceptionModal } from '../debate/DebateExceptionModal';
+import { DebateAssignModal } from '../debate/DebateAssignModal';
+import { DebateCapacityModal } from '../debate/DebateCapacityModal';
+import { DebateAuditTrailModal } from '../debate/DebateAuditTrailModal';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
@@ -67,6 +75,23 @@ export const DebateRoomPreviewPage: React.FC = () => {
   const [isSavingReflection, setIsSavingReflection] = useState(false);
   const [reflectionSuccess, setReflectionSuccess] = useState<string | null>(null);
 
+  // Reservation Policy & Owner Controls State (Package 08C2)
+  const [showReservationRulebook, setShowReservationRulebook] = useState(false);
+  const [selectedRoleForException, setSelectedRoleForException] = useState<string | null>(null);
+  const [exceptionError, setExceptionError] = useState<string | null>(null);
+  const [isSubmittingException, setIsSubmittingException] = useState(false);
+  const [isFinalizingRole, setIsFinalizingRole] = useState<string | null>(null);
+  const [selectedRoleForAssign, setSelectedRoleForAssign] = useState<string | null>(null);
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [isSubmittingAssign, setIsSubmittingAssign] = useState(false);
+  const [selectedRoleForCapacity, setSelectedRoleForCapacity] = useState<string | null>(null);
+  const [capacityError, setCapacityError] = useState<string | null>(null);
+  const [isSubmittingCapacity, setIsSubmittingCapacity] = useState(false);
+  const [selectedRoleForAudits, setSelectedRoleForAudits] = useState<string | null>(null);
+  const [currentRoleAudits, setCurrentRoleAudits] = useState<AllocationAuditRecord[]>([]);
+  const [isLoadingAudits, setIsLoadingAudits] = useState(false);
+  const [isWithdrawingRole, setIsWithdrawingRole] = useState<string | null>(null);
+
   // Load session
   const loadSessionData = async () => {
     try {
@@ -91,19 +116,172 @@ export const DebateRoomPreviewPage: React.FC = () => {
     }
   };
 
+  // Full session projection reload whenever active persona changes
+  // Ensures owner-only fields are never visible to another persona
   useEffect(() => {
+    setSelectedRoleForException(null);
+    setSelectedRoleForAssign(null);
+    setSelectedRoleForCapacity(null);
+    setSelectedRoleForAudits(null);
     loadSessionData();
-  }, []);
+  }, [currentUser?.id]);
 
-  // Re-fetch persona-scoped session reflections when currentUser changes
-  useEffect(() => {
-    if (session && currentUser) {
-      demoRepository
-        .getSessionReflections(session.id, currentUser.id)
-        .then(setSessionReflections)
-        .catch(() => {});
+  // Reservation Allocation Handlers (08C1 APIs)
+  const handleFinalizeRole = async (roleName: string) => {
+    if (!currentUser) return;
+    setActionError(null);
+    setActionSuccess(null);
+    setIsFinalizingRole(roleName);
+    try {
+      const updated = await demoRepository.finalizeSessionRoleAllocation(
+        session?.id || 'sess_jaipur_01',
+        roleName,
+        currentUser.id
+      );
+      setSession(updated);
+      setActionSuccess(`Role allocation for "${roleName}" has been successfully finalized!`);
+    } catch (err: any) {
+      setActionError(err.message || `Failed to finalize role "${roleName}"`);
+    } finally {
+      setIsFinalizingRole(null);
     }
-  }, [currentUser?.id, session?.id]);
+  };
+
+  const handleApproveException = async (reason: string) => {
+    if (!currentUser || !selectedRoleForException) return;
+    setIsSubmittingException(true);
+    setExceptionError(null);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const { session: updated } = await demoRepository.approveSessionRoleException(
+        session?.id || 'sess_jaipur_01',
+        selectedRoleForException,
+        reason,
+        currentUser.id
+      );
+      setSession(updated);
+      setActionSuccess(`Platform Owner exception approved for "${selectedRoleForException}".`);
+      setSelectedRoleForException(null);
+    } catch (err: any) {
+      setExceptionError(err.message || 'Failed to approve exception');
+    } finally {
+      setIsSubmittingException(false);
+    }
+  };
+
+  const handleAssignOrReplace = async (targetUserId: string) => {
+    if (!currentUser || !selectedRoleForAssign || !session) return;
+    setIsSubmittingAssign(true);
+    setAssignError(null);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const roleName = selectedRoleForAssign;
+      const alloc = session.roleAllocations?.[roleName];
+      const currentOccupantId =
+        alloc?.confirmedOccupants?.[0] ||
+        session.roster.find((r) => r.role === roleName)?.userId;
+
+      let updated: Session;
+      if (currentOccupantId && currentOccupantId !== targetUserId) {
+        updated = await demoRepository.replaceSessionRole(
+          session.id,
+          currentOccupantId,
+          targetUserId,
+          roleName,
+          currentUser.id
+        );
+        setActionSuccess(`Role "${roleName}" occupant successfully replaced.`);
+      } else {
+        updated = await demoRepository.assignSessionRole(
+          session.id,
+          targetUserId,
+          roleName,
+          currentUser.id
+        );
+        setActionSuccess(`User assigned successfully to role "${roleName}".`);
+      }
+      setSession(updated);
+      setSelectedRoleForAssign(null);
+    } catch (err: any) {
+      const msg = err.message || `Failed to assign user to "${selectedRoleForAssign}"`;
+      setAssignError(msg);
+      setActionError(msg);
+    } finally {
+      setIsSubmittingAssign(false);
+    }
+  };
+
+  const handleWithdrawRole = async (roleName: string) => {
+    if (!currentUser || !session) return;
+    setActionError(null);
+    setActionSuccess(null);
+    setIsWithdrawingRole(roleName);
+    try {
+      const alloc = session.roleAllocations?.[roleName];
+      const occupantId =
+        alloc?.confirmedOccupants?.[0] ||
+        session.roster.find((r) => r.role === roleName)?.userId;
+      if (!occupantId) {
+        throw new Error(`No occupant found to withdraw from role "${roleName}".`);
+      }
+      const updated = await demoRepository.withdrawSessionRole(
+        session.id,
+        occupantId,
+        currentUser.id
+      );
+      setSession(updated);
+      setActionSuccess(
+        `Occupant withdrawn from role "${roleName}". The reserved place remains vacant by default.`
+      );
+    } catch (err: any) {
+      setActionError(err.message || `Failed to withdraw occupant from "${roleName}"`);
+    } finally {
+      setIsWithdrawingRole(null);
+    }
+  };
+
+  const handleUpdateCapacity = async (newCapacity: number) => {
+    if (!currentUser || !selectedRoleForCapacity || !session) return;
+    setIsSubmittingCapacity(true);
+    setCapacityError(null);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const updated = await demoRepository.updateSessionRoleCapacity(
+        session.id,
+        selectedRoleForCapacity,
+        newCapacity,
+        currentUser.id
+      );
+      setSession(updated);
+      setActionSuccess(
+        `Capacity for "${selectedRoleForCapacity}" updated to ${newCapacity} place(s). Prior exception invalidated if existed.`
+      );
+      setSelectedRoleForCapacity(null);
+    } catch (err: any) {
+      setCapacityError(err.message || `Failed to update capacity for "${selectedRoleForCapacity}"`);
+    } finally {
+      setIsSubmittingCapacity(false);
+    }
+  };
+
+  const handleOpenAuditsModal = async (roleName: string) => {
+    if (!currentUser || !session) return;
+    setSelectedRoleForAudits(roleName);
+    setIsLoadingAudits(true);
+    setActionError(null);
+    try {
+      const alloc = session.roleAllocations?.[roleName];
+      const audits = await demoRepository.getAllocationAudits(alloc?.allocationId, currentUser.id);
+      setCurrentRoleAudits(audits);
+    } catch (err: any) {
+      setActionError(err.message || `Failed to load audits for "${roleName}"`);
+    } finally {
+      setIsLoadingAudits(false);
+    }
+  };
 
   if (isLoading || !session || !currentUser) {
     return (
@@ -331,7 +509,10 @@ export const DebateRoomPreviewPage: React.FC = () => {
 
       {/* Action Alerts */}
       {actionError && (
-        <div className="p-3.5 rounded-lg border border-red-200 bg-red-50 text-red-900 text-xs flex items-center justify-between">
+        <div
+          className="p-3.5 rounded-lg border border-red-200 bg-red-50 text-red-900 text-xs flex items-center justify-between"
+          data-testid="debate-role-action-error"
+        >
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
             <span>{actionError}</span>
@@ -346,7 +527,10 @@ export const DebateRoomPreviewPage: React.FC = () => {
         </div>
       )}
       {actionSuccess && (
-        <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs flex items-center justify-between">
+        <div
+          className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 text-xs flex items-center justify-between"
+          data-testid="debate-role-action-success"
+        >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{actionSuccess}</span>
@@ -559,6 +743,36 @@ export const DebateRoomPreviewPage: React.FC = () => {
           })}
         </div>
       </Card>
+
+      {/* Debate Reservation Rulebook Point-of-Use Banner */}
+      <DebateReservationRulebookBanner
+        onOpenRulebook={() => setShowReservationRulebook(true)}
+      />
+
+      {/* Debate Room Named Role Allocations & Compliance Plan Card */}
+      <DebateRoleAllocationsCard
+        session={session}
+        currentUser={currentUser}
+        allUsers={allUsers}
+        onOpenRulebook={() => setShowReservationRulebook(true)}
+        onOpenExceptionModal={(roleName) => {
+          setSelectedRoleForException(roleName);
+          setExceptionError(null);
+        }}
+        onFinalizeRole={handleFinalizeRole}
+        onOpenAssignModal={(roleName) => {
+          setSelectedRoleForAssign(roleName);
+          setAssignError(null);
+        }}
+        onWithdrawRole={handleWithdrawRole}
+        onOpenCapacityModal={(roleName) => {
+          setSelectedRoleForCapacity(roleName);
+          setCapacityError(null);
+        }}
+        onOpenAuditsModal={handleOpenAuditsModal}
+        isFinalizingRole={isFinalizingRole}
+        isWithdrawingRole={isWithdrawingRole}
+      />
 
       {/* Main Grid: Left Column (Queue & Text Contributions) + Right Column (Dock & Info) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1147,6 +1361,75 @@ export const DebateRoomPreviewPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Debate Reservation Rulebook Modal */}
+      <DebateReservationRulebookModal
+        isOpen={showReservationRulebook}
+        onClose={() => setShowReservationRulebook(false)}
+      />
+
+      {/* Platform Owner Exception Approval Modal */}
+      <DebateExceptionModal
+        roleName={selectedRoleForException}
+        isOpen={Boolean(selectedRoleForException)}
+        onClose={() => {
+          setSelectedRoleForException(null);
+          setExceptionError(null);
+        }}
+        onSubmit={handleApproveException}
+        isSubmitting={isSubmittingException}
+        error={exceptionError}
+      />
+
+      {/* Assign / Replace Role Modal */}
+      <DebateAssignModal
+        roleName={selectedRoleForAssign}
+        currentOccupantName={
+          session.roster.find((r) => r.role === selectedRoleForAssign)?.name ||
+          (selectedRoleForAssign && session.roleAllocations?.[selectedRoleForAssign]?.confirmedOccupants?.[0]
+            ? allUsers.find((u) => u.id === session.roleAllocations![selectedRoleForAssign]!.confirmedOccupants![0])?.name
+            : undefined)
+        }
+        users={allUsers}
+        isOpen={Boolean(selectedRoleForAssign)}
+        onClose={() => {
+          setSelectedRoleForAssign(null);
+          setAssignError(null);
+        }}
+        onSubmit={handleAssignOrReplace}
+        isSubmitting={isSubmittingAssign}
+        error={assignError}
+      />
+
+      {/* Change Capacity Modal */}
+      <DebateCapacityModal
+        roleName={selectedRoleForCapacity}
+        currentCapacity={
+          selectedRoleForCapacity && session.roleAllocations?.[selectedRoleForCapacity]
+            ? session.roleAllocations[selectedRoleForCapacity].totalPlaces
+            : 1
+        }
+        isOpen={Boolean(selectedRoleForCapacity)}
+        onClose={() => {
+          setSelectedRoleForCapacity(null);
+          setCapacityError(null);
+        }}
+        onSubmit={handleUpdateCapacity}
+        isSubmitting={isSubmittingCapacity}
+        error={capacityError}
+      />
+
+      {/* Allocation Audit Trail Modal */}
+      <DebateAuditTrailModal
+        roleName={selectedRoleForAudits}
+        audits={currentRoleAudits}
+        isOpen={Boolean(selectedRoleForAudits)}
+        onClose={() => {
+          setSelectedRoleForAudits(null);
+          setCurrentRoleAudits([]);
+        }}
+        isLoading={isLoadingAudits}
+      />
     </div>
   );
 };
