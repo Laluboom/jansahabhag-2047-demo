@@ -1766,7 +1766,7 @@ export const AssemblySessionPage: React.FC = () => {
       {/* RULEBOOK MODAL / DRAWER */}
       {showRulebookModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <Card className="max-w-2xl w-full bg-white p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+          <Card className="max-w-2xl w-full bg-white p-6 space-y-4 max-h-[90vh] overflow-y-auto" data-testid="assembly-rulebook-modal">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-civic-teal-600" />
@@ -1906,7 +1906,7 @@ export const AssemblySessionPage: React.FC = () => {
               </div>
 
               {overrideError && (
-                <div className="p-2 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                <div className="p-2 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs" data-testid="override-error-banner">
                   {overrideError}
                 </div>
               )}

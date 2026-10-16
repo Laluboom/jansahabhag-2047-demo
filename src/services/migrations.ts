@@ -1,7 +1,7 @@
 import { DemoDatabase, AssemblyStage, AssemblyRoleType, AssemblyRolePower } from '../types/domain';
 import { CURRENT_SCHEMA_VERSION, getFreshSeedDatabase } from '../data/seed';
 import { seedSessions } from '../data/seed/events';
-import { canonicalAssemblyRulebook } from '../data/seed/assemblies';
+import { canonicalAssemblyRulebook, seedAssemblies } from '../data/seed/assemblies';
 import {
   seedWorkspaces,
   seedWorkspaceMemberships,
@@ -10,7 +10,7 @@ import {
   canonicalWorkspaceRulebook,
 } from '../data/seed/workspaces';
 import { seedEvents } from '../data/seed/events';
-import { buildAllocationState } from './reservationAllocationService';
+import { buildAllocationState, buildAssemblyRoleAllocations } from './reservationAllocationService';
 
 export interface Migration {
   version: number;
@@ -711,6 +711,58 @@ export function normalizeEventAllocationRecords(db: DemoDatabase): DemoDatabase 
   return db;
 }
 
+export function normalizeAssemblyRoleAllocationRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+
+  db.allocationAudits = db.allocationAudits || [];
+
+  if (!Array.isArray(db.assemblies)) {
+    db.assemblies = [];
+  }
+
+  // Ensure small fictional demo assemblies exist in db
+  for (const seedAsm of seedAssemblies) {
+    if (!db.assemblies.some((a) => a.id === seedAsm.id)) {
+      db.assemblies.push(JSON.parse(JSON.stringify(seedAsm)));
+    }
+  }
+
+  db.assemblies.forEach((assembly) => {
+    assembly.participantUserIds = Array.isArray(assembly.participantUserIds) ? assembly.participantUserIds : [];
+    if (assembly.participantUserIds.length === 3) {
+      assembly.isThreePersonMiniMode = true;
+    }
+
+    const roles = Array.isArray(db.assemblyRoles)
+      ? db.assemblyRoles.filter((r) => r.assemblyId === assembly.id)
+      : [];
+
+    assembly.roleAllocations = buildAssemblyRoleAllocations({
+      assemblyId: assembly.id,
+      isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+      participantUserIds: assembly.participantUserIds,
+      roles,
+      facilitatorId: assembly.facilitatorId,
+      chairId: assembly.chairId,
+      coChairId: assembly.coChairId,
+      existingAllocations: assembly.roleAllocations,
+    });
+
+    // Sync any existing exception audits into db.allocationAudits
+    if (assembly.roleAllocations) {
+      for (const alloc of Object.values(assembly.roleAllocations)) {
+        if (alloc.exceptionAudit) {
+          if (!db.allocationAudits!.some((a) => a.id === alloc.exceptionAudit!.id)) {
+            db.allocationAudits!.push(alloc.exceptionAudit);
+          }
+        }
+      }
+    }
+  });
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -733,6 +785,7 @@ export function runMigrations(storedData: any): DemoDatabase {
   normalizeWorkspaceRecords(migrated);
   normalizePassportAndCreditRecords(migrated);
   normalizeEventAllocationRecords(migrated);
+  normalizeAssemblyRoleAllocationRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }

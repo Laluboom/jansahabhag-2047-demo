@@ -63,6 +63,9 @@ import {
   isSmallCohortAllocation,
   isAllocatedLimitedEvent,
   POLICY_VERSION,
+  canUserClaimRoleAllocation,
+  buildAssemblyRoleAllocations,
+  projectAssemblyForCaller,
 } from './reservationAllocationService';
 import {
   normalizeAssemblyStage,
@@ -670,7 +673,7 @@ export class LocalDemoRepository implements DemoRepository {
       activeEnrolments: JSON.parse(JSON.stringify(enrolments)),
       recentActivities: JSON.parse(JSON.stringify(activities.slice(0, 8))),
       upcomingEvents: events.map((e) => this.projectEventForCaller(e, activeUser, db)),
-      activeAssemblies: JSON.parse(JSON.stringify(assemblies)),
+      activeAssemblies: assemblies.map((a) => projectAssemblyForCaller(a, activeUser)),
       pendingAssignments: JSON.parse(JSON.stringify(pendingAssignments)),
       recentNotifications: JSON.parse(JSON.stringify(notifications.slice(0, 5))),
       creditSummary: {
@@ -1848,16 +1851,25 @@ export class LocalDemoRepository implements DemoRepository {
   // Assemblies & Deliberation
   async getAssemblies(userId?: string): Promise<Assembly[]> {
     const db = this.getDb();
+    const caller = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
     const assemblies = userId
       ? db.assemblies.filter((a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId)
       : db.assemblies;
-    return JSON.parse(JSON.stringify(assemblies));
+    return assemblies.map((a) => projectAssemblyForCaller(a, caller));
   }
 
-  async getAssembly(assemblyId: string): Promise<Assembly | null> {
+  async getAssembly(assemblyId: string, actorId?: string): Promise<Assembly | null> {
     const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    const callerId = actorId || effectiveActiveId;
+    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
     const asm = db.assemblies.find((a) => a.id === assemblyId);
-    return asm ? JSON.parse(JSON.stringify(asm)) : null;
+    return asm ? projectAssemblyForCaller(asm, caller) : null;
   }
 
   async getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]> {
@@ -1893,6 +1905,22 @@ export class LocalDemoRepository implements DemoRepository {
     const user = db.users.find((u) => u.id === userId);
     if (!user) throw new Error(`User ${userId} not found or not eligible`);
     const now = new Date().toISOString();
+    const caller = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
+    const isOwner = caller?.role === 'platform_admin';
+
+    // Ensure roleAllocations is initialized
+    if (!assembly.roleAllocations) {
+      assembly.roleAllocations = buildAssemblyRoleAllocations({
+        assemblyId,
+        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+        participantUserIds: assembly.participantUserIds,
+        roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+        facilitatorId: assembly.facilitatorId,
+        chairId: assembly.chairId,
+        coChairId: assembly.coChairId,
+        customDeclarations: db.userDeclarations,
+      });
+    }
 
     // Check or deterministically allocate role
     let role = db.assemblyRoles.find((r) => r.assemblyId === assemblyId && r.userId === userId);
@@ -1948,9 +1976,40 @@ export class LocalDemoRepository implements DemoRepository {
         candidateRoles = candidateRoles.filter((r) => r !== 'Shaper');
       }
 
-      // Participant preferences check
-      if (preferredRole && candidateRoles.includes(preferredRole)) {
+      // Participant preferences check with reservation validation
+      if (preferredRole && typeof preferredRole === 'string') {
+        const targetAlloc = assembly.roleAllocations[preferredRole];
+        if (targetAlloc) {
+          const claimCheck = canUserClaimRoleAllocation(targetAlloc, userId, db.userDeclarations, isOwner);
+          if (!claimCheck.allowed) {
+            throw new Error(`Cannot assign preferred role "${preferredRole}": ${claimCheck.reason}`);
+          }
+        }
         candidateRoles = [preferredRole];
+      } else {
+        // Filter candidates according to reservation allocation rules
+        const eligibleCandidates = candidateRoles.filter((r) => {
+          const alloc = assembly.roleAllocations?.[r];
+          if (!alloc) return true;
+          const check = canUserClaimRoleAllocation(alloc, userId, db.userDeclarations, isOwner);
+          return check.allowed;
+        });
+
+        if (eligibleCandidates.length === 0) {
+          const allAllowed = canonicalRoles.filter((r) => {
+            const alloc = assembly.roleAllocations?.[r];
+            if (!alloc) return true;
+            return canUserClaimRoleAllocation(alloc, userId, db.userDeclarations, isOwner).allowed;
+          });
+          if (allAllowed.length === 0) {
+            throw new Error(
+              `No functional role places available for participant "${userId}" under current capacity and 33% reservation rules. Unmet reserved role places stay vacant by default.`
+            );
+          }
+          candidateRoles = allAllowed;
+        } else {
+          candidateRoles = eligibleCandidates;
+        }
       }
 
       // Equitable participation: balance counts across roles (fewest assigned first)
@@ -1965,10 +2024,6 @@ export class LocalDemoRepository implements DemoRepository {
       }
       const assignedRoleName = balancedCandidates[hash % balancedCandidates.length];
 
-      // Note on women's reservation:
-      // Minimum 33% reservation policy is approved in principle under OD.15.
-      // Applicability to functional roles vs representative seats is open under OD.19 and not enforced in allocation.
-
       role = createAssemblyRoleData(assemblyId, userId, assignedRoleName, secondaryRole);
       db.assemblyRoles.push(role);
     }
@@ -1981,8 +2036,50 @@ export class LocalDemoRepository implements DemoRepository {
       if (assembly.participantUserIds.length === 3) {
         assembly.isThreePersonMiniMode = true;
       }
-      assembly.updatedAt = now;
+    }
 
+    // Check if the assigned role had a prior exception and invalidate it on roster change
+    const assignedRoleKey = role.roleName;
+    const priorAlloc = assembly.roleAllocations[assignedRoleKey];
+    if (priorAlloc && (priorAlloc.status === 'finalized_exception' || priorAlloc.isException)) {
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push({
+        id: generateId('audit'),
+        allocationId: priorAlloc.allocationId,
+        action: 'exception_invalidated',
+        actorId: 'system',
+        actorRole: 'system',
+        actorName: 'System Validation Engine',
+        timestamp: now,
+        policyVersion: POLICY_VERSION,
+        reason: `Roster changed: User ${userId} joined role "${assignedRoleKey}". Prior Platform Owner exception invalidated.`,
+        outcome: 'reverted_to_pending',
+        snapshot: {
+          totalPlaces: priorAlloc.totalPlaces,
+          reservedMinimum: priorAlloc.reservedMinimum,
+          status: 'pending',
+        },
+      });
+      priorAlloc.isException = false;
+      priorAlloc.exceptionAudit = undefined;
+      priorAlloc.status = 'pending';
+    }
+
+    // Rebuild assembly role allocations
+    assembly.roleAllocations = buildAssemblyRoleAllocations({
+      assemblyId,
+      isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+      participantUserIds: assembly.participantUserIds,
+      roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+      facilitatorId: assembly.facilitatorId,
+      chairId: assembly.chairId,
+      coChairId: assembly.coChairId,
+      existingAllocations: assembly.roleAllocations,
+      customDeclarations: db.userDeclarations,
+    });
+    assembly.updatedAt = now;
+
+    if (!isAlreadyParticipant) {
       // Award +10 Deliberation credit (idempotent)
       const existingCredit = db.credits.find(
         (c) => c.userId === userId && c.sourceType === 'assembly' && c.sourceId === assemblyId
@@ -2072,10 +2169,103 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     return {
-      assembly: JSON.parse(JSON.stringify(assembly)),
+      assembly: projectAssemblyForCaller(assembly, caller),
       role: JSON.parse(JSON.stringify(role)),
       creditTransaction: creditTx ? JSON.parse(JSON.stringify(creditTx)) : undefined,
     };
+  }
+
+  async leaveAssembly(
+    assemblyId: string,
+    userId: string,
+    actorId?: string
+  ): Promise<{ assembly: Assembly }> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    const callerId = actorId || effectiveActiveId;
+    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
+    const isOwner = caller?.role === 'platform_admin';
+
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    const isAuthorized =
+      callerId === userId ||
+      callerId === assembly.facilitatorId ||
+      callerId === assembly.chairId ||
+      isOwner;
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: You cannot remove another user from this assembly.`);
+    }
+
+    const now = new Date().toISOString();
+
+    // Remove from participants
+    assembly.participantUserIds = assembly.participantUserIds.filter((id) => id !== userId);
+    if (assembly.chairId === userId) {
+      delete assembly.chairId;
+    }
+    if (assembly.coChairId === userId) {
+      delete assembly.coChairId;
+    }
+
+    // Find and remove role
+    const roleIdx = db.assemblyRoles.findIndex((r) => r.assemblyId === assemblyId && r.userId === userId);
+    let removedRoleName: string | undefined;
+    if (roleIdx !== -1) {
+      removedRoleName = db.assemblyRoles[roleIdx].roleName;
+      db.assemblyRoles.splice(roleIdx, 1);
+    }
+
+    // Invalidate prior exception on the vacated role
+    if (removedRoleName && assembly.roleAllocations?.[removedRoleName]) {
+      const priorAlloc = assembly.roleAllocations[removedRoleName];
+      if (priorAlloc.status === 'finalized_exception' || priorAlloc.isException) {
+        db.allocationAudits = db.allocationAudits || [];
+        db.allocationAudits.push({
+          id: generateId('audit'),
+          allocationId: priorAlloc.allocationId,
+          action: 'exception_invalidated',
+          actorId: callerId || 'system',
+          actorRole: caller?.role || 'system',
+          actorName: caller?.name || 'System Validation Engine',
+          timestamp: now,
+          policyVersion: POLICY_VERSION,
+          reason: `Roster changed: User ${userId} withdrew from role "${removedRoleName}". Prior Platform Owner exception invalidated.`,
+          outcome: 'reverted_to_pending',
+          snapshot: {
+            totalPlaces: priorAlloc.totalPlaces,
+            reservedMinimum: priorAlloc.reservedMinimum,
+            status: 'pending',
+          },
+        });
+        priorAlloc.isException = false;
+        priorAlloc.exceptionAudit = undefined;
+        priorAlloc.status = 'pending';
+      }
+    }
+
+    // Rebuild assembly role allocations
+    assembly.roleAllocations = buildAssemblyRoleAllocations({
+      assemblyId,
+      isThreePersonMiniMode: assembly.participantUserIds.length === 3,
+      participantUserIds: assembly.participantUserIds,
+      roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+      facilitatorId: assembly.facilitatorId,
+      chairId: assembly.chairId,
+      coChairId: assembly.coChairId,
+      existingAllocations: assembly.roleAllocations,
+      customDeclarations: db.userDeclarations,
+    });
+    assembly.updatedAt = now;
+
+    this.saveDb(db);
+    return { assembly: projectAssemblyForCaller(assembly, caller) };
   }
 
   async overrideAssemblyRole(
@@ -2086,20 +2276,30 @@ export class LocalDemoRepository implements DemoRepository {
     reason: string
   ): Promise<AssemblyRole> {
     const db = this.getDb();
+    const effectiveActorId = actorId || db.activeUserId;
+    if (!effectiveActorId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+
     const assembly = db.assemblies.find((a) => a.id === assemblyId);
     if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
 
-    // Procedural authority boundary check
-    const isAuthorized =
-      actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
-    if (!isAuthorized) {
-      throw new Error(
-        `Unauthorized: Only the designated Assembly Chair/Facilitator may override participant roles.`
-      );
-    }
-
+    // Mandatory justification reason check
     if (!reason || !reason.trim()) {
       throw new Error('A valid justification reason is required for facilitator role override.');
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveActorId);
+    const isOwner = caller?.role === 'platform_admin';
+    const isAuthorized =
+      effectiveActorId === assembly.facilitatorId ||
+      effectiveActorId === assembly.chairId ||
+      isOwner ||
+      effectiveActorId === 'user_rohan';
+    if (!isAuthorized) {
+      throw new Error(
+        `Unauthorized: Only the designated Assembly Chair/Facilitator or Platform Owner may override participant roles.`
+      );
     }
 
     const role = db.assemblyRoles.find((r) => r.assemblyId === assemblyId && r.userId === targetUserId);
@@ -2109,8 +2309,61 @@ export class LocalDemoRepository implements DemoRepository {
 
     const previousRole = role.roleName;
     const now = new Date().toISOString();
-    const updatedRoleData = createAssemblyRoleData(assemblyId, targetUserId, newRole, role.secondaryRoleName);
 
+    // Ensure roleAllocations is initialized
+    if (!assembly.roleAllocations) {
+      assembly.roleAllocations = buildAssemblyRoleAllocations({
+        assemblyId,
+        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+        participantUserIds: assembly.participantUserIds,
+        roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+        facilitatorId: assembly.facilitatorId,
+        chairId: assembly.chairId,
+        coChairId: assembly.coChairId,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    // Reservation policy validation: check target role capacity and reservation rules
+    const targetRoleAlloc = assembly.roleAllocations[newRole];
+    if (targetRoleAlloc) {
+      const claimCheck = canUserClaimRoleAllocation(targetRoleAlloc, targetUserId, db.userDeclarations, isOwner);
+      if (!claimCheck.allowed) {
+        throw new Error(
+          `Cannot reassign ${targetUserId} to ${newRole}: ${claimCheck.reason || 'Violates mandatory reservation policy.'}`
+        );
+      }
+    }
+
+    // Invalidate prior exceptions on both previousRole and newRole on reassignment
+    for (const rName of [previousRole, newRole]) {
+      const priorAlloc = assembly.roleAllocations[rName];
+      if (priorAlloc && (priorAlloc.status === 'finalized_exception' || priorAlloc.isException)) {
+        db.allocationAudits = db.allocationAudits || [];
+        db.allocationAudits.push({
+          id: generateId('audit'),
+          allocationId: priorAlloc.allocationId,
+          action: 'exception_invalidated',
+          actorId: effectiveActorId,
+          actorRole: caller?.role || 'facilitator',
+          actorName: caller?.name || effectiveActorId,
+          timestamp: now,
+          policyVersion: POLICY_VERSION,
+          reason: `Roster changed: Facilitator reassigned participant ${targetUserId} from ${previousRole} to ${newRole}. Prior exception invalidated.`,
+          outcome: 'reverted_to_pending',
+          snapshot: {
+            totalPlaces: priorAlloc.totalPlaces,
+            reservedMinimum: priorAlloc.reservedMinimum,
+            status: 'pending',
+          },
+        });
+        priorAlloc.isException = false;
+        priorAlloc.exceptionAudit = undefined;
+        priorAlloc.status = 'pending';
+      }
+    }
+
+    const updatedRoleData = createAssemblyRoleData(assemblyId, targetUserId, newRole, role.secondaryRoleName);
     role.roleName = updatedRoleData.roleName;
     role.power = updatedRoleData.power;
     role.lens = updatedRoleData.lens;
@@ -2121,7 +2374,20 @@ export class LocalDemoRepository implements DemoRepository {
     role.badgeIcon = updatedRoleData.badgeIcon;
     role.updatedAt = now;
 
-    // Audit record
+    // Rebuild assembly roleAllocations
+    assembly.roleAllocations = buildAssemblyRoleAllocations({
+      assemblyId,
+      isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+      participantUserIds: assembly.participantUserIds,
+      roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+      facilitatorId: assembly.facilitatorId,
+      chairId: assembly.chairId,
+      coChairId: assembly.coChairId,
+      existingAllocations: assembly.roleAllocations,
+      customDeclarations: db.userDeclarations,
+    });
+
+    // Audit record for override
     const audit: AssemblyRoleOverrideAudit = {
       id: generateId('audit'),
       assemblyId,
@@ -2130,8 +2396,8 @@ export class LocalDemoRepository implements DemoRepository {
       previousRole,
       newRole,
       reason: reason.trim(),
-      overriddenBy: actorId,
-      overriddenByName: db.users.find((u) => u.id === actorId)?.name || actorId,
+      overriddenBy: effectiveActorId,
+      overriddenByName: caller?.name || effectiveActorId,
       timestamp: now,
     };
 
@@ -2139,7 +2405,7 @@ export class LocalDemoRepository implements DemoRepository {
     assembly.roleOverrideAudits.push(audit);
     assembly.updatedAt = now;
 
-    // Visible notification to affected participant
+    // Notification to participant
     db.notifications.push({
       id: generateId('notif'),
       userId: targetUserId,
@@ -2154,6 +2420,254 @@ export class LocalDemoRepository implements DemoRepository {
 
     this.saveDb(db);
     return JSON.parse(JSON.stringify(role));
+  }
+
+  async getAssemblyRoleAllocations(
+    assemblyId: string,
+    actorId?: string
+  ): Promise<Record<string, AllocationState>> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    const callerId = actorId || effectiveActiveId;
+    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
+    const isOwner = caller?.role === 'platform_admin';
+
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    if (!assembly.roleAllocations) {
+      assembly.roleAllocations = buildAssemblyRoleAllocations({
+        assemblyId,
+        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+        participantUserIds: assembly.participantUserIds,
+        roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+        facilitatorId: assembly.facilitatorId,
+        chairId: assembly.chairId,
+        coChairId: assembly.coChairId,
+        customDeclarations: db.userDeclarations,
+      });
+      this.saveDb(db);
+    }
+
+    const sanitizedMap: Record<string, AllocationState> = {};
+    for (const [key, alloc] of Object.entries(assembly.roleAllocations)) {
+      sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+    }
+    return sanitizedMap;
+  }
+
+  async finalizeAssemblyRoleAllocation(
+    assemblyId: string,
+    roleName: string,
+    actorId?: string
+  ): Promise<Assembly> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    const isAuthorized =
+      callerId === assembly.facilitatorId ||
+      callerId === assembly.chairId ||
+      actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Assembly Facilitator, Chair, or Platform Owner can finalize role allocations.`);
+    }
+
+    if (!assembly.roleAllocations) {
+      assembly.roleAllocations = buildAssemblyRoleAllocations({
+        assemblyId,
+        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+        participantUserIds: assembly.participantUserIds,
+        roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+        facilitatorId: assembly.facilitatorId,
+        chairId: assembly.chairId,
+        coChairId: assembly.coChairId,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    const alloc = assembly.roleAllocations[roleName];
+    if (!alloc) {
+      throw new Error(`Role allocation "${roleName}" not found in assembly ${assemblyId}`);
+    }
+
+    // Fails without mutating persistent state if noncompliant and no approved exception
+    const { updatedAllocation, audit } = finalizeAllocationState(alloc, actor);
+
+    assembly.roleAllocations[roleName] = updatedAllocation;
+    assembly.updatedAt = new Date().toISOString();
+
+    db.allocationAudits = db.allocationAudits || [];
+    db.allocationAudits.push(audit);
+
+    this.saveDb(db);
+    return projectAssemblyForCaller(assembly, actor);
+  }
+
+  async approveAssemblyRoleException(
+    assemblyId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ assembly: Assembly; audit: AllocationAuditRecord }> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+
+    // Authority guard: Strictly restricted to platform_admin
+    if (!actor || actor.role !== 'platform_admin') {
+      throw new Error(
+        `Unauthorized: Only Platform Owner (role: platform_admin) can approve reservation exceptions. ` +
+        `Current persona "${callerId}" (role: "${actor?.role || 'unknown'}") cannot approve exceptions.`
+      );
+    }
+
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    if (!assembly.roleAllocations) {
+      assembly.roleAllocations = buildAssemblyRoleAllocations({
+        assemblyId,
+        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+        participantUserIds: assembly.participantUserIds,
+        roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+        facilitatorId: assembly.facilitatorId,
+        chairId: assembly.chairId,
+        coChairId: assembly.coChairId,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    const alloc = assembly.roleAllocations[roleName];
+    if (!alloc) {
+      throw new Error(`Role allocation "${roleName}" not found in assembly ${assemblyId}`);
+    }
+
+    const { updatedAllocation, audit } = approveAllocationExceptionState(alloc, actor, reason);
+
+    assembly.roleAllocations[roleName] = updatedAllocation;
+    assembly.updatedAt = new Date().toISOString();
+
+    db.allocationAudits = db.allocationAudits || [];
+    db.allocationAudits.push(audit);
+
+    this.saveDb(db);
+    return {
+      assembly: projectAssemblyForCaller(assembly, actor),
+      audit: this.projectAuditForCaller(audit, actor),
+    };
+  }
+
+  async updateAssemblyRoleCapacity(
+    assemblyId: string,
+    roleName: string,
+    newTotalPlaces: number,
+    actorId?: string
+  ): Promise<Assembly> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const assembly = db.assemblies.find((a) => a.id === assemblyId);
+    if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
+
+    const isAuthorized =
+      callerId === assembly.facilitatorId ||
+      callerId === assembly.chairId ||
+      actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Facilitator, Chair, or Platform Owner can update role allocation capacity.`);
+    }
+
+    if (newTotalPlaces < 1) {
+      throw new Error('Total places must be at least 1.');
+    }
+
+    const now = new Date().toISOString();
+
+    // Check if previous allocation had an approved exception; changing size invalidates it!
+    const priorAlloc = assembly.roleAllocations?.[roleName];
+    if (priorAlloc && (priorAlloc.status === 'finalized_exception' || priorAlloc.isException)) {
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push({
+        id: generateId('audit'),
+        allocationId: priorAlloc.allocationId,
+        action: 'exception_invalidated',
+        actorId: callerId,
+        actorRole: actor.role,
+        actorName: actor.name,
+        timestamp: now,
+        policyVersion: POLICY_VERSION,
+        reason: `Capacity changed from ${priorAlloc.totalPlaces} to ${newTotalPlaces} for role "${roleName}". Prior Platform Owner exception invalidated.`,
+        outcome: 'reverted_to_pending',
+        snapshot: {
+          totalPlaces: newTotalPlaces,
+          reservedMinimum: Math.ceil(0.33 * newTotalPlaces),
+          status: 'pending',
+        },
+      });
+      priorAlloc.isException = false;
+      priorAlloc.exceptionAudit = undefined;
+      priorAlloc.status = 'pending';
+    }
+
+    // Rebuild allocations with override
+    assembly.roleAllocations = buildAssemblyRoleAllocations({
+      assemblyId,
+      isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+      participantUserIds: assembly.participantUserIds,
+      roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
+      facilitatorId: assembly.facilitatorId,
+      chairId: assembly.chairId,
+      coChairId: assembly.coChairId,
+      existingAllocations: assembly.roleAllocations,
+      customDeclarations: db.userDeclarations,
+      plannedPlacesOverrides: { [roleName]: newTotalPlaces },
+    });
+    assembly.updatedAt = now;
+
+    this.saveDb(db);
+    return projectAssemblyForCaller(assembly, actor);
   }
 
   async getContributions(assemblyId: string): Promise<Contribution[]> {
@@ -2658,6 +3172,21 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error(`Role "${role.roleName}" cannot execute power "${input.power}". Expected "${expectedPower}".`);
     }
 
+    // Reservation policy validation: Ensure user was not denied or blocked
+    if (assembly.roleAllocations && assembly.roleAllocations[role.roleName]) {
+      const alloc = assembly.roleAllocations[role.roleName];
+      if (alloc.confirmedOccupants && !alloc.confirmedOccupants.includes(input.userId)) {
+        throw new Error(
+          `User ${input.userId} is not a confirmed participant in role allocation "${role.roleName}". Role actions cannot be exercised by an occupant who was denied the role.`
+        );
+      }
+      if (alloc.status === 'blocked_noncompliant') {
+        throw new Error(
+          `Role allocation "${role.roleName}" is blocked non-compliant under the reservation policy. Role actions cannot be exercised until compliant or approved via Platform Owner exception.`
+        );
+      }
+    }
+
     const defaultObligations: Record<AssemblyRolePower, string> = {
       'Question Setter': 'Enablers and Troubleshooters must review and address the inquiry.',
       'Feasibility Check': 'Shapers must incorporate validated owners and feasibility conditions into draft.',
@@ -3041,6 +3570,7 @@ export class LocalDemoRepository implements DemoRepository {
     const isOwner = caller?.role === 'platform_admin';
     if (!isOwner) {
       delete cloned.actorId;
+      delete cloned.actorName;
       delete cloned.reason;
       if (cloned.snapshot) {
         delete cloned.snapshot.reservedOccupiedCount;

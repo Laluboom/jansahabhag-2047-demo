@@ -29,6 +29,8 @@ import {
   WorkspaceAuditEvent,
   WorkspaceActionType,
   CreditAppeal,
+  AllocationState,
+  AllocationAuditRecord,
 } from '../types/domain';
 import {
   DashboardData,
@@ -86,11 +88,26 @@ export interface DemoRepository {
 
   // Assemblies & Deliberation
   getAssemblies(userId?: string): Promise<Assembly[]>;
-  getAssembly(assemblyId: string): Promise<Assembly | null>;
+  getAssembly(assemblyId: string, actorId?: string): Promise<Assembly | null>;
   getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]>;
   getUserAssemblyRole(assemblyId: string, userId: string): Promise<AssemblyRole | null>;
   joinAssembly(assemblyId: string, userId: string, preferredRole?: import('../types/domain').AssemblyRoleType): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
   overrideAssemblyRole(assemblyId: string, actorId: string, targetUserId: string, newRole: import('../types/domain').AssemblyRoleType, reason: string): Promise<AssemblyRole>;
+  leaveAssembly(assemblyId: string, userId: string, actorId?: string): Promise<{ assembly: Assembly }>;
+  getAssemblyRoleAllocations(assemblyId: string, actorId?: string): Promise<Record<string, AllocationState>>;
+  finalizeAssemblyRoleAllocation(assemblyId: string, roleName: string, actorId?: string): Promise<Assembly>;
+  approveAssemblyRoleException(
+    assemblyId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ assembly: Assembly; audit: AllocationAuditRecord }>;
+  updateAssemblyRoleCapacity(
+    assemblyId: string,
+    roleName: string,
+    newTotalPlaces: number,
+    actorId?: string
+  ): Promise<Assembly>;
   getContributions(assemblyId: string): Promise<Contribution[]>;
   addAssemblyContribution(input: AssemblyContributionInput): Promise<Contribution>;
   getProposition(propositionId: string): Promise<Proposition | null>;

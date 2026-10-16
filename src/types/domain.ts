@@ -261,8 +261,15 @@ export type AllocationStatus =
 export interface AllocationAuditRecord {
   id: string;
   allocationId: string;
-  action: 'created' | 'updated' | 'finalized' | 'exception_approved' | 'finalization_rejected';
+  action:
+    | 'created'
+    | 'updated'
+    | 'finalized'
+    | 'exception_approved'
+    | 'finalization_rejected'
+    | 'exception_invalidated';
   actorId?: string; // approver persona (private to owner)
+  actorName?: string; // approver display name (private to owner)
   actorRole: string; // approver role (e.g. 'platform_admin')
   reason?: string; // substantive reason (private to owner)
   policyVersion: string;
@@ -608,6 +615,9 @@ export interface Assembly {
   roleActions?: AssemblyRoleAction[];
   roleOverrideAudits?: AssemblyRoleOverrideAudit[];
   isThreePersonMiniMode?: boolean;
+  coChairId?: string;
+  roleAllocations?: Record<string, AllocationState>;
+  rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -1241,6 +1251,7 @@ export interface DemoDatabase {
   assemblyRoleActions?: AssemblyRoleAction[];
   assemblyRoleOverrideAudits?: AssemblyRoleOverrideAudit[];
   allocationAudits?: AllocationAuditRecord[];
+  userDeclarations?: Record<string, ReservationEligibility>;
   workspaces?: Workspace[];
   workspaceMemberships?: WorkspaceMembership[];
   workspaceActions?: WorkspaceAction[];

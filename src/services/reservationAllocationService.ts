@@ -31,6 +31,8 @@ import {
   AllocationAuditRecord,
   AllocationValidationResult,
   ReservationEligibility,
+  Assembly,
+  AssemblyRole,
 } from '../types/domain';
 import {
   POLICY_VERSION,
@@ -47,6 +49,18 @@ export const ALLOCATION_SURFACES_INVENTORY = {
     'event_check_in_allocation_guards',
     'event_point_of_use_rulebook',
     'event_aggregate_reservation_metrics_ui',
+  ],
+  package08BCoverage: [
+    'assembly_named_roles_quota',
+    'assembly_functional_zones_allocation', // Thinker, Enabler, Troubleshooter, Shaper
+    'assembly_procedural_roles_allocation', // Chair, Co-Chair, Facilitator
+    'assembly_three_person_secondary_roles_allocation',
+    'assembly_role_assignment_guards',
+    'assembly_facilitator_override_guards',
+    'assembly_role_finalization_guards',
+    'assembly_point_of_use_rulebook',
+    'assembly_per_role_status_and_privacy_projections',
+    'assembly_simulated_owner_exception_controls',
   ],
   dependentAssemblyDebateCoverage: [
     'assembly_named_roles_quota',
@@ -191,25 +205,37 @@ export function sanitizeAllocationForPublic(
     ((sanitized.reservedOccupiedCount ?? 0) + (sanitized.ordinaryOccupiedCount ?? 0));
   delete sanitized.confirmedOccupants;
 
-  // Robust public projection rule: withhold exact counts for ALL non-owner callers
-  sanitized.isPrivacySuppressed = true;
-  delete sanitized.reservedOccupiedCount;
-  delete sanitized.ordinaryOccupiedCount;
-  delete sanitized.vacanciesCount;
+  const isSmall = isSmallCohortAllocation(sanitized.totalPlaces);
 
-  // Suppress status if it implies individual reservation eligibility (compliance, non-compliance, or exception)
-  if (
-    sanitized.status === 'finalized_compliant' ||
-    sanitized.status === 'blocked_noncompliant' ||
-    sanitized.status === 'finalized_exception'
-  ) {
-    delete sanitized.status;
+  // For small cohorts (<= 3 places) or allocated limited events: withhold exact counts
+  if (isSmall || sanitized.allocationType === 'event_places') {
+    sanitized.isPrivacySuppressed = true;
+    delete sanitized.reservedOccupiedCount;
+    delete sanitized.ordinaryOccupiedCount;
+    delete sanitized.vacanciesCount;
+
+    // Suppress status if it implies individual reservation eligibility (compliance, non-compliance, or exception)
+    if (
+      sanitized.status === 'finalized_compliant' ||
+      sanitized.status === 'blocked_noncompliant' ||
+      sanitized.status === 'finalized_exception'
+    ) {
+      delete sanitized.status;
+    }
+
+    sanitized.isException = false;
+    delete sanitized.exceptionAudit;
+  } else {
+    // For larger allocations (> 3 places, such as 6-seat Thinker zone), aggregate numbers can be reported
+    // without revealing individual declarations, but exception audits are sanitized of private reason/actorId:
+    if (sanitized.exceptionAudit) {
+      sanitized.exceptionAudit = {
+        ...sanitized.exceptionAudit,
+        actorId: undefined,
+        reason: undefined,
+      };
+    }
   }
-
-  // Suppress exception state and audit for ALL non-owner allocated-event projections
-  // to prevent deductive inference of attendee eligibility on identified cohorts.
-  sanitized.isException = false;
-  delete sanitized.exceptionAudit;
 
   return sanitized;
 }
@@ -498,4 +524,254 @@ declare module '../types/domain' {
 export function isAllocatedLimitedEvent(evt?: { allocation?: AllocationState | null } | null): boolean {
   if (!evt || !evt.allocation) return false;
   return evt.allocation.status !== 'unvalidated_legacy';
+}
+
+export interface RoleAssignmentCheckResult {
+  allowed: boolean;
+  reason?: string;
+  placeType?: 'reserved' | 'ordinary';
+}
+
+/**
+ * Evaluates whether a user can be assigned to a specific named role allocation in an Assembly.
+ *
+ * Rules:
+ * 1. If user is already confirmed in this role, update is allowed.
+ * 2. Total occupants cannot exceed totalPlaces (no overbooking).
+ * 3. Eligible participants claim reserved places first (up to reservedMinimum), then ordinary places.
+ * 4. Ineligible/undeclared participants can ONLY claim ordinary places (up to ordinaryPlaces).
+ * 5. Unmet reserved places stay vacant by default and cannot be claimed by ordinary participants
+ *    unless an explicit Platform Owner exception is approved.
+ * 6. Non-owners receive state-neutral denial to prevent deductive inference of private declarations.
+ */
+export function canUserClaimRoleAllocation(
+  allocation: AllocationState,
+  userId: string,
+  customDeclarations?: Record<string, ReservationEligibility>,
+  isOwner: boolean = false
+): RoleAssignmentCheckResult {
+  if (allocation.confirmedOccupants?.includes(userId)) {
+    return { allowed: true };
+  }
+
+  const currentCount =
+    allocation.confirmedOccupants?.length ??
+    ((allocation.reservedOccupiedCount ?? 0) + (allocation.ordinaryOccupiedCount ?? 0));
+
+  const roleTitle = allocation.title || 'Role';
+
+  if (currentCount >= allocation.totalPlaces) {
+    return {
+      allowed: false,
+      reason: isOwner
+        ? `${roleTitle} allocation capacity of ${allocation.totalPlaces} has been reached. Overbooking is prevented.`
+        : `${roleTitle} capacity has been reached. Overbooking is prevented.`,
+    };
+  }
+
+  const eligibility = customDeclarations && userId in customDeclarations
+    ? customDeclarations[userId]
+    : getFictionalReservationEligibility(userId);
+
+  const reservedFilled = allocation.reservedOccupiedCount ?? (allocation.reservedOccupants?.length ?? 0);
+  const ordinaryFilled = allocation.ordinaryOccupiedCount ?? (allocation.ordinaryOccupants?.length ?? 0);
+
+  if (eligibility === 'eligible') {
+    if (reservedFilled < allocation.reservedMinimum) {
+      return { allowed: true, placeType: 'reserved' };
+    }
+    if (ordinaryFilled < allocation.ordinaryPlaces) {
+      return { allowed: true, placeType: 'ordinary' };
+    }
+    if (allocation.isException && currentCount < allocation.totalPlaces) {
+      return { allowed: true, placeType: 'ordinary' };
+    }
+    return {
+      allowed: false,
+      reason: isOwner
+        ? `${roleTitle} capacity reached. Both reserved places (${allocation.reservedMinimum}) and ordinary places (${allocation.ordinaryPlaces}) are filled.`
+        : `${roleTitle} capacity of ${allocation.totalPlaces} has been reached. Overbooking is prevented.`,
+    };
+  }
+
+  // Ineligible or undeclared participant
+  if (ordinaryFilled < allocation.ordinaryPlaces) {
+    return { allowed: true, placeType: 'ordinary' };
+  }
+
+  // If approved exception allows ordinary users into vacant reserved places:
+  if (allocation.isException && currentCount < allocation.totalPlaces) {
+    return { allowed: true, placeType: 'ordinary' };
+  }
+
+  // Unmet reserved places stay vacant by default
+  const remainingReserved = allocation.reservedMinimum - reservedFilled;
+  const reason = isOwner
+    ? `Ordinary capacity reached (${ordinaryFilled}/${allocation.ordinaryPlaces}) for ${roleTitle}. ` +
+      `The remaining ${remainingReserved} place(s) are reserved under the 33% mandatory women's reservation policy. ` +
+      `Unmet reserved role places stay vacant by default unless an audited Platform Owner exception is approved.`
+    : `This role assignment cannot be accepted under current allocation rules. Reserved places are not automatically reassigned under the reservation policy.`;
+
+  return {
+    allowed: false,
+    reason,
+  };
+}
+
+export interface BuildAssemblyRoleAllocationsInput {
+  assemblyId: string;
+  isThreePersonMiniMode?: boolean;
+  participantUserIds?: string[];
+  roles?: AssemblyRole[];
+  facilitatorId?: string;
+  chairId?: string;
+  coChairId?: string;
+  existingAllocations?: Record<string, AllocationState>;
+  customDeclarations?: Record<string, ReservationEligibility>;
+  plannedPlacesOverrides?: Record<string, number>;
+}
+
+/**
+ * Constructs or updates the full set of named role allocations for a Youth Assembly:
+ * - Functional Zone Roles: Thinker, Enabler, Troubleshooter, Shaper
+ * - Procedural Roles: Chair, Co-Chair (if configured), Facilitator
+ * - Secondary Roles: In 3-person mini-deliberation mode
+ *
+ * Each allocation calculates its own minimum ceil(0.33 * totalPlaces) separately without pooling.
+ */
+export function buildAssemblyRoleAllocations(
+  input: BuildAssemblyRoleAllocationsInput
+): Record<string, AllocationState> {
+  const result: Record<string, AllocationState> = {};
+  const roles = input.roles || [];
+  const existing = input.existingAllocations || {};
+  const overrides = input.plannedPlacesOverrides || {};
+
+  // Procedural Leadership Roles
+  // 1. Chair
+  const chairOccupants = input.chairId ? [input.chairId] : [];
+  const chairPlaces = overrides['Chair'] ?? existing['Chair']?.totalPlaces ?? 1;
+  result['Chair'] = buildAllocationState({
+    allocationId: `alloc_${input.assemblyId}_chair`,
+    allocationType: 'named_roles',
+    title: 'Assembly Chair',
+    totalPlaces: chairPlaces,
+    confirmedOccupants: chairOccupants,
+    existingStatus: existing['Chair']?.status ?? 'unvalidated_legacy',
+    existingExceptionAudit: existing['Chair']?.exceptionAudit,
+    customDeclarations: input.customDeclarations,
+  });
+
+  // 2. Facilitator
+  const facilitatorOccupants = input.facilitatorId ? [input.facilitatorId] : [];
+  const facilitatorPlaces = overrides['Facilitator'] ?? existing['Facilitator']?.totalPlaces ?? 1;
+  result['Facilitator'] = buildAllocationState({
+    allocationId: `alloc_${input.assemblyId}_facilitator`,
+    allocationType: 'named_roles',
+    title: 'Assembly Facilitator',
+    totalPlaces: facilitatorPlaces,
+    confirmedOccupants: facilitatorOccupants,
+    existingStatus: existing['Facilitator']?.status ?? 'unvalidated_legacy',
+    existingExceptionAudit: existing['Facilitator']?.exceptionAudit,
+    customDeclarations: input.customDeclarations,
+  });
+
+  // 3. Co-Chair (if configured or planned)
+  if (input.coChairId || overrides['Co-Chair'] || existing['Co-Chair']) {
+    const coChairOccupants = input.coChairId ? [input.coChairId] : [];
+    const coChairPlaces = overrides['Co-Chair'] ?? existing['Co-Chair']?.totalPlaces ?? 1;
+    result['Co-Chair'] = buildAllocationState({
+      allocationId: `alloc_${input.assemblyId}_co_chair`,
+      allocationType: 'named_roles',
+      title: 'Assembly Co-Chair',
+      totalPlaces: coChairPlaces,
+      confirmedOccupants: coChairOccupants,
+      existingStatus: existing['Co-Chair']?.status ?? 'unvalidated_legacy',
+      existingExceptionAudit: existing['Co-Chair']?.exceptionAudit,
+      customDeclarations: input.customDeclarations,
+    });
+  }
+
+  // Functional Primary Roles: Thinker, Enabler, Troubleshooter, Shaper
+  const functionalRoles: import('../types/domain').AssemblyRoleType[] = [
+    'Thinker',
+    'Enabler',
+    'Troubleshooter',
+    'Shaper',
+  ];
+
+  const defaultFunctionalPlaces = input.isThreePersonMiniMode ? 1 : 6;
+
+  for (const rName of functionalRoles) {
+    const occupants = roles
+      .filter((r) => r.roleName === rName && r.assemblyId === input.assemblyId)
+      .map((r) => r.userId);
+
+    let totalPlaces = overrides[rName] ?? existing[rName]?.totalPlaces;
+    if (totalPlaces === undefined) {
+      if (input.isThreePersonMiniMode) {
+        totalPlaces = occupants.length > 0 ? occupants.length : (rName === 'Shaper' ? 0 : 1);
+      } else {
+        totalPlaces = defaultFunctionalPlaces;
+      }
+    }
+
+    result[rName] = buildAllocationState({
+      allocationId: `alloc_${input.assemblyId}_${rName.toLowerCase()}`,
+      allocationType: 'named_roles',
+      title: `${rName} Role Allocation`,
+      totalPlaces,
+      confirmedOccupants: occupants,
+      existingStatus: existing[rName]?.status ?? 'unvalidated_legacy',
+      existingExceptionAudit: existing[rName]?.exceptionAudit,
+      customDeclarations: input.customDeclarations,
+    });
+  }
+
+  // Secondary Roles in 3-person mini-deliberation mode
+  if (input.isThreePersonMiniMode) {
+    for (const rName of functionalRoles) {
+      const secondaryOccupants = roles
+        .filter((r) => r.secondaryRoleName === rName && r.assemblyId === input.assemblyId)
+        .map((r) => r.userId);
+
+      const secondaryKey = `Secondary ${rName}`;
+      if (secondaryOccupants.length > 0 || existing[secondaryKey] || overrides[secondaryKey]) {
+        const totalPlaces = overrides[secondaryKey] ?? existing[secondaryKey]?.totalPlaces ?? 1;
+        result[secondaryKey] = buildAllocationState({
+          allocationId: `alloc_${input.assemblyId}_sec_${rName.toLowerCase()}`,
+          allocationType: 'named_roles',
+          title: `${secondaryKey} Allocation`,
+          totalPlaces,
+          confirmedOccupants: secondaryOccupants,
+          existingStatus: existing[secondaryKey]?.status ?? 'unvalidated_legacy',
+          existingExceptionAudit: existing[secondaryKey]?.exceptionAudit,
+          customDeclarations: input.customDeclarations,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Projects an Assembly for a caller by applying privacy sanitization across all its roleAllocations.
+ */
+export function projectAssemblyForCaller(
+  assembly: Assembly,
+  caller?: { id: string; role: string } | null
+): Assembly {
+  const isOwner = caller?.role === 'platform_admin';
+  const cloned: Assembly = JSON.parse(JSON.stringify(assembly));
+
+  if (cloned.roleAllocations) {
+    const sanitizedMap: Record<string, AllocationState> = {};
+    for (const [key, alloc] of Object.entries(cloned.roleAllocations)) {
+      sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+    }
+    cloned.roleAllocations = sanitizedMap;
+  }
+
+  return cloned;
 }
