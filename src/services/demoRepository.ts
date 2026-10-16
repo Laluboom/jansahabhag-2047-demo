@@ -681,7 +681,7 @@ export class LocalDemoRepository implements DemoRepository {
           }
         }
         if (mutated) this.saveDb(db);
-        const dashboardViewer = activeUser || user;
+        const dashboardViewer = activeUser;
         return assemblies.map((a) => projectAssemblyForCaller(a, dashboardViewer));
       })(),
       pendingAssignments: JSON.parse(JSON.stringify(pendingAssignments)),
@@ -1877,8 +1877,7 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getAssemblies(userId?: string): Promise<Assembly[]> {
     const db = this.getDb();
-    const callerId = userId || db.activeUserId;
-    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
+    const activeViewer = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
     let mutated = false;
     for (const a of db.assemblies) {
       if (this.ensureAssemblyRoleAllocations(a, db)) {
@@ -1886,25 +1885,21 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
     if (mutated) this.saveDb(db);
-    return db.assemblies.map((a) => projectAssemblyForCaller(a, caller));
+    const assemblies = userId
+      ? db.assemblies.filter((a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId)
+      : db.assemblies;
+    return assemblies.map((a) => projectAssemblyForCaller(a, activeViewer));
   }
 
   async getAssembly(assemblyId: string, actorId?: string): Promise<Assembly | null> {
     const db = this.getDb();
-    const effectiveActiveId = db.activeUserId;
-    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
-      throw new Error(
-        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
-      );
-    }
-    const callerId = actorId || effectiveActiveId;
-    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
+    const activeViewer = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
     const asm = db.assemblies.find((a) => a.id === assemblyId);
     if (!asm) return null;
     if (this.ensureAssemblyRoleAllocations(asm, db)) {
       this.saveDb(db);
     }
-    return projectAssemblyForCaller(asm, caller);
+    return projectAssemblyForCaller(asm, activeViewer);
   }
 
   async getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]> {
@@ -2555,35 +2550,19 @@ export class LocalDemoRepository implements DemoRepository {
     actorId?: string
   ): Promise<Record<string, AllocationState>> {
     const db = this.getDb();
-    const effectiveActiveId = db.activeUserId;
-    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
-      throw new Error(
-        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
-      );
-    }
-    const callerId = actorId || effectiveActiveId;
-    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
-    const isOwner = caller?.role === 'platform_admin';
+    const activeViewer = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
+    const isOwner = activeViewer?.role === 'platform_admin';
 
     const assembly = db.assemblies.find((a) => a.id === assemblyId);
     if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
 
-    if (!assembly.roleAllocations) {
-      assembly.roleAllocations = buildAssemblyRoleAllocations({
-        assemblyId,
-        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
-        participantUserIds: assembly.participantUserIds,
-        roles: db.assemblyRoles.filter((r) => r.assemblyId === assemblyId),
-        facilitatorId: assembly.facilitatorId,
-        chairId: assembly.chairId,
-        coChairId: assembly.coChairId,
-        customDeclarations: db.userDeclarations,
-      });
+    if (this.ensureAssemblyRoleAllocations(assembly, db)) {
       this.saveDb(db);
     }
 
+    const roleAllocations = assembly.roleAllocations ?? {};
     const sanitizedMap: Record<string, AllocationState> = {};
-    for (const [key, alloc] of Object.entries(assembly.roleAllocations)) {
+    for (const [key, alloc] of Object.entries(roleAllocations)) {
       sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
     }
     return sanitizedMap;

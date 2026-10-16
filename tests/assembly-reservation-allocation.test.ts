@@ -415,7 +415,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(shaperAlloc?.status).not.toBe('finalized_exception');
 
       // 2. getAssemblies (non-owner perspective)
-      const assemblies = await repository.getAssemblies('user_aarav');
+      const assemblies = await repository.getAssemblies();
       const jaipurFromList = assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       const shaperFromList = jaipurFromList?.roleAllocations?.['Shaper'];
       expect(shaperFromList?.isPrivacySuppressed).toBe(true);
@@ -720,6 +720,249 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(secAlloc.reservedMinimum).toBe(1);
       expect(secAlloc.ordinaryPlaces).toBe(0);
       expect(secAlloc.confirmedOccupants).toContain('user_meera');
+    });
+  });
+
+  describe('11. Read Projection Privacy, Filter Semantics & Browser Persona Binding Repair', () => {
+    it('active ordinary participant calling getAssemblies("user_admin") sees only a filtered list and never receives private role counts, occupant partitions, or exception audit', async () => {
+      // 1. As Platform Owner, approve an exception on Chair role to ensure sensitive audit snapshots exist
+      await repository.switchPersona('user_admin');
+      await repository.approveAssemblyRoleException(
+        'assembly_jaipur_pedestrian_2026',
+        'Chair',
+        'Confidential administrative pilot justification reason',
+        'user_admin'
+      );
+
+      // Verify audit is present for owner
+      const ownerAsm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      expect(ownerAsm?.roleAllocations?.['Chair']?.exceptionAudit).toBeDefined();
+
+      // In initial seed, user_admin is not a participant of any assembly. Calling getAssemblies('user_admin') returns empty list
+      await repository.switchPersona('user_aarav');
+      const emptyList = await repository.getAssemblies('user_admin');
+      expect(emptyList).toHaveLength(0);
+
+      // Add user_admin as participant in assembly_jaipur_pedestrian_2026 to verify non-empty filtered list
+      const db = PersistenceService.loadDatabase();
+      const jaipur = db.assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      if (jaipur && !jaipur.participantUserIds.includes('user_admin')) {
+        jaipur.participantUserIds.push('user_admin');
+      }
+      PersistenceService.saveDatabase(db);
+
+      // Active ordinary participant user_aarav calls getAssemblies('user_admin')
+      const filteredList = await repository.getAssemblies('user_admin');
+      // Must return ONLY the filtered assembly containing user_admin, not all assemblies
+      expect(filteredList).toHaveLength(1);
+      expect(filteredList[0].id).toBe('assembly_jaipur_pedestrian_2026');
+
+      const chairAlloc = filteredList[0].roleAllocations?.['Chair'];
+      expect(chairAlloc).toBeDefined();
+      // Crucial privacy invariants: caller must NEVER receive owner-only counts, occupant partitions, or exception audit
+      expect(chairAlloc?.isPrivacySuppressed).toBe(true);
+      expect(chairAlloc?.reservedOccupiedCount).toBeUndefined();
+      expect(chairAlloc?.ordinaryOccupiedCount).toBeUndefined();
+      expect(chairAlloc?.vacanciesCount).toBeUndefined();
+      expect(chairAlloc?.reservedOccupants).toBeUndefined();
+      expect(chairAlloc?.ordinaryOccupants).toBeUndefined();
+      expect(chairAlloc?.confirmedOccupants).toBeUndefined();
+      expect(chairAlloc?.exceptionAudit).toBeUndefined();
+      expect(chairAlloc?.isException).toBe(false);
+
+      // Low-occupancy Shaper role also suppressed
+      const shaperAlloc = filteredList[0].roleAllocations?.['Shaper'];
+      expect(shaperAlloc?.isPrivacySuppressed).toBe(true);
+      expect(shaperAlloc?.reservedOccupiedCount).toBeUndefined();
+      expect(shaperAlloc?.confirmedOccupants).toBeUndefined();
+    });
+
+    it('active owner gets full details across getAssemblies, getAssembly, and getAssemblyRoleAllocations', async () => {
+      await repository.switchPersona('user_admin');
+      await repository.approveAssemblyRoleException(
+        'assembly_jaipur_pedestrian_2026',
+        'Chair',
+        'Confidential administrative pilot justification reason',
+        'user_admin'
+      );
+
+      // 1. getAssemblies
+      const assemblies = await repository.getAssemblies();
+      const jaipurFromList = assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      const chairFromList = jaipurFromList?.roleAllocations?.['Chair'];
+      expect(chairFromList?.isPrivacySuppressed).toBeFalsy();
+      expect(chairFromList?.reservedOccupiedCount).toBeDefined();
+      expect(chairFromList?.ordinaryOccupiedCount).toBeDefined();
+      expect(chairFromList?.vacanciesCount).toBeDefined();
+      expect(chairFromList?.confirmedOccupants).toBeDefined();
+      expect(chairFromList?.exceptionAudit).toBeDefined();
+
+      // 2. getAssembly
+      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const chairFromDetail = detail?.roleAllocations?.['Chair'];
+      expect(chairFromDetail?.isPrivacySuppressed).toBeFalsy();
+      expect(chairFromDetail?.reservedOccupiedCount).toBeDefined();
+      expect(chairFromDetail?.confirmedOccupants).toBeDefined();
+      expect(chairFromDetail?.exceptionAudit).toBeDefined();
+
+      // 3. getAssemblyRoleAllocations
+      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const chairFromAllocs = allocations['Chair'];
+      expect(chairFromAllocs?.isPrivacySuppressed).toBeFalsy();
+      expect(chairFromAllocs?.reservedOccupiedCount).toBeDefined();
+      expect(chairFromAllocs?.confirmedOccupants).toBeDefined();
+      expect(chairFromAllocs?.exceptionAudit).toBeDefined();
+    });
+
+    it('getAssemblies("user_aarav") keeps prior list filtering and does not return unjoined assemblies', async () => {
+      await repository.switchPersona('user_aarav');
+
+      // Before Aarav joins, getAssemblies('user_aarav') must return empty array
+      const beforeJoin = await repository.getAssemblies('user_aarav');
+      expect(beforeJoin).toHaveLength(0);
+
+      // Querying all assemblies without filter returns full catalogue
+      const allAssemblies = await repository.getAssemblies();
+      expect(allAssemblies.length).toBeGreaterThanOrEqual(3);
+
+      // Aarav joins Jaipur assembly
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+
+      // After joining, getAssemblies('user_aarav') returns only Jaipur assembly
+      const afterJoin = await repository.getAssemblies('user_aarav');
+      expect(afterJoin).toHaveLength(1);
+      expect(afterJoin[0].id).toBe('assembly_jaipur_pedestrian_2026');
+
+      // All assemblies remains unaffected
+      const allAfterJoin = await repository.getAssemblies();
+      expect(allAfterJoin.length).toBe(allAssemblies.length);
+    });
+
+    it('dashboard and detail remain projected for the active viewer even if another user ID is supplied as a filter where supported', async () => {
+      // Ensure Chair has approved exception
+      await repository.switchPersona('user_admin');
+      await repository.approveAssemblyRoleException(
+        'assembly_jaipur_pedestrian_2026',
+        'Chair',
+        'Confidential domain expertise reason',
+        'user_admin'
+      );
+
+      // Active viewer is user_aarav (ordinary participant)
+      await repository.switchPersona('user_aarav');
+
+      // 1. Dashboard: Calling getDashboard('user_admin') must project assemblies for active viewer user_aarav
+      const dash = await repository.getDashboard('user_admin');
+      const jaipurFromDash = dash.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      expect(jaipurFromDash).toBeDefined();
+      const chairFromDash = jaipurFromDash?.roleAllocations?.['Chair'];
+      expect(chairFromDash?.isPrivacySuppressed).toBe(true);
+      expect(chairFromDash?.reservedOccupiedCount).toBeUndefined();
+      expect(chairFromDash?.ordinaryOccupiedCount).toBeUndefined();
+      expect(chairFromDash?.confirmedOccupants).toBeUndefined();
+      expect(chairFromDash?.exceptionAudit).toBeUndefined();
+
+      // 2. Detail: Calling getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin') must remain projected for user_aarav
+      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const chairFromDetail = detail?.roleAllocations?.['Chair'];
+      expect(chairFromDetail?.isPrivacySuppressed).toBe(true);
+      expect(chairFromDetail?.reservedOccupiedCount).toBeUndefined();
+      expect(chairFromDetail?.confirmedOccupants).toBeUndefined();
+      expect(chairFromDetail?.exceptionAudit).toBeUndefined();
+
+      // 3. Allocations: Calling getAssemblyRoleAllocations with 'user_admin' must remain projected for user_aarav
+      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const chairFromAllocs = allocations['Chair'];
+      expect(chairFromAllocs?.isPrivacySuppressed).toBe(true);
+      expect(chairFromAllocs?.reservedOccupiedCount).toBeUndefined();
+      expect(chairFromAllocs?.confirmedOccupants).toBeUndefined();
+      expect(chairFromAllocs?.exceptionAudit).toBeUndefined();
+
+      // 4. Owner active viewer retains full details even when querying for participant
+      await repository.switchPersona('user_admin');
+      const ownerDash = await repository.getDashboard('user_aarav');
+      const jaipurOwnerDash = ownerDash.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      expect(jaipurOwnerDash?.roleAllocations?.['Chair']?.isPrivacySuppressed).toBeFalsy();
+      expect(jaipurOwnerDash?.roleAllocations?.['Chair']?.reservedOccupiedCount).toBeDefined();
+
+      const ownerDetail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      expect(ownerDetail?.roleAllocations?.['Chair']?.isPrivacySuppressed).toBeFalsy();
+      expect(ownerDetail?.roleAllocations?.['Chair']?.reservedOccupiedCount).toBeDefined();
+    });
+
+    it('read-only calls without an active persona do not use a supplied ID to manufacture owner access', async () => {
+      // Ensure Chair has approved exception
+      await repository.switchPersona('user_admin');
+      await repository.approveAssemblyRoleException(
+        'assembly_jaipur_pedestrian_2026',
+        'Chair',
+        'Confidential domain expertise reason',
+        'user_admin'
+      );
+
+      // Simulate logged out / unauthenticated state (activeUserId undefined)
+      const db = PersistenceService.loadDatabase();
+      (db as any).activeUserId = undefined;
+      PersistenceService.saveDatabase(db);
+
+      // 1. getAssemblies('user_admin')
+      const assemblies = await repository.getAssemblies('user_admin');
+      for (const asm of assemblies) {
+        if (asm.roleAllocations?.['Chair']) {
+          expect(asm.roleAllocations['Chair'].isPrivacySuppressed).toBe(true);
+          expect(asm.roleAllocations['Chair'].reservedOccupiedCount).toBeUndefined();
+          expect(asm.roleAllocations['Chair'].confirmedOccupants).toBeUndefined();
+        }
+      }
+
+      // 2. getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin')
+      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      expect(detail).toBeDefined();
+      const chairAlloc = detail?.roleAllocations?.['Chair'];
+      expect(chairAlloc?.isPrivacySuppressed).toBe(true);
+      expect(chairAlloc?.reservedOccupiedCount).toBeUndefined();
+      expect(chairAlloc?.confirmedOccupants).toBeUndefined();
+      expect(chairAlloc?.exceptionAudit).toBeUndefined();
+
+      // 3. getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin')
+      const allocs = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      expect(allocs['Chair']?.isPrivacySuppressed).toBe(true);
+      expect(allocs['Chair']?.reservedOccupiedCount).toBeUndefined();
+      expect(allocs['Chair']?.confirmedOccupants).toBeUndefined();
+      expect(allocs['Chair']?.exceptionAudit).toBeUndefined();
+
+      // 4. getDashboard('user_admin')
+      const dash = await repository.getDashboard('user_admin');
+      const jaipurFromDash = dash.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      if (jaipurFromDash?.roleAllocations?.['Chair']) {
+        expect(jaipurFromDash.roleAllocations['Chair'].isPrivacySuppressed).toBe(true);
+        expect(jaipurFromDash.roleAllocations['Chair'].reservedOccupiedCount).toBeUndefined();
+        expect(jaipurFromDash.roleAllocations['Chair'].confirmedOccupants).toBeUndefined();
+        expect(jaipurFromDash.roleAllocations['Chair'].exceptionAudit).toBeUndefined();
+      }
+    });
+
+    it('initializes role allocations on raw assemblies without leaking owner-only category counts or audit details to non-owners', async () => {
+      // Strip roleAllocations from an assembly in persistence
+      const db = PersistenceService.loadDatabase();
+      const jaipur = db.assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      if (jaipur) {
+        delete (jaipur as any).roleAllocations;
+      }
+      PersistenceService.saveDatabase(db);
+
+      // Query as non-owner
+      await repository.switchPersona('user_aarav');
+      const assemblies = await repository.getAssemblies();
+      const jaipurFromList = assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      expect(jaipurFromList?.roleAllocations).toBeDefined();
+
+      const shaperAlloc = jaipurFromList?.roleAllocations?.['Shaper'];
+      expect(shaperAlloc).toBeDefined();
+      expect(shaperAlloc?.isPrivacySuppressed).toBe(true);
+      expect(shaperAlloc?.reservedOccupiedCount).toBeUndefined();
+      expect(shaperAlloc?.confirmedOccupants).toBeUndefined();
+      expect(shaperAlloc?.exceptionAudit).toBeUndefined();
     });
   });
 });
