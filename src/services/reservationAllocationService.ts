@@ -169,22 +169,23 @@ export function buildAllocationState(input: BuildAllocationInput): AllocationSta
  * (reserved/ordinary/vacancies counts, status, audit snapshots) allows deductive inference
  * of individual reservation declarations or eligibility.
  *
- * Consistent rule: covers cohorts with capacity <= 3 (such as capacity 2 with 1,
- * capacity 3 with 2, capacity 3 with 1 or 3, etc.).
+ * Covers allocations where planned capacity is 1–3 OR current confirmed occupancy is 1–3.
  */
-export function isSmallCohortAllocation(totalPlaces: number): boolean {
-  return totalPlaces > 0 && totalPlaces <= 3;
+export function isSmallCohortAllocation(totalPlaces: number, confirmedCount?: number): boolean {
+  const isSmallCapacity = totalPlaces >= 1 && totalPlaces <= 3;
+  const isSmallOccupancy = confirmedCount !== undefined && confirmedCount >= 1 && confirmedCount <= 3;
+  return isSmallCapacity || isSmallOccupancy;
 }
 
 /**
  * Strips private individual reservation eligibility arrays (reservedOccupants, ordinaryOccupants, confirmedOccupants)
  * and sensitive audit details from an AllocationState.
  *
- * For small cohorts (<= 3 places), also withholds exact reservedOccupiedCount, ordinaryOccupiedCount,
- * vacanciesCount, and status for non-owner callers to prevent deductive identification of individual eligibility.
+ * Suppresses category breakdown, vacancies, compliance/exception status, and private audit
+ * when either planned capacity OR current confirmed occupancy is 1–3, or for allocated limited events.
  *
  * Only the simulated Platform Owner (role: 'platform_admin') is authorized to receive unredacted
- * validation details and arrays. Organizers and staff receive the sanitized public projection.
+ * validation details and arrays.
  */
 export function sanitizeAllocationForPublic(
   allocation: AllocationState,
@@ -205,9 +206,9 @@ export function sanitizeAllocationForPublic(
     ((sanitized.reservedOccupiedCount ?? 0) + (sanitized.ordinaryOccupiedCount ?? 0));
   delete sanitized.confirmedOccupants;
 
-  const isSmall = isSmallCohortAllocation(sanitized.totalPlaces);
+  const isSmall = isSmallCohortAllocation(sanitized.totalPlaces, confirmedCount);
 
-  // For small cohorts (<= 3 places) or allocated limited events: withhold exact counts
+  // For small cohorts (capacity 1–3 or occupancy 1–3) or allocated limited events: withhold exact counts
   if (isSmall || sanitized.allocationType === 'event_places') {
     sanitized.isPrivacySuppressed = true;
     delete sanitized.reservedOccupiedCount;
@@ -226,7 +227,7 @@ export function sanitizeAllocationForPublic(
     sanitized.isException = false;
     delete sanitized.exceptionAudit;
   } else {
-    // For larger allocations (> 3 places, such as 6-seat Thinker zone), aggregate numbers can be reported
+    // For larger allocations (> 3 places and > 3 occupants), aggregate numbers can be reported
     // without revealing individual declarations, but exception audits are sanitized of private reason/actorId:
     if (sanitized.exceptionAudit) {
       sanitized.exceptionAudit = {
@@ -736,7 +737,16 @@ export function buildAssemblyRoleAllocations(
         .map((r) => r.userId);
 
       const secondaryKey = `Secondary ${rName}`;
-      if (secondaryOccupants.length > 0 || existing[secondaryKey] || overrides[secondaryKey]) {
+      const primaryOccupants = roles
+        .filter((r) => r.roleName === rName && r.assemblyId === input.assemblyId)
+        .map((r) => r.userId);
+
+      if (
+        secondaryOccupants.length > 0 ||
+        existing[secondaryKey] ||
+        overrides[secondaryKey] ||
+        primaryOccupants.length === 0
+      ) {
         const totalPlaces = overrides[secondaryKey] ?? existing[secondaryKey]?.totalPlaces ?? 1;
         result[secondaryKey] = buildAllocationState({
           allocationId: `alloc_${input.assemblyId}_sec_${rName.toLowerCase()}`,
@@ -744,7 +754,9 @@ export function buildAssemblyRoleAllocations(
           title: `${secondaryKey} Allocation`,
           totalPlaces,
           confirmedOccupants: secondaryOccupants,
-          existingStatus: existing[secondaryKey]?.status ?? 'unvalidated_legacy',
+          existingStatus:
+            existing[secondaryKey]?.status ??
+            (secondaryOccupants.length === 0 ? 'pending' : 'unvalidated_legacy'),
           existingExceptionAudit: existing[secondaryKey]?.exceptionAudit,
           customDeclarations: input.customDeclarations,
         });

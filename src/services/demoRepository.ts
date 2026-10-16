@@ -673,7 +673,17 @@ export class LocalDemoRepository implements DemoRepository {
       activeEnrolments: JSON.parse(JSON.stringify(enrolments)),
       recentActivities: JSON.parse(JSON.stringify(activities.slice(0, 8))),
       upcomingEvents: events.map((e) => this.projectEventForCaller(e, activeUser, db)),
-      activeAssemblies: assemblies.map((a) => projectAssemblyForCaller(a, activeUser)),
+      activeAssemblies: (() => {
+        let mutated = false;
+        for (const a of assemblies) {
+          if (this.ensureAssemblyRoleAllocations(a, db)) {
+            mutated = true;
+          }
+        }
+        if (mutated) this.saveDb(db);
+        const dashboardViewer = activeUser || user;
+        return assemblies.map((a) => projectAssemblyForCaller(a, dashboardViewer));
+      })(),
       pendingAssignments: JSON.parse(JSON.stringify(pendingAssignments)),
       recentNotifications: JSON.parse(JSON.stringify(notifications.slice(0, 5))),
       creditSummary: {
@@ -1848,14 +1858,35 @@ export class LocalDemoRepository implements DemoRepository {
     return JSON.parse(JSON.stringify(newEvidence));
   }
 
-  // Assemblies & Deliberation
+  private ensureAssemblyRoleAllocations(assembly: Assembly, db: DemoDatabase): boolean {
+    if (!assembly.roleAllocations) {
+      assembly.roleAllocations = buildAssemblyRoleAllocations({
+        assemblyId: assembly.id,
+        isThreePersonMiniMode: assembly.isThreePersonMiniMode,
+        participantUserIds: assembly.participantUserIds,
+        roles: db.assemblyRoles.filter((r) => r.assemblyId === assembly.id),
+        facilitatorId: assembly.facilitatorId,
+        chairId: assembly.chairId,
+        coChairId: assembly.coChairId,
+        customDeclarations: db.userDeclarations,
+      });
+      return true;
+    }
+    return false;
+  }
+
   async getAssemblies(userId?: string): Promise<Assembly[]> {
     const db = this.getDb();
-    const caller = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
-    const assemblies = userId
-      ? db.assemblies.filter((a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId)
-      : db.assemblies;
-    return assemblies.map((a) => projectAssemblyForCaller(a, caller));
+    const callerId = userId || db.activeUserId;
+    const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
+    let mutated = false;
+    for (const a of db.assemblies) {
+      if (this.ensureAssemblyRoleAllocations(a, db)) {
+        mutated = true;
+      }
+    }
+    if (mutated) this.saveDb(db);
+    return db.assemblies.map((a) => projectAssemblyForCaller(a, caller));
   }
 
   async getAssembly(assemblyId: string, actorId?: string): Promise<Assembly | null> {
@@ -1869,7 +1900,11 @@ export class LocalDemoRepository implements DemoRepository {
     const callerId = actorId || effectiveActiveId;
     const caller = callerId ? db.users.find((u) => u.id === callerId) : null;
     const asm = db.assemblies.find((a) => a.id === assemblyId);
-    return asm ? projectAssemblyForCaller(asm, caller) : null;
+    if (!asm) return null;
+    if (this.ensureAssemblyRoleAllocations(asm, db)) {
+      this.saveDb(db);
+    }
+    return projectAssemblyForCaller(asm, caller);
   }
 
   async getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]> {
@@ -1957,16 +1992,6 @@ export class LocalDemoRepository implements DemoRepository {
         candidateRoles = canonicalRoles;
       }
 
-      // Transparent 3-person rotating/multi-role mini-deliberation
-      let secondaryRole: AssemblyRoleType | undefined;
-      if (totalParticipants === 3) {
-        assembly.isThreePersonMiniMode = true;
-        const missingRole = canonicalRoles.find((r) => roleCounts[r] === 0 && r !== candidateRoles[0]);
-        if (missingRole) {
-          secondaryRole = missingRole;
-        }
-      }
-
       // Role history rotation (avoid repeatedly assigning Shaper or Chair)
       const userPastRoles = db.assemblyRoles
         .filter((r) => r.userId === userId && r.assemblyId !== assemblyId)
@@ -2023,6 +2048,49 @@ export class LocalDemoRepository implements DemoRepository {
         hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
       }
       const assignedRoleName = balancedCandidates[hash % balancedCandidates.length];
+
+      // Transparent 3-person rotating/multi-role mini-deliberation
+      let secondaryRole: AssemblyRoleType | undefined;
+      if (totalParticipants === 3) {
+        assembly.isThreePersonMiniMode = true;
+        const updatedRoleCounts = { ...roleCounts };
+        updatedRoleCounts[assignedRoleName] = (updatedRoleCounts[assignedRoleName] || 0) + 1;
+        const missingRole = canonicalRoles.find((r) => (updatedRoleCounts[r] || 0) === 0);
+        if (missingRole) {
+          const secKey = `Secondary ${missingRole}`;
+          let secAlloc = assembly.roleAllocations?.[secKey];
+          if (!secAlloc) {
+            secAlloc = buildAllocationState({
+              allocationId: `alloc_${assemblyId}_sec_${missingRole.toLowerCase()}`,
+              allocationType: 'named_roles',
+              title: `${secKey} Allocation`,
+              totalPlaces: 1,
+              confirmedOccupants: [],
+              existingStatus: 'pending',
+              customDeclarations: db.userDeclarations,
+            });
+          }
+          const secClaimCheck = canUserClaimRoleAllocation(secAlloc, userId, db.userDeclarations, isOwner);
+          if (secClaimCheck.allowed) {
+            secondaryRole = missingRole;
+          } else {
+            // userId denied secondary role: check other participants in 3-person mode
+            const otherEligible = db.assemblyRoles.find(
+              (r) =>
+                r.assemblyId === assemblyId &&
+                r.userId !== userId &&
+                !r.secondaryRoleName &&
+                r.roleName !== missingRole &&
+                canUserClaimRoleAllocation(secAlloc, r.userId, db.userDeclarations, isOwner).allowed
+            );
+            if (otherEligible) {
+              otherEligible.secondaryRoleName = missingRole;
+              otherEligible.updatedAt = now;
+            }
+            // If no eligible person is available, secondaryRole remains undefined (vacant place)
+          }
+        }
+      }
 
       role = createAssemblyRoleData(assemblyId, userId, assignedRoleName, secondaryRole);
       db.assemblyRoles.push(role);
@@ -2272,8 +2340,9 @@ export class LocalDemoRepository implements DemoRepository {
     assemblyId: string,
     actorId: string,
     targetUserId: string,
-    newRole: AssemblyRoleType,
-    reason: string
+    newRole: AssemblyRoleType | string,
+    reason: string,
+    newSecondaryRole?: AssemblyRoleType | null
   ): Promise<AssemblyRole> {
     const db = this.getDb();
     const effectiveActorId = actorId || db.activeUserId;
@@ -2308,6 +2377,7 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const previousRole = role.roleName;
+    const previousSecondaryRole = role.secondaryRoleName;
     const now = new Date().toISOString();
 
     // Ensure roleAllocations is initialized
@@ -2324,8 +2394,16 @@ export class LocalDemoRepository implements DemoRepository {
       });
     }
 
+    const isSecondaryDirectOverride = typeof newRole === 'string' && newRole.startsWith('Secondary ');
+    const actualRoleName: AssemblyRoleType = isSecondaryDirectOverride
+      ? role.roleName
+      : (normalizeAssemblyRoleName(newRole) as AssemblyRoleType);
+
     // Reservation policy validation: check target role capacity and reservation rules
-    const targetRoleAlloc = assembly.roleAllocations[newRole];
+    const targetRoleAlloc = isSecondaryDirectOverride
+      ? assembly.roleAllocations[newRole]
+      : assembly.roleAllocations[actualRoleName];
+
     if (targetRoleAlloc) {
       const claimCheck = canUserClaimRoleAllocation(targetRoleAlloc, targetUserId, db.userDeclarations, isOwner);
       if (!claimCheck.allowed) {
@@ -2335,8 +2413,57 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
-    // Invalidate prior exceptions on both previousRole and newRole on reassignment
-    for (const rName of [previousRole, newRole]) {
+    let resolvedSecondaryRole: AssemblyRoleType | undefined = role.secondaryRoleName;
+
+    if (isSecondaryDirectOverride) {
+      resolvedSecondaryRole = newRole.replace('Secondary ', '').trim() as AssemblyRoleType;
+    } else if (newSecondaryRole !== undefined) {
+      if (newSecondaryRole === null) {
+        resolvedSecondaryRole = undefined;
+      } else {
+        const secKey = `Secondary ${newSecondaryRole}`;
+        let targetSecAlloc = assembly.roleAllocations[secKey];
+        if (!targetSecAlloc) {
+          targetSecAlloc = buildAllocationState({
+            allocationId: `alloc_${assemblyId}_sec_${newSecondaryRole.toLowerCase()}`,
+            allocationType: 'named_roles',
+            title: `${secKey} Allocation`,
+            totalPlaces: 1,
+            confirmedOccupants: [],
+            existingStatus: 'pending',
+            customDeclarations: db.userDeclarations,
+          });
+        }
+        const claimCheck = canUserClaimRoleAllocation(targetSecAlloc, targetUserId, db.userDeclarations, isOwner);
+        if (!claimCheck.allowed) {
+          throw new Error(
+            `Cannot assign secondary role "${newSecondaryRole}" to ${targetUserId}: ${claimCheck.reason || 'Violates mandatory reservation policy.'}`
+          );
+        }
+        resolvedSecondaryRole = newSecondaryRole;
+      }
+    } else if (assembly.isThreePersonMiniMode) {
+      if (resolvedSecondaryRole === actualRoleName) {
+        resolvedSecondaryRole = undefined;
+      }
+      if (resolvedSecondaryRole) {
+        const secKey = `Secondary ${resolvedSecondaryRole}`;
+        const targetSecAlloc = assembly.roleAllocations[secKey];
+        if (targetSecAlloc) {
+          const claimCheck = canUserClaimRoleAllocation(targetSecAlloc, targetUserId, db.userDeclarations, isOwner);
+          if (!claimCheck.allowed) {
+            resolvedSecondaryRole = undefined;
+          }
+        }
+      }
+    }
+
+    // Invalidate prior exceptions on previousRole, newRole, and affected secondary allocations
+    const affectedRoles = [previousRole, newRole];
+    if (previousSecondaryRole) affectedRoles.push(`Secondary ${previousSecondaryRole}`);
+    if (resolvedSecondaryRole) affectedRoles.push(`Secondary ${resolvedSecondaryRole}`);
+
+    for (const rName of affectedRoles) {
       const priorAlloc = assembly.roleAllocations[rName];
       if (priorAlloc && (priorAlloc.status === 'finalized_exception' || priorAlloc.isException)) {
         db.allocationAudits = db.allocationAudits || [];
@@ -2349,7 +2476,7 @@ export class LocalDemoRepository implements DemoRepository {
           actorName: caller?.name || effectiveActorId,
           timestamp: now,
           policyVersion: POLICY_VERSION,
-          reason: `Roster changed: Facilitator reassigned participant ${targetUserId} from ${previousRole} to ${newRole}. Prior exception invalidated.`,
+          reason: `Roster changed: Facilitator reassigned participant ${targetUserId} to ${newRole}. Prior exception invalidated.`,
           outcome: 'reverted_to_pending',
           snapshot: {
             totalPlaces: priorAlloc.totalPlaces,
@@ -2363,8 +2490,9 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
-    const updatedRoleData = createAssemblyRoleData(assemblyId, targetUserId, newRole, role.secondaryRoleName);
+    const updatedRoleData = createAssemblyRoleData(assemblyId, targetUserId, actualRoleName, resolvedSecondaryRole);
     role.roleName = updatedRoleData.roleName;
+    role.secondaryRoleName = updatedRoleData.secondaryRoleName;
     role.power = updatedRoleData.power;
     role.lens = updatedRoleData.lens;
     role.responsibilities = updatedRoleData.responsibilities;
@@ -2394,7 +2522,7 @@ export class LocalDemoRepository implements DemoRepository {
       userId: targetUserId,
       userName: db.users.find((u) => u.id === targetUserId)?.name || targetUserId,
       previousRole,
-      newRole,
+      newRole: newRole as AssemblyRoleType,
       reason: reason.trim(),
       overriddenBy: effectiveActorId,
       overriddenByName: caller?.name || effectiveActorId,
@@ -2691,9 +2819,15 @@ export class LocalDemoRepository implements DemoRepository {
     const assembly = db.assemblies.find((a) => a.id === input.assemblyId);
     if (!assembly) throw new Error(`Assembly ${input.assemblyId} not found`);
 
-    // Ensure user is marked as participant if contributing
-    if (!assembly.participantUserIds.includes(input.userId)) {
-      assembly.participantUserIds.push(input.userId);
+    // A contribution requires an already admitted participant with a confirmed valid role
+    const isAdmitted = assembly.participantUserIds.includes(input.userId);
+    const assignedRole = db.assemblyRoles.find(
+      (r) => r.assemblyId === input.assemblyId && r.userId === input.userId
+    );
+    if (!isAdmitted || !assignedRole) {
+      throw new Error(
+        `Unauthorized: User "${input.userId}" is not an admitted participant with a confirmed valid role in assembly "${input.assemblyId}". Contributions require prior admission via joinAssembly.`
+      );
     }
 
     const now = new Date().toISOString();
@@ -3168,21 +3302,25 @@ export class LocalDemoRepository implements DemoRepository {
     if (!role) throw new Error(`User ${input.userId} has no assigned role in assembly ${input.assemblyId}`);
 
     const expectedPower = getRolePowerForName(role.roleName);
-    if (input.power !== expectedPower && input.power !== role.power) {
+    const expectedSecondaryPower = role.secondaryRoleName ? getRolePowerForName(role.secondaryRoleName) : null;
+    const isPrimaryPower = input.power === expectedPower || input.power === role.power;
+    const isSecondaryPower = Boolean(expectedSecondaryPower && input.power === expectedSecondaryPower);
+    if (!isPrimaryPower && !isSecondaryPower) {
       throw new Error(`Role "${role.roleName}" cannot execute power "${input.power}". Expected "${expectedPower}".`);
     }
 
     // Reservation policy validation: Ensure user was not denied or blocked
-    if (assembly.roleAllocations && assembly.roleAllocations[role.roleName]) {
-      const alloc = assembly.roleAllocations[role.roleName];
+    const checkRoleName = isSecondaryPower ? `Secondary ${role.secondaryRoleName}` : role.roleName;
+    if (assembly.roleAllocations && assembly.roleAllocations[checkRoleName]) {
+      const alloc = assembly.roleAllocations[checkRoleName];
       if (alloc.confirmedOccupants && !alloc.confirmedOccupants.includes(input.userId)) {
         throw new Error(
-          `User ${input.userId} is not a confirmed participant in role allocation "${role.roleName}". Role actions cannot be exercised by an occupant who was denied the role.`
+          `User ${input.userId} is not a confirmed participant in role allocation "${checkRoleName}". Role actions cannot be exercised by an occupant who was denied the role.`
         );
       }
       if (alloc.status === 'blocked_noncompliant') {
         throw new Error(
-          `Role allocation "${role.roleName}" is blocked non-compliant under the reservation policy. Role actions cannot be exercised until compliant or approved via Platform Owner exception.`
+          `Role allocation "${checkRoleName}" is blocked non-compliant under the reservation policy. Role actions cannot be exercised until compliant or approved via Platform Owner exception.`
         );
       }
     }
@@ -3199,7 +3337,7 @@ export class LocalDemoRepository implements DemoRepository {
       assemblyId: input.assemblyId,
       userId: input.userId,
       userName: user?.name || input.userId,
-      roleName: role.roleName,
+      roleName: isSecondaryPower ? (role.secondaryRoleName as AssemblyRoleType) : role.roleName,
       power: input.power,
       title: input.title,
       description: input.description,

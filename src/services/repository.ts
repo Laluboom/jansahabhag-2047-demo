@@ -92,7 +92,14 @@ export interface DemoRepository {
   getAssemblyRoles(assemblyId: string): Promise<AssemblyRole[]>;
   getUserAssemblyRole(assemblyId: string, userId: string): Promise<AssemblyRole | null>;
   joinAssembly(assemblyId: string, userId: string, preferredRole?: import('../types/domain').AssemblyRoleType): Promise<{ assembly: Assembly; role: AssemblyRole; creditTransaction?: CreditTransaction }>;
-  overrideAssemblyRole(assemblyId: string, actorId: string, targetUserId: string, newRole: import('../types/domain').AssemblyRoleType, reason: string): Promise<AssemblyRole>;
+  overrideAssemblyRole(
+    assemblyId: string,
+    actorId: string,
+    targetUserId: string,
+    newRole: import('../types/domain').AssemblyRoleType | string,
+    reason: string,
+    newSecondaryRole?: import('../types/domain').AssemblyRoleType | null
+  ): Promise<AssemblyRole>;
   leaveAssembly(assemblyId: string, userId: string, actorId?: string): Promise<{ assembly: Assembly }>;
   getAssemblyRoleAllocations(assemblyId: string, actorId?: string): Promise<Record<string, AllocationState>>;
   finalizeAssemblyRoleAllocation(assemblyId: string, roleName: string, actorId?: string): Promise<Assembly>;

@@ -395,6 +395,7 @@ describe('DemoRepository Domain Service Implementation', () => {
 
   describe('Deliberation & Assemblies', () => {
     it('adding an assembly contribution adds 5 deliberation credits and activity entry', async () => {
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
       const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
 
       const contrib = await repository.addAssemblyContribution({

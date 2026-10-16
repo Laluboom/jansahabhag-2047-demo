@@ -9,12 +9,14 @@ import {
 } from '../src/services/reservationAllocationService';
 import { DemoRepository } from '../src/services/repository';
 import { LocalDemoRepository } from '../src/services/demoRepository';
+import { PersistenceService } from '../src/services/persistence';
 
 describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
   let repository: DemoRepository;
 
   beforeEach(() => {
     localStorage.clear();
+    PersistenceService.resetDatabase();
     repository = new LocalDemoRepository();
   });
 
@@ -378,6 +380,346 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         // Never labeled compliant without validation
         expect(alloc.status).not.toBe('finalized_compliant');
       }
+    });
+  });
+
+  describe('8. Low-Occupancy Privacy Protection for 1–3 Confirmed Occupants (Gap 1)', () => {
+    it('suppresses category counts, vacancies, and status for 6-place role with 1 occupant across all repository outputs', async () => {
+      // In Jaipur pedestrian assembly, Shaper is a 6-place role with exactly 1 confirmed occupant: user_siddharth.
+      // 1 occupant in a 6-place role would leak Siddharth's reservation status if category breakdown or vacancies were visible.
+
+      // 1. getAssembly (non-owner perspective: user_aarav)
+      await repository.switchPersona('user_aarav');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      expect(asm).toBeDefined();
+      const shaperAlloc = asm?.roleAllocations?.['Shaper'];
+      expect(shaperAlloc).toBeDefined();
+
+      // Suppression active
+      expect(shaperAlloc?.isPrivacySuppressed).toBe(true);
+      expect(shaperAlloc?.reservedOccupiedCount).toBeUndefined();
+      expect(shaperAlloc?.ordinaryOccupiedCount).toBeUndefined();
+      expect(shaperAlloc?.vacanciesCount).toBeUndefined();
+      expect(shaperAlloc?.isException).toBe(false);
+      expect(shaperAlloc?.exceptionAudit).toBeUndefined();
+      expect(shaperAlloc?.reservedOccupants).toBeUndefined();
+      expect(shaperAlloc?.ordinaryOccupants).toBeUndefined();
+      expect(shaperAlloc?.confirmedOccupants).toBeUndefined();
+
+      // Formula and total capacity remain transparent
+      expect(shaperAlloc?.totalPlaces).toBe(6);
+      expect(shaperAlloc?.reservedMinimum).toBe(2);
+      expect(shaperAlloc?.ordinaryPlaces).toBe(4);
+      expect(shaperAlloc?.status).toBe('unvalidated_legacy');
+      expect(shaperAlloc?.status).not.toBe('finalized_compliant');
+      expect(shaperAlloc?.status).not.toBe('finalized_exception');
+
+      // 2. getAssemblies (non-owner perspective)
+      const assemblies = await repository.getAssemblies('user_aarav');
+      const jaipurFromList = assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      const shaperFromList = jaipurFromList?.roleAllocations?.['Shaper'];
+      expect(shaperFromList?.isPrivacySuppressed).toBe(true);
+      expect(shaperFromList?.reservedOccupiedCount).toBeUndefined();
+      expect(shaperFromList?.ordinaryOccupiedCount).toBeUndefined();
+      expect(shaperFromList?.vacanciesCount).toBeUndefined();
+      expect(shaperFromList?.totalPlaces).toBe(6);
+
+      // 3. getDashboard (non-owner perspective)
+      const dashboard = await repository.getDashboard('user_aarav');
+      const jaipurFromDash = dashboard.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
+      const shaperFromDash = jaipurFromDash?.roleAllocations?.['Shaper'];
+      expect(shaperFromDash?.isPrivacySuppressed).toBe(true);
+      expect(shaperFromDash?.reservedOccupiedCount).toBeUndefined();
+      expect(shaperFromDash?.ordinaryOccupiedCount).toBeUndefined();
+      expect(shaperFromDash?.vacanciesCount).toBeUndefined();
+      expect(shaperFromDash?.totalPlaces).toBe(6);
+
+      // 4. getAssemblyRoleAllocations (non-owner perspective)
+      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      const shaperFromAllocs = allocations['Shaper'];
+      expect(shaperFromAllocs?.isPrivacySuppressed).toBe(true);
+      expect(shaperFromAllocs?.reservedOccupiedCount).toBeUndefined();
+      expect(shaperFromAllocs?.ordinaryOccupiedCount).toBeUndefined();
+      expect(shaperFromAllocs?.vacanciesCount).toBeUndefined();
+      expect(shaperFromAllocs?.totalPlaces).toBe(6);
+
+      // 5. Platform Owner gets full unredacted view
+      await repository.switchPersona('user_admin');
+      const ownerAllocs = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const ownerShaper = ownerAllocs['Shaper'];
+      expect(ownerShaper?.isPrivacySuppressed).toBeFalsy();
+      expect(ownerShaper?.reservedOccupiedCount).toBe(0);
+      expect(ownerShaper?.ordinaryOccupiedCount).toBe(1);
+      expect(ownerShaper?.vacanciesCount).toBe(2);
+      expect(ownerShaper?.confirmedOccupants).toContain('user_siddharth');
+    });
+  });
+
+  describe('9. Contribution Admission Barrier & Zero Side Effects (Gap 2)', () => {
+    it('denies contribution by unadmitted persona and guarantees zero state mutation', async () => {
+      // user_neha is not joined to assembly_jaipur_pedestrian_2026
+      const unadmittedUserId = 'user_neha';
+      const assemblyId = 'assembly_jaipur_pedestrian_2026';
+
+      await repository.switchPersona('user_admin');
+      const initialAsm = await repository.getAssembly(assemblyId, 'user_admin');
+      expect(initialAsm?.participantUserIds).not.toContain(unadmittedUserId);
+      const initialParticipantCount = initialAsm!.participantUserIds.length;
+
+      const initialCredits = await repository.getCredits(unadmittedUserId);
+      const initialActivities = await repository.getActivities(unadmittedUserId);
+      const initialPassport = await repository.getPassport(unadmittedUserId);
+      const initialNotifs = await repository.getNotifications(unadmittedUserId);
+      const initialContribs = await repository.getContributions(assemblyId);
+
+      // Direct contribution attempt without admission must be rejected
+      await expect(
+        repository.addAssemblyContribution({
+          assemblyId,
+          userId: unadmittedUserId,
+          stage: 'think',
+          type: 'argument',
+          text: 'This is an unauthorized contribution attempt without joining.',
+        })
+      ).rejects.toThrow(/not an admitted participant/i);
+
+      // Verify zero side effects across all data dimensions
+      const postAsm = await repository.getAssembly(assemblyId, 'user_admin');
+      expect(postAsm?.participantUserIds).not.toContain(unadmittedUserId);
+      expect(postAsm?.participantUserIds.length).toBe(initialParticipantCount);
+
+      const postCredits = await repository.getCredits(unadmittedUserId);
+      expect(postCredits.length).toBe(initialCredits.length);
+
+      const postActivities = await repository.getActivities(unadmittedUserId);
+      expect(postActivities.length).toBe(initialActivities.length);
+
+      const postPassport = await repository.getPassport(unadmittedUserId);
+      expect(postPassport.entries.length).toBe(initialPassport.entries.length);
+
+      const postNotifs = await repository.getNotifications(unadmittedUserId);
+      expect(postNotifs.length).toBe(initialNotifs.length);
+
+      const postContribs = await repository.getContributions(assemblyId);
+      expect(postContribs.length).toBe(initialContribs.length);
+    });
+
+    it('preserves ability of already admitted seeded participant with valid role to contribute', async () => {
+      // Priya is an admitted participant in Jaipur assembly with confirmed Thinker role
+      const contrib = await repository.addAssemblyContribution({
+        assemblyId: 'assembly_jaipur_pedestrian_2026',
+        userId: 'user_priya',
+        stage: 'think',
+        type: 'argument',
+        text: 'Legitimate substantive contribution by admitted delegate Priya.',
+      });
+
+      expect(contrib.id).toBeDefined();
+      expect(contrib.userId).toBe('user_priya');
+      expect(contrib.isSubstantive).toBe(true);
+    });
+  });
+
+  describe('10. Three-Person Secondary Role Reservation Quotas (Gap 3)', () => {
+    it('leaves secondary role place vacant and retains truthful 3-person mode when 3rd participant is ineligible', async () => {
+      // Construct an isolated mini-assembly with 2 participants (Vikram, Kabir)
+      const db = PersistenceService.loadDatabase();
+      const miniAssemblyId = 'assembly_mini_3p_test';
+      db.assemblies.push({
+        id: miniAssemblyId,
+        programmeId: 'prog_my_community_future',
+        title: 'Mini Deliberation Chamber',
+        theme: 'Pedestrian Pathways',
+        question: 'How to organize rapid school crossings?',
+        description: 'Test 3-person assembly',
+        location: 'Jaipur',
+        scheduledDate: '2026-11-01T10:00:00Z',
+        currentStage: 'think',
+        status: 'deliberating',
+        participantUserIds: ['user_vikram', 'user_kabir'],
+        facilitatorId: 'user_rohan',
+        chairId: 'user_rohan',
+        evidenceIds: [],
+        rulebook: db.assemblies[0].rulebook,
+        speakingQueue: [],
+        roleActions: [],
+        roleOverrideAudits: [],
+        rolePlanStage: 'planned',
+        schemaVersion: 1,
+        createdAt: '2026-10-01T00:00:00Z',
+        updatedAt: '2026-10-01T00:00:00Z',
+      });
+      // Vikram is Thinker, Kabir is Enabler
+      db.assemblyRoles.push(
+        {
+          id: 'role_mini_vikram',
+          assemblyId: miniAssemblyId,
+          userId: 'user_vikram',
+          roleName: 'Thinker',
+          responsibilities: [],
+          power: 'Question Setter',
+          promptSuggestions: [],
+          schemaVersion: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'role_mini_kabir',
+          assemblyId: miniAssemblyId,
+          userId: 'user_kabir',
+          roleName: 'Enabler',
+          responsibilities: [],
+          power: 'Feasibility Check',
+          promptSuggestions: [],
+          schemaVersion: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      );
+      PersistenceService.saveDatabase(db);
+
+      // Now Karan (ineligible for women's reservation) joins as 3rd participant
+      const joinResult = await repository.joinAssembly(miniAssemblyId, 'user_karan');
+      expect(joinResult.assembly.participantUserIds.length).toBe(3);
+      expect(joinResult.assembly.isThreePersonMiniMode).toBe(true);
+
+      // Karan received primary role
+      expect(joinResult.role.roleName).toBeDefined();
+
+      // Karan CANNOT be granted the 1-place secondary role because he is ineligible!
+      // Vikram and Kabir are also ineligible.
+      // Therefore, secondary role place is left VACANT rather than silently granted!
+      expect(joinResult.role.secondaryRoleName).toBeUndefined();
+
+      const roles = await repository.getAssemblyRoles(miniAssemblyId);
+      for (const r of roles) {
+        expect(r.secondaryRoleName).toBeUndefined();
+      }
+
+      // Check allocation state as platform owner: secondary role exists with 0 occupants and 1 vacancy
+      await repository.switchPersona('user_admin');
+      const allocs = await repository.getAssemblyRoleAllocations(miniAssemblyId, 'user_admin');
+      const secKeys = Object.keys(allocs).filter((k) => k.startsWith('Secondary '));
+      expect(secKeys.length).toBeGreaterThanOrEqual(1);
+      const vacantSecAlloc = allocs[secKeys[0]];
+      expect(vacantSecAlloc.totalPlaces).toBe(1);
+      expect(vacantSecAlloc.reservedMinimum).toBe(1);
+      expect(vacantSecAlloc.ordinaryPlaces).toBe(0);
+      expect(vacantSecAlloc.confirmedOccupants?.length).toBe(0);
+      expect(vacantSecAlloc.vacanciesCount).toBe(1);
+    });
+
+    it('grants secondary role when an eligible participant joins 3rd in 3-person mode', async () => {
+      // Construct an isolated mini-assembly with 2 participants (Vikram, Kabir)
+      const db = PersistenceService.loadDatabase();
+      const miniAssemblyId = 'assembly_mini_eligible_test';
+      db.assemblies.push({
+        id: miniAssemblyId,
+        programmeId: 'prog_my_community_future',
+        title: 'Mini Deliberation Chamber Eligible',
+        theme: 'Pedestrian Pathways',
+        question: 'How to organize rapid school crossings?',
+        description: 'Test 3-person assembly',
+        location: 'Jaipur',
+        scheduledDate: '2026-11-01T10:00:00Z',
+        currentStage: 'think',
+        status: 'deliberating',
+        participantUserIds: ['user_vikram', 'user_kabir'],
+        facilitatorId: 'user_rohan',
+        chairId: 'user_rohan',
+        evidenceIds: [],
+        rulebook: db.assemblies[0].rulebook,
+        speakingQueue: [],
+        roleActions: [],
+        roleOverrideAudits: [],
+        rolePlanStage: 'planned',
+        schemaVersion: 1,
+        createdAt: '2026-10-01T00:00:00Z',
+        updatedAt: '2026-10-01T00:00:00Z',
+      });
+      db.assemblyRoles.push(
+        {
+          id: 'role_mini2_vikram',
+          assemblyId: miniAssemblyId,
+          userId: 'user_vikram',
+          roleName: 'Thinker',
+          responsibilities: [],
+          power: 'Question Setter',
+          promptSuggestions: [],
+          schemaVersion: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'role_mini2_kabir',
+          assemblyId: miniAssemblyId,
+          userId: 'user_kabir',
+          roleName: 'Enabler',
+          responsibilities: [],
+          power: 'Feasibility Check',
+          promptSuggestions: [],
+          schemaVersion: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      );
+      PersistenceService.saveDatabase(db);
+
+      // Ananya (eligible for women's reservation) joins as 3rd participant
+      const joinResult = await repository.joinAssembly(miniAssemblyId, 'user_ananya');
+      expect(joinResult.assembly.participantUserIds.length).toBe(3);
+      expect(joinResult.assembly.isThreePersonMiniMode).toBe(true);
+
+      // Ananya is granted the secondary role because she satisfies the 1-place reservation quota!
+      expect(joinResult.role.secondaryRoleName).toBeDefined();
+
+      await repository.switchPersona('user_admin');
+      const allocs = await repository.getAssemblyRoleAllocations(miniAssemblyId, 'user_admin');
+      const secKey = `Secondary ${joinResult.role.secondaryRoleName}`;
+      const secAlloc = allocs[secKey];
+      expect(secAlloc).toBeDefined();
+      expect(secAlloc.totalPlaces).toBe(1);
+      expect(secAlloc.reservedMinimum).toBe(1);
+      expect(secAlloc.confirmedOccupants).toContain('user_ananya');
+    });
+
+    it('overrideAssemblyRole enforces one-place reservation check on secondary role reassignment', async () => {
+      // In assembly_public_transit_2026 (3-person assembly):
+      // Attempt to reassign secondary role to user_karan (ineligible)
+      await repository.switchPersona('user_rohan');
+      await expect(
+        repository.overrideAssemblyRole(
+          'assembly_public_transit_2026',
+          'user_rohan',
+          'user_karan',
+          'Troubleshooter',
+          'Testing ineligible secondary override',
+          'Shaper'
+        )
+      ).rejects.toThrow(/reservation policy|cannot assign secondary role/i);
+
+      // Attempt to reassign secondary role to user_meera (eligible)
+      const updatedRole = await repository.overrideAssemblyRole(
+        'assembly_public_transit_2026',
+        'user_rohan',
+        'user_meera',
+        'Thinker',
+        'Valid secondary role reassignment to eligible participant',
+        'Troubleshooter'
+      );
+
+      expect(updatedRole.roleName).toBe('Thinker');
+      expect(updatedRole.secondaryRoleName).toBe('Troubleshooter');
+
+      // Verify Secondary Troubleshooter quota is 1 place without quota pooling
+      await repository.switchPersona('user_admin');
+      const allocs = await repository.getAssemblyRoleAllocations('assembly_public_transit_2026', 'user_admin');
+      const secAlloc = allocs['Secondary Troubleshooter'];
+      expect(secAlloc).toBeDefined();
+      expect(secAlloc.totalPlaces).toBe(1);
+      expect(secAlloc.reservedMinimum).toBe(1);
+      expect(secAlloc.ordinaryPlaces).toBe(0);
+      expect(secAlloc.confirmedOccupants).toContain('user_meera');
     });
   });
 });
