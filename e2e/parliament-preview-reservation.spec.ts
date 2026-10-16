@@ -43,13 +43,25 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     // Check Validation Status Badge
     await expect(page.locator('[data-testid="validation-status-badge"]')).toHaveText('VALIDATION OUTCOME: COMPLIANT');
 
-    // Check Candidate Seats
-    await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Priya Sharma');
-    await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Reserved Seat');
-    await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('Aarav Sharma');
-    await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('General Seat');
-    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Vikram Malhotra');
-    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('General Seat');
+    // Check Small-Cohort Privacy Notice
+    await expect(page.locator('[data-testid="small-cohort-privacy-notice"]')).toBeVisible();
+    await expect(page.locator('[data-testid="small-cohort-privacy-notice"]')).toContainText('Small-Cohort Privacy Notice');
+
+    // Check Anonymous Candidate Seats (No persona names or linked IDs)
+    await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Seat #1 — Fictional Reserved Allocation');
+    await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Reserved Allocation');
+    await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Occupied by Eligible Candidate');
+    await expect(page.locator('[data-testid="seat-card-1"]')).not.toContainText('Priya Sharma');
+
+    await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('Seat #2 — Fictional General Allocation');
+    await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('General Allocation');
+    await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('Occupied by General Candidate');
+    await expect(page.locator('[data-testid="seat-card-2"]')).not.toContainText('Aarav Sharma');
+
+    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Seat #3 — Fictional General Allocation');
+    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('General Allocation');
+    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Occupied by General Candidate');
+    await expect(page.locator('[data-testid="seat-card-3"]')).not.toContainText('Vikram Malhotra');
 
     // 5. Switch to Scenario B: Non-Compliant (Reserved Vacancy Default)
     await page.locator('[data-testid="scenario-btn-noncompliant"]').click();
@@ -60,7 +72,7 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
 
     // Verify Seat 3 is held vacant
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Held Vacant');
-    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Unfilled Reserved Vacancy');
+    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Held Vacant by Default (Reserved)');
 
     // Verify Service Warning Message
     const outcomeBox = page.locator('[data-testid="service-validation-outcome"]');
@@ -73,8 +85,9 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await expect(page.locator('[data-testid="validation-status-badge"]')).toHaveText('VALIDATION OUTCOME: BLOCKED NON-COMPLIANT');
     await expect(outcomeBox).toContainText('Ordinary capacity exceeded (3/2)');
     await expect(outcomeBox).toContainText('Reserved places cannot be transferred to ordinary participants without an approved Platform Owner exception');
-    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Rohan Mehta');
+    await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Seat #3 — Blocked General Allocation');
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Blocked without Platform Owner Exception');
+    await expect(page.locator('[data-testid="seat-card-3"]')).not.toContainText('Rohan Mehta');
 
     // 7. Verify Disclaimer Footer (No False Claim of Enforcement)
     await expect(illustration).toContainText('Prototype Preview Limitation: Illustrative calculation only. Real member appointment and parliamentary delegation selection remain unbuilt.');

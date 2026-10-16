@@ -26,7 +26,7 @@ export const ParliamentPage: React.FC = () => {
   const [delegationScenario, setDelegationScenario] = useState<'compliant' | 'noncompliant' | 'overbooked_ordinary'>('compliant');
 
   const illustration = buildParliamentDelegationIllustration(delegationScenario);
-  const { allocation, validation, candidates, summaryNote } = illustration;
+  const { allocation, validation, seats, summaryNote } = illustration;
 
   const motions = [
     {
@@ -170,7 +170,7 @@ export const ParliamentPage: React.FC = () => {
             </div>
             <p className="leading-relaxed text-slate-600">
               Unfilled reserved places remain held vacant by default. General/ordinary candidates cannot claim reserved vacancies
-              without an explicit, immutable, Platform Owner audited exception.
+              without an explicit, simulated Platform Owner audited exception.
             </p>
           </div>
 
@@ -351,48 +351,54 @@ export const ParliamentPage: React.FC = () => {
         {/* Fictional Seat Roster Table */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-            <span>Fictional Delegation Candidates (Seat by Seat Allocation)</span>
-            <span className="text-[11px] text-slate-500">Explicit Declarations Only &bull; No Portrait/Proxy Inference</span>
+            <span>Fictional Delegation Seats (Seat-by-Seat Math Illustration)</span>
+            <span className="text-[11px] text-slate-500">Anonymous Seat Cards &bull; Non-Inference Invariant</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed" data-testid="small-cohort-privacy-notice">
+            <strong>Small-Cohort Privacy Notice:</strong> This example illustrates allocation mathematics and capacity validation only,
+            not a public disclosure pattern for real cohorts. In real small cohorts (1–3 places), individual declarations and named breakdowns
+            are withheld from public views to prevent deductive identification.
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {candidates.map((cand, idx) => (
+            {seats.map((seat) => (
               <div
-                key={cand.id}
+                key={seat.seatNumber}
                 className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${
-                  cand.seatType === 'reserved'
+                  seat.seatType === 'reserved'
                     ? 'bg-emerald-50/50 border-emerald-200'
-                    : cand.seatType === 'vacant'
+                    : seat.seatType === 'vacant'
                     ? 'bg-amber-50/50 border-dashed border-amber-300'
                     : 'bg-slate-50 border-slate-200'
                 }`}
-                data-testid={`seat-card-${idx + 1}`}
+                data-testid={`seat-card-${seat.seatNumber}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono font-bold uppercase text-slate-500">
-                    Seat #{idx + 1}
+                    Seat #{seat.seatNumber}
                   </span>
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                      cand.seatType === 'reserved'
+                      seat.seatType === 'reserved'
                         ? 'bg-emerald-100 text-emerald-800'
-                        : cand.seatType === 'vacant'
+                        : seat.seatType === 'vacant'
                         ? 'bg-amber-100 text-amber-800'
                         : 'bg-slate-200 text-slate-700'
                     }`}
                   >
-                    {cand.seatType === 'reserved'
-                      ? 'Reserved Seat'
-                      : cand.seatType === 'vacant'
+                    {seat.seatType === 'reserved'
+                      ? 'Reserved Allocation'
+                      : seat.seatType === 'vacant'
                       ? 'Held Vacant'
-                      : 'General Seat'}
+                      : 'General Allocation'}
                   </span>
                 </div>
 
-                <div className="font-bold text-slate-900">{cand.name}</div>
+                <div className="font-bold text-slate-900">{seat.seatLabel}</div>
                 <div className="text-[11px] text-slate-600">
-                  <span>Declaration: </span>
-                  <span className="font-mono text-[10px] font-semibold">{cand.declaredGenderCategory}</span>
+                  <span>Allocation Status: </span>
+                  <span className="font-mono text-[10px] font-semibold">{seat.categoryLabel}</span>
                 </div>
               </div>
             ))}

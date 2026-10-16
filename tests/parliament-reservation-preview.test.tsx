@@ -28,19 +28,22 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       expect(result.validation.canFinalize).toBe(true);
       expect(result.validation.errors).toHaveLength(0);
 
-      // Verify explicit candidates without proxy inference
-      expect(result.candidates).toHaveLength(3);
-      expect(result.candidates[0].id).toBe('user_priya');
-      expect(result.candidates[0].seatType).toBe('reserved');
-      expect(result.candidates[0].eligibility).toBe('eligible');
+      // Verify anonymous seat cards without linked persona names or proxy inference
+      expect(result.seats).toHaveLength(3);
+      expect(result.seats[0].seatNumber).toBe(1);
+      expect(result.seats[0].seatType).toBe('reserved');
+      expect(result.seats[0].seatLabel).toBe('Seat #1 — Fictional Reserved Allocation');
+      expect(result.seats[0].categoryLabel).toBe('Occupied by Eligible Candidate');
 
-      expect(result.candidates[1].id).toBe('user_aarav');
-      expect(result.candidates[1].seatType).toBe('ordinary');
-      expect(result.candidates[1].eligibility).toBe('ineligible');
+      expect(result.seats[1].seatNumber).toBe(2);
+      expect(result.seats[1].seatType).toBe('ordinary');
+      expect(result.seats[1].seatLabel).toBe('Seat #2 — Fictional General Allocation');
+      expect(result.seats[1].categoryLabel).toBe('Occupied by General Candidate');
 
-      expect(result.candidates[2].id).toBe('user_vikram');
-      expect(result.candidates[2].seatType).toBe('ordinary');
-      expect(result.candidates[2].eligibility).toBe('ineligible');
+      expect(result.seats[2].seatNumber).toBe(3);
+      expect(result.seats[2].seatType).toBe('ordinary');
+      expect(result.seats[2].seatLabel).toBe('Seat #3 — Fictional General Allocation');
+      expect(result.seats[2].categoryLabel).toBe('Occupied by General Candidate');
     });
 
     it('builds non-compliant 3-place scenario with reserved vacancy held by default', () => {
@@ -57,8 +60,8 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       expect(result.validation.warnings[0]).toContain('remain held vacant by default');
 
       // Seat 3 is held vacant under reserved vacancy default
-      expect(result.candidates[2].seatType).toBe('vacant');
-      expect(result.candidates[2].declaredGenderCategory).toContain('Unfilled Reserved Vacancy');
+      expect(result.seats[2].seatType).toBe('vacant');
+      expect(result.seats[2].categoryLabel).toContain('Held Vacant by Default (Reserved)');
     });
 
     it('builds blocked overbooking attempt when 3rd seat is filled by ordinary candidate without owner exception', () => {
@@ -124,13 +127,25 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       const badge = screen.getByTestId('validation-status-badge');
       expect(badge.textContent).toBe('VALIDATION OUTCOME: COMPLIANT');
 
-      // Seat Cards
-      expect(screen.getByTestId('seat-card-1').textContent).toContain('Priya Sharma');
-      expect(screen.getByTestId('seat-card-1').textContent).toContain('Reserved Seat');
-      expect(screen.getByTestId('seat-card-2').textContent).toContain('Aarav Sharma');
-      expect(screen.getByTestId('seat-card-2').textContent).toContain('General Seat');
-      expect(screen.getByTestId('seat-card-3').textContent).toContain('Vikram Malhotra');
-      expect(screen.getByTestId('seat-card-3').textContent).toContain('General Seat');
+      // Small-cohort privacy notice
+      expect(screen.getByTestId('small-cohort-privacy-notice')).toBeInTheDocument();
+      expect(screen.getByTestId('small-cohort-privacy-notice').textContent).toContain('Small-Cohort Privacy Notice');
+
+      // Seat Cards - Anonymous fictional labels without linked persona names
+      expect(screen.getByTestId('seat-card-1').textContent).toContain('Seat #1 — Fictional Reserved Allocation');
+      expect(screen.getByTestId('seat-card-1').textContent).toContain('Reserved Allocation');
+      expect(screen.getByTestId('seat-card-1').textContent).toContain('Occupied by Eligible Candidate');
+      expect(screen.getByTestId('seat-card-1').textContent).not.toContain('Priya Sharma');
+
+      expect(screen.getByTestId('seat-card-2').textContent).toContain('Seat #2 — Fictional General Allocation');
+      expect(screen.getByTestId('seat-card-2').textContent).toContain('General Allocation');
+      expect(screen.getByTestId('seat-card-2').textContent).toContain('Occupied by General Candidate');
+      expect(screen.getByTestId('seat-card-2').textContent).not.toContain('Aarav Sharma');
+
+      expect(screen.getByTestId('seat-card-3').textContent).toContain('Seat #3 — Fictional General Allocation');
+      expect(screen.getByTestId('seat-card-3').textContent).toContain('General Allocation');
+      expect(screen.getByTestId('seat-card-3').textContent).toContain('Occupied by General Candidate');
+      expect(screen.getByTestId('seat-card-3').textContent).not.toContain('Vikram Malhotra');
     });
 
     it('dynamically toggles to Non-Compliant scenario demonstrating reserved vacancy default', async () => {
@@ -148,7 +163,7 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       // Check Seat 3 is held vacant
       const seat3 = screen.getByTestId('seat-card-3');
       expect(seat3.textContent).toContain('Held Vacant');
-      expect(seat3.textContent).toContain('Unfilled Reserved Vacancy');
+      expect(seat3.textContent).toContain('Held Vacant by Default (Reserved)');
 
       // Check service warning
       const outcomeBox = screen.getByTestId('service-validation-outcome');
@@ -170,8 +185,9 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       expect(outcomeBox.textContent).toContain('Reserved places cannot be transferred to ordinary participants without an approved Platform Owner exception');
 
       const seat3 = screen.getByTestId('seat-card-3');
-      expect(seat3.textContent).toContain('Rohan Mehta');
+      expect(seat3.textContent).toContain('Seat #3 — Blocked General Allocation');
       expect(seat3.textContent).toContain('Blocked without Platform Owner Exception');
+      expect(seat3.textContent).not.toContain('Rohan Mehta');
     });
 
     it('retains Tabled Motions and motion detail modal functionality', async () => {

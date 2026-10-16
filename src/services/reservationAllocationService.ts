@@ -950,11 +950,10 @@ export function projectSessionForCaller(
   return cloned;
 }
 
-export interface ParliamentDelegationCandidate {
-  id: string;
-  name: string;
-  declaredGenderCategory: string;
-  eligibility: ReservationEligibility;
+export interface ParliamentDelegationSeat {
+  seatNumber: number;
+  seatLabel: string;
+  categoryLabel: string;
   seatType: 'reserved' | 'ordinary' | 'vacant';
 }
 
@@ -962,7 +961,7 @@ export interface ParliamentDelegationIllustrationData {
   scenario: 'compliant' | 'noncompliant' | 'overbooked_ordinary';
   allocation: AllocationState;
   validation: AllocationValidationResult;
-  candidates: ParliamentDelegationCandidate[];
+  seats: ParliamentDelegationSeat[];
   summaryNote: string;
 }
 
@@ -971,9 +970,14 @@ export interface ParliamentDelegationIllustrationData {
  * Dynamically calculated by the shared reservation allocation service.
  * Demonstrates:
  * 1. Approved formula: ceil(0.33 * 3) = 1 reserved seat minimum, 2 ordinary seats.
- * 2. Compliant scenario: 1 eligible (Priya Sharma) + 2 general (Aarav Sharma, Vikram Malhotra) -> Compliant.
- * 3. Non-compliant scenario: 0 eligible + 2 general (Aarav, Vikram) -> 1 reserved seat held vacant by default.
- * 4. Overbooked ordinary scenario: Attempting to fill Seat 3 with an ordinary candidate (Rohan Mehta) -> Blocked by validation without Platform Owner exception.
+ * 2. Compliant scenario: 1 eligible + 2 general -> Compliant.
+ * 3. Non-compliant scenario: 0 eligible + 2 general -> 1 reserved seat held vacant by default.
+ * 4. Overbooked ordinary scenario: Attempting to fill Seat 3 with an ordinary candidate -> Blocked by validation without Platform Owner exception.
+ *
+ * Privacy Invariant:
+ * Evaluated using explicit fictional declarations only (user_priya: eligible, user_aarav/user_vikram/user_rohan: ineligible),
+ * never inferred from names or demographic proxies.
+ * Outputs anonymous fictional seat labels without exposing linked individual personas or IDs.
  */
 export function buildParliamentDelegationIllustration(
   scenario: 'compliant' | 'noncompliant' | 'overbooked_ordinary'
@@ -996,31 +1000,28 @@ export function buildParliamentDelegationIllustration(
       scenario,
       allocation,
       validation,
-      candidates: [
+      seats: [
         {
-          id: 'user_priya',
-          name: 'Priya Sharma (Youth Delegate, Jaipur)',
-          declaredGenderCategory: 'Declared Woman (Eligible for Reserved Place)',
-          eligibility: 'eligible',
+          seatNumber: 1,
+          seatLabel: 'Seat #1 — Fictional Reserved Allocation',
+          categoryLabel: 'Occupied by Eligible Candidate',
           seatType: 'reserved',
         },
         {
-          id: 'user_aarav',
-          name: 'Aarav Sharma (Youth Delegate, Jaipur)',
-          declaredGenderCategory: 'General / Ineligible for Reserved Place',
-          eligibility: 'ineligible',
+          seatNumber: 2,
+          seatLabel: 'Seat #2 — Fictional General Allocation',
+          categoryLabel: 'Occupied by General Candidate',
           seatType: 'ordinary',
         },
         {
-          id: 'user_vikram',
-          name: 'Vikram Malhotra (Youth Delegate, Jaipur)',
-          declaredGenderCategory: 'General / Ineligible for Reserved Place',
-          eligibility: 'ineligible',
+          seatNumber: 3,
+          seatLabel: 'Seat #3 — Fictional General Allocation',
+          categoryLabel: 'Occupied by General Candidate',
           seatType: 'ordinary',
         },
       ],
       summaryNote:
-        'Compliant allocation: 1 of 1 mandatory reserved place is occupied by an eligible candidate (Priya Sharma). General capacity (2/2) is fully occupied.',
+        'Compliant allocation: 1 of 1 mandatory reserved place is occupied by a candidate with an explicit eligible declaration. General capacity (2/2) is fully occupied.',
     };
   }
 
@@ -1040,26 +1041,23 @@ export function buildParliamentDelegationIllustration(
       scenario,
       allocation,
       validation,
-      candidates: [
+      seats: [
         {
-          id: 'user_aarav',
-          name: 'Aarav Sharma (Youth Delegate, Jaipur)',
-          declaredGenderCategory: 'General / Ineligible for Reserved Place',
-          eligibility: 'ineligible',
+          seatNumber: 1,
+          seatLabel: 'Seat #1 — Fictional General Allocation',
+          categoryLabel: 'Occupied by General Candidate',
           seatType: 'ordinary',
         },
         {
-          id: 'user_vikram',
-          name: 'Vikram Malhotra (Youth Delegate, Jaipur)',
-          declaredGenderCategory: 'General / Ineligible for Reserved Place',
-          eligibility: 'ineligible',
+          seatNumber: 2,
+          seatLabel: 'Seat #2 — Fictional General Allocation',
+          categoryLabel: 'Occupied by General Candidate',
           seatType: 'ordinary',
         },
         {
-          id: 'vacant_seat_3',
-          name: 'Seat 3 — Reserved Place (Held Vacant by Default)',
-          declaredGenderCategory: 'Unfilled Reserved Vacancy',
-          eligibility: 'undeclared',
+          seatNumber: 3,
+          seatLabel: 'Seat #3 — Fictional Reserved Allocation',
+          categoryLabel: 'Held Vacant by Default (Reserved)',
           seatType: 'vacant',
         },
       ],
@@ -1084,26 +1082,23 @@ export function buildParliamentDelegationIllustration(
     scenario,
     allocation,
     validation,
-    candidates: [
+    seats: [
       {
-        id: 'user_aarav',
-        name: 'Aarav Sharma (Youth Delegate, Jaipur)',
-        declaredGenderCategory: 'General / Ineligible for Reserved Place',
-        eligibility: 'ineligible',
+        seatNumber: 1,
+        seatLabel: 'Seat #1 — Fictional General Allocation',
+        categoryLabel: 'Occupied by General Candidate',
         seatType: 'ordinary',
       },
       {
-        id: 'user_vikram',
-        name: 'Vikram Malhotra (Youth Delegate, Jaipur)',
-        declaredGenderCategory: 'General / Ineligible for Reserved Place',
-        eligibility: 'ineligible',
+        seatNumber: 2,
+        seatLabel: 'Seat #2 — Fictional General Allocation',
+        categoryLabel: 'Occupied by General Candidate',
         seatType: 'ordinary',
       },
       {
-        id: 'user_rohan',
-        name: 'Rohan Mehta (General Candidate — Blocked without Platform Owner Exception)',
-        declaredGenderCategory: 'General / Ineligible for Reserved Place',
-        eligibility: 'ineligible',
+        seatNumber: 3,
+        seatLabel: 'Seat #3 — Blocked General Allocation',
+        categoryLabel: 'Blocked without Platform Owner Exception',
         seatType: 'ordinary',
       },
     ],
@@ -1111,4 +1106,3 @@ export function buildParliamentDelegationIllustration(
       'Blocked non-compliant attempt: Ordinary capacity exceeded (3/2). Reserved places cannot be transferred to ordinary participants without an approved Platform Owner exception.',
   };
 }
-
