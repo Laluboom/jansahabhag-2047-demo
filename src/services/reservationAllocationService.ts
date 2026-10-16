@@ -336,7 +336,9 @@ export function canUserRsvpAllocation(
     }
     return {
       allowed: false,
-      reason: `Event capacity reached. Both reserved places (${allocation.reservedMinimum}) and ordinary places (${allocation.ordinaryPlaces}) are filled.`,
+      reason: isOwner
+        ? `Event capacity reached. Both reserved places (${allocation.reservedMinimum}) and ordinary places (${allocation.ordinaryPlaces}) are filled.`
+        : `Event capacity of ${allocation.totalPlaces} has been reached. Overbooking is prevented.`,
     };
   }
 
@@ -356,8 +358,7 @@ export function canUserRsvpAllocation(
     ? `Ordinary capacity reached (${ordinaryFilled}/${allocation.ordinaryPlaces}). ` +
       `The remaining ${remainingReserved} place(s) are reserved under the 33% mandatory women's reservation policy. ` +
       `Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved.`
-    : `This RSVP cannot be accepted under current allocation rules and reserved places remain held: ` +
-      `unmet places are reserved under the 33% mandatory women's reservation policy unless an audited Platform Owner exception is approved.`;
+    : `This RSVP cannot be accepted under current allocation rules. Reserved places are not automatically reassigned under the reservation policy.`;
 
   return {
     allowed: false,

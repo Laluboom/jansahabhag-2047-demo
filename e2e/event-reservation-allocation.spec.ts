@@ -63,19 +63,67 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     const attendingBtn = page.getByRole('button', { name: /^Attending$/i });
     await attendingBtn.click();
 
-    // Verify rejection alert is displayed with generalized explanation (no exact category breakdown leaked)
+    // Verify rejection alert is displayed with state-neutral explanation (no category breakdown or state clues leaked)
     const alertBox = page.getByRole('alert');
     await expect(alertBox).toBeVisible();
     await expect(alertBox.getByText(/This RSVP cannot be accepted under current allocation rules/i)).toBeVisible();
-    await expect(alertBox.getByText(/Reserved places remain held/i)).toBeVisible();
-    // Negative assertion: no mention of ordinary capacity or counts
+    await expect(alertBox.getByText(/Reserved places are not automatically reassigned/i)).toBeVisible();
+    // Negative assertions: state-specific clues must NOT be present
+    await expect(alertBox.getByText(/remain held/i)).toHaveCount(0);
+    await expect(alertBox.getByText(/unmet/i)).toHaveCount(0);
+    await expect(alertBox.getByText(/vacan/i)).toHaveCount(0);
     await expect(alertBox.getByText(/ordinary/i)).toHaveCount(0);
     await expect(alertBox.getByText(/\(2\/2\)/)).toHaveCount(0);
+    await expect(alertBox.getByText(/\b\d+\/\d+\b/)).toHaveCount(0);
+    await expect(alertBox.getByText(/fully subscribed/i)).toHaveCount(0);
+    await expect(alertBox.getByText(/capacity reached/i)).toHaveCount(0);
 
     // Verify participant authority is restricted
     await expect(page.getByText(/Authority Restricted:.*Only Platform Owner/i)).toBeVisible();
 
-    // 8. Test compliant eligible path: Switch to eligible participant Meera Singh
+    // 8. Test reload on the named two-attendee event before persona switch:
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('Withheld');
+    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
+    await page.getByRole('button', { name: /^Attending$/i }).click();
+    const alertBoxReload = page.getByRole('alert');
+    await expect(alertBoxReload).toBeVisible();
+    await expect(alertBoxReload.getByText(/This RSVP cannot be accepted under current allocation rules/i)).toBeVisible();
+    await expect(alertBoxReload.getByText(/Reserved places are not automatically reassigned/i)).toBeVisible();
+    await expect(alertBoxReload.getByText(/remain held/i)).toHaveCount(0);
+    await expect(alertBoxReload.getByText(/unmet/i)).toHaveCount(0);
+    await expect(alertBoxReload.getByText(/vacan/i)).toHaveCount(0);
+    await expect(alertBoxReload.getByText(/ordinary/i)).toHaveCount(0);
+    await expect(alertBoxReload.getByText(/\(2\/2\)/)).toHaveCount(0);
+
+    // 9. Persona switch to Platform Owner (Demo Administrator) on the 2-attendee event: Owner MUST see precise detail
+    await page.goto('/demo-login');
+    await page.getByText('Demo Administrator').first().click();
+    await page.waitForURL('**/dashboard');
+
+    await page.goto('/events/evt_jaipur_limited_05');
+    await page.waitForURL('**/events/evt_jaipur_limited_05');
+
+    // Owner view retains unredacted exact metrics and validation status on the 2-attendee event
+    await expect(page.getByTestId('metric-total-places')).toHaveText('3');
+    await expect(page.getByTestId('metric-reserved-minimum')).toHaveText('1');
+    await expect(page.getByTestId('metric-ordinary-places')).toHaveText('2');
+    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('0');
+    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('2');
+    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('1');
+    await expect(page.getByTestId('status-pending')).toBeVisible();
+    await expect(page.getByTestId('status-privacy-suppressed')).toHaveCount(0);
+
+    // Verify owner view after reload retains precise details
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('0');
+    await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('2');
+    await expect(page.getByTestId('metric-vacancies-count')).toHaveText('1');
+
+    // 10. Test compliant eligible path: Switch to eligible participant Meera Singh
     await page.goto('/demo-login');
     await page.getByText('Meera Singh').first().click();
     await page.waitForURL('**/dashboard');
@@ -92,7 +140,7 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
     await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
 
-    // 9. Switch to Platform Owner (Demo Administrator) to verify exact validation details are retained
+    // 11. Switch back to Platform Owner (Demo Administrator) to verify exact validation details updated
     await page.goto('/demo-login');
     await page.getByText('Demo Administrator').first().click();
     await page.waitForURL('**/dashboard');

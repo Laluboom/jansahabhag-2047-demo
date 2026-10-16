@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { demoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
-import { POLICY_VERSION } from '../src/services/reservationAllocationService';
+import { POLICY_VERSION, canUserRsvpAllocation } from '../src/services/reservationAllocationService';
 
 describe('Event Reservation & Allocation Repository Controls (Package 08A)', () => {
   beforeEach(async () => {
@@ -50,9 +50,20 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
 
       // user_aarav is an ineligible/ordinary participant
       await demoRepository.switchPersona('user_aarav');
-      await expect(
-        demoRepository.rsvpEvent(evt!.id, 'user_aarav', 'attending')
-      ).rejects.toThrowError(/cannot be accepted under current allocation rules.*reserved places remain held/i);
+      const err = await demoRepository.rsvpEvent(evt!.id, 'user_aarav', 'attending').catch((e) => e);
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toMatch(/cannot be accepted under current allocation rules/i);
+      expect(err.message).toMatch(/reserved places are not automatically reassigned/i);
+      // Negative tests for state-specific clues
+      expect(err.message.toLowerCase()).not.toContain('remain held');
+      expect(err.message.toLowerCase()).not.toContain('unmet');
+      expect(err.message.toLowerCase()).not.toContain('vacan');
+      expect(err.message.toLowerCase()).not.toContain('ordinary');
+      expect(err.message.toLowerCase()).not.toContain('capacity reached');
+      expect(err.message.toLowerCase()).not.toContain('fully subscribed');
+      expect(err.message).not.toContain('(2/2)');
+      expect(err.message).not.toMatch(/\b\d+\/\d+\b/);
+      expect(err.message).not.toMatch(/\b\d+ place/);
 
       // Verify participant projection withholds vacancies in small cohort
       const participantView = await demoRepository.getEvent(evt!.id);
@@ -577,18 +588,21 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
     it('generalizes public RSVP denial messages without leaking occupancy or vacancy counts', async () => {
       // evt_jaipur_limited_05: capacity 3, 2 ordinary attendees, 1 vacant reserved
       await demoRepository.switchPersona('user_aarav');
-      await expect(
-        demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending')
-      ).rejects.toThrowError(/cannot be accepted under current allocation rules.*reserved places remain held/i);
+      const err = await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending').catch((e) => e);
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toMatch(/cannot be accepted under current allocation rules/i);
+      expect(err.message).toMatch(/reserved places are not automatically reassigned/i);
 
-      // Must NOT contain category leaks or exact counts
-      try {
-        await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending');
-      } catch (err: any) {
-        expect(err.message.toLowerCase()).not.toContain('ordinary');
-        expect(err.message).not.toContain('(2/2)');
-        expect(err.message).not.toMatch(/\b\d+ place\(s\) are reserved\b/);
-      }
+      // Must NOT contain category leaks, occupancy, or state-specific clues
+      expect(err.message.toLowerCase()).not.toContain('remain held');
+      expect(err.message.toLowerCase()).not.toContain('unmet');
+      expect(err.message.toLowerCase()).not.toContain('vacan');
+      expect(err.message.toLowerCase()).not.toContain('ordinary');
+      expect(err.message.toLowerCase()).not.toContain('capacity reached');
+      expect(err.message.toLowerCase()).not.toContain('fully subscribed');
+      expect(err.message).not.toContain('(2/2)');
+      expect(err.message).not.toMatch(/\b\d+\/\d+\b/);
+      expect(err.message).not.toMatch(/\b\d+ place\(s\) are reserved\b/);
     });
 
     it('rigorously prevents deductive inference for concrete 2-attendee denial and exception scenarios across reload and persona switch', async () => {
@@ -597,11 +611,17 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       const denialErr = await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending').catch((e) => e);
       expect(denialErr).toBeInstanceOf(Error);
       expect(denialErr.message).toMatch(/cannot be accepted under current allocation rules/i);
-      expect(denialErr.message).toMatch(/reserved places remain held/i);
-      // Negative assertions: message must not reveal ordinary category is full or any count
+      expect(denialErr.message).toMatch(/reserved places are not automatically reassigned/i);
+      // Negative assertions: message must not reveal ordinary category is full, vacant, or any count
+      expect(denialErr.message.toLowerCase()).not.toContain('remain held');
+      expect(denialErr.message.toLowerCase()).not.toContain('unmet');
+      expect(denialErr.message.toLowerCase()).not.toContain('vacan');
       expect(denialErr.message.toLowerCase()).not.toContain('ordinary');
+      expect(denialErr.message.toLowerCase()).not.toContain('capacity reached');
+      expect(denialErr.message.toLowerCase()).not.toContain('fully subscribed');
       expect(denialErr.message).not.toContain('(2/2)');
       expect(denialErr.message).not.toMatch(/\b\d+\/\d+\b/);
+      expect(denialErr.message).not.toMatch(/\b\d+ place/);
 
       // Participant projection for 2-attendee event withholds category metrics
       const pViewBefore = await demoRepository.getEvent('evt_jaipur_limited_05');
@@ -612,8 +632,44 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(pViewBefore!.allocation?.status).toBe('pending');
       expect(pViewBefore!.allocation?.isException).toBe(false);
 
-      // Concrete case 2: Owner approves exception on 2-attendee event
+      // Reload simulation for participant before persona switch
+      const pViewReloaded = await demoRepository.getEvent('evt_jaipur_limited_05');
+      expect(pViewReloaded!.allocation?.isPrivacySuppressed).toBe(true);
+      expect(pViewReloaded!.allocation?.vacanciesCount).toBeUndefined();
+      const denialReloadErr = await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending').catch((e) => e);
+      expect(denialReloadErr.message).toMatch(/cannot be accepted under current allocation rules/i);
+      expect(denialReloadErr.message).toMatch(/reserved places are not automatically reassigned/i);
+      expect(denialReloadErr.message.toLowerCase()).not.toContain('remain held');
+      expect(denialReloadErr.message.toLowerCase()).not.toContain('unmet');
+      expect(denialReloadErr.message.toLowerCase()).not.toContain('vacan');
+      expect(denialReloadErr.message.toLowerCase()).not.toContain('ordinary');
+
+      // Persona switch to Platform Owner on the 2-attendee event: Owner MUST see precise detail
       await demoRepository.switchPersona('user_admin');
+      const ownerViewBefore = await demoRepository.getEvent('evt_jaipur_limited_05');
+      expect(ownerViewBefore!.allocation?.isPrivacySuppressed).toBeFalsy();
+      expect(ownerViewBefore!.allocation?.totalPlaces).toBe(3);
+      expect(ownerViewBefore!.allocation?.reservedMinimum).toBe(1);
+      expect(ownerViewBefore!.allocation?.ordinaryPlaces).toBe(2);
+      expect(ownerViewBefore!.allocation?.reservedOccupiedCount).toBe(0);
+      expect(ownerViewBefore!.allocation?.ordinaryOccupiedCount).toBe(2);
+      expect(ownerViewBefore!.allocation?.vacanciesCount).toBe(1);
+      expect(ownerViewBefore!.allocation?.status).toBe('pending');
+
+      // Owner validation check preserves actionable detailed reason and hold-vacant default
+      const ownerValidation = canUserRsvpAllocation(ownerViewBefore!.allocation!, 'user_aarav', undefined, true);
+      expect(ownerValidation.allowed).toBe(false);
+      expect(ownerValidation.reason).toContain('Ordinary capacity reached (2/2)');
+      expect(ownerValidation.reason).toContain('The remaining 1 place(s) are reserved under the 33% mandatory women\'s reservation policy');
+      expect(ownerValidation.reason).toContain('Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved');
+
+      // Owner reload check: retains precise detail after reload
+      const ownerViewReloaded = await demoRepository.getEvent('evt_jaipur_limited_05');
+      expect(ownerViewReloaded!.allocation?.reservedOccupiedCount).toBe(0);
+      expect(ownerViewReloaded!.allocation?.ordinaryOccupiedCount).toBe(2);
+      expect(ownerViewReloaded!.allocation?.vacanciesCount).toBe(1);
+
+      // Concrete case 2: Owner approves exception on 2-attendee event
       const sensitiveReason = 'Two confirmed attendees are ordinary; no eligible candidates found after outreach.';
       await demoRepository.approveEventAllocationException('evt_jaipur_limited_05', sensitiveReason);
 

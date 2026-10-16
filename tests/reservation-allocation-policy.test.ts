@@ -227,21 +227,29 @@ describe('Reservation Allocation Policy Engine (Package 08A)', () => {
       expect(allocation.reservedOccupants).toHaveLength(0);
       expect(allocation.vacanciesCount).toBe(1);
 
-      // 3rd ordinary applicant attempts to RSVP as non-owner (generalized denial, no leak)
+      // 3rd ordinary applicant attempts to RSVP as non-owner (state-neutral denial, no leak)
       const rsvpAttemptNonOwner = canUserRsvpAllocation(allocation, 'ord_3', customDeclarations, false);
       expect(rsvpAttemptNonOwner.allowed).toBe(false);
       expect(rsvpAttemptNonOwner.reason).toBe(
-        "This RSVP cannot be accepted under current allocation rules and reserved places remain held: " +
-        "unmet places are reserved under the 33% mandatory women's reservation policy unless an audited Platform Owner exception is approved."
+        "This RSVP cannot be accepted under current allocation rules. Reserved places are not automatically reassigned under the reservation policy."
       );
+      // Negative assertions: state-specific clues must NOT be present
       expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('ordinary');
+      expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('unmet');
+      expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('held');
+      expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('vacan');
+      expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('capacity reached');
+      expect(rsvpAttemptNonOwner.reason?.toLowerCase()).not.toContain('fully subscribed');
       expect(rsvpAttemptNonOwner.reason).not.toContain('(2/2)');
+      expect(rsvpAttemptNonOwner.reason).not.toMatch(/\b\d+\/\d+\b/);
+      expect(rsvpAttemptNonOwner.reason).not.toMatch(/\b\d+ place/);
 
       // Simulated Platform Owner sees exact breakdown
       const rsvpAttemptOwner = canUserRsvpAllocation(allocation, 'ord_3', customDeclarations, true);
       expect(rsvpAttemptOwner.allowed).toBe(false);
       expect(rsvpAttemptOwner.reason).toContain('Ordinary capacity reached (2/2)');
-      expect(rsvpAttemptOwner.reason).toContain('Unmet reserved places stay vacant by default');
+      expect(rsvpAttemptOwner.reason).toContain('The remaining 1 place(s) are reserved under the 33% mandatory women\'s reservation policy');
+      expect(rsvpAttemptOwner.reason).toContain('Unmet reserved places stay vacant by default unless an audited Platform Owner exception is approved');
     });
 
     it('treats undeclared participants as ordinary without prompting for real gender data', () => {
@@ -262,10 +270,50 @@ describe('Reservation Allocation Policy Engine (Package 08A)', () => {
       expect(allocation.ordinaryOccupants).toHaveLength(2);
       expect(allocation.vacanciesCount).toBe(1);
 
-      // Another unseeded/undeclared participant cannot claim the reserved vacancy
+      // Another unseeded/undeclared participant cannot claim the reserved vacancy (non-owner)
       const check = canUserRsvpAllocation(allocation, 'unseeded_user_999');
       expect(check.allowed).toBe(false);
-      expect(check.reason).toContain('reserved under the 33% mandatory women\'s reservation policy');
+      expect(check.reason).toBe(
+        "This RSVP cannot be accepted under current allocation rules. Reserved places are not automatically reassigned under the reservation policy."
+      );
+      expect(check.reason?.toLowerCase()).not.toContain('ordinary');
+      expect(check.reason?.toLowerCase()).not.toContain('unmet');
+      expect(check.reason?.toLowerCase()).not.toContain('held');
+      expect(check.reason?.toLowerCase()).not.toContain('vacan');
+
+      // Platform Owner check sees full policy details
+      const checkOwner = canUserRsvpAllocation(allocation, 'unseeded_user_999', undefined, true);
+      expect(checkOwner.allowed).toBe(false);
+      expect(checkOwner.reason).toContain('reserved under the 33% mandatory women\'s reservation policy');
+    });
+
+    it('provides state-neutral capacity-full denial to non-owners without category breakdowns', () => {
+      const customDeclarations: Record<string, ReservationEligibility> = {
+        el_1: 'eligible',
+        ord_1: 'ineligible',
+        ord_2: 'ineligible',
+      };
+
+      const allocation = buildAllocationState({
+        allocationId: 'alloc_full',
+        allocationType: 'event_places',
+        totalPlaces: 3,
+        confirmedOccupants: ['el_1', 'ord_1', 'ord_2'],
+        customDeclarations,
+      });
+
+      // Eligible applicant tries to RSVP to full event as non-owner
+      const fullNonOwner = canUserRsvpAllocation(allocation, 'el_new', { el_new: 'eligible' }, false);
+      expect(fullNonOwner.allowed).toBe(false);
+      expect(fullNonOwner.reason).toBe('Event capacity of 3 has been reached. Overbooking is prevented.');
+      expect(fullNonOwner.reason?.toLowerCase()).not.toContain('ordinary');
+      expect(fullNonOwner.reason?.toLowerCase()).not.toContain('reserved');
+      expect(fullNonOwner.reason?.toLowerCase()).not.toContain('both');
+
+      // Platform Owner sees detailed breakdown
+      const fullOwner = canUserRsvpAllocation(allocation, 'el_new', { el_new: 'eligible' }, true);
+      expect(fullOwner.allowed).toBe(false);
+      expect(fullOwner.reason).toContain('Event capacity of 3 has been reached');
     });
   });
 
