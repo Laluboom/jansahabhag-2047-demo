@@ -2,6 +2,8 @@
 
 Date: 16 October 2026
 
+**Post-merge check:** Owner-approved merge `33ac60e` brought the accepted branch into local `autobuild` without conflicts. Independent merged-checkout build, 321 unit tests and 35 browser tests passed. GitHub and Vercel still show the earlier version.
+
 ## Source and delivery boundary
 
 The Master PRD archive is governing. The women's reservation supplement extends it with an in-principle owner decision and the recorded fictional-demo operating rules in `docs/decisions.md`. This acceptance concerns the labelled, single-browser, fictional Jaipur competition demo. It does not certify a multi-user service, real identity data, legal compliance, or the older public deployment.
@@ -14,7 +16,7 @@ The Master PRD archive is governing. The women's reservation supplement extends 
 | 10B: local browser audit | `agy/j-20261016-151430-7j62` (`dbda23e`) | Desktop/mobile visits to 60 representative route URLs; 20 screenshots; representative control and persona tests | Independent build and full 33-case browser suite passed; audit wording corrected to distinguish route checks from sampled controls |
 | 11: reservation checklist and Parliament preview | `agy/j-20261016-163611-vwcz` (`f28f779`) | Module/rulebook checklist; fictional three-place Jaipur delegation illustration using the shared validator; anonymous public seat cards | Independent build, 321 unit tests in 25 files, all 35 browser tests, and clean diff check |
 
-The final Package 11 branch contains the earlier accepted app work. No ancestor branch needs a separate merge. Audit documents and 20 representative screenshots are copied into root `docs/audits/` for review; app changes remain on the isolated branch.
+The final Package 11 branch contained the earlier accepted app work, so the owner-approved merge brought the whole accepted chain into local `autobuild`. Audit documents and 20 representative screenshots are available in `docs/audits/`.
 
 ## What the evidence establishes
 
@@ -36,4 +38,4 @@ All commands passed on 16 October 2026. The build retained a bundle-size advisor
 
 ## Remaining boundary
 
-The public Vercel deployment and root app still represent the older frontend demo. The final branch has not been merged, pushed or deployed. After an owner-controlled merge, the complete suite must be rerun on the integrated checkout, followed by deployed-route inspection if published. Multi-user persistence, server authorization, real selection workflows, Hindi review, real-data privacy/safeguarding, and public-launch reviews remain outside this competition-demo acceptance.
+The local `autobuild` app contains the accepted changes and passed the complete suite after merge. The branch has not been pushed or deployed, so the public Vercel site still represents the older frontend demo. Deployed-route inspection remains pending if this version is published. Multi-user persistence, server authorization, real selection workflows, Hindi review, real-data privacy/safeguarding, and public-launch reviews remain outside this competition-demo acceptance.
