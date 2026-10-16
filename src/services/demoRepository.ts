@@ -66,6 +66,7 @@ import {
   canUserClaimRoleAllocation,
   buildAssemblyRoleAllocations,
   projectAssemblyForCaller,
+  buildSessionRoleAllocations,
 } from './reservationAllocationService';
 import {
   normalizeAssemblyStage,
@@ -3666,6 +3667,23 @@ export class LocalDemoRepository implements DemoRepository {
     const isOwner = resolvedCaller?.role === 'platform_admin';
     if (isOwner) return cloned;
 
+    // Sanitize roleAllocations for non-owner
+    if (cloned.roleAllocations) {
+      const sanitizedMap: Record<string, AllocationState> = {};
+      for (const [key, alloc] of Object.entries(cloned.roleAllocations)) {
+        sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+      }
+      cloned.roleAllocations = sanitizedMap;
+    }
+
+    if (cloned.debateData?.roleAllocations) {
+      const sanitizedMap: Record<string, AllocationState> = {};
+      for (const [key, alloc] of Object.entries(cloned.debateData.roleAllocations)) {
+        sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+      }
+      cloned.debateData.roleAllocations = sanitizedMap;
+    }
+
     const linkedEvent = activeDb.events.find((e) => e.id === sess.eventId);
     if (!linkedEvent || !isAllocatedLimitedEvent(linkedEvent)) {
       return cloned;
@@ -3728,6 +3746,18 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const sess = db.sessions.find((s) => s.id === sessionId);
     if (!sess) return null;
+    if (!sess.roleAllocations) {
+      sess.roleAllocations = buildSessionRoleAllocations({
+        sessionId: sess.id,
+        facilitatorId: sess.facilitatorId,
+        roster: sess.roster,
+        customDeclarations: db.userDeclarations,
+      });
+      if (sess.debateData) {
+        sess.debateData.roleAllocations = sess.roleAllocations;
+      }
+      this.saveDb(db);
+    }
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
     return this.projectSessionForCaller(sess, activeUser, db);
   }
@@ -3737,6 +3767,18 @@ export class LocalDemoRepository implements DemoRepository {
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
     const sess = db.sessions.find((s) => s.eventId === eventId);
     if (sess) {
+      if (!sess.roleAllocations) {
+        sess.roleAllocations = buildSessionRoleAllocations({
+          sessionId: sess.id,
+          facilitatorId: sess.facilitatorId,
+          roster: sess.roster,
+          customDeclarations: db.userDeclarations,
+        });
+        if (sess.debateData) {
+          sess.debateData.roleAllocations = sess.roleAllocations;
+        }
+        this.saveDb(db);
+      }
       return this.projectSessionForCaller(sess, activeUser, db);
     }
     const evt = db.events.find((e) => e.id === eventId);
@@ -4127,6 +4169,18 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) can switch session modes`);
     }
 
+    if (!session.roleAllocations) {
+      session.roleAllocations = buildSessionRoleAllocations({
+        sessionId,
+        facilitatorId: session.facilitatorId,
+        roster: session.roster,
+        customDeclarations: db.userDeclarations,
+      });
+      if (session.debateData) {
+        session.debateData.roleAllocations = session.roleAllocations;
+      }
+    }
+
     if (session.currentMode !== targetMode) {
       session.modeTransitions.push({
         id: `trans_${Date.now()}`,
@@ -4143,6 +4197,690 @@ export class LocalDemoRepository implements DemoRepository {
 
     const caller = db.users.find((u) => u.id === (db.activeUserId || actorId)) || null;
     return this.projectSessionForCaller(session, caller, db);
+  }
+
+  // Session & Debate Room Role Allocations (Package 08C1)
+  async getSessionRoleAllocations(
+    sessionId: string,
+    actorId?: string
+  ): Promise<Record<string, AllocationState>> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (actorId && effectiveActiveId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    const callerId = actorId || effectiveActiveId;
+    const actor = callerId ? db.users.find((u) => u.id === callerId) : null;
+    const isOwner = actor?.role === 'platform_admin';
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session "${sessionId}" not found.`);
+
+    if (!session.roleAllocations) {
+      session.roleAllocations = buildSessionRoleAllocations({
+        sessionId,
+        facilitatorId: session.facilitatorId,
+        roster: session.roster,
+        customDeclarations: db.userDeclarations,
+      });
+      if (session.debateData) {
+        session.debateData.roleAllocations = session.roleAllocations;
+      }
+      this.saveDb(db);
+    }
+
+    const roleAllocations = session.roleAllocations ?? {};
+    const sanitizedMap: Record<string, AllocationState> = {};
+    for (const [key, alloc] of Object.entries(roleAllocations)) {
+      sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+    }
+    return sanitizedMap;
+  }
+
+  async assignSessionRole(
+    sessionId: string,
+    userId: string,
+    roleName: string,
+    actorId?: string
+  ): Promise<Session> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    const isAuthorized = callerId === session.facilitatorId || actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Session Facilitator or Platform Owner can assign formal roles.`);
+    }
+
+    const targetUser = db.users.find((u) => u.id === userId);
+    if (!targetUser) throw new Error(`Target user ${userId} not found.`);
+
+    if (!session.roleAllocations) {
+      session.roleAllocations = buildSessionRoleAllocations({
+        sessionId,
+        facilitatorId: session.facilitatorId,
+        roster: session.roster,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    let alloc = session.roleAllocations[roleName];
+    if (!alloc) {
+      alloc = buildAllocationState({
+        allocationId: `alloc_${sessionId}_${roleName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
+        allocationType: 'named_roles',
+        title: `${roleName} Allocation`,
+        totalPlaces: 1,
+        confirmedOccupants: [],
+        existingStatus: 'pending',
+        customDeclarations: db.userDeclarations,
+      });
+      session.roleAllocations[roleName] = alloc;
+    }
+
+    // Shared validator check
+    const check = canUserClaimRoleAllocation(
+      alloc,
+      userId,
+      db.userDeclarations,
+      actor.role === 'platform_admin'
+    );
+    if (!check.allowed) {
+      throw new Error(check.reason || `Assignment of user ${userId} to role "${roleName}" denied under reservation policy.`);
+    }
+
+    const now = new Date().toISOString();
+
+    // Check if target user was already in another formal role in this session
+    const existingRosterIdx = session.roster.findIndex((r) => r.userId === userId);
+    const previousRole = existingRosterIdx !== -1 ? session.roster[existingRosterIdx].role : undefined;
+
+    if (previousRole && previousRole !== roleName && session.roleAllocations[previousRole]) {
+      const priorAlloc = session.roleAllocations[previousRole];
+      if (priorAlloc.status === 'finalized_exception' || priorAlloc.isException) {
+        db.allocationAudits = db.allocationAudits || [];
+        db.allocationAudits.push({
+          id: `audit_inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          allocationId: priorAlloc.allocationId,
+          action: 'exception_invalidated',
+          actorId: callerId,
+          actorRole: actor.role,
+          actorName: actor.name,
+          timestamp: now,
+          policyVersion: POLICY_VERSION,
+          reason: `Roster changed: User ${userId} vacated role "${previousRole}" to become "${roleName}". Prior Platform Owner exception invalidated.`,
+          outcome: 'reverted_to_pending',
+          snapshot: {
+            totalPlaces: priorAlloc.totalPlaces,
+            reservedMinimum: priorAlloc.reservedMinimum,
+            status: 'pending',
+          },
+        });
+        priorAlloc.isException = false;
+        priorAlloc.exceptionAudit = undefined;
+        priorAlloc.status = 'pending';
+      }
+    }
+
+    // If role already had confirmed occupants and is being reassigned, invalidate prior exception
+    if (alloc.confirmedOccupants && alloc.confirmedOccupants.length > 0 && (alloc.status === 'finalized_exception' || alloc.isException)) {
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push({
+        id: `audit_inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        allocationId: alloc.allocationId,
+        action: 'exception_invalidated',
+        actorId: callerId,
+        actorRole: actor.role,
+        actorName: actor.name,
+        timestamp: now,
+        policyVersion: POLICY_VERSION,
+        reason: `Roster changed: Occupant of role "${roleName}" changed. Prior Platform Owner exception invalidated.`,
+        outcome: 'reverted_to_pending',
+        snapshot: {
+          totalPlaces: alloc.totalPlaces,
+          reservedMinimum: alloc.reservedMinimum,
+          status: 'pending',
+        },
+      });
+      alloc.isException = false;
+      alloc.exceptionAudit = undefined;
+      alloc.status = 'pending';
+    }
+
+    // Update roster
+    if (existingRosterIdx !== -1) {
+      session.roster[existingRosterIdx].role = roleName;
+    } else {
+      session.roster.push({
+        userId,
+        name: targetUser.name,
+        role: roleName,
+        joinedAt: now,
+      });
+    }
+
+    if (roleName === 'Facilitator') {
+      session.facilitatorId = userId;
+    }
+
+    // Rebuild allocations
+    session.roleAllocations = buildSessionRoleAllocations({
+      sessionId,
+      facilitatorId: session.facilitatorId,
+      roster: session.roster,
+      existingAllocations: session.roleAllocations,
+      customDeclarations: db.userDeclarations,
+    });
+    if (session.debateData) {
+      session.debateData.roleAllocations = session.roleAllocations;
+    }
+    session.updatedAt = now;
+
+    this.saveDb(db);
+    return this.projectSessionForCaller(session, actor, db);
+  }
+
+  async withdrawSessionRole(
+    sessionId: string,
+    userId: string,
+    actorId?: string
+  ): Promise<Session> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    const isAuthorized =
+      callerId === session.facilitatorId ||
+      callerId === userId ||
+      actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Facilitator, Platform Owner, or the role occupant can withdraw from a role.`);
+    }
+
+    const entry = session.roster.find((r) => r.userId === userId);
+    if (!entry) {
+      throw new Error(`User ${userId} is not in session roster.`);
+    }
+
+    const oldRole = entry.role;
+    const openParticipationRoles = new Set(['participant', 'observer', 'open participant', '']);
+    if (openParticipationRoles.has(oldRole.toLowerCase())) {
+      // User is already an open participant
+      return this.projectSessionForCaller(session, actor, db);
+    }
+
+    const now = new Date().toISOString();
+
+    // Invalidate prior exception on vacated role
+    const priorAlloc = session.roleAllocations?.[oldRole];
+    if (priorAlloc && (priorAlloc.status === 'finalized_exception' || priorAlloc.isException)) {
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push({
+        id: `audit_inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        allocationId: priorAlloc.allocationId,
+        action: 'exception_invalidated',
+        actorId: callerId,
+        actorRole: actor.role,
+        actorName: actor.name,
+        timestamp: now,
+        policyVersion: POLICY_VERSION,
+        reason: `Roster changed: User ${userId} withdrew from role "${oldRole}". Prior Platform Owner exception invalidated.`,
+        outcome: 'reverted_to_pending',
+        snapshot: {
+          totalPlaces: priorAlloc.totalPlaces,
+          reservedMinimum: priorAlloc.reservedMinimum,
+          status: 'pending',
+        },
+      });
+      priorAlloc.isException = false;
+      priorAlloc.exceptionAudit = undefined;
+      priorAlloc.status = 'pending';
+    }
+
+    // Demote role to Participant (open participation)
+    entry.role = 'Participant';
+
+    // Rebuild allocations
+    session.roleAllocations = buildSessionRoleAllocations({
+      sessionId,
+      facilitatorId: session.facilitatorId,
+      roster: session.roster,
+      existingAllocations: session.roleAllocations,
+      customDeclarations: db.userDeclarations,
+    });
+    if (session.debateData) {
+      session.debateData.roleAllocations = session.roleAllocations;
+    }
+    session.updatedAt = now;
+
+    this.saveDb(db);
+    return this.projectSessionForCaller(session, actor, db);
+  }
+
+  async replaceSessionRole(
+    sessionId: string,
+    currentUserId: string,
+    newUserId: string,
+    roleName: string,
+    actorId?: string
+  ): Promise<Session> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    const isAuthorized = callerId === session.facilitatorId || actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Session Facilitator or Platform Owner can replace formal roles.`);
+    }
+
+    const currentEntry = session.roster.find((r) => r.userId === currentUserId && r.role === roleName);
+    if (!currentEntry) {
+      throw new Error(`Current user ${currentUserId} does not hold role "${roleName}".`);
+    }
+
+    const newUser = db.users.find((u) => u.id === newUserId);
+    if (!newUser) throw new Error(`New user ${newUserId} not found.`);
+
+    if (!session.roleAllocations) {
+      session.roleAllocations = buildSessionRoleAllocations({
+        sessionId,
+        facilitatorId: session.facilitatorId,
+        roster: session.roster,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    const currentAlloc = session.roleAllocations[roleName];
+    if (!currentAlloc) {
+      throw new Error(`Role allocation "${roleName}" not found.`);
+    }
+
+    // Evaluate replacement eligibility on allocation with currentUserId removed
+    const tempConfirmed = (currentAlloc.confirmedOccupants || []).filter((id) => id !== currentUserId);
+    const tempAlloc = buildAllocationState({
+      allocationId: currentAlloc.allocationId,
+      allocationType: 'named_roles',
+      title: currentAlloc.title,
+      totalPlaces: currentAlloc.totalPlaces,
+      confirmedOccupants: tempConfirmed,
+      customDeclarations: db.userDeclarations,
+    });
+
+    const check = canUserClaimRoleAllocation(
+      tempAlloc,
+      newUserId,
+      db.userDeclarations,
+      actor.role === 'platform_admin'
+    );
+    if (!check.allowed) {
+      throw new Error(check.reason || `Replacement of ${currentUserId} by ${newUserId} for "${roleName}" denied under reservation policy.`);
+    }
+
+    const now = new Date().toISOString();
+
+    // If role had an active exception, replacing occupant invalidates it
+    if (currentAlloc.status === 'finalized_exception' || currentAlloc.isException) {
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push({
+        id: `audit_inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        allocationId: currentAlloc.allocationId,
+        action: 'exception_invalidated',
+        actorId: callerId,
+        actorRole: actor.role,
+        actorName: actor.name,
+        timestamp: now,
+        policyVersion: POLICY_VERSION,
+        reason: `Role occupant replaced: ${currentUserId} replaced by ${newUserId} for role "${roleName}". Prior Platform Owner exception invalidated.`,
+        outcome: 'reverted_to_pending',
+        snapshot: {
+          totalPlaces: currentAlloc.totalPlaces,
+          reservedMinimum: currentAlloc.reservedMinimum,
+          status: 'pending',
+        },
+      });
+      currentAlloc.isException = false;
+      currentAlloc.exceptionAudit = undefined;
+      currentAlloc.status = 'pending';
+    }
+
+    // Demote current user to Participant
+    currentEntry.role = 'Participant';
+
+    // Promote new user
+    const newEntryIdx = session.roster.findIndex((r) => r.userId === newUserId);
+    if (newEntryIdx !== -1) {
+      session.roster[newEntryIdx].role = roleName;
+    } else {
+      session.roster.push({
+        userId: newUserId,
+        name: newUser.name,
+        role: roleName,
+        joinedAt: now,
+      });
+    }
+
+    if (roleName === 'Facilitator') {
+      session.facilitatorId = newUserId;
+    }
+
+    // Rebuild allocations
+    session.roleAllocations = buildSessionRoleAllocations({
+      sessionId,
+      facilitatorId: session.facilitatorId,
+      roster: session.roster,
+      existingAllocations: session.roleAllocations,
+      customDeclarations: db.userDeclarations,
+    });
+    if (session.debateData) {
+      session.debateData.roleAllocations = session.roleAllocations;
+    }
+    session.updatedAt = now;
+
+    this.saveDb(db);
+    return this.projectSessionForCaller(session, actor, db);
+  }
+
+  async changeSessionRole(
+    sessionId: string,
+    userId: string,
+    newRole: string,
+    actorId?: string
+  ): Promise<Session> {
+    return this.assignSessionRole(sessionId, userId, newRole, actorId);
+  }
+
+  async finalizeSessionRoleAllocation(
+    sessionId: string,
+    roleName: string,
+    actorId?: string
+  ): Promise<Session> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    const isAuthorized = callerId === session.facilitatorId || actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Session Facilitator or Platform Owner can finalize role allocations.`);
+    }
+
+    if (!session.roleAllocations) {
+      session.roleAllocations = buildSessionRoleAllocations({
+        sessionId,
+        facilitatorId: session.facilitatorId,
+        roster: session.roster,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    const alloc = session.roleAllocations[roleName];
+    if (!alloc) {
+      throw new Error(`Role allocation "${roleName}" not found in session ${sessionId}`);
+    }
+
+    // Fails without mutating persistent state if noncompliant and no approved exception
+    const { updatedAllocation, audit } = finalizeAllocationState(alloc, actor);
+
+    session.roleAllocations[roleName] = updatedAllocation;
+    if (session.debateData) {
+      session.debateData.roleAllocations = session.roleAllocations;
+    }
+
+    // Check if all role allocations in session are finalized
+    const allFinalized = Object.values(session.roleAllocations).every(
+      (a) => a.status === 'finalized_compliant' || a.status === 'finalized_exception'
+    );
+    if (allFinalized) {
+      session.rolePlanStage = 'finalized';
+      if (session.debateData) {
+        session.debateData.rolePlanStage = 'finalized';
+      }
+    }
+
+    session.updatedAt = new Date().toISOString();
+
+    db.allocationAudits = db.allocationAudits || [];
+    db.allocationAudits.push(audit);
+
+    this.saveDb(db);
+    return this.projectSessionForCaller(session, actor, db);
+  }
+
+  async approveSessionRoleException(
+    sessionId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ session: Session; audit: AllocationAuditRecord }> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+
+    // Authority guard: Strictly restricted to platform_admin
+    if (!actor || actor.role !== 'platform_admin') {
+      throw new Error(
+        `Unauthorized: Only Platform Owner (role: platform_admin) can approve reservation exceptions. ` +
+        `Current persona "${callerId}" (role: "${actor?.role || 'unknown'}") cannot approve exceptions.`
+      );
+    }
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    if (!session.roleAllocations) {
+      session.roleAllocations = buildSessionRoleAllocations({
+        sessionId,
+        facilitatorId: session.facilitatorId,
+        roster: session.roster,
+        customDeclarations: db.userDeclarations,
+      });
+    }
+
+    const alloc = session.roleAllocations[roleName];
+    if (!alloc) {
+      throw new Error(`Role allocation "${roleName}" not found in session ${sessionId}`);
+    }
+
+    const { updatedAllocation, audit } = approveAllocationExceptionState(alloc, actor, reason);
+
+    session.roleAllocations[roleName] = updatedAllocation;
+    if (session.debateData) {
+      session.debateData.roleAllocations = session.roleAllocations;
+    }
+    session.updatedAt = new Date().toISOString();
+
+    db.allocationAudits = db.allocationAudits || [];
+    db.allocationAudits.push(audit);
+
+    this.saveDb(db);
+    return {
+      session: this.projectSessionForCaller(session, actor, db),
+      audit: this.projectAuditForCaller(audit, actor),
+    };
+  }
+
+  async updateSessionRoleCapacity(
+    sessionId: string,
+    roleName: string,
+    newTotalPlaces: number,
+    actorId?: string
+  ): Promise<Session> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (actorId && actorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${actorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const callerId = effectiveActiveId;
+    const actor = db.users.find((u) => u.id === callerId);
+    if (!actor) throw new Error(`Actor ${callerId} not found.`);
+
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
+
+    const isAuthorized = callerId === session.facilitatorId || actor.role === 'platform_admin';
+    if (!isAuthorized) {
+      throw new Error(`Unauthorized: Only Facilitator or Platform Owner can update role allocation capacity.`);
+    }
+
+    if (newTotalPlaces < 1) {
+      throw new Error('Total places must be at least 1.');
+    }
+
+    const now = new Date().toISOString();
+
+    // Check if previous allocation had an approved exception; changing size invalidates it!
+    const priorAlloc = session.roleAllocations?.[roleName];
+    if (priorAlloc && (priorAlloc.status === 'finalized_exception' || priorAlloc.isException)) {
+      db.allocationAudits = db.allocationAudits || [];
+      db.allocationAudits.push({
+        id: `audit_inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        allocationId: priorAlloc.allocationId,
+        action: 'exception_invalidated',
+        actorId: callerId,
+        actorRole: actor.role,
+        actorName: actor.name,
+        timestamp: now,
+        policyVersion: POLICY_VERSION,
+        reason: `Capacity changed from ${priorAlloc.totalPlaces} to ${newTotalPlaces} for role "${roleName}". Prior Platform Owner exception invalidated.`,
+        outcome: 'reverted_to_pending',
+        snapshot: {
+          totalPlaces: newTotalPlaces,
+          reservedMinimum: Math.ceil(0.33 * newTotalPlaces),
+          status: 'pending',
+        },
+      });
+      priorAlloc.isException = false;
+      priorAlloc.exceptionAudit = undefined;
+      priorAlloc.status = 'pending';
+    }
+
+    // Rebuild allocations with override
+    session.roleAllocations = buildSessionRoleAllocations({
+      sessionId,
+      facilitatorId: session.facilitatorId,
+      roster: session.roster,
+      existingAllocations: session.roleAllocations,
+      customDeclarations: db.userDeclarations,
+      plannedPlacesOverrides: { [roleName]: newTotalPlaces },
+    });
+    if (session.debateData) {
+      session.debateData.roleAllocations = session.roleAllocations;
+    }
+    session.updatedAt = now;
+
+    this.saveDb(db);
+    return this.projectSessionForCaller(session, actor, db);
+  }
+
+  // Aliases for Debate Room role allocations
+  async getDebateRoleAllocations(sessionId: string, actorId?: string): Promise<Record<string, AllocationState>> {
+    return this.getSessionRoleAllocations(sessionId, actorId);
+  }
+
+  async assignDebateRole(sessionId: string, userId: string, roleName: string, actorId?: string): Promise<Session> {
+    return this.assignSessionRole(sessionId, userId, roleName, actorId);
+  }
+
+  async withdrawDebateRole(sessionId: string, userId: string, actorId?: string): Promise<Session> {
+    return this.withdrawSessionRole(sessionId, userId, actorId);
+  }
+
+  async replaceDebateRole(sessionId: string, currentUserId: string, newUserId: string, roleName: string, actorId?: string): Promise<Session> {
+    return this.replaceSessionRole(sessionId, currentUserId, newUserId, roleName, actorId);
+  }
+
+  async changeDebateRole(sessionId: string, userId: string, newRole: string, actorId?: string): Promise<Session> {
+    return this.changeSessionRole(sessionId, userId, newRole, actorId);
+  }
+
+  async finalizeDebateRoleAllocation(sessionId: string, roleName: string, actorId?: string): Promise<Session> {
+    return this.finalizeSessionRoleAllocation(sessionId, roleName, actorId);
+  }
+
+  async updateDebateRoleCapacity(sessionId: string, roleName: string, newTotalPlaces: number, actorId?: string): Promise<Session> {
+    return this.updateSessionRoleCapacity(sessionId, roleName, newTotalPlaces, actorId);
+  }
+
+  async approveDebateRoleException(
+    sessionId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ session: Session; audit: AllocationAuditRecord }> {
+    return this.approveSessionRoleException(sessionId, roleName, reason, actorId);
   }
 
   async rsvpEvent(

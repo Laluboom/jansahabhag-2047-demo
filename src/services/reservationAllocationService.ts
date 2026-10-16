@@ -33,6 +33,9 @@ import {
   ReservationEligibility,
   Assembly,
   AssemblyRole,
+  Session,
+  SessionRosterEntry,
+  CANONICAL_DEBATE_ROLES,
 } from '../types/domain';
 import {
   POLICY_VERSION,
@@ -65,6 +68,23 @@ export const ALLOCATION_SURFACES_INVENTORY = {
   dependentAssemblyDebateCoverage: [
     'assembly_named_roles_quota',
     'debate_room_speaking_queue_quota',
+  ],
+  package08C1Coverage: [
+    'debate_room_named_roles_allocation', // Facilitator, Questioner, Evidence Analyst, Civic Advocate, Community Voice, Synthesiser, Rapporteur
+    'debate_room_one_place_rounding_no_pooling',
+    'debate_room_role_assignment_guards',
+    'debate_room_role_withdrawal_guards',
+    'debate_room_role_replacement_guards',
+    'debate_room_role_finalization_guards',
+    'debate_room_role_capacity_guards',
+    'debate_room_simulated_owner_exception_controls',
+    'debate_room_exception_invalidation_guards',
+    'debate_room_privacy_projections',
+  ],
+  dependentDebate08C2Coverage: [
+    'debate_room_point_of_use_rulebook',
+    'debate_room_owner_controls_ui',
+    'debate_room_browser_journey',
     'combined_cross_module_reservation_ui',
   ],
   programmeCohortStatus: 'No place allocation or cohort quota logic currently exists on Programme entities.',
@@ -783,6 +803,139 @@ export function projectAssemblyForCaller(
       sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
     }
     cloned.roleAllocations = sanitizedMap;
+  }
+
+  return cloned;
+}
+
+export interface BuildSessionRoleAllocationsInput {
+  sessionId: string;
+  facilitatorId?: string;
+  roster?: SessionRosterEntry[];
+  existingAllocations?: Record<string, AllocationState>;
+  customDeclarations?: Record<string, ReservationEligibility>;
+  plannedPlacesOverrides?: Record<string, number>;
+}
+
+/**
+ * Constructs or updates the full set of formal named role allocations for a Debate Room / Session:
+ * - Canonical Debate Roles: Facilitator, Questioner, Evidence Analyst, Civic Advocate,
+ *   Community Voice, Synthesiser, Rapporteur.
+ * - Any additional formal named roles introduced through the session model.
+ * - Open roster participation (role 'Participant', 'Observer', etc.) and speaking queue
+ *   are preserved as open participation, not fixed role allocations.
+ * - Every one-place role applies ceil(0.33 * 1) = 1 without pooling.
+ * - Facilitator is NOT exempt.
+ * - Seeded appointments start as 'unvalidated_legacy' or provisional until reviewed.
+ */
+export function buildSessionRoleAllocations(
+  input: BuildSessionRoleAllocationsInput
+): Record<string, AllocationState> {
+  const result: Record<string, AllocationState> = {};
+  const roster = input.roster || [];
+  const existing = input.existingAllocations || {};
+  const overrides = input.plannedPlacesOverrides || {};
+
+  // Canonical debate roles from seeded roster
+  const canonicalRoles: string[] = [
+    'Facilitator',
+    'Questioner',
+    'Evidence Analyst',
+    'Civic Advocate',
+    'Community Voice',
+    'Synthesiser',
+    'Rapporteur',
+  ];
+
+  // Open participation roles that do not form fixed role allocations
+  const openParticipationRoles = new Set(['participant', 'observer', 'open participant', '']);
+
+  // Collect all formal named roles: canonical roles plus any additional formal named roles in roster or overrides or existing
+  const allRoles = new Set<string>(canonicalRoles);
+
+  for (const entry of roster) {
+    const roleTrimmed = (entry.role || '').trim();
+    if (roleTrimmed && !openParticipationRoles.has(roleTrimmed.toLowerCase())) {
+      allRoles.add(roleTrimmed);
+    }
+  }
+  for (const key of Object.keys(existing)) {
+    allRoles.add(key);
+  }
+  for (const key of Object.keys(overrides)) {
+    allRoles.add(key);
+  }
+
+  for (const roleName of allRoles) {
+    let occupants: string[] = [];
+    if (roleName === 'Facilitator') {
+      const fromRoster = roster.filter((r) => r.role === 'Facilitator').map((r) => r.userId);
+      const fromId = input.facilitatorId ? [input.facilitatorId] : [];
+      occupants = Array.from(new Set([...fromId, ...fromRoster]));
+    } else {
+      occupants = Array.from(new Set(roster.filter((r) => r.role === roleName).map((r) => r.userId)));
+    }
+
+    const defaultPlaces = 1;
+    const totalPlaces = overrides[roleName] ?? existing[roleName]?.totalPlaces ?? defaultPlaces;
+
+    const roleSlug = roleName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    const allocationId = existing[roleName]?.allocationId || `alloc_${input.sessionId}_${roleSlug}`;
+
+    const existingStatus =
+      existing[roleName]?.status ??
+      (occupants.length > 0 ? 'unvalidated_legacy' : 'pending');
+
+    result[roleName] = buildAllocationState({
+      allocationId,
+      allocationType: 'named_roles',
+      title: `${roleName} Allocation`,
+      totalPlaces,
+      confirmedOccupants: occupants,
+      existingStatus,
+      existingExceptionAudit: existing[roleName]?.exceptionAudit,
+      customDeclarations: input.customDeclarations,
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Projects a Session for a caller by applying privacy sanitization across all its roleAllocations
+ * and redacting roster identities on allocated limited events for non-owners.
+ */
+export function projectSessionForCaller(
+  session: Session,
+  caller?: { id: string; role: string } | null,
+  linkedEventIsAllocatedLimited: boolean = false
+): Session {
+  const isOwner = caller?.role === 'platform_admin';
+  const cloned: Session = JSON.parse(JSON.stringify(session));
+
+  if (cloned.roleAllocations) {
+    const sanitizedMap: Record<string, AllocationState> = {};
+    for (const [key, alloc] of Object.entries(cloned.roleAllocations)) {
+      sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+    }
+    cloned.roleAllocations = sanitizedMap;
+  }
+
+  if (cloned.debateData?.roleAllocations) {
+    const sanitizedMap: Record<string, AllocationState> = {};
+    for (const [key, alloc] of Object.entries(cloned.debateData.roleAllocations)) {
+      sanitizedMap[key] = sanitizeAllocationForPublic(alloc, isOwner);
+    }
+    cloned.debateData.roleAllocations = sanitizedMap;
+  }
+
+  if (!isOwner && linkedEventIsAllocatedLimited) {
+    const callerId = caller?.id;
+    if (callerId) {
+      cloned.roster = (cloned.roster || []).filter((entry) => entry.userId === callerId);
+    } else {
+      cloned.roster = [];
+    }
   }
 
   return cloned;

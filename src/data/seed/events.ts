@@ -1,4 +1,5 @@
 import { Event, Session, Activity } from '../../types/domain';
+import { buildAllocationState } from '../../services/reservationAllocationService';
 
 export const seedEvents: Event[] = [
   {
@@ -141,6 +142,65 @@ export const seedEvents: Event[] = [
   },
 ];
 
+const seedJaipurDebateRoleAllocations = {
+  Facilitator: buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_facilitator',
+    allocationType: 'named_roles',
+    title: 'Facilitator Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_rohan'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+  Questioner: buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_questioner',
+    allocationType: 'named_roles',
+    title: 'Questioner Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_aarav'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+  'Evidence Analyst': buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_evidence_analyst',
+    allocationType: 'named_roles',
+    title: 'Evidence Analyst Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_priya'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+  'Civic Advocate': buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_civic_advocate',
+    allocationType: 'named_roles',
+    title: 'Civic Advocate Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_vikram'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+  'Community Voice': buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_community_voice',
+    allocationType: 'named_roles',
+    title: 'Community Voice Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_kabir'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+  Synthesiser: buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_synthesiser',
+    allocationType: 'named_roles',
+    title: 'Synthesiser Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_siddharth'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+  Rapporteur: buildAllocationState({
+    allocationId: 'alloc_sess_jaipur_01_rapporteur',
+    allocationType: 'named_roles',
+    title: 'Rapporteur Allocation',
+    totalPlaces: 1,
+    confirmedOccupants: ['user_isha'],
+    existingStatus: 'unvalidated_legacy',
+  }),
+};
+
 export const seedSessions: Session[] = [
   {
     id: 'sess_jaipur_01',
@@ -249,7 +309,11 @@ export const seedSessions: Session[] = [
         ],
       },
       reflectionPrompt: 'How did the debate discussion and evidence presented on tabletop crosswalks shape your perspective on safe school corridors?',
+      roleAllocations: seedJaipurDebateRoleAllocations,
+      rolePlanStage: 'open_selection',
     },
+    rolePlanStage: 'open_selection',
+    roleAllocations: seedJaipurDebateRoleAllocations,
     schemaVersion: 1,
     createdAt: '2026-10-01T00:00:00Z',
     updatedAt: '2026-10-01T00:00:00Z',

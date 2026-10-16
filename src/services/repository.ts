@@ -196,6 +196,36 @@ export interface DemoRepository {
   approveEventAllocationException(eventId: string, reason: string, actorId?: string): Promise<{ event: Event; audit: import('../types/domain').AllocationAuditRecord }>;
   getAllocationAudits(allocationId?: string, actorId?: string): Promise<import('../types/domain').AllocationAuditRecord[]>;
 
+  // Session & Debate Room Role Allocations (Package 08C1)
+  getSessionRoleAllocations(sessionId: string, actorId?: string): Promise<Record<string, AllocationState>>;
+  assignSessionRole(sessionId: string, userId: string, roleName: string, actorId?: string): Promise<Session>;
+  withdrawSessionRole(sessionId: string, userId: string, actorId?: string): Promise<Session>;
+  replaceSessionRole(sessionId: string, currentUserId: string, newUserId: string, roleName: string, actorId?: string): Promise<Session>;
+  changeSessionRole(sessionId: string, userId: string, newRole: string, actorId?: string): Promise<Session>;
+  finalizeSessionRoleAllocation(sessionId: string, roleName: string, actorId?: string): Promise<Session>;
+  updateSessionRoleCapacity(sessionId: string, roleName: string, newTotalPlaces: number, actorId?: string): Promise<Session>;
+  approveSessionRoleException(
+    sessionId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ session: Session; audit: AllocationAuditRecord }>;
+
+  // Aliases for Debate Room role allocations
+  getDebateRoleAllocations(sessionId: string, actorId?: string): Promise<Record<string, AllocationState>>;
+  assignDebateRole(sessionId: string, userId: string, roleName: string, actorId?: string): Promise<Session>;
+  withdrawDebateRole(sessionId: string, userId: string, actorId?: string): Promise<Session>;
+  replaceDebateRole(sessionId: string, currentUserId: string, newUserId: string, roleName: string, actorId?: string): Promise<Session>;
+  changeDebateRole(sessionId: string, userId: string, newRole: string, actorId?: string): Promise<Session>;
+  finalizeDebateRoleAllocation(sessionId: string, roleName: string, actorId?: string): Promise<Session>;
+  updateDebateRoleCapacity(sessionId: string, roleName: string, newTotalPlaces: number, actorId?: string): Promise<Session>;
+  approveDebateRoleException(
+    sessionId: string,
+    roleName: string,
+    reason: string,
+    actorId?: string
+  ): Promise<{ session: Session; audit: AllocationAuditRecord }>;
+
   // Activities
   getActivities(userId?: string): Promise<Activity[]>;
   addActivity(activity: Omit<Activity, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Activity>;

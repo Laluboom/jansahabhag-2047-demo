@@ -450,7 +450,28 @@ export interface DebateRoomData {
   rulebook: DebateRulebook;
   acknowledgedUserIds?: string[];
   reflectionPrompt?: string;
+  roleAllocations?: Record<string, AllocationState>;
+  rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
 }
+
+export type CanonicalDebateRole =
+  | 'Facilitator'
+  | 'Questioner'
+  | 'Evidence Analyst'
+  | 'Civic Advocate'
+  | 'Community Voice'
+  | 'Synthesiser'
+  | 'Rapporteur';
+
+export const CANONICAL_DEBATE_ROLES: CanonicalDebateRole[] = [
+  'Facilitator',
+  'Questioner',
+  'Evidence Analyst',
+  'Civic Advocate',
+  'Community Voice',
+  'Synthesiser',
+  'Rapporteur',
+];
 
 export interface Session {
   id: string;
@@ -468,6 +489,8 @@ export interface Session {
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
+  roleAllocations?: Record<string, AllocationState>;
+  rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
 }
 
 export type AssemblyStage =

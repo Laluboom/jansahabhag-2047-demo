@@ -10,7 +10,7 @@ import {
   canonicalWorkspaceRulebook,
 } from '../data/seed/workspaces';
 import { seedEvents } from '../data/seed/events';
-import { buildAllocationState, buildAssemblyRoleAllocations } from './reservationAllocationService';
+import { buildAllocationState, buildAssemblyRoleAllocations, buildSessionRoleAllocations } from './reservationAllocationService';
 
 export interface Migration {
   version: number;
@@ -304,6 +304,42 @@ export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
             rules: [],
           };
         }
+      }
+    }
+
+    if (!session.rolePlanStage) {
+      session.rolePlanStage = 'open_selection';
+    }
+
+    if (!session.roleAllocations) {
+      if (session.id === 'sess_jaipur_01') {
+        const seedJaipur = seedSessions.find((s) => s.id === 'sess_jaipur_01');
+        if (seedJaipur?.roleAllocations) {
+          session.roleAllocations = JSON.parse(JSON.stringify(seedJaipur.roleAllocations));
+        } else {
+          session.roleAllocations = buildSessionRoleAllocations({
+            sessionId: session.id,
+            facilitatorId: session.facilitatorId,
+            roster: session.roster,
+            customDeclarations: db.userDeclarations,
+          });
+        }
+      } else {
+        session.roleAllocations = buildSessionRoleAllocations({
+          sessionId: session.id,
+          facilitatorId: session.facilitatorId,
+          roster: session.roster,
+          customDeclarations: db.userDeclarations,
+        });
+      }
+    }
+
+    if (session.debateData) {
+      if (!session.debateData.rolePlanStage) {
+        session.debateData.rolePlanStage = session.rolePlanStage;
+      }
+      if (!session.debateData.roleAllocations) {
+        session.debateData.roleAllocations = session.roleAllocations;
       }
     }
   });
