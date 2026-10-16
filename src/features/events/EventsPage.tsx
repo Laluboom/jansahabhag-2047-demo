@@ -182,7 +182,7 @@ export const EventsPage: React.FC = () => {
               <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs text-slate-500">
-                    {evt.attendeeUserIds.length}/{evt.capacity} Registered
+                    {evt.registeredCount ?? evt.attendeeUserIds.length}/{evt.capacity} Registered
                   </span>
                   <span className="text-[11px] text-slate-400">
                     &bull; 33% Min: {evt.allocation?.reservedMinimum ?? Math.ceil(0.33 * evt.capacity)}

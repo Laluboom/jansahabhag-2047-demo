@@ -200,6 +200,11 @@ export const EventDetailPage: React.FC = () => {
     );
   }
 
+  const isOwner = currentUser?.role === 'platform_admin';
+  const isAllocated = Boolean(event.allocation && event.allocation.status !== 'unvalidated_legacy');
+  const isProtectedRoster = isAllocated && !isOwner;
+  const registeredCount = event.registeredCount ?? event.attendeeUserIds.length;
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <Link
@@ -351,10 +356,10 @@ export const EventDetailPage: React.FC = () => {
             <Users className="w-4 h-4 text-slate-500 shrink-0" />
             <div>
               <span className="font-bold block text-slate-900">
-                {event.attendeeUserIds.length} / {event.capacity} Registered
+                {registeredCount} / {event.capacity} Registered
               </span>
               <span className="text-slate-500">
-                {event.capacity - event.attendeeUserIds.length} total seats remaining
+                {event.capacity - registeredCount} total seats remaining
               </span>
             </div>
           </div>
@@ -790,16 +795,53 @@ export const EventDetailPage: React.FC = () => {
             <Card className="border-slate-200 p-5 space-y-3 bg-white shadow-sm" data-testid="registered-cohort-card">
               <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-slate-600" />
-                <span>Participants Registered ({attendees.length})</span>
+                <span>Participants Registered ({registeredCount})</span>
               </h3>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {attendees.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
-                    <span className="font-semibold text-slate-900">{user.name}</span>
-                    <span className="text-[10px] text-slate-400 capitalize">{user.role}</span>
+              {isProtectedRoster ? (
+                <div className="space-y-3" data-testid="roster-protected-view">
+                  {attendees.length > 0 && (
+                    <div className="space-y-1.5 pb-2 border-b border-slate-100">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Status</span>
+                      {attendees.map((user) => (
+                        <div key={user.id} className="flex items-center justify-between text-xs py-1">
+                          <span className="font-semibold text-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>You ({user.name})</span>
+                          </span>
+                          <span className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Confirmed Attendee
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1.5" data-testid="roster-protected-notice">
+                    <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                      <ShieldCheck className="w-4 h-4 text-civic-teal-600 shrink-0" />
+                      <span>Roster Protected for Allocation Privacy</span>
+                    </div>
+                    <p className="leading-relaxed">
+                      Individual attendee identities in allocated cohorts are withheld to prevent indirect status deduction. Total confirmed places: {registeredCount}.
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Single-Browser Local Simulation &bull; Full named cohort roster is accessible only to Platform Owner.
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {attendees.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-1">No confirmed participants yet.</p>
+                  ) : (
+                    attendees.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                        <span className="font-semibold text-slate-900">{user.name}</span>
+                        <span className="text-[10px] text-slate-400 capitalize">{user.role}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </Card>
           </div>
         </div>
@@ -808,16 +850,53 @@ export const EventDetailPage: React.FC = () => {
           <Card className="md:col-span-3 border-slate-200 p-5 space-y-3 bg-white shadow-sm" data-testid="registered-cohort-card">
             <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
               <Users className="w-4 h-4 text-slate-600" />
-              <span>Participants Registered ({attendees.length})</span>
+              <span>Participants Registered ({registeredCount})</span>
             </h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {attendees.map((user) => (
-                <div key={user.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
-                  <span className="font-semibold text-slate-900">{user.name}</span>
-                  <span className="text-[10px] text-slate-400 capitalize">{user.role}</span>
+            {isProtectedRoster ? (
+              <div className="space-y-3" data-testid="roster-protected-view">
+                {attendees.length > 0 && (
+                  <div className="space-y-1.5 pb-2 border-b border-slate-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Your Status</span>
+                    {attendees.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between text-xs py-1">
+                        <span className="font-semibold text-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>You ({user.name})</span>
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Confirmed Attendee
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1.5" data-testid="roster-protected-notice">
+                  <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                    <ShieldCheck className="w-4 h-4 text-civic-teal-600 shrink-0" />
+                    <span>Roster Protected for Allocation Privacy</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    Individual attendee identities in allocated cohorts are withheld to prevent indirect status deduction. Total confirmed places: {registeredCount}.
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Single-Browser Local Simulation &bull; Full named cohort roster is accessible only to Platform Owner.
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {attendees.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-1">No confirmed participants yet.</p>
+                ) : (
+                  attendees.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+                      <span className="font-semibold text-slate-900">{user.name}</span>
+                      <span className="text-[10px] text-slate-400 capitalize">{user.role}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </Card>
         </div>
       )}

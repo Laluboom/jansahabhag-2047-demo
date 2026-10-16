@@ -65,9 +65,12 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(err.message).not.toMatch(/\b\d+\/\d+\b/);
       expect(err.message).not.toMatch(/\b\d+ place/);
 
-      // Verify participant projection withholds vacancies in small cohort
+      // Verify participant projection withholds vacancies and redacts other attendees' identities
       const participantView = await demoRepository.getEvent(evt!.id);
-      expect(participantView!.attendeeUserIds).toEqual(['user_vikram', 'user_rohan']);
+      expect(participantView!.attendeeUserIds).not.toContain('user_vikram');
+      expect(participantView!.attendeeUserIds).not.toContain('user_rohan');
+      expect(participantView!.attendeeUserIds).toEqual([]);
+      expect((participantView as any).registeredCount).toBe(2);
       expect(participantView!.allocation?.isPrivacySuppressed).toBe(true);
       expect(participantView!.allocation?.vacanciesCount).toBeUndefined();
 
@@ -623,7 +626,7 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(denialErr.message).not.toMatch(/\b\d+\/\d+\b/);
       expect(denialErr.message).not.toMatch(/\b\d+ place/);
 
-      // Participant projection for 2-attendee event withholds category metrics
+      // Participant projection for 2-attendee event withholds category metrics and redacts attendee identities
       const pViewBefore = await demoRepository.getEvent('evt_jaipur_limited_05');
       expect(pViewBefore!.allocation?.isPrivacySuppressed).toBe(true);
       expect(pViewBefore!.allocation?.reservedOccupiedCount).toBeUndefined();
@@ -631,11 +634,30 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(pViewBefore!.allocation?.vacanciesCount).toBeUndefined();
       expect(pViewBefore!.allocation?.status).toBe('pending');
       expect(pViewBefore!.allocation?.isException).toBe(false);
+      // Identity link broken: participant cannot derive Vikram or Rohan attendance from getEvent
+      expect(pViewBefore!.attendeeUserIds).not.toContain('user_vikram');
+      expect(pViewBefore!.attendeeUserIds).not.toContain('user_rohan');
+      expect(pViewBefore!.attendeeUserIds).toEqual([]);
+      expect((pViewBefore as any).registeredCount).toBe(2);
+
+      // Session projection also redacts named roster for non-owner
+      const pSessionBefore = await demoRepository.getSessionByEvent('evt_jaipur_limited_05');
+      expect(pSessionBefore?.roster.some((r) => r.userId === 'user_vikram' || r.name?.includes('Vikram'))).toBe(false);
+      expect(pSessionBefore?.roster.some((r) => r.userId === 'user_rohan' || r.name?.includes('Rohan'))).toBe(false);
+
+      // Same identity protection on getEvents() list
+      const pAllEventsBefore = await demoRepository.getEvents();
+      const pEvt5Before = pAllEventsBefore.find((e) => e.id === 'evt_jaipur_limited_05');
+      expect(pEvt5Before?.attendeeUserIds).not.toContain('user_vikram');
+      expect(pEvt5Before?.attendeeUserIds).not.toContain('user_rohan');
 
       // Reload simulation for participant before persona switch
       const pViewReloaded = await demoRepository.getEvent('evt_jaipur_limited_05');
       expect(pViewReloaded!.allocation?.isPrivacySuppressed).toBe(true);
       expect(pViewReloaded!.allocation?.vacanciesCount).toBeUndefined();
+      expect(pViewReloaded!.attendeeUserIds).not.toContain('user_vikram');
+      expect(pViewReloaded!.attendeeUserIds).not.toContain('user_rohan');
+
       const denialReloadErr = await demoRepository.rsvpEvent('evt_jaipur_limited_05', 'user_aarav', 'attending').catch((e) => e);
       expect(denialReloadErr.message).toMatch(/cannot be accepted under current allocation rules/i);
       expect(denialReloadErr.message).toMatch(/reserved places are not automatically reassigned/i);
@@ -644,7 +666,15 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(denialReloadErr.message.toLowerCase()).not.toContain('vacan');
       expect(denialReloadErr.message.toLowerCase()).not.toContain('ordinary');
 
-      // Persona switch to Platform Owner on the 2-attendee event: Owner MUST see precise detail
+      // After denial: participant still cannot derive Vikram/Rohan from event or session
+      const pViewAfterDenial = await demoRepository.getEvent('evt_jaipur_limited_05');
+      expect(pViewAfterDenial!.attendeeUserIds).not.toContain('user_vikram');
+      expect(pViewAfterDenial!.attendeeUserIds).not.toContain('user_rohan');
+      const pSessionAfterDenial = await demoRepository.getSessionByEvent('evt_jaipur_limited_05');
+      expect(pSessionAfterDenial?.roster.some((r) => r.userId === 'user_vikram')).toBe(false);
+      expect(pSessionAfterDenial?.roster.some((r) => r.userId === 'user_rohan')).toBe(false);
+
+      // Persona switch to Platform Owner on the 2-attendee event: Owner MUST see precise detail and full attendee list
       await demoRepository.switchPersona('user_admin');
       const ownerViewBefore = await demoRepository.getEvent('evt_jaipur_limited_05');
       expect(ownerViewBefore!.allocation?.isPrivacySuppressed).toBeFalsy();
@@ -655,6 +685,12 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(ownerViewBefore!.allocation?.ordinaryOccupiedCount).toBe(2);
       expect(ownerViewBefore!.allocation?.vacanciesCount).toBe(1);
       expect(ownerViewBefore!.allocation?.status).toBe('pending');
+      // Owner view retains full attendee IDs and named session roster
+      expect(ownerViewBefore!.attendeeUserIds).toContain('user_vikram');
+      expect(ownerViewBefore!.attendeeUserIds).toContain('user_rohan');
+      const ownerSession = await demoRepository.getSessionByEvent('evt_jaipur_limited_05');
+      expect(ownerSession?.roster.some((r) => r.userId === 'user_vikram')).toBe(true);
+      expect(ownerSession?.roster.some((r) => r.userId === 'user_rohan')).toBe(true);
 
       // Owner validation check preserves actionable detailed reason and hold-vacant default
       const ownerValidation = canUserRsvpAllocation(ownerViewBefore!.allocation!, 'user_aarav', undefined, true);
@@ -668,6 +704,8 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(ownerViewReloaded!.allocation?.reservedOccupiedCount).toBe(0);
       expect(ownerViewReloaded!.allocation?.ordinaryOccupiedCount).toBe(2);
       expect(ownerViewReloaded!.allocation?.vacanciesCount).toBe(1);
+      expect(ownerViewReloaded!.attendeeUserIds).toContain('user_vikram');
+      expect(ownerViewReloaded!.attendeeUserIds).toContain('user_rohan');
 
       // Concrete case 2: Owner approves exception on 2-attendee event
       const sensitiveReason = 'Two confirmed attendees are ordinary; no eligible candidates found after outreach.';
@@ -689,6 +727,8 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(pViewAfter!.allocation?.isException).toBe(false);
       expect(pViewAfter!.allocation?.exceptionAudit).toBeUndefined();
       expect(pViewAfter!.allocation?.status).toBeUndefined();
+      expect(pViewAfter!.attendeeUserIds).not.toContain('user_vikram');
+      expect(pViewAfter!.attendeeUserIds).not.toContain('user_rohan');
       const pAuditsAfter = await demoRepository.getAllocationAudits('alloc_evt_jaipur_limited_05');
       expect(pAuditsAfter.some((a) => a.action === 'exception_approved')).toBe(false);
       expect(pAuditsAfter.some((a) => a.snapshot?.status === 'finalized_exception')).toBe(false);
@@ -699,24 +739,37 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(reloadedView!.allocation?.isException).toBe(false);
       expect(reloadedView!.allocation?.exceptionAudit).toBeUndefined();
       expect(reloadedView!.allocation?.status).toBeUndefined();
+      expect(reloadedView!.attendeeUserIds).not.toContain('user_vikram');
+      expect(reloadedView!.attendeeUserIds).not.toContain('user_rohan');
       const reloadedAudits = await demoRepository.getAllocationAudits('alloc_evt_jaipur_limited_05');
       expect(reloadedAudits.some((a) => a.action === 'exception_approved')).toBe(false);
 
-      // Persona switch to another participant (user_priya): still suppressed
+      // Persona switch to another participant (user_priya): still suppressed, attendee IDs redacted
       await demoRepository.switchPersona('user_priya');
       const priyaView = await demoRepository.getEvent('evt_jaipur_limited_05');
       expect(priyaView!.allocation?.isException).toBe(false);
       expect(priyaView!.allocation?.exceptionAudit).toBeUndefined();
       expect(priyaView!.allocation?.status).toBeUndefined();
+      expect(priyaView!.attendeeUserIds).not.toContain('user_vikram');
+      expect(priyaView!.attendeeUserIds).not.toContain('user_rohan');
       const priyaAudits = await demoRepository.getAllocationAudits('alloc_evt_jaipur_limited_05');
       expect(priyaAudits.some((a) => a.action === 'exception_approved')).toBe(false);
 
-      // Persona switch to organizer (user_dev): still suppressed
+      // Persona switch to organizer (user_dev): still suppressed, attendee IDs and roster redacted
       await demoRepository.switchPersona('user_dev');
       const devView = await demoRepository.getEvent('evt_jaipur_limited_05');
       expect(devView!.allocation?.isException).toBe(false);
       expect(devView!.allocation?.exceptionAudit).toBeUndefined();
       expect(devView!.allocation?.status).toBeUndefined();
+      expect(devView!.attendeeUserIds).not.toContain('user_vikram');
+      expect(devView!.attendeeUserIds).not.toContain('user_rohan');
+      const devSession = await demoRepository.getSessionByEvent('evt_jaipur_limited_05');
+      expect(devSession?.roster.some((r) => r.userId === 'user_vikram')).toBe(false);
+      expect(devSession?.roster.some((r) => r.userId === 'user_rohan')).toBe(false);
+      const devEvents = await demoRepository.getEvents();
+      const devEvt5 = devEvents.find((e) => e.id === 'evt_jaipur_limited_05');
+      expect(devEvt5?.attendeeUserIds).not.toContain('user_vikram');
+      expect(devEvt5?.attendeeUserIds).not.toContain('user_rohan');
       const devAudits = await demoRepository.getAllocationAudits('alloc_evt_jaipur_limited_05');
       expect(devAudits.some((a) => a.action === 'exception_approved')).toBe(false);
     });
@@ -758,6 +811,136 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(ownerView!.allocation?.reservedOccupiedCount).toBe(1);
       expect(ownerView!.allocation?.ordinaryOccupiedCount).toBe(1);
       expect(ownerView!.allocation?.vacanciesCount).toBe(0);
+    });
+
+    it('redacts other attendee identities in getDashboard upcomingEvents across caller personas and views', async () => {
+      // 1. Participant Aarav views his own dashboard:
+      await demoRepository.switchPersona('user_aarav');
+      const aaravDash = await demoRepository.getDashboard('user_aarav');
+      for (const ev of aaravDash.upcomingEvents) {
+        if (ev.allocation && ev.allocation.status !== 'unvalidated_legacy') {
+          expect(ev.attendeeUserIds).not.toContain('user_vikram');
+          expect(ev.attendeeUserIds).not.toContain('user_rohan');
+        }
+      }
+
+      // 2. Cross-persona inspection: Aarav (non-owner) reads Vikram's dashboard
+      // Must not allow another persona dashboard to reveal identified attendance in allocated limited events
+      const vikramDashViewedByAarav = await demoRepository.getDashboard('user_vikram');
+      const evt5InVikramDash = vikramDashViewedByAarav.upcomingEvents.find(
+        (e) => e.id === 'evt_jaipur_limited_05'
+      );
+      // evt_jaipur_limited_05 is an allocated event where Vikram is only an attendee; must not be revealed to Aarav
+      expect(evt5InVikramDash).toBeUndefined();
+
+      // For any events that are returned on Vikram's dashboard,
+      // projected for Aarav: attendee IDs must still never reveal Vikram or Rohan on allocated events
+      for (const ev of vikramDashViewedByAarav.upcomingEvents) {
+        if (ev.allocation && ev.allocation.status !== 'unvalidated_legacy') {
+          expect(ev.attendeeUserIds).not.toContain('user_vikram');
+          expect(ev.attendeeUserIds).not.toContain('user_rohan');
+        }
+      }
+
+      // 3. Organizer Dev Patel views Vikram's dashboard:
+      await demoRepository.switchPersona('user_dev');
+      const vikramDashViewedByDev = await demoRepository.getDashboard('user_vikram');
+      expect(
+        vikramDashViewedByDev.upcomingEvents.find((e) => e.id === 'evt_jaipur_limited_05')
+      ).toBeUndefined();
+
+      // 4. Platform Owner (user_admin) views Vikram's dashboard:
+      // Owner is authorized to view full audit detail and attendee memberships
+      await demoRepository.switchPersona('user_admin');
+      const vikramDashViewedByAdmin = await demoRepository.getDashboard('user_vikram');
+      const evt5InAdminDash = vikramDashViewedByAdmin.upcomingEvents.find(
+        (e) => e.id === 'evt_jaipur_limited_05'
+      );
+      expect(evt5InAdminDash).toBeDefined();
+      expect(evt5InAdminDash!.attendeeUserIds).toContain('user_vikram');
+      expect(evt5InAdminDash!.attendeeUserIds).toContain('user_rohan');
+    });
+
+    it('protects session roster in mutator return paths for allocated events while preserving internal DB state', async () => {
+      // Setup a session linked to allocated event evt_jaipur_limited_05 in DB
+      const db = PersistenceService.loadDatabase();
+      const mockAllocSession: any = {
+        id: 'sess_allocated_limited_05',
+        eventId: 'evt_jaipur_limited_05',
+        title: 'Limited Deliberation Workshop Session',
+        currentMode: 'debate_room',
+        facilitatorId: 'user_dev',
+        roster: [
+          { userId: 'user_vikram', name: 'Vikram Joshi', role: 'Participant', joinedAt: '2026-10-01T00:00:00Z' },
+          { userId: 'user_rohan', name: 'Rohan Mehta', role: 'Participant', joinedAt: '2026-10-01T00:00:00Z' },
+          { userId: 'user_aarav', name: 'Aarav Patel', role: 'Participant', joinedAt: '2026-10-01T00:00:00Z' },
+        ],
+        modeTransitions: [
+          {
+            id: 'trans_alloc_01',
+            fromMode: 'debate_room',
+            toMode: 'debate_room',
+            timestamp: '2026-10-01T00:00:00Z',
+            initiatedBy: 'user_dev',
+            summary: 'Session in debate room mode',
+          },
+        ],
+        agenda: [],
+        resources: [],
+        debateData: {
+          motion: 'Test Motion for Limited Workshop',
+          currentPhase: 'DISCUSSION',
+          activeSpeakerId: null,
+          speakingQueue: [],
+          contributions: [],
+          acknowledgedUserIds: [],
+          rulebook: { version: 'v1.0', rules: [] },
+        },
+        schemaVersion: 1,
+        createdAt: '2026-10-01T00:00:00Z',
+        updatedAt: '2026-10-01T00:00:00Z',
+      };
+      db.sessions = db.sessions.filter((s) => s.id !== mockAllocSession.id);
+      db.sessions.push(mockAllocSession);
+      PersistenceService.saveDatabase(db);
+
+      // Act as non-owner participant Aarav:
+      await demoRepository.switchPersona('user_aarav');
+
+      // 1. Mutator: acknowledgeRulebook
+      const ackResult = await demoRepository.acknowledgeRulebook('sess_allocated_limited_05', 'user_aarav');
+      expect(ackResult.roster.some((r) => r.userId === 'user_vikram')).toBe(false);
+      expect(ackResult.roster.some((r) => r.userId === 'user_rohan')).toBe(false);
+      expect(ackResult.roster.some((r) => r.userId === 'user_aarav')).toBe(true);
+
+      // 2. Mutator: requestSpeakingTurn
+      const reqResult = await demoRepository.requestSpeakingTurn('sess_allocated_limited_05', 'user_aarav');
+      expect(reqResult.roster.some((r) => r.userId === 'user_vikram')).toBe(false);
+      expect(reqResult.roster.some((r) => r.userId === 'user_rohan')).toBe(false);
+      expect(reqResult.roster.some((r) => r.userId === 'user_aarav')).toBe(true);
+
+      // 3. Mutator: cancelSpeakingTurn
+      const cancelResult = await demoRepository.cancelSpeakingTurn('sess_allocated_limited_05', 'user_aarav');
+      expect(cancelResult.roster.some((r) => r.userId === 'user_vikram')).toBe(false);
+      expect(cancelResult.roster.some((r) => r.userId === 'user_rohan')).toBe(false);
+
+      // 4. Verify internal DB state preserved the full roster!
+      const freshDb = PersistenceService.loadDatabase();
+      const internalSession = freshDb.sessions.find((s) => s.id === 'sess_allocated_limited_05');
+      expect(internalSession?.roster).toHaveLength(3);
+      expect(internalSession?.roster.some((r) => r.userId === 'user_vikram')).toBe(true);
+      expect(internalSession?.roster.some((r) => r.userId === 'user_rohan')).toBe(true);
+
+      // 5. Platform Owner gets full roster on mutators/reads
+      await demoRepository.switchPersona('user_admin');
+      const ownerSession = await demoRepository.getSession('sess_allocated_limited_05');
+      expect(ownerSession?.roster.some((r) => r.userId === 'user_vikram')).toBe(true);
+      expect(ownerSession?.roster.some((r) => r.userId === 'user_rohan')).toBe(true);
+
+      // 6. Normal debate room flow on unallocated session (sess_jaipur_01) preserves full roster for non-owner
+      await demoRepository.switchPersona('user_aarav');
+      const normalAck = await demoRepository.acknowledgeRulebook('sess_jaipur_01', 'user_aarav');
+      expect(normalAck.roster.length).toBeGreaterThan(1);
     });
   });
 });

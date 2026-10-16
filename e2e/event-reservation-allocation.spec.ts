@@ -38,11 +38,16 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('status-blocked-noncompliant')).toHaveCount(0);
     await expect(page.getByTestId('status-finalized-exception')).toHaveCount(0);
 
-    // 5. Verify privacy protection in participant list: no individual declarations exposed
+    // 5. Verify privacy protection in participant list: no individual declarations exposed, other attendee identities redacted
     const cohortCard = page.getByTestId('registered-cohort-card');
     await expect(cohortCard.getByText('Participants Registered (2)')).toBeVisible();
-    await expect(cohortCard.getByText('Vikram Joshi')).toBeVisible();
-    await expect(cohortCard.getByText('Rohan Mehta')).toBeVisible();
+    await expect(page.getByTestId('roster-protected-notice')).toBeVisible();
+    await expect(page.getByText(/Roster Protected for Allocation Privacy/i)).toBeVisible();
+    // Negative assertions: other attendees' names must NOT be exposed to non-owner participant
+    await expect(cohortCard.getByText('Vikram Joshi')).toHaveCount(0);
+    await expect(cohortCard.getByText('Rohan Mehta')).toHaveCount(0);
+    await expect(page.getByText('Vikram Joshi')).toHaveCount(0);
+    await expect(page.getByText('Rohan Mehta')).toHaveCount(0);
     // Ensure no gender or reservation tags appear next to participants
     await expect(cohortCard.locator('text=/\\b(eligible|ineligible|female|male|reservation)\\b/i')).toHaveCount(0);
 
@@ -78,6 +83,10 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(alertBox.getByText(/fully subscribed/i)).toHaveCount(0);
     await expect(alertBox.getByText(/capacity reached/i)).toHaveCount(0);
 
+    // After denial: attendee names still cannot be derived by participant
+    await expect(page.getByText('Vikram Joshi')).toHaveCount(0);
+    await expect(page.getByText('Rohan Mehta')).toHaveCount(0);
+
     // Verify participant authority is restricted
     await expect(page.getByText(/Authority Restricted:.*Only Platform Owner/i)).toBeVisible();
 
@@ -87,6 +96,10 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('Withheld');
     await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('Withheld');
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
+    // Attendee names remain unexposed after reload
+    await expect(page.getByText('Vikram Joshi')).toHaveCount(0);
+    await expect(page.getByText('Rohan Mehta')).toHaveCount(0);
+
     await page.getByRole('button', { name: /^Attending$/i }).click();
     const alertBoxReload = page.getByRole('alert');
     await expect(alertBoxReload).toBeVisible();
@@ -98,7 +111,17 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(alertBoxReload.getByText(/ordinary/i)).toHaveCount(0);
     await expect(alertBoxReload.getByText(/\(2\/2\)/)).toHaveCount(0);
 
-    // 9. Persona switch to Platform Owner (Demo Administrator) on the 2-attendee event: Owner MUST see precise detail
+    // Test organizer persona: Organizer also CANNOT derive Vikram/Rohan identity from UI
+    await page.goto('/demo-login');
+    await page.getByText('Dev Patel').first().click();
+    await page.waitForURL('**/dashboard');
+    await page.goto('/events/evt_jaipur_limited_05');
+    await page.waitForURL('**/events/evt_jaipur_limited_05');
+    await expect(page.getByTestId('roster-protected-notice')).toBeVisible();
+    await expect(page.getByText('Vikram Joshi')).toHaveCount(0);
+    await expect(page.getByText('Rohan Mehta')).toHaveCount(0);
+
+    // 9. Persona switch to Platform Owner (Demo Administrator) on the 2-attendee event: Owner MUST see precise detail and full attendee roster
     await page.goto('/demo-login');
     await page.getByText('Demo Administrator').first().click();
     await page.waitForURL('**/dashboard');
@@ -116,12 +139,20 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('status-pending')).toBeVisible();
     await expect(page.getByTestId('status-privacy-suppressed')).toHaveCount(0);
 
+    // Platform Owner receives full attendee list
+    const ownerCohortCard = page.getByTestId('registered-cohort-card');
+    await expect(ownerCohortCard.getByText('Participants Registered (2)')).toBeVisible();
+    await expect(ownerCohortCard.getByText('Vikram Joshi')).toBeVisible();
+    await expect(ownerCohortCard.getByText('Rohan Mehta')).toBeVisible();
+
     // Verify owner view after reload retains precise details
     await page.reload();
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('metric-reserved-occupied')).toHaveText('0');
     await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('2');
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('1');
+    await expect(page.getByTestId('registered-cohort-card').getByText('Vikram Joshi')).toBeVisible();
+    await expect(page.getByTestId('registered-cohort-card').getByText('Rohan Mehta')).toBeVisible();
 
     // 10. Test compliant eligible path: Switch to eligible participant Meera Singh
     await page.goto('/demo-login');
@@ -139,6 +170,11 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('metric-ordinary-occupied')).toHaveText('Withheld');
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('Withheld');
     await expect(page.getByTestId('status-privacy-suppressed')).toBeVisible();
+    // Meera sees her own confirmed status, while others remain protected
+    await expect(page.getByTestId('roster-protected-notice')).toBeVisible();
+    await expect(page.getByText('You (Meera Singh)')).toBeVisible();
+    await expect(page.getByText('Vikram Joshi')).toHaveCount(0);
+    await expect(page.getByText('Rohan Mehta')).toHaveCount(0);
 
     // 11. Switch back to Platform Owner (Demo Administrator) to verify exact validation details updated
     await page.goto('/demo-login');
@@ -157,6 +193,13 @@ test.describe('Package 08A: Shared Reservation Allocation & Limited Event Places
     await expect(page.getByTestId('metric-vacancies-count')).toHaveText('0');
     await expect(page.getByTestId('status-pending')).toBeVisible();
     await expect(page.getByTestId('status-privacy-suppressed')).toHaveCount(0);
+
+    // Owner sees all 3 attendees
+    const ownerCohortAfterMeera = page.getByTestId('registered-cohort-card');
+    await expect(ownerCohortAfterMeera.getByText('Participants Registered (3)')).toBeVisible();
+    await expect(ownerCohortAfterMeera.getByText('Vikram Joshi')).toBeVisible();
+    await expect(ownerCohortAfterMeera.getByText('Rohan Mehta')).toBeVisible();
+    await expect(ownerCohortAfterMeera.getByText('Meera Singh')).toBeVisible();
   });
 
   test('desktop: simulates Platform Owner exception approval with audit record', async ({ page }) => {

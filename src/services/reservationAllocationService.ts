@@ -484,3 +484,19 @@ export function approveAllocationExceptionState(
 
   return { updatedAllocation, audit };
 }
+
+declare module '../types/domain' {
+  interface Event {
+    registeredCount?: number;
+  }
+}
+
+/**
+ * Determines whether an event is an allocated limited event governed by the 33% reservation policy.
+ * Legacy unvalidated events (e.g. unvalidated_legacy) are excluded.
+ */
+export function isAllocatedLimitedEvent(evt?: { allocation?: AllocationState | null } | null): boolean {
+  if (!evt || !evt.allocation) return false;
+  return evt.allocation.status !== 'unvalidated_legacy';
+}
+

@@ -61,6 +61,7 @@ import {
   approveAllocationExceptionState,
   sanitizeAllocationForPublic,
   isSmallCohortAllocation,
+  isAllocatedLimitedEvent,
   POLICY_VERSION,
 } from './reservationAllocationService';
 import {
@@ -499,6 +500,8 @@ export class LocalDemoRepository implements DemoRepository {
     clonedUser.totalCredits = userCredits;
 
     const activeUserId = db.activeUserId;
+    const activeUser = db.users.find((u) => u.id === activeUserId) || null;
+    const isOwner = activeUser?.role === 'platform_admin';
     const isOtherPersona = userId !== activeUserId;
 
     const enrolments = db.enrolments.filter((e) => {
@@ -514,7 +517,16 @@ export class LocalDemoRepository implements DemoRepository {
         return true;
       })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    const events = db.events.filter((e) => e.attendeeUserIds.includes(userId) || e.organizerId === userId);
+    const events = db.events.filter((e) => {
+      const isOrganizer = e.organizerId === userId;
+      const isAttendee = e.attendeeUserIds.includes(userId);
+      if (!isOrganizer && !isAttendee) return false;
+      // Do not allow another persona dashboard to reveal identified attendance on allocated limited events
+      if (isOtherPersona && !isOwner && isAttendee && !isOrganizer && isAllocatedLimitedEvent(e)) {
+        return false;
+      }
+      return true;
+    });
     const assemblies = db.assemblies.filter(
       (a) => a.participantUserIds.includes(userId) || a.facilitatorId === userId || a.status === 'deliberating' || a.status === 'active'
     );
@@ -657,7 +669,7 @@ export class LocalDemoRepository implements DemoRepository {
       user: clonedUser,
       activeEnrolments: JSON.parse(JSON.stringify(enrolments)),
       recentActivities: JSON.parse(JSON.stringify(activities.slice(0, 8))),
-      upcomingEvents: JSON.parse(JSON.stringify(events)),
+      upcomingEvents: events.map((e) => this.projectEventForCaller(e, activeUser, db)),
       activeAssemblies: JSON.parse(JSON.stringify(assemblies)),
       pendingAssignments: JSON.parse(JSON.stringify(pendingAssignments)),
       recentNotifications: JSON.parse(JSON.stringify(notifications.slice(0, 5))),
@@ -2969,13 +2981,58 @@ export class LocalDemoRepository implements DemoRepository {
   }
 
   // Events & Sessions
-  private projectEventForCaller(evt: Event, caller?: User | null): Event {
+  private projectEventForCaller(evt: Event, caller?: User | null, db?: DemoDatabase): Event {
+    const activeDb = db || this.getDb();
+    const resolvedCaller = caller ?? (activeDb.activeUserId ? activeDb.users.find((u) => u.id === activeDb.activeUserId) : null);
     const cloned: Event = JSON.parse(JSON.stringify(evt));
-    const isOwner = caller?.role === 'platform_admin';
+    const isOwner = resolvedCaller?.role === 'platform_admin';
+    const isAllocated = isAllocatedLimitedEvent(evt);
 
     if (cloned.allocation) {
       cloned.allocation = sanitizeAllocationForPublic(cloned.allocation, isOwner);
     }
+
+    // Attach truthful aggregate counts
+    cloned.registeredCount = evt.attendeeUserIds?.length ?? 0;
+
+    // For allocated limited events: only Platform Owner may receive full attendee IDs, RSVP map, and check-in IDs.
+    // Non-owner callers receive only their own participation state with no identified others.
+    if (isAllocated && !isOwner) {
+      const callerId = resolvedCaller?.id;
+      cloned.attendeeUserIds = callerId && evt.attendeeUserIds?.includes(callerId) ? [callerId] : [];
+      cloned.checkedInUserIds = callerId && evt.checkedInUserIds?.includes(callerId) ? [callerId] : [];
+      if (cloned.rsvpMap) {
+        cloned.rsvpMap = callerId && evt.rsvpMap?.[callerId] ? { [callerId]: evt.rsvpMap[callerId] } : {};
+      }
+    }
+
+    return cloned;
+  }
+
+  private projectSessionForCaller(
+    sess: Session,
+    caller?: User | null,
+    db?: DemoDatabase
+  ): Session {
+    const activeDb = db || this.getDb();
+    const resolvedCaller = caller ?? (activeDb.activeUserId ? activeDb.users.find((u) => u.id === activeDb.activeUserId) : null);
+    const cloned: Session = JSON.parse(JSON.stringify(sess));
+    const isOwner = resolvedCaller?.role === 'platform_admin';
+    if (isOwner) return cloned;
+
+    const linkedEvent = activeDb.events.find((e) => e.id === sess.eventId);
+    if (!linkedEvent || !isAllocatedLimitedEvent(linkedEvent)) {
+      return cloned;
+    }
+
+    // For allocated limited events: non-owner receives only their own participation state (if in roster) with no identified others.
+    const callerId = resolvedCaller?.id;
+    if (callerId) {
+      cloned.roster = (cloned.roster || []).filter((entry) => entry.userId === callerId);
+    } else {
+      cloned.roster = [];
+    }
+
     return cloned;
   }
 
@@ -3023,14 +3080,17 @@ export class LocalDemoRepository implements DemoRepository {
   async getSession(sessionId: string): Promise<Session | null> {
     const db = this.getDb();
     const sess = db.sessions.find((s) => s.id === sessionId);
-    return sess ? JSON.parse(JSON.stringify(sess)) : null;
+    if (!sess) return null;
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    return this.projectSessionForCaller(sess, activeUser, db);
   }
 
   async getSessionByEvent(eventId: string): Promise<Session | null> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
     const sess = db.sessions.find((s) => s.eventId === eventId);
     if (sess) {
-      return JSON.parse(JSON.stringify(sess));
+      return this.projectSessionForCaller(sess, activeUser, db);
     }
     const evt = db.events.find((e) => e.id === eventId);
     if (!evt) return null;
@@ -3076,7 +3136,7 @@ export class LocalDemoRepository implements DemoRepository {
       createdAt: evt.createdAt,
       updatedAt: evt.updatedAt,
     };
-    return mockSession;
+    return this.projectSessionForCaller(mockSession, activeUser, db);
   }
 
   async acknowledgeRulebook(sessionId: string, userId: string): Promise<Session> {
@@ -3096,7 +3156,8 @@ export class LocalDemoRepository implements DemoRepository {
       session.updatedAt = new Date().toISOString();
       this.saveDb(db);
     }
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || userId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async requestSpeakingTurn(sessionId: string, userId: string): Promise<Session> {
@@ -3153,7 +3214,8 @@ export class LocalDemoRepository implements DemoRepository {
     session.debateData.speakingQueue.push(newEntry);
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || userId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async cancelSpeakingTurn(sessionId: string, userId: string): Promise<Session> {
@@ -3185,7 +3247,8 @@ export class LocalDemoRepository implements DemoRepository {
     queueEntry.status = 'cancelled';
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || userId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async recognizeSpeakingTurn(sessionId: string, actorId: string, targetUserId: string): Promise<Session> {
@@ -3229,7 +3292,8 @@ export class LocalDemoRepository implements DemoRepository {
     session.debateData.activeSpeakerId = targetUserId;
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || actorId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async advanceSpeakingTurn(sessionId: string, actorId: string): Promise<Session> {
@@ -3273,7 +3337,8 @@ export class LocalDemoRepository implements DemoRepository {
 
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || actorId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async advanceDebatePhase(sessionId: string, actorId: string, nextPhase: DebatePhase): Promise<Session> {
@@ -3314,7 +3379,8 @@ export class LocalDemoRepository implements DemoRepository {
     session.debateData.currentPhase = nextPhase;
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || actorId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async postDebateContribution(input: {
@@ -3388,7 +3454,8 @@ export class LocalDemoRepository implements DemoRepository {
     session.debateData.contributions.push(contrib);
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || input.userId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async switchSessionMode(
@@ -3427,7 +3494,8 @@ export class LocalDemoRepository implements DemoRepository {
       this.saveDb(db);
     }
 
-    return JSON.parse(JSON.stringify(session));
+    const caller = db.users.find((u) => u.id === (db.activeUserId || actorId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
   }
 
   async rsvpEvent(
