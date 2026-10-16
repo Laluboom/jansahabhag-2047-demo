@@ -1,4 +1,12 @@
-# Autobuild handoff — 2026-10-15
+# Autobuild handoff — 2026-10-16
+
+## Current handoff
+
+The owner's standing approval now covers all Autobuild repair rounds and fresh repair jobs; `/home/lalu/Softwares/sub-agy/AUTOBUILD-PROMPT.md` was updated accordingly. Packages 08A event allocation, 08B Assembly named roles, 08C Debate named roles/UI, and 09 connected Jaipur journey were completed in a dependent isolated branch chain. The final branch is `agy/j-20261016-073737-pt3p`; focused code commit `b33515d` passed independent production build, 311 unit tests and 29 browser tests. See `docs/HANDOFF_2026-10-16.md` and the package acceptance records in `docs/audits/`.
+
+The Package 09 sub-agy job exhausted two rounds without a completion contract, but saved a focused diff. That diff was independently reviewed, tested and committed on the isolated branch. No sub-agy job is running. Root `autobuild` and the public deployment do not include the new branch chain. Merging remains the user's decision; if merged, rerun the full suite on the integrated checkout and inspect the deployed result after publication. The full product's backend, Hindi review, real-data policy and launch reviews remain outside this browser demo.
+
+## Historical 15 October controlled stop
 
 ## Current controlled stop — reservation privacy blocker
 
