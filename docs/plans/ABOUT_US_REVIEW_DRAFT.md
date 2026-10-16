@@ -1,6 +1,6 @@
-# About Us — review draft, not published
+# About Us — page copy and remaining fact review
 
-Source: `docs/reference/JanSahabhag_2047_Developer_Handoff.docx` (Website Content & About Us — Developer Handoff). This file is a proposed page and approval checklist. It is not an implemented route or a statement that the founder facts are verified.
+Sources: `docs/reference/JanSahabhag_2047_Developer_Handoff.docx` (Website Content & About Us — Developer Handoff) and the owner's 2026-10-16 identification of both supplied portraits and roles. The `/about` route now uses the safe initiative copy and the confirmed people facts. Publication to a remote site remains a separate action.
 
 ## Example visitor-facing page
 
@@ -38,9 +38,13 @@ The aim is to help young people understand an issue, listen to different views, 
 
 As India approaches the centenary of its independence, JanSahabhag 2047 explores how education can nurture informed, responsible and participating citizens.
 
-### Founder section — hold until approved
+### People credits used on the page
 
-The handoff proposes **Nazim M. Sandh**, **Founder and Initiator**, with the descriptor **Independent Learner | From the Gir region of Gujarat**. It also proposes a biography covering microbiology, youth work, sustainability and the Viksit Bharat Young Leaders Dialogue 2026. None of those personal facts or achievement claims should appear on the public page until the owner confirms the exact wording and supplies or approves a photograph. The page can launch without this section if the identity review is still open.
+**Nazim M. Sandh — Founder and Initiator.** The owner identified the first supplied portrait as Nazim and confirmed him as founder. The developer handoff supplies his fuller name and designation.
+
+**Visesh Akbari — Website and System Developer.** The owner identified the second supplied portrait as Visesh and said he made the website and technical system. The owner specified that his contribution was technical, not ideation. No cofounder or concept credit is assigned to him.
+
+The handoff also proposes a Gir descriptor and a biography covering microbiology, youth work, sustainability and the Viksit Bharat Young Leaders Dialogue 2026. Those details, any Prime Minister presentation claim, and public contact links remain unpublished pending exact confirmation.
 
 ## Page build plan
 
@@ -48,18 +52,15 @@ The handoff proposes **Nazim M. Sandh**, **Founder and Initiator**, with the des
 | --- | --- |
 | Route | Public `/about` page with a visible link from the current welcome page and site navigation. |
 | Presentation | Editorial layout using deep navy, muted teal, off-white, generous spacing and short paragraphs; responsive on mobile. |
-| Images | Use an approved founder photograph if supplied. Otherwise omit the image; do not use a stock politician, flag, handshake or Parliament image. |
-| Content status | Keep the concept and initiative language above. Add founder/achievement/contact claims only after approval. No ministry seals, endorsements or partner logos without evidence and permission. |
+| Images | Use the owner-supplied Nazim and Visesh portraits with named alt text. |
+| Content status | Keep the concept and initiative language above. Show only confirmed names and roles. No unsupported biography, ministry seals, endorsements or partner logos. |
 | Verification | Check direct `/about` navigation, links, mobile layout, keyboard access and the absence of unapproved claims. |
 
-## Approval checklist
+## Remaining information to confirm
 
-Reply with **approve**, **edit**, or **omit** for each item that you want on the public About Us page:
+1. **Visesh's preferred public title and scope:** whether “Website and System Developer” is exact, and whether he built the demo alone or with others. Clarify whether “system” includes only the current browser demo or other technical work.
+2. **Visesh's public biography:** one or two sentences in his own words, if wanted. Qualifications, organizations, dates and personal details are excluded until supplied.
+3. **Visesh's public links and photo credit:** exact portfolio/GitHub/LinkedIn URLs or no links; any requested photographer credit.
+4. **Nazim's fuller biography and claims:** Gir descriptor, academic status and any work examples; exact supported VBYLD/Prime Minister wording if wanted. These are excluded from the current page.
 
-1. **Initiative copy:** the visitor-facing sections above, including the description of LOK MANCH-2047 as a concept under development.
-2. **Founder name and designation:** `Nazim M. Sandh — Founder and Initiator`.
-3. **Founder descriptor and biography:** Gir region, academic status in microbiology, and which work examples may be stated publicly. Provide corrected wording where needed.
-4. **VBYLD / Prime Minister presentation claim:** exact supported wording and evidence, or omit it. This is excluded from the example page above.
-5. **Photograph and contact:** an image you approve for public use and the exact public email/social links, if any. These are excluded until provided.
-
-Approval of the page draft authorizes only the chosen public copy. It does not approve separate Founder’s Journey, Our Work, Contact or LOK MANCH pages, or publication of the app.
+The current page does not imply a production backend or live multi-user service. It labels the experience as a single-browser simulation.

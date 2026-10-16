@@ -52,6 +52,12 @@ export const WelcomePage: React.FC = () => {
               </Button>
             </Link>
           </div>
+          <Link
+            to="/about"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-semibold text-civic-saffron-300 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-saffron-400"
+          >
+            About the people behind JanSahabhag <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
 
         {/* Ambient background decoration */}

@@ -13,7 +13,7 @@ export interface RouteDefinition {
   screenshotMobile?: string;
 }
 
-export const ALL_60_ROUTES: RouteDefinition[] = [
+export const ALL_61_ROUTES: RouteDefinition[] = [
   { index: 1, pattern: '/demo-login', url: '/demo-login', headingRegex: /Select a Persona|Demo Personas|JanSahabhag 2047|Enter JanSahabhag/i, controlRegex: /Enter JanSahabhag|Aarav Sharma/i, screenshotDesktop: '01-desktop-demo-login.png' },
   { index: 2, pattern: '/', url: '/', expectedUrlRegex: /\/dashboard$/, headingRegex: /Civic Journey Dashboard|Welcome back/i, controlRegex: /Continue Learning|Civic Passport|Civic Credits/i },
   { index: 3, pattern: '/welcome', url: '/welcome', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i, controlRegex: /Begin Aarav|Explore All Personas|Explore Curriculum|Join Assembly/i },
@@ -73,7 +73,8 @@ export const ALL_60_ROUTES: RouteDefinition[] = [
   { index: 57, pattern: '/admin/content', url: '/admin/content', headingRegex: /Curriculum & Content Management/i, controlRegex: /Curriculum|Modules|Courses/i },
   { index: 58, pattern: '/admin/moderation', url: '/admin/moderation', headingRegex: /Moderation & Content Safety Queue|Moderation/i, controlRegex: /All Cases|Open|Resolved/i },
   { index: 59, pattern: '/analytics', url: '/analytics', headingRegex: /Civic Engagement & Deliberation Analytics|Analytics/i, controlRegex: /Local Institution Real-Time|National 2047 Preview|Total Participants/i },
-  { index: 60, pattern: '/*', url: '/non-existent-route-slug-404', headingRegex: /Path Not Found|Error 404/i, controlRegex: /Return to Dashboard/i, screenshotDesktop: '16-desktop-catchall-404.png' },
+  { index: 60, pattern: '/about', url: '/about', headingRegex: /Connecting education with citizenship/i, controlRegex: /Nazim M. Sandh|Visesh Akbari/i },
+  { index: 61, pattern: '/*', url: '/non-existent-route-slug-404', headingRegex: /Path Not Found|Error 404/i, controlRegex: /Return to Dashboard/i, screenshotDesktop: '16-desktop-catchall-404.png' },
 ];
 
 const SCREENSHOT_DIR = path.resolve('docs/audits/phase0-screenshots');
@@ -96,7 +97,7 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
     await page.waitForURL('**/dashboard');
   });
 
-  test('Desktop (1280x800): verifies all 60 router patterns render/redirect without infinite spinner or horizontal overflow', async ({ page }) => {
+  test('Desktop (1280x800): verifies all 61 router patterns render/redirect without infinite spinner or horizontal overflow', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     let renderedCount = 0;
@@ -104,7 +105,7 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
     let noSpinnerCount = 0;
     let controlObservedCount = 0;
 
-    for (const r of ALL_60_ROUTES) {
+    for (const r of ALL_61_ROUTES) {
       await page.goto(r.url);
 
       if (r.expectedUrlRegex) {
@@ -148,14 +149,14 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
       }
     }
 
-    // Verify all 60 patterns completed without crash or layout break
-    expect(renderedCount).toBe(60);
-    expect(noSpinnerCount).toBe(60);
-    expect(noOverflowCount).toBe(60);
+    // Verify all 61 patterns completed without crash or layout break
+    expect(renderedCount).toBe(61);
+    expect(noSpinnerCount).toBe(61);
+    expect(noOverflowCount).toBe(61);
     expect(controlObservedCount).toBeGreaterThanOrEqual(55);
   });
 
-  test('Mobile (375x667): verifies all 60 router patterns render/redirect without infinite spinner or horizontal overflow', async ({ page }) => {
+  test('Mobile (375x667): verifies all 61 router patterns render/redirect without infinite spinner or horizontal overflow', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
 
     let renderedCount = 0;
@@ -163,7 +164,7 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
     let noSpinnerCount = 0;
     let controlObservedCount = 0;
 
-    for (const r of ALL_60_ROUTES) {
+    for (const r of ALL_61_ROUTES) {
       await page.goto(r.url);
 
       if (r.expectedUrlRegex) {
@@ -205,9 +206,9 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
       }
     }
 
-    expect(renderedCount).toBe(60);
-    expect(noSpinnerCount).toBe(60);
-    expect(noOverflowCount).toBe(60);
+    expect(renderedCount).toBe(61);
+    expect(noSpinnerCount).toBe(61);
+    expect(noOverflowCount).toBe(61);
     expect(controlObservedCount).toBeGreaterThanOrEqual(55);
   });
 

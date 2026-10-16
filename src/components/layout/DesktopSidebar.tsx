@@ -18,6 +18,7 @@ import {
   Bell,
   Settings,
   HelpCircle,
+  Info,
   Building2,
   ShieldCheck,
   BarChart3,
@@ -75,6 +76,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { to: '/notifications', label: 'Notifications', icon: Bell },
     { to: '/settings', label: 'Settings', icon: Settings },
     { to: '/help', label: 'Help / Rulebooks', icon: HelpCircle },
+    { to: '/about', label: 'About Us', icon: Info },
   ];
 
   return (

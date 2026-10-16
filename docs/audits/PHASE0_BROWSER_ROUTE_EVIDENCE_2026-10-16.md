@@ -6,6 +6,8 @@
 **Related Audit Records:** [PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md](PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md), [PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md)
 **Execution Context:** Package 10B browser verification in isolated worktree (`j-20261016-151430-7j62`)
 
+**Later change:** The `/about` route was added after this 60-route run. The current browser test includes 61 patterns; this document records the historical run and does not claim that the new page was covered then.
+
 ---
 
 ## 1. Executive Summary & Verification Boundary

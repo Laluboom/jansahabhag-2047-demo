@@ -6,6 +6,8 @@
 **Branch & Commit State:** Audited code base: `b33515d` (incorporating Packages 01–09), audited on branch `agy/j-20261016-144649-wf8g`
 **Execution Context:** Package 10A static and source-code evidence audit in isolated worktree
 
+**Later change:** The `/about` route was added after this 60-route audit. This record remains a snapshot of the audited commit; the current route inventory and browser test include 61 patterns.
+
 ---
 
 ## 1. Executive Summary & Verification Boundary
