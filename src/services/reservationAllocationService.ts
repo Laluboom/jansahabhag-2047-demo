@@ -499,4 +499,3 @@ export function isAllocatedLimitedEvent(evt?: { allocation?: AllocationState | n
   if (!evt || !evt.allocation) return false;
   return evt.allocation.status !== 'unvalidated_legacy';
 }
-
