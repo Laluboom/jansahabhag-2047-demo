@@ -71,7 +71,7 @@ export const AboutPage: React.FC = () => (
             />
           </div>
           <div className="space-y-2 p-6 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-teal-700">Developer</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Developer</p>
             <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
             <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-semibold">
               <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
