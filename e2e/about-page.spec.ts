@@ -6,10 +6,8 @@ test('About page credits founder and technical builder accurately', async ({ pag
   await expect(page.getByRole('heading', { level: 1, name: 'Connecting education with citizenship.' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Nazim M. Sandh' })).toBeVisible();
   await expect(page.getByText('Founder and Initiator', { exact: true })).toBeVisible();
-  await expect(page.getByText('Nazim M. Sandh is the founder of JanSahabhag 2047 and initiated its civic participation concept.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
   await expect(page.getByText('Developer', { exact: true })).toBeVisible();
-  await expect(page.getByText('Visesh Akbari independently developed the website and technical system for this demo.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
   await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
   await expect(page.getByText('Single-browser simulation')).toBeVisible();

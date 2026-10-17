@@ -44,6 +44,8 @@ As India approaches the centenary of its independence, JanSahabhag 2047 explores
 
 **Visesh Akbari — Developer.** The owner identified the second supplied portrait as Visesh, confirmed that he alone made the website and technical system for the current demo, and chose the public title “Developer.” The owner specified that his contribution was technical, not ideation. No cofounder or concept credit is assigned to him. Future technical work is not described as already delivered.
 
+The owner prefers no biographical paragraph beneath either person's name. The page shows only their portrait, name, role and Visesh's public profile links.
+
 The owner supplied public profile links: [GitHub](https://github.com/laluboom) and [LinkedIn](https://www.linkedin.com/in/viseshakbari/). These exact URLs are shown on the page. Their profile contents were not used as biography evidence.
 
 The handoff also proposes a Gir descriptor and a biography covering microbiology, youth work, sustainability and the Viksit Bharat Young Leaders Dialogue 2026. Those details, any Prime Minister presentation claim, and other contact links remain unpublished pending exact confirmation.
@@ -60,8 +62,6 @@ The handoff also proposes a Gir descriptor and a biography covering microbiology
 
 ## Remaining information to confirm
 
-1. **Visesh's public biography:** the owner requested wording options before choosing a longer bio. Qualifications, organizations, dates and personal details are excluded until supplied.
-2. **Photo credit:** any requested photographer credit for either portrait.
-3. **Nazim's fuller biography and claims:** Gir descriptor, academic status and any work examples; exact supported VBYLD/Prime Minister wording if wanted. These are excluded from the current page. The owner confirmed “Nazim M. Sandh” as the public founder name.
+The owner may supply a photographer credit for either portrait. Proposed founder biography and achievement claims remain excluded from the page. The owner confirmed “Nazim M. Sandh” as the public founder name.
 
 The current page does not imply a production backend or live multi-user service. It labels the experience as a single-browser simulation.
