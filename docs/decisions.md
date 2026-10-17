@@ -1,6 +1,6 @@
 # Product decisions and open owner inputs
 
-**Implementation status, 16 October 2026:** The fictional Jaipur reservation rule has been implemented and independently tested for limited events, Assembly named roles, and Debate named roles in the isolated branch chain ending at `agy/j-20261016-073737-pt3p`; see [the handoff](HANDOFF_2026-10-16.md). These changes are not merged or deployed. The statements below that say no reservation behavior is implemented describe the original 12 October baseline, not the current isolated branch. No real-data collection, server-side enforcement, or legal/public-launch approval follows from the demo work.
+**Implementation status, 17 October 2026:** The fictional Jaipur demo work, including the reservation rule for limited events, Assembly named roles and Debate named roles, is merged into local `autobuild`; see [the handoff](HANDOFF_2026-10-16.md). This version has not been pushed or verified on Vercel. Older statements below that say no reservation behavior is implemented describe the original 12 October baseline, not the current checkout. No real-data collection, server-side enforcement, or legal/public-launch approval follows from the demo work.
 
 **Reviewed:** 12 October 2026. **Governing source:** [Master PRD archive](reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A. The file is named `v3.1`, but its internal version table says `v3.0 — Consolidated Master PRD`; the reason is not documented. This record does not treat archived v2.1 defaults as new owner approvals.
 
