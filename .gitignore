@@ -1,6 +1,7 @@
 .subagy/
 node_modules/
 dist/
+.vite/
 .vercel/
 coverage/
 playwright-report/
