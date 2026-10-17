@@ -293,7 +293,7 @@ export const ActivitiesPage: React.FC = () => {
 
                 {act.referenceType === 'assembly' && (
                   <Link to={`/assemblies/${act.referenceId}`} className="shrink-0">
-                    <Button size="sm" variant="outline" className="text-xs h-7 px-2">
+                    <Button size="sm" variant="outline" className="text-xs">
                       <span>View</span>
                       <ArrowRight className="w-3 h-3 ml-1" />
                     </Button>
@@ -301,7 +301,7 @@ export const ActivitiesPage: React.FC = () => {
                 )}
                 {act.referenceType === 'milestone' && (
                   <Link to="/projects" className="shrink-0">
-                    <Button size="sm" variant="outline" className="text-xs h-7 px-2">
+                    <Button size="sm" variant="outline" className="text-xs">
                       <span>Project</span>
                       <ArrowRight className="w-3 h-3 ml-1" />
                     </Button>

@@ -37,8 +37,8 @@ export const DemoPreviewBadge: React.FC<DemoPreviewBadgeProps> = ({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 font-medium rounded-md uppercase tracking-wider',
-        size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-xs',
+        'inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md text-center font-medium leading-snug uppercase tracking-wider whitespace-normal break-words [&>svg]:shrink-0',
+        size === 'sm' ? 'px-2.5 py-1 text-[10px]' : 'px-3 py-1.5 text-xs',
         'bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs',
         className
       )}

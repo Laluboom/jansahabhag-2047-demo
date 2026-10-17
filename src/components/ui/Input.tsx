@@ -12,7 +12,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
     return (
-      <div className="w-full space-y-1.5">
+      <div className="min-w-0 w-full space-y-1.5">
         {label && (
           <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
             {label}
@@ -23,14 +23,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           type={type}
           className={cn(
-            'flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 focus-visible:border-civic-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
+            'flex min-h-11 min-w-0 w-full max-w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 focus-visible:border-civic-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors',
             error && 'border-rose-500 focus-visible:ring-rose-500 focus-visible:border-rose-500',
             className
           )}
           {...props}
         />
-        {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
-        {helperText && !error && <p className="text-xs text-slate-500">{helperText}</p>}
+        {error && <p className="text-xs text-rose-600 font-medium break-words">{error}</p>}
+        {helperText && !error && <p className="text-xs text-slate-500 break-words">{helperText}</p>}
       </div>
     );
   }
@@ -48,7 +48,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
     return (
-      <div className="w-full space-y-1.5">
+      <div className="min-w-0 w-full space-y-1.5">
         {label && (
           <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
             {label}
@@ -59,14 +59,14 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           rows={rows}
           className={cn(
-            'flex w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 focus-visible:border-civic-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors resize-y',
+            'flex min-w-0 w-full max-w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 focus-visible:border-civic-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors resize-y break-words',
             error && 'border-rose-500 focus-visible:ring-rose-500 focus-visible:border-rose-500',
             className
           )}
           {...props}
         />
-        {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
-        {helperText && !error && <p className="text-xs text-slate-500">{helperText}</p>}
+        {error && <p className="text-xs text-rose-600 font-medium break-words">{error}</p>}
+        {helperText && !error && <p className="text-xs text-slate-500 break-words">{helperText}</p>}
       </div>
     );
   }

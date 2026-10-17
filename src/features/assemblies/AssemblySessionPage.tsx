@@ -767,7 +767,7 @@ export const AssemblySessionPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link to="/debate-room">
-            <Button size="sm" variant="outline" className="bg-white text-civic-teal-800 border-civic-teal-300 hover:bg-civic-teal-100 text-xs h-7 px-2.5">
+            <Button size="sm" variant="outline" className="bg-white text-civic-teal-800 border-civic-teal-300 hover:bg-civic-teal-100 text-xs">
               <Scale className="w-3.5 h-3.5 mr-1" />
               <span>Switch to Debate Room</span>
             </Button>
@@ -1666,7 +1666,7 @@ export const AssemblySessionPage: React.FC = () => {
                 </div>
                 {isChair && (
                   <div className="pt-2">
-                    <Button size="sm" variant="outline" onClick={handleReleaseSpeaker} className="w-full text-xs h-7">
+                    <Button size="sm" variant="outline" onClick={handleReleaseSpeaker} className="w-full text-xs">
                       Release Floor
                     </Button>
                   </div>
