@@ -7,8 +7,10 @@ test('About page credits founder and technical builder accurately', async ({ pag
   await expect(page.getByRole('heading', { name: 'Nazim M. Sandh' })).toBeVisible();
   await expect(page.getByText('Founder and Initiator', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
-  await expect(page.getByText('Website and System Developer', { exact: true })).toBeVisible();
-  await expect(page.getByText('Visesh built the website and technical system for this demo.')).toBeVisible();
+  await expect(page.getByText('Developer', { exact: true })).toBeVisible();
+  await expect(page.getByText('Visesh independently built the website and technical system for this demo.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
+  await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
   await expect(page.getByText('Single-browser simulation')).toBeVisible();
 
   for (const name of ['Nazim M. Sandh', 'Visesh Akbari']) {

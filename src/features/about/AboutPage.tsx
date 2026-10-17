@@ -45,13 +45,15 @@ export const AboutPage: React.FC = () => (
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
         <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <img
-            src={nazimPortrait}
-            alt="Portrait of Nazim M. Sandh"
-            className="aspect-[5/4] w-full object-cover object-[center_38%]"
-            width="1254"
-            height="1254"
-          />
+          <div className="aspect-square bg-slate-100 p-3 sm:p-4">
+            <img
+              src={nazimPortrait}
+              alt="Portrait of Nazim M. Sandh"
+              className="h-full w-full rounded-xl object-contain"
+              width="1254"
+              height="1254"
+            />
+          </div>
           <div className="space-y-2 p-6 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Founder and Initiator</p>
             <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
@@ -62,19 +64,29 @@ export const AboutPage: React.FC = () => (
         </article>
 
         <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <img
-            src={viseshPortrait}
-            alt="Portrait of Visesh Akbari"
-            className="aspect-[5/4] w-full object-cover object-[center_32%]"
-            width="1122"
-            height="1402"
-          />
+          <div className="aspect-square bg-slate-100 p-3 sm:p-4">
+            <img
+              src={viseshPortrait}
+              alt="Portrait of Visesh Akbari"
+              className="h-full w-full rounded-xl object-contain"
+              width="1122"
+              height="1402"
+            />
+          </div>
           <div className="space-y-2 p-6 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-teal-700">Website and System Developer</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-teal-700">Developer</p>
             <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
             <p className="text-sm leading-6 text-slate-700">
-              Visesh built the website and technical system for this demo.
+              Visesh independently built the website and technical system for this demo.
             </p>
+            <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-semibold">
+              <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
+                GitHub
+              </a>
+              <a href="https://www.linkedin.com/in/viseshakbari/" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
+                LinkedIn
+              </a>
+            </div>
           </div>
         </article>
       </div>
