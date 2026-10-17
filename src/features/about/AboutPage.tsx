@@ -58,7 +58,7 @@ export const AboutPage: React.FC = () => (
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Founder and Initiator</p>
             <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
             <p className="text-sm leading-6 text-slate-700">
-              Nazim founded JanSahabhag 2047 and initiated its civic participation concept.
+              Nazim M. Sandh is the founder of JanSahabhag 2047 and initiated its civic participation concept.
             </p>
           </div>
         </article>
@@ -77,7 +77,7 @@ export const AboutPage: React.FC = () => (
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-teal-700">Developer</p>
             <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
             <p className="text-sm leading-6 text-slate-700">
-              Visesh independently built the website and technical system for this demo.
+              Visesh Akbari independently developed the website and technical system for this demo.
             </p>
             <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-semibold">
               <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
