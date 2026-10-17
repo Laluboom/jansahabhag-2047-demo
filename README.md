@@ -10,7 +10,7 @@ This is **not** a production implementation. It intentionally simulates backend,
 
 **Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner. This fictional single-browser demo applies `ceil(0.33 × planned places)` separately to every named role and limited place, leaves unmet reserved places vacant by default, and demonstrates owner-approved exceptions with a local audit record. This does not provide real owner authority or server-side enforcement. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records historical differences; [product decisions](docs/decisions.md) and the [current handoff](docs/HANDOFF_2026-10-16.md) record the accepted demo boundary and remaining decisions.
 
-**Current local state, 17 October 2026:** the connected fictional Jaipur demo and [About page](src/features/about/AboutPage.tsx) are implemented locally. The About page shows Nazim M. Sandh as founder and Visesh Akbari as developer, with their supplied portraits and no biographical paragraphs. This version is not yet pushed or verified on Vercel; the live URL above may show an older build. Sections headed “Suggested” retain some original planning language and should be read as proposals rather than live feature claims.
+**Published demo, 17 October 2026:** the connected fictional Jaipur demo and [About page](src/features/about/AboutPage.tsx) are on GitHub and Vercel. The live About page was checked after deployment: it shows Nazim M. Sandh as founder and Visesh Akbari as developer, with their supplied portraits and no biographical paragraphs. Sections headed “Suggested” retain some original planning language and should be read as proposals rather than live feature claims.
 
 ---
 
@@ -780,7 +780,7 @@ npm run dev
 
 The deployed demo is a client-rendered React/Vite application. Vercel serves the static build in `dist`; `vercel.json` sends direct links to `index.html` so React Router can handle them. There is no backend or database in this demo. State is stored in each browser's `localStorage`, so progress does not sync between browsers or people. Demo personas do not provide production authentication or access control.
 
-The Vercel project is `lalubooms-projects/jansahabhag_2027` and is connected to the public GitHub repository. As checked on 17 October 2026, GitHub's remote default branch is `autobuild`; there is no remote `main` branch yet. A push of `main` alone will not update the current Vercel production deployment. To check a local production build, run `npm run build`.
+The Vercel project is `lalubooms-projects/jansahabhag_2027` and is connected to the public GitHub repository. Both `main` and `autobuild` contain the published demo. As checked on 17 October 2026, GitHub's default and Vercel's production branch is `autobuild`; a push of `main` alone does not update production. To check a local production build, run `npm run build`.
 
 Recommended scripts:
 
