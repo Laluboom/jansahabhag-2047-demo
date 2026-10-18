@@ -635,7 +635,7 @@ export class LocalDemoRepository implements DemoRepository {
             title: isUhvCourse ? `Continue Module: ${nextLesson.title}` : `Continue Lesson: ${nextLesson.title}`,
             description: nextLesson.contentSummary || course.description,
             targetRoute: `/learn/${course.id}/lesson/${nextLesson.id}`,
-            badgeText: isUhvCourse ? `${course.code} &bull; Next Module` : `${course.code} &bull; Next Lesson`,
+            badgeText: isUhvCourse ? `${course.code} • Next Module` : `${course.code} • Next Lesson`,
             rewardText: isUhvCourse ? 'Self-Exploration' : '+5 Learning Credits',
           };
         }
