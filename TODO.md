@@ -15,7 +15,7 @@
 ## Future choices
 
 - [ ] Complete the [Master PRD reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md): route/control inventory, canonical navigation, Debate Room, Workspace, four-role/six-stage Assembly, rulebooks, honest verification and permission boundaries. Use [product decisions](docs/decisions.md) for owner inputs.
-- [x] Publish the public GitHub repository and deploy the Vercel project at https://jansahabhag2027.vercel.app.
+- [x] Publish the public GitHub repository and deploy the Vercel project at https://jansahabhag2047.vercel.app.
 - [ ] Review dependency audit findings and choose supported updates deliberately; no force upgrade was applied.
 - [ ] Clean the 219 ESLint warnings reported during the final review; `npm run lint` exits successfully with no errors.
 - [ ] Before use with real participants, replace demo persona switching with real authentication and server-enforced authorization, and replace local persistence and simulated verification, messaging, AI, sessions, moderation and analytics with backed services.

@@ -82,7 +82,7 @@ Requirements:
 - Do not infer backend absence from a missing dashboard control.
 - Do not treat a visual placeholder as functioning implementation.
 - Preserve valid existing regional/language content until reviewed.
-- Resolve the `2047` product name vs `2027` deployment URL as an owner decision; do not silently rename it.
+- The owner resolved the product-name/deployment-address mismatch on 21 October 2026. Use the `2047` address recorded in [product decisions](docs/decisions.md); preserve dated audit evidence of the former address.
 
 ### Acceptance
 

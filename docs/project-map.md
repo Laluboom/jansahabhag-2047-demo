@@ -27,6 +27,8 @@ jansahabhag_2027/
 └── .subagy/                  Ignored plans, job logs and isolated worktrees
 ```
 
+The checkout folder still has its historical name. The public GitHub repository and Vercel project use `2047`; see [product decisions](decisions.md#owner-decisions-and-remaining-reviewer-inputs), OD.7.
+
 ## Entry points and commands
 
 One Vite/React/TypeScript package. `index.html` loads `src/main.tsx`, which renders `src/app/App.tsx`. `src/app/router.tsx` maps every README path. There is no API server, Docker entrypoint or monorepo package. `npm run dev` serves local development; `npm run build` type-checks and writes `dist/`; `npm run preview` serves it; `npm run test -- --run` runs unit/UI checks; `npm run test:e2e` runs Chromium browser checks on Task 05.
@@ -39,4 +41,4 @@ React Router handles navigation; Zustand holds persona and UI state; React Hook 
 
 ## Build and deployment
 
-Task 05's independent production build passed. Lazy route loading reduced the largest chunks to about 428 kB and 405 kB. No production host, project or credentials have been selected. The README suggests possible hosts, but neither is connected.
+Task 05's independent production build passed. Lazy route loading reduced the largest chunks to about 428 kB and 405 kB. The public repository is [Laluboom/jansahabhag-2047-demo](https://github.com/Laluboom/jansahabhag-2047-demo). Vercel project `lalubooms-projects/jansahabhag2047` serves the [public demo](https://jansahabhag2047.vercel.app). The former site address permanently redirects to it.

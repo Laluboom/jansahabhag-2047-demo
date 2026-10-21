@@ -4,6 +4,8 @@
 
 **Deployment inspected:** `https://jansahabhag2027.vercel.app`. The browser rendered the deployed JavaScript application; observations below are from its visible accessibility tree. Source locations are from the current `autobuild` checkout. No live form was submitted and no deployed records were changed.
 
+The inspected address now redirects to [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). This record retains the original address as historical evidence.
+
 | Route | Live observation | Initial disposition for next demo |
 |---|---|---|
 | `/dashboard` | Renders as fictional participant Aarav Sharma. Primary navigation has Home, Learn, Participate, Deliberate, Act, Passport; the canonical eleven learner items are absent. The evidence-to-action strip says Learn, Field Evidence, Youth Assembly, Civic Action, Passport rather than the Master PRD's canonical five-stage method. | **Change:** align labels, route order and method; retain the useful dashboard journey. |

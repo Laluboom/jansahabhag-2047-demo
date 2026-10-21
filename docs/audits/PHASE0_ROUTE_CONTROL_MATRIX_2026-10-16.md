@@ -8,6 +8,8 @@
 
 **Later change:** The `/about` route was added after this 60-route audit. This record remains a snapshot of the audited commit; the current route inventory and browser test include 61 patterns.
 
+**Later branding change:** The current demo is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). The former address below identifies the site observed on 12 October 2026 and now redirects to the current address.
+
 ---
 
 ## 1. Executive Summary & Verification Boundary
@@ -82,7 +84,7 @@ A strict line-by-line syntax inventory of [src/app/router.tsx](../../src/app/rou
 ### 3.5 Deployment Path & Environment
 - **Toolchain:** Built with Vite 5.4.9, React 18.3.1, TypeScript 5.6.3, and Tailwind CSS 3.4.14.
 - **Routing Engine:** React Router 6.27.0 with client-side HTML5 pushState history (`createBrowserRouter`).
-- **Production Host:** Deployed as a static client application on Vercel (`https://jansahabhag2027.vercel.app`).
+- **Production Host at audit time:** Deployed as a static client application on Vercel (`https://jansahabhag2027.vercel.app`). Current address: `https://jansahabhag2047.vercel.app`.
 - **Deployment Divergence & Limits:** The 12 October live observation of `https://jansahabhag2027.vercel.app` reflected historical baseline `c4e0861`. Current public Vercel deployment status has not been retrieved in this task; Packages 01–09 (canonical 11 learner navigation items, 6-stage assembly, debate room simulation, private workspace, 33% reservation allocation, and connected Jaipur journey) are verified locally on this branch and are not known to be deployed.
 
 ### 3.6 Mobile & Keyboard Accessibility Evidence
