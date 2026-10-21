@@ -3,7 +3,7 @@
 - **Audit date:** 12 October 2026
 - **Original comparison source:** [Rules & Requirements by Scope](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md)
 - **Subsequent source check:** [Master PRD reconciliation](MASTER_PRD_RECONCILIATION.md) against the [supplied archive](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx)
-- **App baseline:** `autobuild` commit `41a7b89` and the live [Vercel demo](https://jansahabhag2027.vercel.app)
+- **App baseline:** `autobuild` commit `41a7b89` and the live Vercel demo at its former address, now redirected to [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app)
 - **Method:** Three independent sub-agy agents used the three configured accounts to review separate scopes. Their reports were checked against source, tests, and the live dashboard, then corrected before consolidation.
 
 This document records the original scope-file comparison: requirements **missing, partial, simulated, contradicted, or not verified** in the current app. It includes demo and release gates, prototypes, production foundations, later-phase scope, and owner decisions. The Master PRD was supplied later. Read [the source-checked corrections](MASTER_PRD_RECONCILIATION.md) and [decision record](../decisions.md) with this baseline; the earlier severity labels and page references are not all final.
@@ -25,7 +25,7 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 
 | ID | Subject | Priority | Canonical Source Requirement | Existing README / Code State | Conflict / Decision Rationale |
 |---|---|---|---|---|---|
-| **OD-01** | Product Branding vs. Deployment URL | **OD** | Master PRD §1; Scope A ([L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)): Platform name is **JanSahabhag 2047**. Name discrepancy must be an explicit Owner Decision; do not silently rename. | [README.md](../../README.md#L1) uses `JanSahabhag 2047`, but the live URL is `https://jansahabhag2027.vercel.app` and the repo directory is `jansahabhag_2027`. | **Unresolved Owner Decision**, now recorded in [docs/decisions.md](../decisions.md); the owner has not chosen retain, redirect or replace. |
+| **OD-01** | Product Branding vs. Deployment URL | **OD** | Master PRD §1; Scope A ([L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)): Platform name is **JanSahabhag 2047**. Name discrepancy must be an explicit Owner Decision; do not silently rename. | At audit time [README.md](../../README.md#L1) used `JanSahabhag 2047`, while the deployment address and checkout folder used a different year. | **Resolved 21 October 2026:** the owner chose `2047`; the repository, project, live URL, and real checkout folder now use it. The old folder path remains a compatibility link for the saved Codex project. |
 | **OD-02** | Founder Details Public Approval | **OD** | Master PRD §A5; Scope E ([L257](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L257)): Founder public profile requires formal confirmation of which details are approved for publication. | [src/features/welcome/WelcomePage.tsx](../../src/features/welcome/WelcomePage.tsx) contains no founder section. Zero founder entities exist in [src/types/domain.ts](../../src/types/domain.ts). | **Decision Needed.** Draft handoff copy cannot be published until the platform owner confirms approved biographical facts and contact methods. |
 | **OD-03** | UHV Curriculum Source & Licensing | **OD** | Master PRD §A11; Scope F ([L298](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L298)): Confirm content source, curriculum, and licensing with owner before production publication. | [src/data/seed/courses.ts](../../src/data/seed/courses.ts#L133) hardcodes Jeevan Vidya concepts into `course_uhv_leadership_05` without attribution or licensing metadata. | **Decision Needed.** Owner confirmation is required before treating curriculum content as approved for production. |
 | **CF-01** | Canonical Learner Navigation Structure | **P0** | Master PRD opening §1: strict 11-item ordered learner navigation. | [README.md](../../README.md) now distinguishes the current six-area demo from the target menu; [DesktopSidebar.tsx](../../src/components/layout/DesktopSidebar.tsx) still renders six primary entries. | **App mismatch remains.** Documentation no longer presents the six-area grouping as the target. |
@@ -49,25 +49,25 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
   - *Production:* Delivery gates prevent unreviewed UI placeholders from being promoted to release.
 - **Next Action:** Complete a route/control inventory with desktop and mobile evidence, then record owner sign-offs in [docs/decisions.md](../decisions.md).
 
-### Finding A.2: Product Name "2047" vs Deployed URL / Repository Directory "2027" Discrepancy
-- **Requirement:** Resolve the `2047` product name vs `2027` deployment URL as an owner decision; do not silently rename it ([README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)).
+### Finding A.2: Former product name, deployment URL, and directory discrepancy
+- **Requirement:** Resolve the discrepancy between the `2047` product name and the former deployment URL as an owner decision; do not silently rename it ([README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L73)).
 - **Priority:** OD
-- **Status:** Decision Needed
+- **Status:** Resolved 21 October 2026 by the owner.
 - **Evidence:**
   - UI header ([src/components/layout/DesktopSidebar.tsx#L83](../../src/components/layout/DesktopSidebar.tsx#L83)) and [package.json#L2](../../package.json#L2) declare "JanSahabhag 2047".
-  - Repository directory name is `jansahabhag_2027`, and the live deployment URL in [README.md#L5](../../README.md#L5) is `https://jansahabhag2027.vercel.app`.
-  - [docs/decisions.md](../decisions.md) records the difference as open; no owner resolution is documented.
+  - At audit time the checkout directory and live deployment address used a different year from the product name.
+  - [docs/decisions.md](../decisions.md) now records the owner's resolution; the current checkout is `jansahabhag_2047` and the live site is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app).
 - **Why it matters (Demo vs. Production):**
   - *Demo:* Causes branding confusion during reviews.
   - *Production:* Domain branding, TLS certificates, and DNS records must match official product names.
-- **Next Action:** Submit an Owner Decision request to record whether `2027` is retained as an interim staging URL or replaced with `2047`.
+- **Next Action:** None for branding. The old local path remains a compatibility link until the saved Codex project is repointed.
 
-### Finding A.3: Live Deployed Behavior at https://jansahabhag2027.vercel.app is Unverified
+### Finding A.3: Live deployed behavior at the former address was unverified
 - **Requirement:** Inspect the running site and available repository before treating a missing/changed feature as fact; label untested live behavior as not verified ([README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L52](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#L52)).
 - **Priority:** P0
 - **Status:** Not Verified
 - **Evidence:**
-  - An HTTP HEAD check confirmed `https://jansahabhag2027.vercel.app` returns `HTTP/2 200` with Vercel edge headers.
+  - At audit time an HTTP HEAD check returned `HTTP/2 200` with Vercel edge headers for the former address. That address now redirects to the [current site](https://jansahabhag2047.vercel.app).
   - However, automated test suites in [tests/](../../tests/) and Playwright specs in [e2e/smoke-routes.spec.ts](../../e2e/smoke-routes.spec.ts) target local Vite instances (`http://localhost:5173` per [playwright.config.ts#L15](../../playwright.config.ts#L15)).
   - Live client bundle routing, deep-link handling via [vercel.json](../../vercel.json), and CDN asset freshness have not been tested on the live domain.
 - **Why it matters (Demo vs. Production):**
@@ -1161,7 +1161,7 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 | **OD.4: Whether video is required** | OD | Decision Needed | Video is currently simulated/absent across all deliberation views (`src/features/assemblies/AssemblySessionPage.tsx`). | If live or recorded video streaming is required for the demo, streaming infrastructure must be provisioned. |
 | **OD.5: Session access policies** | OD | Decision Needed | Any seeded user can immediately click "Join" on any assembly (`src/features/assemblies/AssembliesPage.tsx:150-180`). | Owner must confirm access policy rules: open, request-to-join, invite-only, or institution-restricted. |
 | **OD.6: Founder / public identity fields approved for publication** | OD | Decision Needed | Platform identity content is currently placeholder text (`src/features/welcome/WelcomePage.tsx:1-150`). | Approvals are required before publishing authentic founder profiles or institutional acknowledgements. |
-| **OD.7: Final domain and branding decision** | OD | Decision Needed | Deployed to ephemeral URL `https://jansahabhag2027.vercel.app`. | Official domain name and branding assets must be confirmed. |
+| **OD.7: Final domain and branding decision** | OD | Resolved for demo | The owner approved `2047`; the current demo is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). | A custom official domain and final brand assets remain production decisions if needed. |
 | **OD.8: Languages required for demo** | OD | Decision Needed | Dropdown offers English, Hindi, and Rajasthani, but screens are English-only (`src/stores/authStore.ts:21-25`). | Owner must decide whether Hindi translation is strictly required for the demo audience, or if English-only presentation is acceptable. |
 | **OD.9: Existing data that must be preserved or migrated** | OD | Decision Needed | Repository uses ephemeral fictional seed data (`src/data/seed/*`) that is overwritten on reset. | Owner must clarify whether pilot student records, survey responses, or assembly minutes exist that must be preserved. |
 | **OD.10: Configured AI provider(s)** | OD | Decision Needed | AI synthesis is hardcoded mock text with disclaimer (`src/features/analytics/AnalyticsPage.tsx:320-359`). | Owner must select approved provider and approve API cost/safety policies. |

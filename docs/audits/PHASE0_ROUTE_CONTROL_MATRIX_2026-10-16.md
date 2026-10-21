@@ -8,7 +8,7 @@
 
 **Later change:** The `/about` route was added after this 60-route audit. This record remains a snapshot of the audited commit; the current route inventory and browser test include 61 patterns.
 
-**Later branding change:** The current demo is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). The former address below identifies the site observed on 12 October 2026 and now redirects to the current address.
+**Later branding change:** The current demo is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). References below to the former address identify the site observed on 12 October 2026; that address now redirects to the current one.
 
 ---
 
@@ -23,7 +23,7 @@ The Master PRD opening §2 and §A2 mandate an exhaustive pre-implementation sit
 To maintain audit integrity and avoid inferring runtime correctness from static declarations, all findings explicitly distinguish four evidence tiers:
 1. **Source-Inspected:** The component, data dependency, and state bindings were directly examined in repository code.
 2. **Local Browser-Observed (Automated Playwright E2E):** The page was loaded in a headless Chromium instance under Playwright test runners (`e2e/`), asserting specific DOM nodes, interactive mutations, reload persistence, or error states.
-3. **Deployed Sample Observed (12 October 2026):** Four routes (`/dashboard`, `/assemblies/.../session`, `/parliament`, `/admin/dashboard`) were inspected on the live Vercel deployment (`https://jansahabhag2027.vercel.app`) using its visible accessibility tree on historical baseline `c4e0861`. Current public deployment status has not been retrieved in this task.
+3. **Deployed Sample Observed (12 October 2026):** Four routes (`/dashboard`, `/assemblies/.../session`, `/parliament`, `/admin/dashboard`) were inspected at the former Vercel address using its visible accessibility tree on historical baseline `c4e0861`. Current public deployment status was not retrieved during this audit.
 4. **Not Verified:** Any route, visible button, tab, filter, modal trigger, or interactive control that has not been exercised and validated in an actual browser execution. A router entry or passing test file name is **not** evidence that all controls function.
 
 ### 1.3 Disclaimer on Server Authority and Launch Readiness
@@ -84,8 +84,8 @@ A strict line-by-line syntax inventory of [src/app/router.tsx](../../src/app/rou
 ### 3.5 Deployment Path & Environment
 - **Toolchain:** Built with Vite 5.4.9, React 18.3.1, TypeScript 5.6.3, and Tailwind CSS 3.4.14.
 - **Routing Engine:** React Router 6.27.0 with client-side HTML5 pushState history (`createBrowserRouter`).
-- **Production Host at audit time:** Deployed as a static client application on Vercel (`https://jansahabhag2027.vercel.app`). Current address: `https://jansahabhag2047.vercel.app`.
-- **Deployment Divergence & Limits:** The 12 October live observation of `https://jansahabhag2027.vercel.app` reflected historical baseline `c4e0861`. Current public Vercel deployment status has not been retrieved in this task; Packages 01–09 (canonical 11 learner navigation items, 6-stage assembly, debate room simulation, private workspace, 33% reservation allocation, and connected Jaipur journey) are verified locally on this branch and are not known to be deployed.
+- **Production Host at audit time:** Deployed as a static client application on Vercel at its former address. Current address: `https://jansahabhag2047.vercel.app`.
+- **Deployment Divergence & Limits:** The 12 October live observation reflected historical baseline `c4e0861`. Current public Vercel deployment status was not retrieved during this audit; Packages 01–09 (canonical 11 learner navigation items, 6-stage assembly, debate room simulation, private workspace, 33% reservation allocation, and connected Jaipur journey) were verified locally on this branch. These packages were subsequently merged and deployed.
 
 ### 3.6 Mobile & Keyboard Accessibility Evidence
 - **Mobile Viewport Testing:** Automated Playwright runs ([e2e/smoke-routes.spec.ts](../../e2e/smoke-routes.spec.ts#L140) and [e2e/connected-jaipur-journey.spec.ts](../../e2e/connected-jaipur-journey.spec.ts#L250)) evaluate mobile rendering at 375x667 for:
@@ -122,7 +122,7 @@ A strict line-by-line syntax inventory of [src/app/router.tsx](../../src/app/rou
 
 ## 4. Relationship to 12 October Deployed Four-Route Sample
 
-On 12 October 2026, an initial accessibility-tree live inspection examined four routes on `https://jansahabhag2027.vercel.app` ([docs/audits/PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md)). The table below contrasts those observations with the current final branch:
+On 12 October 2026, an initial accessibility-tree live inspection examined four routes at the former Vercel address ([docs/audits/PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md)). The table below contrasts those observations with the branch audited here:
 
 | Route | 12 October Deployed Observation (c4e0861) | Current Branch Source State (b33515d) | Audit Disposition & Limits |
 |---|---|---|---|

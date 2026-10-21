@@ -2,9 +2,9 @@
 
 **Purpose:** record directly observed deployed behavior before planning the next connected competition demo. This is a partial live inspection, not the complete Phase 0 route audit required by the Master PRD opening §2 and [scope guide](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md#2-scope-a--governance-verification-and-delivery-gates).
 
-**Deployment inspected:** `https://jansahabhag2027.vercel.app`. The browser rendered the deployed JavaScript application; observations below are from its visible accessibility tree. Source locations are from the current `autobuild` checkout. No live form was submitted and no deployed records were changed.
+**Deployment inspected:** the site's former Vercel address, now redirected to [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). The browser rendered the deployed JavaScript application at the time; observations below are from its visible accessibility tree. Source locations are from the then-current `autobuild` checkout. No live form was submitted and no deployed records were changed.
 
-The inspected address now redirects to [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app). This record retains the original address as historical evidence.
+This is a dated observation of the former address and build, not a current verification of the site.
 
 | Route | Live observation | Initial disposition for next demo |
 |---|---|---|

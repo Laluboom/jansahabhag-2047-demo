@@ -37,7 +37,7 @@ This audit establishes a complete, module-by-module and rulebook-by-rulebook ver
 > [!IMPORTANT]
 > **Strict Environmental Distinction:**
 > - **Current Isolated Git Worktree Branch (`agy/j-20261016-163611-vwcz`):** Contains the complete implementation of Packages 01–09, Phase 0 audit records, Package 11 reservation coverage, and the Youth Parliament delegation illustration. All 321 unit tests (across 25 test files) and 35 Playwright E2E browser tests pass synchronously on this branch.
-> - **Deployed Public Demo Site (`https://jansahabhag2027.vercel.app`):** Represents historical baseline `c4e0861` (inspected 12 October 2026). It does **not** have the unified reservation engine, does not have the Jaipur connected journey, and has not deployed this branch's changes.
+> - **Deployed Public Demo Site at audit time:** The former Vercel address represented historical baseline `c4e0861` (inspected 12 October 2026). It did **not** have the unified reservation engine or the Jaipur connected journey at that time. This branch's changes were subsequently merged and deployed at [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app).
 > - **No Server-Side Enforcement Claim:** The current codebase executes exclusively inside a single client browser via `localStorage` and simulated async repository methods. Real production enforcement, server-side identity verification, database durability, and external legal/safeguarding reviews remain open backlog items. Client-side localStorage audit records are mutable client storage and do not constitute immutable ledger storage, formal legal compliance, or statutory privacy certification.
 
 ---
