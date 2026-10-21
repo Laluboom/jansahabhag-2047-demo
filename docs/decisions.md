@@ -41,9 +41,9 @@
 | Privacy defaults | Workspace discovery is private or institution-scoped by default. Recording is off by default. AI and video providers remain behind replaceable interfaces pending selection. | Part A §A21, default-recommendations table |
 | Full-system architecture | The current React/Vite app is a single browser-rendered demo using local browser storage. Real multi-user sessions, authenticated permissions, moderation, verification and shared persistence require server-side services for the Master PRD product. | Opening §2; Part A §§A6–A7, A16–A17; [repository architecture](architecture.md) |
 
-## Still requiring an owner or qualified reviewer
+## Owner decisions and remaining reviewer inputs
 
-The PRD supplies requirements or safe defaults for some topics, but **does not record an owner choice** for these items. The numbers follow the 14 questions in [Rules & Requirements by Scope](../README_01_RULES_REQUIREMENTS_BY_SCOPE.md), §24.
+The PRD supplies requirements or safe defaults for some topics. The table tracks later owner decisions and the inputs still open. The numbers follow the 14 questions in [Rules & Requirements by Scope](../README_01_RULES_REQUIREMENTS_BY_SCOPE.md), §24.
 
 | ID | Open decision | What the PRD already settles |
 |---|---|---|
@@ -53,7 +53,7 @@ The PRD supplies requirements or safe defaults for some topics, but **does not r
 | OD.4 | **Text-first demo with labelled video preview approved, 15 October 2026.** | Working video is not required for the competition demo; the full product still needs the PRD media and fallback behavior. |
 | OD.5 | **Fictional Jaipur Workspace is invite-only and private, 15 October 2026; other room policies remain open.** | Access must be scoped and configurable; the Workspace default remains private or institution-scoped. |
 | OD.6 | Owner confirmed Nazim M. Sandh as founder and Visesh Akbari as the sole builder of the current demo's website and technical system, and supplied both portraits for About Us. Visesh's public title is “Developer”; his contribution receives no idea/concept credit. | Longer biography and achievements remain unpublished until confirmed. Owner supplied GitHub and LinkedIn links for Visesh. |
-| OD.7 | Final domain and the existing `2027` URL | Product name is `2047`; retaining, redirecting or replacing the URL is explicitly an owner choice. |
+| OD.7 | **Resolved 21 October 2026:** Product name and deployment address use `2047`. Vercel project `jansahabhag2047` serves `https://jansahabhag2047.vercel.app`; the former address permanently redirects to it. The GitHub repository was already named `jansahabhag-2047-demo`. | The local checkout folder still has the former name because moving it would invalidate attached sub-agy worktree paths; dated audit URLs remain historical evidence. |
 | OD.8 | **Working Jaipur competition demo in English; Hindi pending bilingual review, confirmed 15 October 2026.** | English and Hindi remain the full-product baseline; Hindi needs a named bilingual reviewer before claiming complete coverage. An unwired selector is not translated content. |
 | OD.9 | Existing non-demo data to preserve or migrate | This repository contains fictional local seed data; outside pilot data has not been inventoried. |
 | OD.10 | AI provider and approved data/cost policy | Provider abstraction, data-tier restrictions and a kill switch are required; no provider is approved. |

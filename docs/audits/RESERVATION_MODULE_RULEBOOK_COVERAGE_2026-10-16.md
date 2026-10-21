@@ -11,6 +11,8 @@
 **Branch & Commit State:** Audited on git branch `agy/j-20261016-163611-vwcz`
 **Execution Context:** Package 11 closure of supplementary reservation PRD evidence gap across all active and explicitly retained platform surfaces.
 
+**Later branding change:** The site inspected in this dated record used the former address. The current demo is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app), and the former address redirects there.
+
 ---
 
 ## 1. Executive Summary & Policy Scope Boundary

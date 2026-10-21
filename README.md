@@ -2,7 +2,7 @@
 
 A browser-based interactive demo of **JanSahabhag 2047** with a linked single-browser participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification. The owner selected the Jaipur pedestrian-safety story for the immediate demo.
 
-**Live demo:** [jansahabhag2027.vercel.app](https://jansahabhag2027.vercel.app)
+**Live demo:** [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app)
 
 **Source:** [Laluboom/jansahabhag-2047-demo](https://github.com/Laluboom/jansahabhag-2047-demo)
 
@@ -780,7 +780,7 @@ npm run dev
 
 The deployed demo is a client-rendered React/Vite application. Vercel serves the static build in `dist`; `vercel.json` sends direct links to `index.html` so React Router can handle them. There is no backend or database in this demo. State is stored in each browser's `localStorage`, so progress does not sync between browsers or people. Demo personas do not provide production authentication or access control.
 
-The Vercel project is `lalubooms-projects/jansahabhag_2027` and is connected to the public GitHub repository. Both `main` and `autobuild` contain the published demo. As checked on 17 October 2026, GitHub's default and Vercel's production branch is `autobuild`; a push of `main` alone does not update production. To check a local production build, run `npm run build`.
+The Vercel project is `lalubooms-projects/jansahabhag2047` and is connected to the public GitHub repository. The production address is `https://jansahabhag2047.vercel.app`; the former address redirects there. Both `main` and `autobuild` contain the published demo. As checked on 17 October 2026, GitHub's default and Vercel's production branch is `autobuild`; a push of `main` alone does not update production. To check a local production build, run `npm run build`.
 
 Recommended scripts:
 

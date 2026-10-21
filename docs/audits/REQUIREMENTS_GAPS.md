@@ -8,6 +8,8 @@
 
 This document records the original scope-file comparison: requirements **missing, partial, simulated, contradicted, or not verified** in the current app. It includes demo and release gates, prototypes, production foundations, later-phase scope, and owner decisions. The Master PRD was supplied later. Read [the source-checked corrections](MASTER_PRD_RECONCILIATION.md) and [decision record](../decisions.md) with this baseline; the earlier severity labels and page references are not all final.
 
+**Later branding resolution:** On 21 October 2026 the owner chose `2047`; the current demo is [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app), and the address inspected in this dated audit redirects there. OD-01 and Finding A.2 below record their 12 October status, not an open decision today.
+
 The deployed app is a client-rendered React/Vite demo with local browser persistence. Its public URL is reachable, but this audit does not certify the public-launch reviews named in Scope P. The live dashboard and navigation were inspected; the detailed findings rely mainly on code and test evidence, and untested live behavior is labelled as such.
 
 ## Highest-priority differences
