@@ -3,7 +3,7 @@
 JanSahabhag 2047 is a frontend-only civic participation demo with fictional personas and local records. Tasks 01–05 are integrated on `autobuild`. See [paused.md](../paused.md) for the completed Autobuild history.
 
 ```text
-jansahabhag_2027/
+jansahabhag_2047/
 ├── README.md                 Product scope and manual acceptance
 ├── IMPLEMENTATION_PLAN.md    Domain flows and delivery sequence
 ├── paused.md                 Current Autobuild handback and job history
@@ -24,10 +24,10 @@ jansahabhag_2027/
 ├── tests/                    Vitest and Testing Library tests
 ├── e2e/                      Playwright browser tests
 ├── playwright.config.ts      Browser test setup
-└── .subagy/                  Ignored plans, job logs and isolated worktrees
+└── .subagy/                  Ignored plans, job logs and archived worktrees
 ```
 
-The checkout folder still has its historical name. The public GitHub repository and Vercel project use `2047`; see [product decisions](decisions.md#owner-decisions-and-remaining-reviewer-inputs), OD.7.
+The checkout folder, public GitHub repository and Vercel project now use `2047`. A compatibility link at the former folder path keeps this Codex project entry working until its saved path is updated; see [product decisions](decisions.md#owner-decisions-and-remaining-reviewer-inputs), OD.7.
 
 ## Entry points and commands
 
