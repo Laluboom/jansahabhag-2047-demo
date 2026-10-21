@@ -42,10 +42,10 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     { to: '/dashboard', label: 'Home', icon: Home },
     { to: '/learn', label: 'Learn', icon: BookOpen },
     { to: '/assignments', label: 'Activities & Assignments', icon: FileCheck2 },
-    { to: '/debate-room', label: 'Debate Room', icon: Scale, badge: 'Simulation' },
+    { to: '/debate-room', label: 'Debate Room', icon: Scale, badge: 'Practice mode' },
     { to: '/assemblies', label: 'Youth Assembly', icon: Vote },
-    { to: '/parliament', label: 'Youth Parliament', icon: Landmark, badge: 'Prototype' },
-    { to: '/workspace', label: 'Workspace', icon: Layers, badge: 'Simulation' },
+    { to: '/parliament', label: 'Youth Parliament', icon: Landmark, badge: 'Preview' },
+    { to: '/workspace', label: 'Workspace', icon: Layers, badge: 'Practice mode' },
     { to: '/projects', label: 'Labs & Projects', icon: Target },
     { to: '/community', label: 'Community', icon: Users2 },
     { to: '/passport', label: 'Civic Passport', icon: Award },
@@ -106,7 +106,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 2047
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 font-normal truncate">Youth Civic Action Demo</p>
+            <p className="text-[11px] text-slate-400 font-normal truncate">Learn. Deliberate. Lead.</p>
           </div>
         </Link>
 
@@ -152,9 +152,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     <span
                       className={cn(
                         'text-[10px] px-1.5 py-0.5 rounded border font-normal shrink-0 ml-1.5',
-                        item.badge === 'Simulation' && 'bg-indigo-950/80 border-indigo-800/80 text-indigo-300',
-                        item.badge === 'Planned' && 'bg-amber-950/80 border-amber-800/80 text-amber-300',
-                        item.badge === 'Prototype' && 'bg-sky-950/80 border-sky-800/80 text-sky-300',
+                        (item.badge === 'Practice mode' || item.badge === 'Simulation') && 'bg-indigo-950/80 border-indigo-800/80 text-indigo-300',
+                        (item.badge === 'Coming next' || item.badge === 'Planned') && 'bg-amber-950/80 border-amber-800/80 text-amber-300',
+                        (item.badge === 'Preview' || item.badge === 'Prototype') && 'bg-sky-950/80 border-sky-800/80 text-sky-300',
                         item.badge === 'Stream' && 'bg-emerald-950/80 border-emerald-800/80 text-emerald-300'
                       )}
                     >
