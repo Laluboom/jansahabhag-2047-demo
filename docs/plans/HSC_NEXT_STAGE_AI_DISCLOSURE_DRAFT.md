@@ -31,4 +31,4 @@ Before using this material in next-stage evaluation materials, the owner needs t
 
 - [ ] **1. Approximate Percentage Estimate:** Confirm or adjust the placeholder `[owner estimate pending: __%]` for the approximate share of the final submitted work with AI assistance (per HSC FAQ Q23).
 - [ ] **2. Presentation Materials & Tool Scope:** Clarify whether this approximate percentage estimate includes presentation materials (e.g. slide decks, visual diagrams, scripts) and whether any other AI tools were used beyond OpenAI Codex and sub-agy / agy Gemini assistance.
-- [ ] **4. Scope of Presentation Talking Points:** Confirm that presentation notes align with the submitted entry and describe the current prototype accurately.
+- [ ] **3. Scope of Presentation Talking Points:** Confirm that presentation notes align with the submitted entry and describe the current prototype accurately.
