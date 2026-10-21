@@ -839,3 +839,10 @@ The demo should preserve the product's core ideas even where infrastructure is s
 - participant work should remain connected across learning, deliberation, projects, and Passport
 
 The [implementation plan](IMPLEMENTATION_PLAN.md) records the historical browser-demo approach. For further work, begin with the [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md), [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md), [open decisions](docs/decisions.md) and [current connected-demo plan](docs/plans/COMPETITION_DEMO_PRD_PLAN.md); the reservation policy is approved in principle but its operating rules are not yet settled.
+
+---
+
+## 23. License
+
+Original repository code and documentation are released under the [Apache License, Version 2.0](LICENSE). Third-party content, external media, supplied portraits, and untracked reference files remain subject to their respective terms and are not licensed under Apache 2.0.
+
