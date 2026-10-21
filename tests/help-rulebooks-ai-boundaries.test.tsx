@@ -35,7 +35,9 @@ describe('HelpRulebooksPage - AI Boundaries Policy Panel', () => {
     // Safeguards, appealability, and policy/demo disclosures
     expect(screen.getByText(/Safeguards, Output Handling & Appeals/i)).toBeInTheDocument();
     expect(screen.getByText(/All AI-generated content must be clearly labelled, reviewable, and freely editable or discardable/i)).toBeInTheDocument();
-    expect(screen.getByText(/All authoritative decisions—including credit awards, evidence validation, and moderation determinations—are made exclusively by named human facilitators and administrators, and remain fully appealable\./i)).toBeInTheDocument();
+    expect(screen.getByText(/AI never decides credit awards, evidence verification, moderation actions, or appeals\./i)).toBeInTheDocument();
+    expect(screen.getByText(/Routine credits may be awarded automatically by deterministic system rules/i)).toBeInTheDocument();
+    expect(screen.getByText(/human review and appeals remaining available where implemented\./i)).toBeInTheDocument();
     expect(screen.getByText(/No generative AI features or commercial model providers are currently active or operating in this fictional browser demo\./i)).toBeInTheDocument();
   });
 });

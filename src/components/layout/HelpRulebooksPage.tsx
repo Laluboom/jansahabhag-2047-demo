@@ -193,10 +193,10 @@ export const HelpRulebooksPage: React.FC = () => {
             <span>Safeguards, Output Handling & Appeals</span>
           </div>
           <p className="leading-relaxed">
-            All AI-generated content must be clearly labelled, reviewable, and freely editable or discardable by participants before submission or use. All authoritative decisions—including credit awards, evidence validation, and moderation determinations—are made exclusively by named human facilitators and administrators, and remain fully appealable.
+            All AI-generated content must be clearly labelled, reviewable, and freely editable or discardable by participants before submission or use. AI never decides credit awards, evidence verification, moderation actions, or appeals. Routine credits may be awarded automatically by deterministic system rules upon verified task completion, while substantive reviews, verification assessments, and moderation determinations are handled by human reviewers and facilitators, with human review and appeals remaining available where implemented.
           </p>
           <p className="text-[11px] text-slate-500 italic">
-            Policy note: This panel establishes institutional governance requirements. No generative AI features or commercial model providers are currently active or operating in this fictional browser demo.
+            Policy note: This panel establishes institutional governance requirements for potential future AI tools. No generative AI features or commercial model providers are currently active or operating in this fictional browser demo.
           </p>
         </div>
       </Card>
