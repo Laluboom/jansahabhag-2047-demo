@@ -1,7 +1,7 @@
 import React from 'react';
 import { SeatModel } from './types';
 import { SeatItem } from './SeatItem';
-import { Mic, Scale } from 'lucide-react';
+import { Mic, Scale, HelpCircle } from 'lucide-react';
 
 interface DebateSeatingLayoutProps {
   seats: SeatModel[];
@@ -19,22 +19,34 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
   // Categorize seats into:
   // 1. Moderator / Presiding bench (Facilitator, Rapporteur, or sideOrBench === 'Moderator')
   // 2. Active Speaker Podium (if someone is recognized or status === 'speaking')
-  // 3. Proposition / For bench (sideOrBench === 'For' or roles like Civic Advocate, Evidence Analyst)
-  // 4. Opposition / Against bench (sideOrBench === 'Against' or roles like Questioner, Community Voice, Synthesiser)
+  // 3. Proposition / For bench (explicitly sideOrBench === 'For' or 'Proposition')
+  // 4. Opposition / Against bench (explicitly sideOrBench === 'Against' or 'Opposition')
+  // 5. Unassigned / Neutral delegates (no explicit stance declared)
+  //
+  // NOTE: Functional roles (Evidence Analyst, Questioner, Civic Advocate, Synthesiser, Community Voice)
+  // must NEVER be mapped to For or Against based on role name alone.
 
   const isModerator = (seat: SeatModel) =>
     seat.sideOrBench?.toLowerCase() === 'moderator' ||
     seat.role.toLowerCase().includes('facilitator') ||
     seat.role.toLowerCase().includes('rapporteur');
 
-  const isFor = (seat: SeatModel) =>
-    seat.sideOrBench?.toLowerCase() === 'for' ||
-    seat.role.toLowerCase().includes('advocate') ||
-    seat.role.toLowerCase().includes('analyst');
+  const isExplicitFor = (seat: SeatModel) => {
+    const s = seat.sideOrBench?.toLowerCase();
+    return s === 'for' || s === 'proposition';
+  };
+
+  const isExplicitAgainst = (seat: SeatModel) => {
+    const s = seat.sideOrBench?.toLowerCase();
+    return s === 'against' || s === 'opposition';
+  };
 
   const moderatorSeats = seats.filter(isModerator);
-  const forSeats = seats.filter((s) => !isModerator(s) && isFor(s));
-  const againstSeats = seats.filter((s) => !isModerator(s) && !isFor(s));
+  const forSeats = seats.filter((s) => !isModerator(s) && isExplicitFor(s));
+  const againstSeats = seats.filter((s) => !isModerator(s) && isExplicitAgainst(s));
+  const neutralSeats = seats.filter(
+    (s) => !isModerator(s) && !isExplicitFor(s) && !isExplicitAgainst(s)
+  );
 
   // Determine active speaker seat
   const activeSpeakerSeat = seats.find(
@@ -62,7 +74,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
       </div>
 
       {/* TOP: Moderator Bench & Rostrum */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-testid="debate-bench-moderator">
         <div className="flex items-center justify-center gap-2 text-center">
           <span className="w-2 h-2 rounded-full bg-civic-indigo-400" />
           <span className="text-xs font-bold uppercase tracking-wider text-civic-indigo-300 font-heading">
@@ -149,7 +161,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
               ))
             ) : (
               <p className="text-xs text-slate-400 italic py-4 text-center">
-                No delegates assigned to Proposition bench.
+                Visual placeholder bench awaiting explicit participant stance.
               </p>
             )}
           </div>
@@ -164,7 +176,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
               <h4 className="font-bold text-xs uppercase tracking-wider text-amber-300 font-heading">
-                Questioning & Scrutiny Bench (Against / Inquiry)
+                Opposition Bench (Against)
               </h4>
             </div>
             <span className="text-[10px] text-slate-400 font-mono">
@@ -184,12 +196,45 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
               ))
             ) : (
               <p className="text-xs text-slate-400 italic py-4 text-center">
-                No delegates assigned to Questioning bench.
+                Visual placeholder bench awaiting explicit participant stance.
               </p>
             )}
           </div>
         </div>
       </div>
+
+      {/* UNASSIGNED / NEUTRAL PARTICIPANTS (Awaiting Explicit Stance) */}
+      {neutralSeats.length > 0 && (
+        <div
+          className="p-4 rounded-xl bg-slate-800/70 border border-slate-700 space-y-3"
+          data-testid="debate-bench-neutral"
+        >
+          <div className="flex items-center justify-between border-b border-slate-700/80 pb-2">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-slate-400" />
+              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-300 font-heading">
+                Unassigned / Neutral Delegates (Awaiting Stance)
+              </h4>
+            </div>
+            <span className="text-[10px] text-slate-400 font-mono">
+              {neutralSeats.length} Delegates
+            </span>
+          </div>
+          <p className="text-xs text-slate-400">
+            Participants are deliberating with unassigned stance. Functional roles do not infer a For or Against position.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+            {neutralSeats.map((seat) => (
+              <SeatItem
+                key={seat.id}
+                seat={seat}
+                isSelected={selectedSeatId === seat.id}
+                onSelect={onSelectSeat}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -118,6 +118,68 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       expect(screen.getByText(/Central Speaker's Podium/i)).toBeInTheDocument();
       expect(screen.getAllByTestId('speaking-badge').length).toBeGreaterThan(0);
     });
+
+    it('does not infer For/Against stance from functional roles when stance is unknown', () => {
+      // Evidence Analyst (Priya) and Questioner (Aarav) with no explicit sideOrBench
+      const unassignedSeats: SeatModel[] = [
+        {
+          id: 'seat_analyst',
+          userId: 'user_priya',
+          name: 'Priya Sharma',
+          role: 'Evidence Analyst',
+          status: 'active',
+          institution: 'Navchetna Public School',
+        },
+        {
+          id: 'seat_questioner',
+          userId: 'user_aarav',
+          name: 'Aarav Sharma',
+          role: 'Questioner',
+          status: 'active',
+          institution: 'Navchetna Public School',
+        },
+        {
+          id: 'seat_facilitator',
+          userId: 'user_rohan',
+          name: 'Rohan Mehta',
+          role: 'Facilitator',
+          status: 'active',
+          institution: 'Rajasthan Youth Deliberation Network',
+        },
+      ];
+
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            seats={unassignedSeats}
+          />
+        </MemoryRouter>
+      );
+
+      // Facilitator remains correctly assigned to Moderator bench supported by actual role
+      const moderatorBench = screen.getByTestId('debate-bench-moderator');
+      expect(moderatorBench).toHaveTextContent('Rohan Mehta');
+
+      // Proposition bench (For) and Opposition bench (Against) are visual placeholders awaiting stance
+      const forBench = screen.getByTestId('debate-bench-for');
+      expect(forBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
+      expect(forBench).not.toHaveTextContent('Priya Sharma');
+      expect(forBench).not.toHaveTextContent('Aarav Sharma');
+
+      const againstBench = screen.getByTestId('debate-bench-against');
+      expect(againstBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
+      expect(againstBench).not.toHaveTextContent('Priya Sharma');
+      expect(againstBench).not.toHaveTextContent('Aarav Sharma');
+
+      // Evidence Analyst and Questioner appear in the Neutral / Unassigned delegates area
+      const neutralBench = screen.getByTestId('debate-bench-neutral');
+      expect(neutralBench).toBeInTheDocument();
+      expect(neutralBench).toHaveTextContent('Priya Sharma');
+      expect(neutralBench).toHaveTextContent('Evidence Analyst');
+      expect(neutralBench).toHaveTextContent('Aarav Sharma');
+      expect(neutralBench).toHaveTextContent('Questioner');
+    });
   });
 
   describe('Assembly Layout & Dissent Marker', () => {
@@ -608,7 +670,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
   });
 
   describe('Page Integration Verification', () => {
-    it('renders SessionSeating inside DebateRoomPreviewPage with active debate roster', async () => {
+    it('renders SessionSeating inside DebateRoomPreviewPage with active debate roster and unassigned stance handling', async () => {
       await useAuthStore.getState().switchPersona('user_aarav');
 
       render(
@@ -624,6 +686,21 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
         expect(screen.getByTestId('debate-seating-layout')).toBeInTheDocument();
         expect(screen.getByTestId('seating-quota-display')).toBeInTheDocument();
       });
+
+      // Roster participants with functional roles (Evidence Analyst Priya, Questioner Aarav)
+      // are not assigned to For or Against benches in the absence of explicit stance data
+      const forBench = screen.getByTestId('debate-bench-for');
+      const againstBench = screen.getByTestId('debate-bench-against');
+      expect(forBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
+      expect(againstBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
+      expect(forBench).not.toHaveTextContent('Priya Sharma');
+      expect(againstBench).not.toHaveTextContent('Aarav Sharma');
+
+      // Unassigned delegates area presents participants without invented stance claims
+      const neutralBench = screen.getByTestId('debate-bench-neutral');
+      expect(neutralBench).toBeInTheDocument();
+      expect(neutralBench).toHaveTextContent('Priya Sharma');
+      expect(neutralBench).toHaveTextContent('Aarav Sharma');
 
       // Existing procedure controls remain present and functional
       expect(screen.getByTestId('debate-reservation-rulebook-banner')).toBeInTheDocument();

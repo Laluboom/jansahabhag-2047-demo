@@ -155,19 +155,14 @@ export const DebateRoomPreviewPage: React.FC = () => {
         (q) => q.userId === member.userId && (q.status === 'waiting' || q.status === 'speaking')
       );
 
-      // Map role to facing benches (Moderator, For, Against)
+      // Map role to chamber seating:
+      // Moderator / Procedural bench is assigned only if supported by actual role (Facilitator, Rapporteur).
+      // Stance (For vs Against) is never inferred from functional roles (e.g. Evidence Analyst, Questioner, Civic Advocate).
+      // Participants without an explicit stance belong to the Unassigned/Neutral area.
       const roleLower = (member.role || '').toLowerCase();
-      let sideOrBench = 'General Bench';
+      let sideOrBench = 'Unassigned';
       if (roleLower.includes('facilitator') || roleLower.includes('rapporteur')) {
         sideOrBench = 'Moderator';
-      } else if (roleLower.includes('advocate') || roleLower.includes('analyst')) {
-        sideOrBench = 'For';
-      } else if (
-        roleLower.includes('questioner') ||
-        roleLower.includes('voice') ||
-        roleLower.includes('synthesiser')
-      ) {
-        sideOrBench = 'Against';
       }
 
       let status: SeatStatus = 'active';
