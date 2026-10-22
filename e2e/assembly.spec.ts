@@ -95,13 +95,13 @@ test.describe('Package 05: Youth Assembly Procedure, Roles, Stages & Dissent (De
 
     // Verify mobile role tabs are present
     await expect(page.getByRole('button', { name: 'All 4 Zones' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Thinker' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Enabler' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Troubleshooter' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Shaper' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Thinker', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Enabler', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Troubleshooter', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Shaper', exact: true })).toBeVisible();
 
     // Filter to Thinker zone
-    await page.getByRole('button', { name: 'Thinker' }).click();
+    await page.getByRole('button', { name: 'Thinker', exact: true }).click();
     await expect(page.locator('.font-heading', { hasText: 'Thinker' }).first()).toBeVisible();
 
     // Switch back to All 4 Zones
