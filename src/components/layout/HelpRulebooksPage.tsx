@@ -14,7 +14,14 @@ import {
   CheckCircle2,
   XCircle,
   ShieldAlert,
+  VideoOff,
 } from 'lucide-react';
+import {
+  NO_RECORDING_RULE_TITLE,
+  NO_RECORDING_RULE_TEXT,
+  FACE_CONSENT_WARNING_TEXT,
+  ALLOWED_EVIDENCE_FORMAT_LABELS,
+} from '../../domain/evidenceRules';
 
 export const HelpRulebooksPage: React.FC = () => {
   return (
@@ -100,7 +107,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft summary for observable field audits, verifiable timestamps, and mentor verification criteria pending owner review.
+            Observable field audits, verifiable timestamps, and mentor verification criteria. Evidence is private by default. No recording without facilitator permission, and unconsented photos of faces are strictly prohibited.
           </p>
           <div className="pt-2">
             <Link to="/assignments">
@@ -129,6 +136,28 @@ export const HelpRulebooksPage: React.FC = () => {
                 <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </Link>
+          </div>
+        </Card>
+
+        {/* Media Consent & No-Recording Policy Card */}
+        <Card className="p-5 border-slate-200 space-y-3 md:col-span-2 bg-slate-50/50">
+          <div className="flex items-center gap-2 text-rose-700 font-semibold text-sm">
+            <VideoOff className="w-5 h-5 text-rose-600 shrink-0" />
+            <CardTitle className="text-base font-bold text-slate-900">
+              Session Recording & Media Rules: {NO_RECORDING_RULE_TITLE}
+            </CardTitle>
+          </div>
+          <p className="text-xs text-slate-700 leading-relaxed">
+            {NO_RECORDING_RULE_TEXT}
+          </p>
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200/80 text-xs text-amber-900 space-y-1">
+            <p className="font-semibold flex items-center gap-1.5">
+              <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>Civic Evidence & Face Consent Standard</span>
+            </p>
+            <p className="text-[11px] text-slate-700 leading-relaxed">
+              When submitting field observations or civic evidence, <strong>{FACE_CONSENT_WARNING_TEXT}</strong> Supported formats are strictly limited to {ALLOWED_EVIDENCE_FORMAT_LABELS} up to 250 KB to ensure durable browser storage and protect participant privacy.
+            </p>
           </div>
         </Card>
       </div>

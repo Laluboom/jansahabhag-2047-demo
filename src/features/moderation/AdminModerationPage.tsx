@@ -216,6 +216,9 @@ export const AdminModerationPage: React.FC = () => {
                 <span className="text-xs text-slate-500">
                   Target: <strong>{c.targetType} ({c.targetId})</strong>
                 </span>
+                <span className="text-xs text-slate-500">
+                  Reporter: <strong>{c.reporterId}</strong>
+                </span>
               </div>
               <StatusChip status={c.status} />
             </div>
