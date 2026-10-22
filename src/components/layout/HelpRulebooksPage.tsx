@@ -4,13 +4,16 @@ import { Card, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import {
   BookOpen,
-  HelpCircle,
   Vote,
   Landmark,
   FileCheck2,
   HeartHandshake,
   ArrowRight,
   Home,
+  Bot,
+  CheckCircle2,
+  XCircle,
+  ShieldAlert,
 } from 'lucide-react';
 
 export const HelpRulebooksPage: React.FC = () => {
@@ -129,6 +132,74 @@ export const HelpRulebooksPage: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* AI Boundaries Policy Panel */}
+      <Card className="p-5 sm:p-6 border-slate-200 bg-slate-50/70 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-civic-indigo-50 text-civic-indigo-700 border border-civic-indigo-100">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+                AI Boundaries: Policy & Principles
+              </CardTitle>
+              <p className="text-xs text-slate-500">
+                Core operating rules governing automated tools and human accountability across JanSahabhag 2047.
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-civic-indigo-100/70 text-civic-indigo-800 text-xs font-semibold w-fit">
+            <span>AI assists, people decide.</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Permitted AI Scope */}
+          <div className="p-4 rounded-xl bg-white border border-emerald-100 shadow-2xs space-y-2.5">
+            <div className="flex items-center gap-2 text-emerald-800 font-semibold text-xs uppercase tracking-wide">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Where AI may assist (if built)</span>
+            </div>
+            <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside leading-relaxed">
+              <li>Suggest practice prompts for mock deliberations.</li>
+              <li>Draft candidate agendas for assembly sessions.</li>
+              <li>Summarise public discussions into concise overviews.</li>
+              <li>Explain rulebook and procedural guidelines in plain language.</li>
+            </ul>
+          </div>
+
+          {/* Prohibited AI Actions */}
+          <div className="p-4 rounded-xl bg-white border border-rose-100 shadow-2xs space-y-2.5">
+            <div className="flex items-center gap-2 text-rose-800 font-semibold text-xs uppercase tracking-wide">
+              <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>Strictly prohibited (AI must not)</span>
+            </div>
+            <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside leading-relaxed">
+              <li>Award civic credits or change passport status.</li>
+              <li>Verify field evidence or audit submissions.</li>
+              <li>Rank, score, or profile participants.</li>
+              <li>Choose speakers or allocate turns during assembly.</li>
+              <li>Moderate discussions autonomously or issue disciplinary actions.</li>
+              <li>Access or ingest private UHV reflections.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Safeguards & Human Accountability */}
+        <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/80 text-xs text-slate-700 space-y-2">
+          <div className="flex items-center gap-2 font-semibold text-amber-900">
+            <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>Safeguards, Output Handling & Appeals</span>
+          </div>
+          <p className="leading-relaxed">
+            All AI-generated content must be clearly labelled, reviewable, and freely editable or discardable by participants before submission or use. AI never decides credit awards, evidence verification, moderation actions, or appeals. Routine credits may be awarded automatically by deterministic system rules upon verified task completion, while substantive reviews, verification assessments, and moderation determinations are handled by human reviewers and facilitators, with human review and appeals remaining available where implemented.
+          </p>
+          <p className="text-[11px] text-slate-500 italic">
+            Policy note: This panel establishes institutional governance requirements for potential future AI tools. No generative AI features or commercial model providers are currently active or operating in this fictional browser demo.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 };
