@@ -43,6 +43,7 @@ import {
   Tag,
   AlertCircle,
   Ban,
+  ExternalLink,
 } from 'lucide-react';
 
 export const WorkspacePage: React.FC = () => {
@@ -1441,6 +1442,14 @@ export const WorkspacePage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Link
+                to="/help"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded py-1 px-2"
+                data-testid="workspace-full-rulebook-link"
+              >
+                <span>Full Rulebook</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
               <Button
                 size="sm"
                 variant={hasAcknowledgedRules ? 'outline' : 'primary'}
@@ -1592,23 +1601,34 @@ export const WorkspacePage: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-              <Button
-                size="sm"
-                variant="outline"
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <Link
+                to="/help"
                 onClick={() => setIsRulebookModalOpen(false)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline"
+                data-testid="workspace-modal-full-rulebook-link"
               >
-                Close
-              </Button>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={handleAcknowledgeRules}
-                disabled={isAcknowledgingRules}
-                data-testid="btn-modal-acknowledge-rules"
-              >
-                {isAcknowledgingRules ? 'Recording...' : 'I Acknowledge & Accept Rules'}
-              </Button>
+                <span>Full Rulebook</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsRulebookModalOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={handleAcknowledgeRules}
+                  disabled={isAcknowledgingRules}
+                  data-testid="btn-modal-acknowledge-rules"
+                >
+                  {isAcknowledgingRules ? 'Recording...' : 'I Acknowledge & Accept Rules'}
+                </Button>
+              </div>
             </div>
           </Card>
         </div>

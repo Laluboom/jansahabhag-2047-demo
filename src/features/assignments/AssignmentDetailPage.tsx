@@ -7,6 +7,7 @@ import { Assignment, Submission, Evidence, User } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
 import {
@@ -220,15 +221,51 @@ export const AssignmentDetailPage: React.FC = () => {
               </>
             )}
           </div>
-          {submission && !isTeacher && (
-            isUhv ? (
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800">
-                {submission.status === 'draft' ? 'Draft Saved' : 'Reflection Recorded'}
-              </span>
-            ) : (
-              <StatusChip status={submission.status} />
-            )
-          )}
+          <div className="flex items-center gap-2">
+            <PointOfUseRulesButton
+              moduleName="Assignment"
+              triggerText="Rules"
+              modalTitle={isUhv ? "UHV Study Reflection Rules" : "Assignment Evidence Rules"}
+              description={isUhv ? "Guidelines for personal values inquiry reflections." : "Verification and consent standards for this assignment."}
+              rules={isUhv ? [
+                {
+                  title: 'Voluntary Self-Study Reflection',
+                  description: 'This is a personal reflection prompt. Ideological agreement is not required or graded.',
+                },
+                {
+                  title: 'No Credit Award',
+                  description: 'UHV assignments carry 0 credits to keep reflection unpressured.',
+                },
+                {
+                  title: 'Private Journal Isolation',
+                  description: 'Stored locally and isolated from public review queues.',
+                },
+              ] : [
+                {
+                  title: 'Verifiable Field Observation',
+                  description: `Submissions must fulfill the required ${assignment.requiredEvidenceType} evidence standard.`,
+                },
+                {
+                  title: 'Consent & Face Privacy',
+                  description: 'Do not upload unconsented faces or private vehicle license plates.',
+                },
+                {
+                  title: 'Mentor Review & Credits',
+                  description: `Earn +${assignment.creditsReward} Contribution Credits upon teacher mentor verification.`,
+                },
+              ]}
+              testId="assignment-detail-rules-btn"
+            />
+            {submission && !isTeacher && (
+              isUhv ? (
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800">
+                  {submission.status === 'draft' ? 'Draft Saved' : 'Reflection Recorded'}
+                </span>
+              ) : (
+                <StatusChip status={submission.status} />
+              )
+            )}
+          </div>
         </div>
 
         <div>

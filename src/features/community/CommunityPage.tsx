@@ -8,6 +8,7 @@ import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   MessageSquare,
   Users,
@@ -165,26 +166,48 @@ export const CommunityPage: React.FC = () => {
           </p>
         </div>
 
-        {currentUser && (
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => setIsNewTopicOpen((prev) => !prev)}
-            className="self-start sm:self-auto shrink-0"
-          >
-            {isNewTopicOpen ? (
-              <>
-                <X className="w-4 h-4 mr-1" />
-                <span>Close Form</span>
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4 mr-1" />
-                <span>New Topic</span>
-              </>
-            )}
-          </Button>
-        )}
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <PointOfUseRulesButton
+            moduleName="Community"
+            triggerText="Community Rules"
+            modalTitle="Community Circles & Forum Guidelines"
+            description="Standards for constructive civic discussion and peer coordination."
+            rules={[
+              {
+                title: 'Constructive Civic Discourse',
+                description: 'Discussions are focused on public safety, civic observations, and peer coordination. Disparaging or abusive speech is prohibited.',
+              },
+              {
+                title: 'Non-Anonymous Accountability',
+                description: 'Posts are associated with your registered demo persona to foster transparency and mutual trust.',
+              },
+              {
+                title: 'Moderation & Reporting',
+                description: 'Community topics are moderated locally. Violations of consent, safety, or respectful conduct may be flagged for moderator action.',
+              },
+            ]}
+            testId="community-rules-btn"
+          />
+          {currentUser && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => setIsNewTopicOpen((prev) => !prev)}
+            >
+              {isNewTopicOpen ? (
+                <>
+                  <X className="w-4 h-4 mr-1" />
+                  <span>Close Form</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span>New Topic</span>
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* New Topic Form */}

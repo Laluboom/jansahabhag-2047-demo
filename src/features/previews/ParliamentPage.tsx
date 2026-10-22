@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
@@ -15,6 +16,7 @@ import {
   Scale,
   ShieldAlert,
   EyeOff,
+  ExternalLink,
 } from 'lucide-react';
 import {
   POLICY_VERSION,
@@ -276,9 +278,19 @@ export const ParliamentPage: React.FC = () => {
               Youth Parliament Reservation Policy & Point-of-Use Rulebook (§§1–10)
             </CardTitle>
           </div>
-          <span className="text-xs font-mono font-semibold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-100 self-start sm:self-auto">
-            Policy {POLICY_VERSION}
-          </span>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-xs font-mono font-semibold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-100">
+              Policy {POLICY_VERSION}
+            </span>
+            <Link
+              to="/help"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded py-0.5 px-1.5"
+              data-testid="parliament-full-rulebook-link"
+            >
+              <span>Full Rulebook</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">

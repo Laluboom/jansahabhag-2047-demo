@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
 import { Avatar } from '../../components/ui/Avatar';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   FileCheck2,
   ArrowRight,
@@ -162,11 +163,38 @@ export const AssignmentsPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 shrink-0 text-right">
-            <span className="text-xs font-bold text-amber-900 uppercase block">Pending Reviews</span>
-            <span className="text-2xl font-extrabold text-amber-950 font-heading">
-              {civicSubmissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length}
-            </span>
+          <div className="flex items-center gap-3 shrink-0">
+            <PointOfUseRulesButton
+              moduleName="Assignments"
+              triggerText="Review Rules"
+              modalTitle="Field Evidence Review & Verification Rules"
+              description="Standards for reviewing and verifying student civic field evidence."
+              rules={[
+                {
+                  title: 'Observable Field Standards',
+                  description: 'Submissions must record verifiable observations, counts, or dates from neighbourhood street audits.',
+                },
+                {
+                  title: 'Consent & Privacy Protections',
+                  description: 'Photos must not expose private vehicle registration plates, residential interiors, or identifiable faces without explicit consent.',
+                },
+                {
+                  title: 'Submission Formats & Limits',
+                  description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
+                },
+                {
+                  title: 'Mentor Verification & Credits',
+                  description: 'Verified civic assignments award +2 Contribution Credits upon mentor review. Revision may be requested if criteria are unmet.',
+                },
+              ]}
+              testId="teacher-assignments-rules-btn"
+            />
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-right">
+              <span className="text-xs font-bold text-amber-900 uppercase block">Pending Reviews</span>
+              <span className="text-2xl font-extrabold text-amber-950 font-heading">
+                {civicSubmissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -447,6 +475,31 @@ export const AssignmentsPage: React.FC = () => {
             Collect observable field data, traffic counts, and community interviews verified by mentors (fictional browser demo).
           </p>
         </div>
+        <PointOfUseRulesButton
+          moduleName="Assignments"
+          triggerText="Evidence Rules"
+          modalTitle="Field Evidence & Assignment Rules"
+          description="Standards for collecting, submitting, and verifying field evidence."
+          rules={[
+            {
+              title: 'Observable Field Standards',
+              description: 'Submissions must record verifiable observations, counts, or dates from neighbourhood street audits.',
+            },
+            {
+              title: 'Consent & Privacy Protections',
+              description: 'Photos must not expose private vehicle registration plates, residential interiors, or identifiable faces without explicit consent.',
+            },
+            {
+              title: 'Submission Formats & Limits',
+              description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
+            },
+            {
+              title: 'Mentor Verification & Credits',
+              description: 'Verified civic assignments award +2 Contribution Credits upon mentor review. Revision may be requested if criteria are unmet.',
+            },
+          ]}
+          testId="assignments-rules-btn"
+        />
       </div>
 
       {/* Visible Path to Activities (Master PRD §1, Item 3) */}

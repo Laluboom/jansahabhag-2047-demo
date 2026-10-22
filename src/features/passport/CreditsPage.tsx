@@ -140,6 +140,17 @@ export const CreditsPage: React.FC = () => {
             Fictional single-browser simulation; English demo with Hindi pending review. Credits are local demonstration counters, not real-world currency or certified credentials.
           </p>
         </div>
+        <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+          <span className="text-slate-500">Read the full credit award criteria and appeal procedures in the rulebook.</span>
+          <Link
+            to="/help"
+            className="font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-civic-indigo-500 rounded py-0.5 px-1"
+            data-testid="credits-full-rulebook-link"
+          >
+            <span>Full Rulebook</span>
+            <ExternalLink className="w-3 h-3" />
+          </Link>
+        </div>
       </Card>
 
       {/* Dimension Filter Tabs */}

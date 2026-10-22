@@ -7,6 +7,7 @@ import { Assembly, AssemblyRole } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { ThreadMotif } from '../../components/layout/ThreadMotif';
 import {
   Vote,
@@ -107,9 +108,38 @@ export const AssembliesPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-civic-teal-50 px-3.5 py-2 rounded-xl border border-civic-teal-200 text-xs text-civic-teal-900 shrink-0">
-          <Sparkles className="w-4 h-4 text-civic-teal-600" />
-          <span>Earn <strong>+2 Credits</strong> on Joining & <strong>+1</strong> per Contribution</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+          <PointOfUseRulesButton
+            moduleName="Youth Assembly"
+            triggerText="Assembly Rules"
+            modalTitle="Youth Assembly Procedural & Representation Rules"
+            description="Standing orders governing deliberation stages, role quotas, speaking queues, and dissent."
+            hasSeatQuotaRule={true}
+            quotaContext="Named Deliberative Roles"
+            rules={[
+              {
+                title: 'Canonical Six Stages',
+                description: 'Assemblies advance sequentially through Frame, Think, Enable, Troubleshoot, Shape, and Final Assembly. Skipping stages is denied.',
+              },
+              {
+                title: 'Four Core Deliberative Roles',
+                description: 'Chambers guarantee balanced coverage of Thinkers, Enablers, Troubleshooters, and Shapers. Singular chair roles require explicit confirmation.',
+              },
+              {
+                title: 'Dissent Retention & Transparency',
+                description: 'Consensus is never forced. Split votes and minority reservations remain permanently recorded in the published outcome.',
+              },
+              {
+                title: 'Speaking Queue & Recognition',
+                description: 'Speaking turns are ordered and moderated by the Chair to ensure equitable participation across cohorts.',
+              },
+            ]}
+            testId="assemblies-rules-btn"
+          />
+          <div className="flex items-center gap-2 bg-civic-teal-50 px-3.5 py-2 rounded-xl border border-civic-teal-200 text-xs text-civic-teal-900">
+            <Sparkles className="w-4 h-4 text-civic-teal-600" />
+            <span>Earn <strong>+2 Credits</strong> on Joining & <strong>+1</strong> per Contribution</span>
+          </div>
         </div>
       </div>
 

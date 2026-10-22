@@ -1,7 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Scale, X } from 'lucide-react';
+import { Scale, X, ExternalLink } from 'lucide-react';
 
 interface DebateReservationRulebookModalProps {
   isOpen: boolean;
@@ -123,8 +124,17 @@ export const DebateReservationRulebookModal: React.FC<DebateReservationRulebookM
           </div>
         </div>
 
-        <div className="pt-3 border-t border-slate-100 flex justify-end">
-          <Button size="sm" variant="primary" onClick={onClose}>
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <Link
+            to="/help"
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded py-1"
+            data-testid="debate-full-rulebook-link"
+          >
+            <span>Open Full Rulebook Index</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Link>
+          <Button size="sm" variant="primary" onClick={onClose} data-testid="close-debate-rulebook-btn">
             Close Rulebook
           </Button>
         </div>

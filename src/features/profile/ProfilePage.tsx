@@ -82,7 +82,7 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-xs text-slate-700">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100 text-xs text-slate-700">
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
             <div>
@@ -102,6 +102,15 @@ export const ProfilePage: React.FC = () => {
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Location</span>
               <span className="font-semibold">{currentUser.location}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-slate-400 shrink-0" />
+            <div>
+              <span className="text-slate-400 block text-[10px] uppercase">Declared Age</span>
+              <span className="font-semibold text-civic-teal-700" data-testid="profile-user-age">
+                {currentUser.age || 18} yrs (18+)
+              </span>
             </div>
           </div>
         </div>

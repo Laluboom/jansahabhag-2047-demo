@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { demoRepository } from '../../services/demoRepository';
 import { PassportView, Reflection } from '../../types';
 import { Card, CardTitle } from '../../components/ui/Card';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { ArrowLeft, Award, Sparkles, CheckCircle2, ShieldCheck, BookOpen, Vote, FileCheck2 } from 'lucide-react';
 
 export const AchievementsPage: React.FC = () => {
@@ -117,8 +118,27 @@ export const AchievementsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold shrink-0">
-          {badges.filter((b) => b.earned).length} / {badges.length} Badges Unlocked
+        <div className="flex items-center gap-2 shrink-0">
+          <PointOfUseRulesButton
+            moduleName="Achievements"
+            triggerText="Honors Rules"
+            modalTitle="Civic Badges & Recognition Standards"
+            description="Criteria governing badge awards and non-gamified recognition."
+            rules={[
+              {
+                title: 'Action-Based Milestones',
+                description: 'Badges recognize verified civic fieldwork, assembly contributions, and coursework completion.',
+              },
+              {
+                title: 'No Moral Profiling',
+                description: 'Digital honors reflect task completion, not moral ranking or character grading.',
+              },
+            ]}
+            testId="achievements-rules-btn"
+          />
+          <div className="text-xs px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold">
+            {badges.filter((b) => b.earned).length} / {badges.length} Badges Unlocked
+          </div>
         </div>
       </div>
 
