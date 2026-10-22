@@ -43,6 +43,13 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
+import {
+  SessionSeating,
+  SeatModel,
+  SeatStatus,
+  SeatingQuotaSummary,
+  computeSeatingQuotaFromAllocations,
+} from '../session';
 
 const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
   'OPENING_STATEMENTS',
@@ -129,6 +136,78 @@ export const DebateRoomPreviewPage: React.FC = () => {
     setSelectedRoleForAudits(null);
     loadSessionData();
   }, [currentUser?.id, targetSessionId]);
+
+  // Typed Seating View Models for SessionSeating (Facing Benches Layout)
+  const debateSeats: SeatModel[] = React.useMemo(() => {
+    if (!session) return [];
+    const roster = session.roster || [];
+    const activeSpkId = session.debateData?.activeSpeakerId;
+    const queue = session.debateData?.speakingQueue || [];
+    const motionText = session.debateData?.motion;
+
+    return roster.map((member) => {
+      const userDetail = allUsers.find((u) => u.id === member.userId);
+      const isSpeaking = Boolean(
+        member.isSpeaking ||
+        (activeSpkId && member.userId === activeSpkId)
+      );
+      const queueEntry = queue.find(
+        (q) => q.userId === member.userId && (q.status === 'waiting' || q.status === 'speaking')
+      );
+
+      // Map role to chamber seating:
+      // Moderator / Procedural bench is assigned only if supported by actual role (Facilitator, Rapporteur).
+      // Stance (For vs Against) is never inferred from functional roles (e.g. Evidence Analyst, Questioner, Civic Advocate).
+      // Participants without an explicit stance belong to the Unassigned/Neutral area.
+      const roleLower = (member.role || '').toLowerCase();
+      let sideOrBench = 'Unassigned';
+      if (roleLower.includes('facilitator') || roleLower.includes('rapporteur')) {
+        sideOrBench = 'Moderator';
+      }
+
+      let status: SeatStatus = 'active';
+      if (isSpeaking) {
+        status = 'speaking';
+      } else if (queueEntry) {
+        status = 'waiting';
+      }
+
+      let currentActivity = `Deliberating in ${member.role} capacity on safe school corridor motion.`;
+      if (isSpeaking) {
+        currentActivity = `Addressing chamber on motion: "${motionText || 'Pedestrian Safety'}"`;
+      } else if (queueEntry) {
+        currentActivity = `Waiting in speaking queue (${queueEntry.userRole || 'Awaiting facilitator recognition'})`;
+      }
+
+      // Check if caller is authorized to see actual assigned reserved occupants (e.g. platform owner)
+      // Never call getFictionalReservationEligibility; personal eligibility is strictly confidential.
+      const alloc = session.roleAllocations?.[member.role];
+      const isReserved = Boolean(
+        alloc?.reservedOccupants && alloc.reservedOccupants.includes(member.userId)
+      );
+
+      return {
+        id: `seat_${session.id}_${member.userId}`,
+        userId: member.userId,
+        name: member.name || userDetail?.name || member.userId,
+        avatar: userDetail?.avatar,
+        role: member.role,
+        sideOrBench,
+        status,
+        isSpeaking,
+        isReserved,
+        institution: userDetail?.institutionName || 'Jaipur Youth Deliberation Network',
+        currentActivity,
+        bio: userDetail?.bio,
+      };
+    });
+  }, [session, allUsers]);
+
+  // Quota calculation pulling strictly from projected roleAllocations
+  // Sum of per-role minimums and totalPlaces; never hard-coded; never recomputed from roster.
+  const debateQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
+    return computeSeatingQuotaFromAllocations(session?.roleAllocations);
+  }, [session?.roleAllocations]);
 
   // Reservation Allocation Handlers (08C1 APIs)
   const handleFinalizeRole = async (roleName: string) => {
@@ -787,6 +866,17 @@ export const DebateRoomPreviewPage: React.FC = () => {
           })}
         </div>
       </Card>
+
+      {/* Reusable Accessible SessionSeating Component (Debate Layout) */}
+      <SessionSeating
+        layout="debate"
+        currentRoute="debate"
+        seats={debateSeats}
+        quotaSummary={debateQuotaSummary}
+        activeSpeakerId={activeSpeakerId}
+        title="Debate Room Chamber Seating"
+        subtitle="Facing Proposition (For) & Opposition (Against) benches with Facilitator rostrum"
+      />
 
       {/* Debate Reservation Rulebook Point-of-Use Banner */}
       <DebateReservationRulebookBanner

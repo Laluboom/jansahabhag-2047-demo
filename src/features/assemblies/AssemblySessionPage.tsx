@@ -29,6 +29,13 @@ import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
 import { StatusChip } from '../../components/ui/StatusChip';
 import {
+  SessionSeating,
+  SeatModel,
+  SeatStatus,
+  SeatingQuotaSummary,
+  computeSeatingQuotaFromAllocations,
+} from '../../components/session';
+import {
   ArrowLeft,
   ArrowRight,
   Vote,
@@ -583,6 +590,102 @@ export const AssemblySessionPage: React.FC = () => {
     }
   };
 
+  // Typed Seating View Models for SessionSeating (4 Functional Zones Layout)
+  const assemblySeats: SeatModel[] = React.useMemo(() => {
+    if (!assembly) return [];
+    const queue = assembly.speakingQueue || [];
+    const activeSpkId = assembly.activeSpeakerId;
+    const actions = assembly.roleActions || [];
+    const propDissent = proposition?.dissent || [];
+    const propResponses = proposition?.participantResponses || [];
+
+    return participants.map((p) => {
+      const roleObj = allRoles.find((r) => r.userId === p.id);
+      const roleName =
+        roleObj?.roleName ||
+        (p.id === assembly.chairId
+          ? 'Chair'
+          : p.id === assembly.facilitatorId
+          ? 'Facilitator'
+          : 'Delegate');
+
+      const isSpeaking = Boolean(
+        activeSpkId === p.id ||
+        queue.some((s) => s.userId === p.id && s.status === 'speaking')
+      );
+      const isWaiting = queue.some(
+        (s) => s.userId === p.id && s.status === 'waiting'
+      );
+
+      // Dissent detection from proposition.dissent, responses, or Red Flag role actions
+      const dissentRec = propDissent.find((d) => d.userId === p.id);
+      const userResp = propResponses.find((r) => r.userId === p.id);
+      const respDissent =
+        userResp &&
+        (userResp.responseState === 'Dissent' ||
+          userResp.responseState === 'Support with reservations');
+      const redFlagAction = actions.find(
+        (a) => a.userId === p.id && a.power === 'Red Flag'
+      );
+
+      const hasDissent = Boolean(dissentRec || respDissent || redFlagAction);
+      const dissentSummary =
+        dissentRec?.reason ||
+        redFlagAction?.description ||
+        (respDissent
+          ? `Registered ${userResp?.responseState} on draft proposition.`
+          : undefined);
+
+      let status: SeatStatus = 'active';
+      if (isSpeaking) {
+        status = 'speaking';
+      } else if (isWaiting) {
+        status = 'waiting';
+      }
+
+      let currentActivity = `Deliberating as ${roleName} on safe student corridor proposition.`;
+      if (isSpeaking) {
+        currentActivity = `Addressing assembly on Stage ${currentStageIndex + 1}: ${
+          CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.label
+        }`;
+      } else if (redFlagAction) {
+        currentActivity = `Raised Red Flag: ${redFlagAction.title}`;
+      } else if (dissentRec) {
+        currentActivity = `Formally logged reservation: ${dissentRec.reason}`;
+      }
+
+      // Check if caller is authorized to see actual assigned reserved occupants (e.g. platform owner)
+      // Never call getFictionalReservationEligibility; personal eligibility is confidential.
+      const alloc = assembly?.roleAllocations?.[roleName];
+      const isReserved = Boolean(
+        alloc?.reservedOccupants && alloc.reservedOccupants.includes(p.id)
+      );
+
+      return {
+        id: `seat_${assembly.id}_${p.id}`,
+        userId: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        role: roleName,
+        sideOrBench: `${roleName} Zone`,
+        status,
+        isSpeaking,
+        hasDissent,
+        dissentSummary,
+        isReserved,
+        institution: p.institutionName || 'Jaipur Youth Deliberative Assembly',
+        currentActivity,
+        bio: p.bio,
+      };
+    });
+  }, [assembly, participants, allRoles, proposition, currentStageIndex]);
+
+  // Quota calculation pulling strictly from projected roleAllocations
+  // Sum of per-role minimums and capacities; no second calculation; no hard-coded capacity.
+  const assemblyQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
+    return computeSeatingQuotaFromAllocations(assembly?.roleAllocations);
+  }, [assembly?.roleAllocations]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading assembly deliberative chamber">
@@ -861,6 +964,17 @@ export const AssemblySessionPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Reusable Accessible SessionSeating Component (Assembly Layout) */}
+      <SessionSeating
+        layout="assembly"
+        currentRoute="assembly"
+        seats={assemblySeats}
+        quotaSummary={assemblyQuotaSummary}
+        activeSpeakerId={assembly.activeSpeakerId}
+        title="Youth Assembly Deliberative Chamber Seating"
+        subtitle="Four balanced functional zones: Thinker, Enabler, Troubleshooter, Shaper & Procedural Rostrum"
+      />
 
       {/* MOBILE ROLE ZONE FILTER TABS (Visible on small screens) */}
       <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-1">

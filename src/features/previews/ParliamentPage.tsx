@@ -20,6 +20,7 @@ import {
   POLICY_VERSION,
   buildParliamentDelegationIllustration,
 } from '../../services/reservationAllocationService';
+import { SessionSeating, SeatModel, SeatingQuotaSummary } from '../../components/session';
 
 export const ParliamentPage: React.FC = () => {
   const [selectedMotionModal, setSelectedMotionModal] = useState<boolean>(false);
@@ -27,6 +28,135 @@ export const ParliamentPage: React.FC = () => {
 
   const illustration = buildParliamentDelegationIllustration(delegationScenario);
   const { allocation, validation, seats, summaryNote } = illustration;
+
+  // Typed Seating View Models for SessionSeating (Parliament Horseshoe Layout)
+  const parliamentSeats: SeatModel[] = React.useMemo(() => {
+    const isNonCompliant = delegationScenario === 'noncompliant';
+    const isOverbooked = delegationScenario === 'overbooked_ordinary';
+
+    return [
+      // 1. Presiding Speaker
+      {
+        id: 'seat_parl_speaker',
+        name: 'Youth Advisory Panel',
+        role: 'Presiding Speaker of Plenary',
+        sideOrBench: 'Speaker',
+        status: 'active',
+        institution: 'Apex Parliamentary Secretariat, New Delhi',
+        currentActivity:
+          'Presiding over Winter Plenary Session 2026 on Child & Pedestrian Urban Transit Protection',
+      },
+      // 2. Government & Sponsoring Benches
+      {
+        id: 'seat_parl_priya',
+        userId: 'user_priya',
+        name: 'Priya Sharma',
+        role: 'Lead Motion Sponsor (Jaipur Delegation)',
+        sideOrBench: 'Government',
+        status: 'speaking',
+        isSpeaking: true,
+        isReserved: true,
+        institution: 'Navchetna Public School, Jaipur (Rajasthan)',
+        currentActivity:
+          'Tabled Rajasthan Motion #07: Mandatory 25 km/h Safe School Perimeter Zones & Raised Crosswalk Standards',
+      },
+      {
+        id: 'seat_parl_rahul',
+        userId: 'user_rahul',
+        name: 'Rahul Deshmukh',
+        role: 'Co-Sponsor (Pune Delegation)',
+        sideOrBench: 'Government',
+        status: 'active',
+        institution: 'Pune Youth Civic Council (Maharashtra)',
+        currentActivity:
+          'Co-Sponsoring Motion #12: Urban School Bus Staggering & Non-Motorised Freight Windows',
+      },
+      {
+        id: 'seat_parl_aarav',
+        userId: 'user_aarav',
+        name: 'Aarav Sharma',
+        role: 'Jaipur Youth Delegate',
+        sideOrBench: 'Government',
+        status: 'active',
+        institution: 'Navchetna Public School, Jaipur',
+        currentActivity:
+          'Presenting grassroots observational traffic counts and speed logs from Mansarovar',
+      },
+      // 3. Opposition & Scrutiny Benches
+      {
+        id: 'seat_parl_ananya',
+        name: 'Ananya Sen',
+        role: 'Civic Scrutiny Spokesperson',
+        sideOrBench: 'Opposition',
+        status: 'waiting',
+        institution: 'Kolkata Deliberative Circle (West Bengal)',
+        currentActivity:
+          'Chamber Inquiry: Municipal budget allocations under AMRUT 2.0 vs local road engineering capacity',
+      },
+      {
+        id: 'seat_parl_dev',
+        name: 'Dev Patel',
+        role: 'Shadow Committee Member',
+        sideOrBench: 'Opposition',
+        status: 'active',
+        institution: 'Ahmedabad Civic Youth Guild (Gujarat)',
+        currentActivity:
+          'Scrutinizing freight diversion time windows and roadside vendor displacement risks',
+      },
+      // 4. Cross-benches & State Delegations
+      {
+        id: 'seat_parl_vikram',
+        userId: 'user_vikram',
+        name: isNonCompliant ? 'Unfilled Reserved Seat' : 'Vikram Rathore',
+        role: isNonCompliant ? 'Held Vacant (33% Quota)' : 'Jaipur Youth Delegate',
+        sideOrBench: 'Cross-bench',
+        status: isNonCompliant ? 'vacant' : 'active',
+        isReserved: isNonCompliant,
+        institution: isNonCompliant
+          ? 'Jaipur Delegation Allocation'
+          : 'Jaipur Youth Deliberative Assembly',
+        currentActivity: isNonCompliant
+          ? 'Unmet reserved place remains held vacant by default per 33% Reservation Policy (OD.17).'
+          : isOverbooked
+          ? 'Ordinary overbooking attempt blocked by validation without approved Platform Owner exception.'
+          : 'Advocating 1:15 approach ramps and cross-drainage pipe installation beneath tabletop crossings.',
+      },
+      {
+        id: 'seat_parl_tara',
+        name: 'Tara Verma',
+        role: 'Northern Zone Delegate',
+        sideOrBench: 'Cross-bench',
+        status: 'active',
+        institution: 'Shimla Youth Environment Circle (Himachal Pradesh)',
+        currentActivity:
+          'Reviewing gradient standards for hill-station pedestrian crossings',
+      },
+      {
+        id: 'seat_parl_arjun',
+        name: 'Arjun Rao',
+        role: 'Southern Zone Representative',
+        sideOrBench: 'Cross-bench',
+        status: 'active',
+        institution: 'Bengaluru Active Mobility Youth Network (Karnataka)',
+        currentActivity:
+          'Presenting data on smart solar warning beacons at 50m approaches',
+      },
+    ];
+  }, [delegationScenario]);
+
+  const parliamentQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
+    return {
+      totalCapacity: allocation.totalPlaces,
+      filledCount:
+        (allocation.reservedOccupiedCount ?? 0) + (allocation.ordinaryOccupiedCount ?? 0),
+      reservedMinimum: allocation.reservedMinimum,
+      reservedFilledCount: allocation.reservedOccupiedCount ?? 0,
+      vacanciesCount: allocation.vacanciesCount ?? 0,
+      isIllustrative: true,
+      illustrativeNotice:
+        'Illustrative apex plenary prototype: 3-seat Jaipur delegation calculation via shared reservationAllocationService. No live member appointment or statutory quota enforcement is claimed for national parliament.',
+    };
+  }, [allocation]);
 
   const motions = [
     {
@@ -197,6 +327,18 @@ export const ParliamentPage: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* Reusable Accessible SessionSeating Component (Parliament Horseshoe Layout) */}
+      <SessionSeating
+        layout="parliament"
+        currentRoute="parliament"
+        seats={parliamentSeats}
+        quotaSummary={parliamentQuotaSummary}
+        activeSpeakerId="seat_parl_priya"
+        isIllustrative={true}
+        title="National Youth Parliament Plenary Chamber"
+        subtitle="Apex horseshoe layout with Presiding Speaker, Government, Opposition & Cross-benches"
+      />
 
       {/* Fictional Jaipur Youth Delegation Allocation Illustration */}
       <Card className="p-6 border-slate-200 bg-white space-y-5" data-testid="parliament-delegation-illustration">
