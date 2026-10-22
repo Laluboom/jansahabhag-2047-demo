@@ -214,7 +214,7 @@ export const ProjectsPage: React.FC = () => {
             {completedMilestones}/{totalMilestones}
           </span>
           <span className="text-[10px] text-emerald-700 font-medium mt-0.5 block">
-            +10 Credits per milestone
+            +2 Credits per milestone
           </span>
         </Card>
 
@@ -371,7 +371,7 @@ export const ProjectsPage: React.FC = () => {
 
           <div className="p-3 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200 text-civic-saffron-900 text-[11px] space-y-1">
             <span className="font-bold block">Automatic Starter Roadmap:</span>
-            <p>Will initialize with 2 predefined field milestones. Completing each milestone awards +10 Civic Action Credits to all participants.</p>
+            <p>Will initialize with 2 predefined field milestones. Completing each milestone awards +2 Civic Action Credits to all participants.</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">

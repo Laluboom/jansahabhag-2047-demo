@@ -40,19 +40,19 @@ export const AchievementsPage: React.FC = () => {
     );
   }
 
-  const hasObservation = (passport?.creditsByDimension.Observation || 0) >= 5;
-  const hasDeliberation = (passport?.creditsByDimension.Deliberation || 0) >= 10;
+  const hasObservation = (passport?.creditsByDimension.Observation || 0) >= 1;
+  const hasDeliberation = (passport?.creditsByDimension.Deliberation || 0) >= 2;
   const hasReflection =
     reflections.filter((r) => r.contextType !== 'session').length > 0 ||
-    (passport?.creditsByDimension.Reflection || 0) >= 5;
-  const hasLearning = (passport?.creditsByDimension.Learning || 0) >= 15;
-  const hasCivicAction = (passport?.creditsByDimension['Civic Action'] || 0) >= 10;
+    (passport?.creditsByDimension.Reflection || 0) >= 1;
+  const hasLearning = (passport?.creditsByDimension.Learning || 0) >= 2;
+  const hasCivicAction = (passport?.creditsByDimension['Civic Action'] || 0) >= 2;
 
   const badges = [
     {
       id: 'b1',
       title: 'Civic Field Auditor',
-      desc: 'Completed verified traffic & pedestrian field count in school zone (+5 Observation).',
+      desc: 'Completed verified traffic & pedestrian field count in school zone (+1 Observation).',
       earned: hasObservation,
       category: 'Observation',
       icon: FileCheck2,
@@ -60,7 +60,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b2',
       title: 'Deliberation Delegate',
-      desc: 'Admitted as delegate and contributed to Youth Deliberative Assembly (+10 Deliberation).',
+      desc: 'Admitted as delegate and contributed to Youth Deliberative Assembly (+2 Deliberation).',
       earned: hasDeliberation,
       category: 'Deliberation',
       icon: Vote,
@@ -68,7 +68,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b3',
       title: 'Civic Deliberative Reflector',
-      desc: 'Recorded civic and ethical reflections in Civic Passport (+5 Reflection).',
+      desc: 'Recorded civic and ethical reflections in Civic Passport (+1 Reflection).',
       earned: hasReflection,
       category: 'Reflection',
       icon: Sparkles,
@@ -76,7 +76,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b4',
       title: 'Civic Knowledge Explorer',
-      desc: 'Completed civic foundations and ethics learning modules (+15 Learning).',
+      desc: 'Completed civic foundations and ethics learning modules (+2 Learning).',
       earned: hasLearning,
       category: 'Learning',
       icon: BookOpen,
@@ -84,7 +84,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b5',
       title: 'Action Project Champion',
-      desc: 'Co-authored a municipal resolution submitted to Nagar Nigam (+10 Civic Action).',
+      desc: 'Co-authored a municipal resolution submitted to Nagar Nigam (+2 Civic Action).',
       earned: hasCivicAction,
       category: 'Civic Action',
       icon: ShieldCheck,
@@ -92,8 +92,8 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b6',
       title: 'Master Civic Practitioner',
-      desc: 'Accumulated 100+ verified Civic Credits across all 6 civic dimensions.',
-      earned: (passport?.totalCredits || 0) >= 100,
+      desc: 'Accumulated 20+ verified Civic Credits across civic dimensions.',
+      earned: (passport?.totalCredits || 0) >= 20,
       category: 'Mastery',
       icon: Award,
     },

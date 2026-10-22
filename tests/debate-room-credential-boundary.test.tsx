@@ -24,8 +24,8 @@ describe('Debate Room Verified Credential Boundary', () => {
     const passportBefore = await repository.getPassport('user_vikram');
     const civicReflsBefore = await repository.getCivicReflections('user_vikram');
 
-    expect(userBefore?.totalCredits).toBe(20);
-    expect(passportBefore.totalCredits).toBe(20);
+    expect(userBefore?.totalCredits).toBe(13);
+    expect(passportBefore.totalCredits).toBe(13);
     expect(passportBefore.creditsByDimension.Reflection).toBe(0);
     expect(civicReflsBefore).toHaveLength(0);
 
@@ -150,9 +150,9 @@ describe('Debate Room Verified Credential Boundary', () => {
     const civicReflsWithAssembly = await repository.getCivicReflections('user_vikram');
     expect(civicReflsWithAssembly.some((r) => r.id === assemblyRefl.id)).toBe(true);
 
-    // Earns credits (+5 Reflection)
+    // Earns credits (+1 Reflection)
     const userWithAssembly = await repository.getUser('user_vikram');
-    expect(userWithAssembly?.totalCredits).toBe((userBefore?.totalCredits || 0) + 5);
+    expect(userWithAssembly?.totalCredits).toBe((userBefore?.totalCredits || 0) + 1);
 
     // Appears in PassportPage credentials
     const { unmount: unmountPassportAssembly } = render(

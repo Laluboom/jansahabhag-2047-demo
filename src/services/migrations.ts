@@ -562,16 +562,86 @@ export function normalizeWorkspaceRecords(db: DemoDatabase): DemoDatabase {
 export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabase {
   if (!db || typeof db !== 'object') return db;
 
-  // 1. Ensure creditAppeals exists
+  // 1. Ensure creditAppeals, credits, and passportEntries exist
   if (!Array.isArray(db.creditAppeals)) {
     db.creditAppeals = [];
   }
+  if (!Array.isArray(db.credits)) {
+    db.credits = [];
+  }
+  if (!Array.isArray(db.passportEntries)) {
+    db.passportEntries = [];
+  }
 
-  // 2. Ensure passportEntries are normalized with truthful review & verification states
+  // 2. Idempotently ensure every participant persona has exactly one Starting balance: 10 transaction
+  if (Array.isArray(db.users)) {
+    db.users.forEach((u) => {
+      if (u.role === 'participant' || (u.role as string) === 'student') {
+        const hasStartingBalance = db.credits.some(
+          (c) => c.userId === u.id && (c.sourceType === 'starting_balance' || c.reason === 'Starting balance: 10')
+        );
+        if (!hasStartingBalance) {
+          const startingTx = {
+            id: `tx_${u.id}_init`,
+            userId: u.id,
+            dimension: 'Contribution' as const,
+            amount: 10,
+            sourceType: 'starting_balance' as const,
+            sourceId: `init_${u.id}`,
+            sourceRoute: '/passport/credits',
+            status: 'Verified' as const,
+            reason: 'Starting balance: 10',
+            calculationExplanation: 'Approved owner model: 10 initial starting credits for newly created demo participant.',
+            createdAt: u.createdAt || '2026-09-01T08:30:00Z',
+            schemaVersion: 1,
+          };
+          db.credits.unshift(startingTx);
+        }
+
+        const hasStartingPassport = db.passportEntries.some(
+          (p) => p.userId === u.id && (p.sourceReferenceType === 'starting_balance' || p.subtitle === 'Starting balance: 10')
+        );
+        if (!hasStartingPassport) {
+          db.passportEntries.unshift({
+            id: `pass_${u.id}_init`,
+            userId: u.id,
+            category: 'achievement',
+            title: 'Civic Passport Initial Allocation',
+            subtitle: 'Starting balance: 10',
+            date: (u.createdAt || '2026-09-01T08:30:00Z').split('T')[0],
+            creditsAwarded: 10,
+            evidenceIds: [],
+            sourceReferenceId: `init_${u.id}`,
+            sourceReferenceType: 'starting_balance',
+            sourceRoute: '/passport/credits',
+            verificationState: 'system_recorded',
+            reviewState: 'accepted',
+            isVerified: true,
+            calculationExplanation: 'Approved owner model: 10 initial starting credits for newly created demo participant.',
+            revisionHistory: [
+              {
+                date: u.createdAt || '2026-09-01T08:30:00Z',
+                action: 'STARTING_BALANCE_ISSUED',
+                actorId: 'system',
+                actorName: 'JanSahabhag Registry',
+                note: 'Starting balance: 10 issued upon participant creation.',
+              },
+            ],
+            schemaVersion: 1,
+          });
+        }
+      }
+    });
+  }
+
+  // 3. Ensure passportEntries are normalized with truthful review & verification states
   if (Array.isArray(db.passportEntries)) {
     db.passportEntries.forEach((p) => {
       if (!p.sourceRoute) {
         switch (p.sourceReferenceType) {
+          case 'starting_balance':
+            p.sourceRoute = `/passport/credits`;
+            break;
           case 'assignment':
           case 'submission':
             p.sourceRoute = `/assignments/${p.sourceReferenceId}`;
@@ -619,6 +689,7 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
           };
           p.organisation = p.organisation || 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)';
         } else if (
+          p.sourceReferenceType === 'starting_balance' ||
           p.sourceReferenceType === 'assembly' ||
           p.sourceReferenceType === 'proposition' ||
           p.sourceReferenceType === 'contribution' ||
@@ -646,7 +717,7 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
     });
   }
 
-  // 3. Ensure credits have valid status and sourceRoute
+  // 4. Ensure credits have valid status, sourceRoute, and auditTrail
   if (Array.isArray(db.credits)) {
     db.credits.forEach((c) => {
       if (!c.status) {
@@ -654,6 +725,9 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
       }
       if (!c.sourceRoute) {
         switch (c.sourceType) {
+          case 'starting_balance':
+            c.sourceRoute = `/passport/credits`;
+            break;
           case 'assignment':
             c.sourceRoute = `/assignments/${c.sourceId}`;
             break;
@@ -680,6 +754,15 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
       if (!Array.isArray(c.auditTrail)) {
         c.auditTrail = [];
       }
+    });
+  }
+
+  // 5. Recompute totalCredits for all users strictly from verified and audited credits
+  if (Array.isArray(db.users) && Array.isArray(db.credits)) {
+    db.users.forEach((u) => {
+      u.totalCredits = db.credits
+        .filter((c) => c.userId === u.id && (c.status === 'Verified' || c.status === 'Audited'))
+        .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
     });
   }
 

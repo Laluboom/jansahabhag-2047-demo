@@ -109,7 +109,7 @@ export const AssembliesPage: React.FC = () => {
 
         <div className="flex items-center gap-2 bg-civic-teal-50 px-3.5 py-2 rounded-xl border border-civic-teal-200 text-xs text-civic-teal-900 shrink-0">
           <Sparkles className="w-4 h-4 text-civic-teal-600" />
-          <span>Earn <strong>+10 Credits</strong> on Joining & <strong>+5</strong> per Contribution</span>
+          <span>Earn <strong>+2 Credits</strong> on Joining & <strong>+1</strong> per Contribution</span>
         </div>
       </div>
 
@@ -191,7 +191,7 @@ export const AssembliesPage: React.FC = () => {
                       Open for Participation &bull; Role assigned upon joining
                     </span>
                     <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                      +10 Credits
+                      +2 Credits
                     </span>
                   </div>
                 )}
@@ -232,7 +232,7 @@ export const AssembliesPage: React.FC = () => {
                       onClick={() => handleJoin(asm.id)}
                     >
                       <Sparkles className="w-3.5 h-3.5 mr-1" />
-                      <span>Join Assembly (+10)</span>
+                      <span>Join Assembly (+2)</span>
                     </Button>
                   )}
                 </div>

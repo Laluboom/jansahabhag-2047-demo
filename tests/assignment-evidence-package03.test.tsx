@@ -456,7 +456,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
 
       const passportAfterSubmit = await demoRepository.getPassport('user_aarav');
       expect(passportAfterSubmit.totalCredits).toBe(initialTotal);
-      expect(passportAfterSubmit.pendingCredits).toBe(10);
+      expect(passportAfterSubmit.pendingCredits).toBe(2);
 
       // 3. Teacher Kavita verifies submission
       await demoRepository.switchUser('user_kavita');
@@ -470,7 +470,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
 
       expect(verified.status).toBe('verified');
 
-      // 4. Submission credit transitions to Verified, +5 Observation credit awarded
+      // 4. Submission credit transitions to Verified, +1 Observation credit awarded
       const creditsAfterReview = await demoRepository.getCredits('user_aarav');
       const reviewedSubCredit = creditsAfterReview.find(
         (c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03'
@@ -482,14 +482,14 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       );
       expect(obsCredit).toBeDefined();
       expect(obsCredit?.status).toBe('Verified');
-      expect(obsCredit?.amount).toBe(5);
+      expect(obsCredit?.amount).toBe(1);
 
-      // 5. User totalCredits and Passport totalCredits now reflect +15 (10 submission + 5 observation)
+      // 5. User totalCredits and Passport totalCredits now reflect +3 (2 submission + 1 observation)
       const userAfterReview = await demoRepository.getUser('user_aarav');
-      expect(userAfterReview?.totalCredits).toBe(initialTotal + 15);
+      expect(userAfterReview?.totalCredits).toBe(initialTotal + 3);
 
       const passportAfterReview = await demoRepository.getPassport('user_aarav');
-      expect(passportAfterReview.totalCredits).toBe(initialTotal + 15);
+      expect(passportAfterReview.totalCredits).toBe(initialTotal + 3);
       expect(passportAfterReview.pendingCredits).toBe(0);
 
       // 6. Idempotent retry: duplicate review does not award extra credits
@@ -503,7 +503,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       expect(duplicateReview.status).toBe('verified');
 
       const userAfterDuplicate = await demoRepository.getUser('user_aarav');
-      expect(userAfterDuplicate?.totalCredits).toBe(initialTotal + 15);
+      expect(userAfterDuplicate?.totalCredits).toBe(initialTotal + 3);
     });
 
     it('revision requested returns actionable feedback and permits edit/resubmit path', async () => {

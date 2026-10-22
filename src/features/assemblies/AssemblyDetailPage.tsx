@@ -324,7 +324,7 @@ export const AssemblyDetailPage: React.FC = () => {
                 className="shadow-xs"
               >
                 <Sparkles className="w-4 h-4 mr-1.5" />
-                <span>Join Youth Assembly (+10 Credits)</span>
+                <span>Join Youth Assembly (+2 Credits)</span>
               </Button>
             )}
           </div>
@@ -633,7 +633,7 @@ export const AssemblyDetailPage: React.FC = () => {
               You have not joined this Assembly yet
             </h3>
             <p className="text-xs text-amber-700 mt-0.5">
-              Click below to join, receive your allocated role (e.g. Thinker), earn 10 Deliberation Credits, and enter the chamber.
+              Click below to join, receive your allocated role (e.g. Thinker), earn 2 Deliberation Credits, and enter the chamber.
             </p>
           </div>
           <Button
@@ -642,7 +642,7 @@ export const AssemblyDetailPage: React.FC = () => {
             isLoading={isJoining}
             onClick={() => handleJoinAssembly()}
           >
-            <span>Join Now (+10 Credits)</span>
+            <span>Join Now (+2 Credits)</span>
             <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </Card>

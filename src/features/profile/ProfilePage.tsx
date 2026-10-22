@@ -119,7 +119,7 @@ export const ProfilePage: React.FC = () => {
               Reset Demo Data to Initial Canonical Seed
             </h3>
             <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
-              Resetting restores all courses, completed lessons, submitted assignments, Assembly stages, propositions, and credit ledgers back to the original seed state under Aarav Sharma.
+              Resetting restores all courses, completed lessons, submitted assignments, Assembly stages, propositions, and credit ledgers back to the original seed state under Aarav Sharma (including 10 starting credits and verified demo activity history).
             </p>
           </div>
 

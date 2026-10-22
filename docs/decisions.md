@@ -26,8 +26,22 @@
 - **Documented exceptions (OD.17):** the normal rule remains that an unmet reserved place stays vacant. A departure may be demonstrated only with explicit owner approval and an audit record containing reason, approver, time, policy version and outcome. The browser-only demo can simulate this approval but cannot provide server-enforced authority or a real-world policy approval.
 - **Demo media (OD.4):** Debate Room and Youth Assembly are text-first; video may appear as a clearly labelled preview. No working video provider is required for the competition demo.
 - **Jaipur Workspace access (OD.5):** the fictional demo room is invite-only and private. The invited user must confirm the destination and accept before joining. This decides the Jaipur room, not every future programme or room.
-- **Competition timing (OD.1):** no fixed date or deadline has been supplied for this demo. Keep the five-minute journey as the acceptance target without claiming a dated launch commitment.
+- **Competition timing (OD.1, historical note from 15 October):** prior to competition details confirmation, no fixed date or deadline had been supplied for this demo, keeping the five-minute journey as the acceptance target. (Reconciled 21 October 2026: official HSC initial portal submission deadline was 15 October 2026 and entry is already submitted).
 - **Demo language (OD.8):** the fully working fictional Jaipur journey is English only for this competition demo. Mark Hindi content and interface coverage as pending bilingual review; do not present an unwired selector or machine text as reviewed Hindi. The full product's bilingual requirement remains open.
+
+## Further owner direction recorded 21 October 2026
+
+- **Participant persona age:** fictional Aarav Sharma updated to 18, still in Jaipur. Fictional seed records, Welcome page text, and tests are updated accordingly. Team eligibility under official Hack for Social Cause (HSC) rules (18–29 years, per https://mybharat.gov.in/pages/hack-for-social-cause) is distinguished from fictional persona character age; HSC age eligibility governs submitting team members, not fictional demo characters.
+- **Civic Passport model:** 10 starting credits, 1–2 credits earned per task. This model is approved in principle by the owner, with full implementation recorded below on 22 October 2026.
+- **Project license:** Apache 2.0 license approved for project distribution and code licensing.
+- **Media assets policy:** no new UHV or real-person media for now; maintain existing placeholders and confirmed portraits only to protect privacy.
+- **Founder contact method:** project-only contact email approved (no personal phone or email exposure); exact address string remains pending creation/confirmation.
+- **Competition submission status (HSC):** entry has already been submitted to the Hack for Social Cause portal and the team is preparing for the next stage. The official initial portal submission deadline was 15 October 2026 (source: https://mybharat.gov.in/pages/hack-for-social-cause).
+
+## Further owner direction recorded 22 October 2026
+
+- **Civic Passport demo credit model implementation:** fully implemented the approved model. Every newly created participant starts with 10 credits via a single, verified, visible, idempotent `Starting balance: 10` transaction under the `Contribution` dimension. Subsequent activities award 1 or 2 credits (+1 Learning for completed lesson, +2 Contribution [held in Pending status until facilitator review] for assignment submission, +1 Observation for verified field evidence, +2 Deliberation for assembly admission/joining, +1 Deliberation for substantive contributions, +1 Collaboration for workspace actions, +2 Civic Action for completed project milestones, +1 Reflection for civic reflection). No-credit activities (private UHV reflections, retained dissent, and private Debate room journals) are strictly preserved at 0 credits. Seeded personas display 10 plus earned activity credits rather than forcing everyone to 10. Existing browser databases migrate safely and idempotently without duplicate initial balances or erasing earned/reversed/audited history.
+- **Superseded branch:** this implementation supersedes unmerged branch `agy/j-20261021-195758-ohzp` (which updated Aarav Sharma's fictional age to 18 across seed users, Welcome page, and tests). All reviewed changes from that branch are incorporated without modification, preserving Aarav's fictional age at 18.
 
 ## Answered by the governing Master PRD
 
@@ -47,7 +61,7 @@ The PRD supplies requirements or safe defaults for some topics. The table tracks
 
 | ID | Open decision | What the PRD already settles |
 |---|---|---|
-| OD.1 | **No fixed competition/demo date yet, confirmed 15 October 2026.** | The five-minute demonstration remains the acceptance target; no calendar deadline is approved. |
+| OD.1 | **Resolved 21 October 2026:** Hack for Social Cause (HSC) initial portal submission is completed (deadline was 15 October 2026 per https://mybharat.gov.in/pages/hack-for-social-cause); team is preparing for next stage. | The five-minute demonstration was the initial acceptance target; initial portal entry is submitted and next stage preparation is active. |
 | OD.2 | **Jaipur pedestrian-safety story selected;** final script and acceptance sign-off remain open. | The minimum connected journey is specified in the Master PRD; the chosen single-browser mode cannot prove shared participation. |
 | OD.3 | Date-based functional versus prototype scope | Youth Parliament and stakeholder routing have explicit prototype allowances. Debate Room, Workspace invitation/moderation and the connected civic loop remain demo requirements. |
 | OD.4 | **Text-first demo with labelled video preview approved, 15 October 2026.** | Working video is not required for the competition demo; the full product still needs the PRD media and fallback behavior. |

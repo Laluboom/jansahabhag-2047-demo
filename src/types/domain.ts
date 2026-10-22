@@ -852,7 +852,8 @@ export type CreditSourceType =
   | 'reflection'
   | 'project'
   | 'workspace'
-  | 'dissent';
+  | 'dissent'
+  | 'starting_balance';
 
 export interface CreditFormulaFactors {
   appliedRule: string;

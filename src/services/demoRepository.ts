@@ -1,5 +1,6 @@
 import {
   User,
+  UserRole,
   Institution,
   Programme,
   Course,
@@ -217,6 +218,8 @@ export class LocalDemoRepository implements DemoRepository {
   public getPassportSourceRoute(entry: { sourceReferenceType?: string; sourceReferenceId?: string; sourceRoute?: string }): string {
     if (entry.sourceRoute) return entry.sourceRoute;
     switch (entry.sourceReferenceType) {
+      case 'starting_balance':
+        return `/passport/credits`;
       case 'assignment':
       case 'submission':
         return `/assignments/${entry.sourceReferenceId}`;
@@ -495,6 +498,96 @@ export class LocalDemoRepository implements DemoRepository {
     return this.switchUser(userId);
   }
 
+  async createParticipant(input: {
+    name: string;
+    email: string;
+    institutionId: string;
+    institutionName: string;
+    programmeIds?: string[];
+    bio?: string;
+    age?: number;
+    location?: string;
+    avatar?: string;
+    role?: UserRole;
+  }): Promise<User> {
+    const db = this.getDb();
+    const now = new Date().toISOString();
+    const userId = generateId('usr');
+
+    const newUser: User = {
+      id: userId,
+      name: input.name.trim(),
+      email: input.email.trim().toLowerCase(),
+      role: input.role || 'participant',
+      institutionId: input.institutionId,
+      institutionName: input.institutionName,
+      programmeIds: input.programmeIds || ['prog_civic_tech_01'],
+      bio: input.bio || 'Civic participant in Jaipur Youth Assembly demo simulation.',
+      age: input.age ?? 18,
+      location: input.location || 'Jaipur, Rajasthan',
+      avatar: input.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      badgeCount: 0,
+      totalCredits: 10,
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // Ensure idempotent starting balance transaction: exactly 1 transaction of 10 credits
+    const existingTx = db.credits.find(
+      (c) => c.userId === userId && (c.sourceType === 'starting_balance' || c.reason === 'Starting balance: 10')
+    );
+    if (!existingTx) {
+      db.credits.push({
+        id: `tx_${userId}_init`,
+        userId,
+        dimension: 'Contribution',
+        amount: 10,
+        sourceType: 'starting_balance',
+        sourceId: `starting_balance_${userId}`,
+        sourceRoute: '/passport/credits',
+        status: 'Verified',
+        reason: 'Starting balance: 10',
+        calculationExplanation: 'Initial Civic Passport demo credit allocation for new participant onboarding (10 credits).',
+        createdAt: now,
+        schemaVersion: 1,
+      });
+    }
+
+    // Ensure matching starting balance passport entry
+    const existingPassport = db.passportEntries.find(
+      (p) => p.userId === userId && (p.sourceReferenceType === 'starting_balance' || p.subtitle === 'Starting balance: 10' || p.title === 'Civic Passport Onboarding Allocation')
+    );
+    if (!existingPassport) {
+      db.passportEntries.push({
+        id: `pass_${userId}_init`,
+        userId,
+        category: 'achievement',
+        title: 'Civic Passport Onboarding Allocation',
+        subtitle: 'Starting balance: 10',
+        date: now.split('T')[0],
+        creditsAwarded: 10,
+        evidenceIds: [],
+        sourceReferenceType: 'starting_balance',
+        sourceReferenceId: `starting_balance_${userId}`,
+        sourceRoute: '/passport/credits',
+        verificationState: 'system_recorded',
+        reviewState: 'accepted',
+        calculationExplanation: 'Initial Civic Passport demo credit allocation for new participant onboarding (10 credits).',
+        isVerified: true,
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    newUser.totalCredits = this.calculateUserCredits(db, userId);
+    db.users.push(newUser);
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(newUser));
+  }
+
   // Dashboard
   async getDashboard(userId: string): Promise<DashboardData> {
     const db = this.getDb();
@@ -615,7 +708,7 @@ export class LocalDemoRepository implements DemoRepository {
             description: 'Continue editing and attach field observation evidence.',
             targetRoute: `/assignments/${draftSub.assignmentId}/submit`,
             badgeText: 'Draft in Progress',
-            rewardText: '+10 Credits on Submit',
+            rewardText: '+2 Credits on Submit',
           };
         }
       }
@@ -636,7 +729,7 @@ export class LocalDemoRepository implements DemoRepository {
             description: nextLesson.contentSummary || course.description,
             targetRoute: `/learn/${course.id}/lesson/${nextLesson.id}`,
             badgeText: isUhvCourse ? `${course.code} • Next Module` : `${course.code} • Next Lesson`,
-            rewardText: isUhvCourse ? 'Self-Exploration' : '+5 Learning Credits',
+            rewardText: isUhvCourse ? 'Self-Exploration' : '+1 Learning Credit',
           };
         }
       }
@@ -665,7 +758,7 @@ export class LocalDemoRepository implements DemoRepository {
         description: firstAssembly.question,
         targetRoute: `/assemblies/${firstAssembly.id}`,
         badgeText: isJoined ? `Stage: ${firstAssembly.currentStage.replace('_', ' ')}` : 'Assembly Chamber',
-        rewardText: isJoined ? 'Deliberation Chamber' : '+10 Credits on Join',
+        rewardText: isJoined ? 'Deliberation Chamber' : '+2 Credits on Join',
       };
     }
 
@@ -890,7 +983,7 @@ export class LocalDemoRepository implements DemoRepository {
             id: generateId('tx'),
             userId,
             dimension: 'Learning',
-            amount: 5,
+            amount: 1,
             sourceType: 'lesson',
             sourceId: lessonId,
             status: 'Verified',
@@ -933,14 +1026,14 @@ export class LocalDemoRepository implements DemoRepository {
             title: `Completed: ${lesson.title}`,
             subtitle: course?.title || 'Civic Academy Lesson',
             date: now.split('T')[0],
-            creditsAwarded: 5,
+            creditsAwarded: 1,
             evidenceIds: [],
             sourceReferenceId: lessonId,
             sourceReferenceType: 'lesson',
             sourceRoute: `/academy/courses/${course?.id || 'course_01'}/lessons/${lessonId}`,
             verificationState: 'system_recorded',
             reviewState: 'accepted',
-            calculationExplanation: 'Base rule: 5 credits per completed Civic Academy lesson (System recorded)',
+            calculationExplanation: 'Base rule: 1 credit per completed Civic Academy lesson (System recorded)',
             isVerified: true,
             schemaVersion: 1,
             createdAt: now,
@@ -982,7 +1075,7 @@ export class LocalDemoRepository implements DemoRepository {
           id: generateId('notif'),
           userId,
           title: 'Lesson Completed!',
-          message: `You completed "${lesson.title}" and earned 5 Learning Credits.`,
+          message: `You completed "${lesson.title}" and earned 1 Learning Credit.`,
           type: 'credit',
           isRead: false,
           targetRoute: `/passport/credits`,
@@ -1348,7 +1441,7 @@ export class LocalDemoRepository implements DemoRepository {
       return JSON.parse(JSON.stringify(submission));
     }
 
-    // Submission credit: +10 Contribution once per submission with Pending status (never minted as Verified before mentor review)
+    // Submission credit: +2 Contribution once per submission with Pending status (never minted as Verified before mentor review)
     const existingCredit = db.credits.find(
       (c) => c.userId === input.userId && c.sourceType === 'assignment' && c.sourceId === input.assignmentId
     );
@@ -1357,7 +1450,7 @@ export class LocalDemoRepository implements DemoRepository {
         id: generateId('tx'),
         userId: input.userId,
         dimension: 'Contribution',
-        amount: 10,
+        amount: 2,
         sourceType: 'assignment',
         sourceId: input.assignmentId,
         status: 'Pending',
@@ -1385,7 +1478,7 @@ export class LocalDemoRepository implements DemoRepository {
         title: `Pending Review: ${asg?.title || input.assignmentId}`,
         subtitle: 'Submitted assignment awaiting mentor review (Jaipur Demo Simulation)',
         date: now.split('T')[0],
-        creditsAwarded: 10,
+        creditsAwarded: 2,
         evidenceIds: submission.evidenceIds || [],
         sourceReferenceId: submission.id,
         sourceReferenceType: 'submission',
@@ -1394,7 +1487,7 @@ export class LocalDemoRepository implements DemoRepository {
         verificationState: 'self_reported',
         reviewState: 'pending',
         visibility: 'public',
-        calculationExplanation: 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review pending.',
+        calculationExplanation: 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review pending.',
         schemaVersion: 1,
         createdAt: now,
         updatedAt: now,
@@ -1529,7 +1622,7 @@ export class LocalDemoRepository implements DemoRepository {
         subCredit.status = 'Verified';
         subCredit.reason = `Submitted assignment: ${asg?.title || submission.assignmentId}`;
         subCredit.sourceRoute = `/assignments/${submission.assignmentId}?submissionId=${submission.id}`;
-        subCredit.calculationExplanation = 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review confirmed.';
+        subCredit.calculationExplanation = 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review confirmed.';
         subCredit.auditTrail = subCredit.auditTrail || [];
         subCredit.auditTrail.push({
           date: now,
@@ -1540,7 +1633,7 @@ export class LocalDemoRepository implements DemoRepository {
         });
       }
 
-      // 2. Mark attached evidence verified and award +5 Observation credit per evidence (idempotently)
+      // 2. Mark attached evidence verified and award +1 Observation credit per evidence (idempotently)
       submission.evidenceIds.forEach((eid) => {
         const ev = db.evidence.find((e) => e.id === eid);
         if (ev) {
@@ -1552,21 +1645,21 @@ export class LocalDemoRepository implements DemoRepository {
           );
           if (existingEvCredit) {
             existingEvCredit.status = 'Verified';
-            existingEvCredit.amount = 5;
+            existingEvCredit.amount = 1;
             existingEvCredit.sourceRoute = `/passport/evidence`;
-            existingEvCredit.calculationExplanation = 'Fixed demo rule: +5 Observation on verified field evidence.';
+            existingEvCredit.calculationExplanation = 'Fixed demo rule: +1 Observation on verified field evidence.';
           } else {
             db.credits.push({
               id: generateId('tx'),
               userId: submission.userId,
               dimension: 'Observation',
-              amount: 5,
+              amount: 1,
               sourceType: 'evidence',
               sourceId: eid,
               sourceRoute: `/passport/evidence`,
               status: 'Verified',
               reason: `Verified field evidence: ${ev.title}`,
-              calculationExplanation: 'Fixed demo rule: +5 Observation on verified field evidence.',
+              calculationExplanation: 'Fixed demo rule: +1 Observation on verified field evidence.',
               createdAt: now,
               schemaVersion: 1,
             });
@@ -1586,13 +1679,13 @@ export class LocalDemoRepository implements DemoRepository {
             id: generateId('tx'),
             userId: submission.userId,
             dimension: 'Observation',
-            amount: 5,
+            amount: 1,
             sourceType: 'assignment',
             sourceId: submission.assignmentId,
             sourceRoute: `/assignments/${submission.assignmentId}`,
             status: 'Verified',
             reason: `Verified assignment fieldwork: ${asg?.title || submission.assignmentId}`,
-            calculationExplanation: 'Fixed demo rule: +5 Observation on verified assignment fieldwork.',
+            calculationExplanation: 'Fixed demo rule: +1 Observation on verified assignment fieldwork.',
             createdAt: now,
             schemaVersion: 1,
           });
@@ -1603,7 +1696,7 @@ export class LocalDemoRepository implements DemoRepository {
       const existingPassport = db.passportEntries.find(
         (p) => p.userId === submission.userId && (p.sourceReferenceId === submission.id || p.sourceReferenceId === submission.assignmentId)
       );
-      const creditsAwarded = submission.evidenceIds.length > 0 ? submission.evidenceIds.length * 5 : 5;
+      const creditsAwarded = 2;
       if (existingPassport) {
         existingPassport.category = 'contribution';
         existingPassport.title = `Verified: ${asg?.title || 'Field Assignment'}`;
@@ -1623,7 +1716,7 @@ export class LocalDemoRepository implements DemoRepository {
           label: 'Mentor Review (Jaipur Demo Simulation)',
         };
         existingPassport.organisation = 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)';
-        existingPassport.calculationExplanation = 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+5 Observation per evidence).';
+        existingPassport.calculationExplanation = 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+1 Observation per evidence).';
         existingPassport.isVerified = true;
         existingPassport.revisionHistory = existingPassport.revisionHistory || [];
         existingPassport.revisionHistory.push({
@@ -1655,7 +1748,7 @@ export class LocalDemoRepository implements DemoRepository {
             label: 'Mentor Review (Jaipur Demo Simulation)',
           },
           organisation: 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)',
-          calculationExplanation: 'Fixed demo rule: +10 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+5 Observation per evidence).',
+          calculationExplanation: 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+1 Observation per evidence).',
           isVerified: true,
           revisionHistory: [
             {
@@ -1714,7 +1807,7 @@ export class LocalDemoRepository implements DemoRepository {
             action: 'REVERSED',
             actorId: input.reviewerId,
             actorName: reviewerName,
-            note: `Reversed +5 Observation credit upon revision request. Original evidence preserved.`,
+            note: `Reversed +1 Observation credit upon revision request. Original evidence preserved.`,
           });
         }
       });
@@ -2144,7 +2237,7 @@ export class LocalDemoRepository implements DemoRepository {
     assembly.updatedAt = now;
 
     if (!isAlreadyParticipant) {
-      // Award +10 Deliberation credit (idempotent)
+      // Award +2 Deliberation credit (idempotent)
       const existingCredit = db.credits.find(
         (c) => c.userId === userId && c.sourceType === 'assembly' && c.sourceId === assemblyId
       );
@@ -2153,7 +2246,7 @@ export class LocalDemoRepository implements DemoRepository {
           id: generateId('tx'),
           userId,
           dimension: 'Deliberation',
-          amount: 10,
+          amount: 2,
           sourceType: 'assembly',
           sourceId: assemblyId,
           status: 'Verified',
@@ -2201,14 +2294,14 @@ export class LocalDemoRepository implements DemoRepository {
           title: `Appointed Assembly ${role.roleName}`,
           subtitle: assembly.title,
           date: now.split('T')[0],
-          creditsAwarded: 10,
+          creditsAwarded: 2,
           evidenceIds: assembly.evidenceIds.slice(0, 2),
           sourceReferenceId: assemblyId,
           sourceReferenceType: 'assembly',
           sourceRoute: `/assemblies/${assemblyId}`,
           verificationState: 'system_recorded',
           reviewState: 'accepted',
-          calculationExplanation: 'Base rule: 10 Deliberation credits on joining youth assembly (System recorded)',
+          calculationExplanation: 'Base rule: 2 Deliberation credits on joining youth assembly (System recorded)',
           isVerified: true,
           schemaVersion: 1,
           createdAt: now,
@@ -2221,7 +2314,7 @@ export class LocalDemoRepository implements DemoRepository {
         id: generateId('notif'),
         userId,
         title: 'Admitted to Youth Assembly',
-        message: `You joined "${assembly.title}" as ${role.roleName} and earned 10 Deliberation Credits.`,
+        message: `You joined "${assembly.title}" as ${role.roleName} and earned 2 Deliberation Credits.`,
         type: 'assembly',
         isRead: false,
         targetRoute: `/assemblies/${assemblyId}`,
@@ -2830,12 +2923,12 @@ export class LocalDemoRepository implements DemoRepository {
 
     db.contributions.push(newContrib);
 
-    // Credit transaction for substantive contribution (+5 Deliberation once per unique contribution)
+    // Credit transaction for substantive contribution (+1 Deliberation once per unique contribution)
     const creditTx: CreditTransaction = {
       id: generateId('tx'),
       userId: input.userId,
       dimension: 'Deliberation',
-      amount: 5,
+      amount: 1,
       sourceType: 'contribution',
       sourceId: newContrib.id,
       status: 'Verified',
@@ -2872,14 +2965,14 @@ export class LocalDemoRepository implements DemoRepository {
       title: `Substantive Contribution: ${input.type.replace('_', ' ')}`,
       subtitle: trimmedText.slice(0, 75),
       date: now.split('T')[0],
-      creditsAwarded: 5,
+      creditsAwarded: 1,
       evidenceIds: input.evidenceIds || [],
       sourceReferenceId: newContrib.id,
       sourceReferenceType: 'contribution',
       sourceRoute: `/assemblies/${input.assemblyId}`,
       verificationState: 'system_recorded',
       reviewState: 'accepted',
-      calculationExplanation: 'Base rule: 5 Deliberation credits for substantive assembly contribution (System recorded)',
+      calculationExplanation: 'Base rule: 1 Deliberation credit for substantive assembly contribution (System recorded)',
       isVerified: true,
       schemaVersion: 1,
       createdAt: now,
@@ -3467,7 +3560,7 @@ export class LocalDemoRepository implements DemoRepository {
         project.status = 'completed';
       }
 
-      // 1. Award +10 Civic Action credit (strictly idempotent)
+      // 1. Award +2 Civic Action credit (strictly idempotent)
       const existingCredit = db.credits.find(
         (c) => c.userId === userId && c.sourceType === 'project' && c.sourceId === milestoneId
       );
@@ -3476,7 +3569,7 @@ export class LocalDemoRepository implements DemoRepository {
           id: generateId('tx'),
           userId,
           dimension: 'Civic Action',
-          amount: 10,
+          amount: 2,
           sourceType: 'project',
           sourceId: milestoneId,
           status: 'Verified',
@@ -3524,14 +3617,14 @@ export class LocalDemoRepository implements DemoRepository {
           title: `Milestone Achieved: ${milestone.title}`,
           subtitle: project.title,
           date: now.split('T')[0],
-          creditsAwarded: 10,
+          creditsAwarded: 2,
           evidenceIds: project.evidenceIds.slice(0, 2),
           sourceReferenceId: milestoneId,
           sourceReferenceType: 'project_milestone',
           sourceRoute: `/workspaces`,
           verificationState: 'system_recorded',
           reviewState: 'accepted',
-          calculationExplanation: 'Base rule: 10 Civic Action credits per completed milestone (System recorded)',
+          calculationExplanation: 'Base rule: 2 Civic Action credits per completed milestone (System recorded)',
           isVerified: true,
           schemaVersion: 1,
           createdAt: now,
@@ -3544,7 +3637,7 @@ export class LocalDemoRepository implements DemoRepository {
         id: generateId('notif'),
         userId,
         title: 'Project Milestone Completed!',
-        message: `You completed "${milestone.title}" in ${project.title} and earned 10 Civic Action Credits.`,
+        message: `You completed "${milestone.title}" in ${project.title} and earned 2 Civic Action Credits.`,
         type: 'project',
         isRead: false,
         targetRoute: `/projects/${projectId}`,
@@ -5480,12 +5573,12 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     // Civic Reflection path (Assembly, project, civic courses): preserves existing behavior
-    // Credit transaction (+5 Reflection)
+    // Credit transaction (+1 Reflection)
     db.credits.push({
       id: generateId('tx'),
       userId: reflection.userId,
       dimension: 'Reflection',
-      amount: 5,
+      amount: 1,
       sourceType: 'reflection',
       sourceId: newRefl.id,
       status: 'Verified',
@@ -5526,14 +5619,14 @@ export class LocalDemoRepository implements DemoRepository {
           ? `Values: ${reflection.valuesHighlighted.join(', ')}`
           : 'Deliberation & Civic Ethics Reflection',
       date: now.split('T')[0],
-      creditsAwarded: 5,
+      creditsAwarded: 1,
       evidenceIds: [],
       sourceReferenceId: newRefl.id,
       sourceReferenceType: 'reflection',
       sourceRoute: '/passport',
       verificationState: 'system_recorded',
       reviewState: 'accepted',
-      calculationExplanation: 'Base rule: 5 Reflection credits per shared civic reflection (System recorded)',
+      calculationExplanation: 'Base rule: 1 Reflection credit per shared civic reflection (System recorded)',
       isVerified: true,
       schemaVersion: 1,
       createdAt: now,
@@ -5545,7 +5638,7 @@ export class LocalDemoRepository implements DemoRepository {
       id: generateId('notif'),
       userId: reflection.userId,
       title: 'Reflection Recorded',
-      message: 'You shared a reflection and earned 5 Reflection Credits in your Passport.',
+      message: 'You shared a reflection and earned 1 Reflection Credit in your Passport.',
       type: 'credit',
       isRead: false,
       targetRoute: '/passport',
@@ -6651,7 +6744,7 @@ export class LocalDemoRepository implements DemoRepository {
       schemaVersion: 1,
     });
 
-    // Award +5 Collaboration credits and create Passport entry for workspace action
+    // Award +1 Collaboration credit and create Passport entry for workspace action
     const existingCredit = db.credits.find(
       (c) => c.userId === params.authorId && c.sourceType === 'workspace' && c.sourceId === newAction.id
     );
@@ -6660,13 +6753,13 @@ export class LocalDemoRepository implements DemoRepository {
         id: generateId('tx'),
         userId: params.authorId,
         dimension: 'Collaboration',
-        amount: 5,
+        amount: 1,
         sourceType: 'workspace',
         sourceId: newAction.id,
         sourceRoute: `/workspaces/${params.workspaceId}`,
         status: 'Verified',
         reason: `Workspace collaboration action: ${trimmedTitle}`,
-        calculationExplanation: 'Fixed demo rule: +5 Collaboration on verified workspace action contribution.',
+        calculationExplanation: 'Fixed demo rule: +1 Collaboration on verified workspace action contribution.',
         createdAt: now,
         schemaVersion: 1,
       });
@@ -6689,7 +6782,7 @@ export class LocalDemoRepository implements DemoRepository {
         title: `Workspace Action: ${trimmedTitle}`,
         subtitle: `Collaborative action in ${ws.title}`,
         date: now.split('T')[0],
-        creditsAwarded: 5,
+        creditsAwarded: 1,
         evidenceIds: [],
         sourceReferenceId: newAction.id,
         sourceReferenceType: 'workspace',
@@ -6698,7 +6791,7 @@ export class LocalDemoRepository implements DemoRepository {
         verificationState: 'system_recorded',
         reviewState: 'accepted',
         visibility: 'public',
-        calculationExplanation: 'Fixed demo rule: +5 Collaboration on verified workspace action contribution.',
+        calculationExplanation: 'Fixed demo rule: +1 Collaboration on verified workspace action contribution.',
         schemaVersion: 1,
         createdAt: now,
         updatedAt: now,

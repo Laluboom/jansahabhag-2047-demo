@@ -175,11 +175,11 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(sub.status).toBe('submitted');
       expect(sub.evidenceIds).toContain(evidence.id);
 
-      // +10 Contribution credit recorded as pending mentor review; total verified credits not prematurely increased
+      // +2 Contribution credit recorded as pending mentor review; total verified credits not prematurely increased
       const credits = await demoRepository.getCredits('user_aarav');
       const pendingSubCredit = credits.find((c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03');
       expect(pendingSubCredit?.status).toBe('Pending');
-      expect(pendingSubCredit?.amount).toBe(10);
+      expect(pendingSubCredit?.amount).toBe(2);
       const creditsAfterSubmit = (await demoRepository.getCurrentUser()).totalCredits;
       expect(creditsAfterSubmit).toBe(initialCredits);
 
@@ -196,12 +196,12 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(reviewed.status).toBe('verified');
       expect(reviewed.score).toBe(25);
 
-      // Evidence verified and +5 Observation credits awarded
+      // Evidence verified and +1 Observation credits awarded
       const updatedEv = await demoRepository.getEvidence(evidence.id);
       expect(updatedEv?.verificationStatus).toBe('verified');
 
       const passport = await demoRepository.getPassport('user_aarav');
-      expect(passport.totalCredits).toBe(initialCredits + 15);
+      expect(passport.totalCredits).toBe(initialCredits + 3);
     });
   });
 
@@ -745,15 +745,15 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(civicRefl.id).toBeDefined();
       expect(civicRefl.isPublicInPassport).toBe(true);
 
-      // Awards +5 Reflection Credits
+      // Awards +1 Reflection Credits
       const creditsAfter = (await demoRepository.getCurrentUser()).totalCredits;
-      expect(creditsAfter).toBe(initialCredits + 5);
+      expect(creditsAfter).toBe(initialCredits + 1);
 
       // Passport entry created and verified
       const passport = await demoRepository.getPassport('user_aarav');
       const passEntry = passport.entries.find((p) => p.sourceReferenceId === civicRefl.id);
       expect(passEntry).toBeDefined();
-      expect(passEntry?.creditsAwarded).toBe(5);
+      expect(passEntry?.creditsAwarded).toBe(1);
       expect(passEntry?.isVerified).toBe(true);
 
       // Activity logged

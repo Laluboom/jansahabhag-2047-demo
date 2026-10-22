@@ -188,10 +188,10 @@ Use one coherent story across the platform instead of disconnected placeholder r
 
 ### Main participant
 
-**Aarav Sharma**  
-Age: 17  
-Institution: **Navchetna Public School, Jaipur**  
-Programme: **My Community, My Future**
+- **Aarav Sharma**
+- Age: 18
+- Institution: **Navchetna Public School, Jaipur**
+- Programme: **My Community, My Future**
 
 Aarav and all demo records are fictional. This browser demo does not provide the age, consent or safeguarding controls needed to enrol real minors.
 
@@ -521,16 +521,19 @@ Each major feature should include examples of:
 
 Use simple transparent demo rules.
 
-Example:
+Approved schedule:
 
 ```text
-Complete lesson              +5 Learning
-Submit assignment            +10 Contribution
-Verified evidence            +5 Observation
-Join Assembly                +10 Deliberation
-Add substantive contribution +5 Deliberation
-Complete reflection          +5 Reflection
-Complete project milestone   +10 Civic Action
+Starting balance             +10 Contribution
+Complete lesson              +1 Learning
+Submit assignment            +2 Contribution (Pending)
+Verified evidence            +1 Observation
+Join Assembly                +2 Deliberation
+Add substantive contribution +1 Deliberation
+Complete reflection          +1 Reflection
+Workspace action             +1 Collaboration
+Complete project milestone   +2 Civic Action
+Private UHV / dissent        0 (No credits)
 ```
 
 The demo must show a transaction history instead of only a single total.

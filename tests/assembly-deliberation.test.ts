@@ -27,17 +27,17 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(result.role.responsibilities.length).toBeGreaterThan(0);
       expect(result.role.promptSuggestions.length).toBeGreaterThan(0);
 
-      // Verify +10 Deliberation Credits
+      // Verify +2 Deliberation Credits
       const updatedCredits = await repository.getCredits('user_aarav');
       const updatedTotal = updatedCredits.reduce((s, c) => s + c.amount, 0);
-      expect(updatedTotal).toBe(initialCredits + 10);
+      expect(updatedTotal).toBe(initialCredits + 2);
 
       const joinCredit = updatedCredits.find(
         (c) => c.sourceType === 'assembly' && c.sourceId === 'assembly_jaipur_pedestrian_2026'
       );
       expect(joinCredit).toBeDefined();
       expect(joinCredit?.dimension).toBe('Deliberation');
-      expect(joinCredit?.amount).toBe(10);
+      expect(joinCredit?.amount).toBe(2);
 
       // Verify Passport Entry
       const passport = await repository.getPassport('user_aarav');
@@ -46,7 +46,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       );
       expect(passportEntry).toBeDefined();
       expect(passportEntry?.title).toContain('Shaper');
-      expect(passportEntry?.creditsAwarded).toBe(10);
+      expect(passportEntry?.creditsAwarded).toBe(2);
       expect(passportEntry?.isVerified).toBe(true);
 
       // Verify Notification
@@ -66,7 +66,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       // First Join
       await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
       const creditsAfterFirst = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
-      expect(creditsAfterFirst).toBe(initialCredits + 10);
+      expect(creditsAfterFirst).toBe(initialCredits + 2);
 
       // Duplicate Join
       await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
@@ -108,15 +108,15 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(contrib.isSubstantive).toBe(true);
       expect(contrib.evidenceIds).toContain('ev_aarav_traffic_count_01');
 
-      // Verify +5 Deliberation Credit
+      // Verify +1 Deliberation Credit
       const credits = await repository.getCredits('user_aarav');
       const updatedTotal = credits.reduce((s, c) => s + c.amount, 0);
-      expect(updatedTotal).toBe(initialCredits + 5);
+      expect(updatedTotal).toBe(initialCredits + 1);
 
       const contribCredit = credits.find((c) => c.sourceType === 'contribution' && c.sourceId === contrib.id);
       expect(contribCredit).toBeDefined();
       expect(contribCredit?.dimension).toBe('Deliberation');
-      expect(contribCredit?.amount).toBe(5);
+      expect(contribCredit?.amount).toBe(1);
 
       // Verify Activity Record
       const dashboard = await repository.getDashboard('user_aarav');
@@ -130,7 +130,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       const passportEntry = passport.entries.find((p) => p.sourceReferenceId === contrib.id);
       expect(passportEntry).toBeDefined();
       expect(passportEntry?.category).toBe('deliberation');
-      expect(passportEntry?.creditsAwarded).toBe(5);
+      expect(passportEntry?.creditsAwarded).toBe(1);
     });
   });
 
@@ -266,22 +266,22 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(reflection.id).toBeDefined();
       expect(reflection.valuesHighlighted).toContain('Trust (Vishwas)');
 
-      // Verify +5 Reflection Credits
+      // Verify +1 Reflection Credits
       const credits = await repository.getCredits('user_aarav');
       const updatedTotal = credits.reduce((s, c) => s + c.amount, 0);
-      expect(updatedTotal).toBe(initialCredits + 5);
+      expect(updatedTotal).toBe(initialCredits + 1);
 
       const reflCredit = credits.find((c) => c.sourceType === 'reflection' && c.sourceId === reflection.id);
       expect(reflCredit).toBeDefined();
       expect(reflCredit?.dimension).toBe('Reflection');
-      expect(reflCredit?.amount).toBe(5);
+      expect(reflCredit?.amount).toBe(1);
 
       // Verify Passport Entry
       const passport = await repository.getPassport('user_aarav');
       const reflEntry = passport.entries.find((p) => p.sourceReferenceId === reflection.id);
       expect(reflEntry).toBeDefined();
       expect(reflEntry?.category).toBe('reflection');
-      expect(reflEntry?.creditsAwarded).toBe(5);
+      expect(reflEntry?.creditsAwarded).toBe(1);
 
       // Query reflections by user
       const userReflections = await repository.getReflections('user_aarav');

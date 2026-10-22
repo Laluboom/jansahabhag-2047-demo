@@ -58,14 +58,14 @@ describe('Task 04 Supporting Modules & Admin Integration Tests', () => {
       expect(milestone2?.isCompleted).toBe(true);
 
       const updatedUser = await demoRepository.getCurrentUser();
-      expect(updatedUser.totalCredits).toBe(initialCredits + 10);
+      expect(updatedUser.totalCredits).toBe(initialCredits + 2);
 
       const passportAfterFirst = await demoRepository.getPassport(user.id);
       expect(passportAfterFirst.entries.length).toBe(initialPassport.entries.length + 1);
       const newEntry = passportAfterFirst.entries.find((e) => e.sourceReferenceId === 'ms_02_assembly');
       expect(newEntry).toBeDefined();
       expect(newEntry?.category).toBe('civic_action');
-      expect(newEntry?.creditsAwarded).toBe(10);
+      expect(newEntry?.creditsAwarded).toBe(2);
 
       // Repeat call: should be idempotent (no duplicate credit or passport entry)
       await demoRepository.completeProjectMilestone(
@@ -75,7 +75,7 @@ describe('Task 04 Supporting Modules & Admin Integration Tests', () => {
       );
 
       const userAfterRepeat = await demoRepository.getCurrentUser();
-      expect(userAfterRepeat.totalCredits).toBe(initialCredits + 10);
+      expect(userAfterRepeat.totalCredits).toBe(initialCredits + 2);
 
       const passportAfterRepeat = await demoRepository.getPassport(user.id);
       expect(passportAfterRepeat.entries.length).toBe(passportAfterFirst.entries.length);

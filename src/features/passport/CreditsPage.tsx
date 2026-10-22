@@ -129,7 +129,7 @@ export const CreditsPage: React.FC = () => {
           <span>Transparent Activity Award Rules & Explainable Formula (7 PRD Dimensions)</span>
         </div>
         <p className="leading-relaxed">
-          &bull; <strong>Learning</strong>: +10 (Module completion) &bull; <strong>Observation</strong>: +5 (Verified field evidence) &bull; <strong>Deliberation</strong>: +10 (Assembly role), +5 (Substantive contribution) &bull; <strong>Contribution</strong>: +10 (Assignment submission; held in Pending status until mentor review) &bull; <strong>Collaboration</strong>: +5 (Workspace action contribution) &bull; <strong>Civic Action</strong>: +10 (Community initiative) &bull; <strong>Reflection</strong>: Autonomous personal inquiries; private UHV reflections carry 0 civic credits.
+          &bull; <strong>Starting Balance</strong>: +10 (Onboarding allocation) &bull; <strong>Learning</strong>: +1 (Module completion) &bull; <strong>Observation</strong>: +1 (Verified field evidence) &bull; <strong>Deliberation</strong>: +2 (Assembly role), +1 (Substantive contribution) &bull; <strong>Contribution</strong>: +2 (Assignment submission; held in Pending status until mentor review) &bull; <strong>Collaboration</strong>: +1 (Workspace action contribution) &bull; <strong>Civic Action</strong>: +2 (Community initiative milestone) &bull; <strong>Reflection</strong>: +1 (Civic reflection); private UHV reflections, retained dissent, and private Debate journals award 0 civic credits.
         </p>
         <p className="text-[11px] text-slate-500 italic">
           Scoring notice: This demo uses fixed amounts per confirmed action. PRD conceptual multiplication equations are exploratory research formulas, not automated production algorithms.

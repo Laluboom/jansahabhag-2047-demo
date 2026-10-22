@@ -12,7 +12,7 @@ describe('DemoRepository Domain Service Implementation', () => {
   });
 
   describe('Lesson Completion & Learning Progress', () => {
-    it('completing a lesson calculates progress, awards 5 learning credits, and creates passport entry', async () => {
+    it('completing a lesson calculates progress, awards 1 learning credit, and creates passport entry', async () => {
       const initialCredits = await repository.getCredits('user_aarav');
       const initialTotal = initialCredits.reduce((s, c) => s + c.amount, 0);
 
@@ -24,14 +24,14 @@ describe('DemoRepository Domain Service Implementation', () => {
 
       const updatedCredits = await repository.getCredits('user_aarav');
       const updatedTotal = updatedCredits.reduce((s, c) => s + c.amount, 0);
-      expect(updatedTotal).toBe(initialTotal + 5);
+      expect(updatedTotal).toBe(initialTotal + 1);
 
       // Check passport entry
       const passport = await repository.getPassport('user_aarav');
       const lessonEntry = passport.entries.find((p) => p.sourceReferenceId === 'les_obs_103');
       expect(lessonEntry).toBeDefined();
       expect(lessonEntry?.category).toBe('learning');
-      expect(lessonEntry?.creditsAwarded).toBe(5);
+      expect(lessonEntry?.creditsAwarded).toBe(1);
 
       // Check notification
       const notifs = await repository.getNotifications('user_aarav');
@@ -68,7 +68,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       // First call
       await repository.completeLesson('user_aarav', 'les_obs_103');
       const creditsAfterFirst = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
-      expect(creditsAfterFirst).toBe(initialTotal + 5);
+      expect(creditsAfterFirst).toBe(initialTotal + 1);
 
       // Duplicate call
       const duplicateResult = await repository.completeLesson('user_aarav', 'les_obs_103');
@@ -110,7 +110,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(subs[0].status).toBe('draft');
     });
 
-    it('submitting an assignment awards +10 Contribution credit and notifies teacher', async () => {
+    it('submitting an assignment awards +2 Contribution credit and notifies teacher', async () => {
       const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
 
       const submission = await repository.submitAssignment({
@@ -122,22 +122,22 @@ describe('DemoRepository Domain Service Implementation', () => {
 
       expect(submission.status).toBe('submitted');
 
-      // Credits should increase by 10 for assignment submission with Contribution dimension
+      // Credits should increase by 2 for assignment submission with Contribution dimension
       const credits = await repository.getCredits('user_aarav');
       const updatedCredits = credits.reduce((s, c) => s + c.amount, 0);
-      expect(updatedCredits).toBe(initialCredits + 10);
+      expect(updatedCredits).toBe(initialCredits + 2);
 
       const subCredit = credits.find((c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03');
       expect(subCredit).toBeDefined();
       expect(subCredit?.dimension).toBe('Contribution');
-      expect(subCredit?.amount).toBe(10);
+      expect(subCredit?.amount).toBe(2);
 
       // Check dashboard and passport track pending credits before facilitator review (Package 07)
       const dashboard = await repository.getDashboard('user_aarav');
-      expect(dashboard.creditSummary.pendingCredits).toBeGreaterThanOrEqual(10);
+      expect(dashboard.creditSummary.pendingCredits).toBeGreaterThanOrEqual(2);
 
       const passport = await repository.getPassport('user_aarav');
-      expect(passport.pendingCredits).toBeGreaterThanOrEqual(10);
+      expect(passport.pendingCredits).toBeGreaterThanOrEqual(2);
 
       // Check teacher notification
       const teacherNotifs = await repository.getNotifications('user_kavita');
@@ -157,7 +157,7 @@ describe('DemoRepository Domain Service Implementation', () => {
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
       const creditsAfterFirst = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
-      expect(creditsAfterFirst).toBe(initialCredits + 10);
+      expect(creditsAfterFirst).toBe(initialCredits + 2);
 
       // Second submit (same assignment)
       await repository.submitAssignment({
@@ -356,9 +356,9 @@ describe('DemoRepository Domain Service Implementation', () => {
       const updatedEvidence = await repository.getEvidence(newEv.id);
       expect(updatedEvidence?.verificationStatus).toBe('verified');
 
-      // +5 Observation credit awarded for verified evidence
+      // +1 Observation credit awarded for verified evidence
       const creditsAfterVerify = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
-      expect(creditsAfterVerify).toBe(creditsBeforeVerify + 5);
+      expect(creditsAfterVerify).toBe(creditsBeforeVerify + 1);
 
       // Passport entry created
       const passport = await repository.getPassport('user_aarav');
@@ -394,7 +394,7 @@ describe('DemoRepository Domain Service Implementation', () => {
   });
 
   describe('Deliberation & Assemblies', () => {
-    it('adding an assembly contribution adds 5 deliberation credits and activity entry', async () => {
+    it('adding an assembly contribution adds 1 deliberation credit and activity entry', async () => {
       await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
       const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
 
@@ -410,7 +410,7 @@ describe('DemoRepository Domain Service Implementation', () => {
       expect(contrib.isSubstantive).toBe(true);
 
       const updatedCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
-      expect(updatedCredits).toBe(initialCredits + 5);
+      expect(updatedCredits).toBe(initialCredits + 1);
     });
   });
 
