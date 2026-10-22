@@ -9,6 +9,7 @@ import { SeatingQuotaDisplay } from './SeatingQuotaDisplay';
 import { ModeSwitcherBar } from './ModeSwitcherBar';
 import { SettingsModal } from '../../features/settings/SettingsModal';
 import { SessionPreferencesService } from '../../services/sessionPreferencesService';
+import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../ui/Button';
 import { List, LayoutGrid, Radio, Users, Landmark, Settings, Zap } from 'lucide-react';
 
@@ -30,7 +31,10 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
   viewMode: controlledViewMode,
   onViewModeChange,
   lowDataMode: controlledLowDataMode,
+  currentUserId,
 }) => {
+  const { currentUser } = useAuthStore();
+  const effectiveUserId = currentUserId || currentUser?.id;
   const sessionKey = sessionId || currentRoute || layout;
 
   // View Mode: 'chamber' | 'text'
@@ -40,34 +44,49 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
   const currentViewMode = controlledViewMode !== undefined ? controlledViewMode : internalViewMode;
   const isTextMode = currentViewMode === 'text';
 
-  // Low data preference
-  const isLowData = controlledLowDataMode !== undefined
-    ? controlledLowDataMode
-    : SessionPreferencesService.getLowDataPreference();
+  // Low data reactive preference
+  const [internalLowData, setInternalLowData] = useState<boolean>(() => {
+    return controlledLowDataMode !== undefined
+      ? controlledLowDataMode
+      : SessionPreferencesService.getLowDataPreference();
+  });
+
+  useEffect(() => {
+    if (controlledLowDataMode !== undefined) {
+      setInternalLowData(controlledLowDataMode);
+    }
+  }, [controlledLowDataMode]);
+
+  const isLowData = controlledLowDataMode !== undefined ? controlledLowDataMode : internalLowData;
 
   // Settings modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Restore seat from local browser session state
+  // Restore seat from local browser session state (scoped by active user/persona)
   const [internalSelectedSeatId, setInternalSelectedSeatId] = useState<string | null>(null);
   const [restoredSeatName, setRestoredSeatName] = useState<string | null>(null);
 
   const selectedSeatId = controlledSelectedSeatId !== undefined ? controlledSelectedSeatId : internalSelectedSeatId;
 
-  // Check saved seat upon mount/initialization
+  // Check saved seat upon mount, sessionKey change, or persona switch
   useEffect(() => {
-    if (controlledSelectedSeatId === undefined && !internalSelectedSeatId) {
-      const savedSeatId = SessionPreferencesService.getSavedSeatId(sessionKey);
+    if (controlledSelectedSeatId === undefined) {
+      const savedSeatId = SessionPreferencesService.getSavedSeatId(sessionKey, effectiveUserId);
       if (savedSeatId) {
         const found = seats.find((s) => s.id === savedSeatId);
-        if (found) {
+        const belongsToCurrentUser = !effectiveUserId || !found?.userId || found.userId === effectiveUserId;
+        if (found && belongsToCurrentUser) {
           setInternalSelectedSeatId(savedSeatId);
           setRestoredSeatName(found.name);
           controlledOnSelectSeat?.(found);
+          return;
         }
       }
+      setInternalSelectedSeatId(null);
+      setRestoredSeatName(null);
+      controlledOnSelectSeat?.(null);
     }
-  }, [sessionKey, seats, controlledSelectedSeatId, internalSelectedSeatId, controlledOnSelectSeat]);
+  }, [sessionKey, effectiveUserId, seats, controlledSelectedSeatId, controlledOnSelectSeat]);
 
   // Default turns fallback for standard deliberative chambers
   const defaultTurns: Record<string, SessionTextTurn[]> = useMemo(
@@ -180,8 +199,8 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
     } else {
       setInternalSelectedSeatId(seatId);
     }
-    // Persist seat selection in browser demo state
-    SessionPreferencesService.saveSeatId(sessionKey, seatId);
+    // Persist seat selection in browser demo state scoped by user
+    SessionPreferencesService.saveSeatId(sessionKey, seatId, effectiveUserId);
     if (seat) {
       setRestoredSeatName(null); // Clear restored tag once explicitly selected
     }
@@ -274,11 +293,6 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
               )}
             </Button>
 
-            {/* Hidden hook with text-mode-toggle test id for dedicated testing */}
-            <span className="sr-only" data-testid="text-mode-toggle" onClick={handleToggleViewMode}>
-              {isTextMode ? 'Text Mode Active' : 'Chamber Mode Active'}
-            </span>
-
             {/* Session Settings / Low Data Preferences Modal Trigger */}
             <Button
               size="sm"
@@ -352,6 +366,8 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onPreferenceChange={() => {
+          const freshLowData = SessionPreferencesService.getLowDataPreference();
+          setInternalLowData(freshLowData);
           setInternalViewMode(SessionPreferencesService.getSessionViewMode(sessionKey));
         }}
       />

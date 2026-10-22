@@ -79,6 +79,7 @@ export interface SessionSeatingProps {
   viewMode?: 'chamber' | 'text';
   onViewModeChange?: (mode: 'chamber' | 'text') => void;
   lowDataMode?: boolean;
+  currentUserId?: string;
 }
 
 export function getInitials(name: string): string {

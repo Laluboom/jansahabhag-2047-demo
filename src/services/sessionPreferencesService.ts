@@ -93,11 +93,14 @@ export class SessionPreferencesService {
   }
 
   /**
-   * Retrieves saved selected seat ID for the session to support reload/return restoration.
+   * Retrieves saved selected seat ID for the session and persona/user to support reload/return restoration.
    */
-  public static getSavedSeatId(sessionKey: string): string | null {
+  public static getSavedSeatId(sessionKey: string, userId?: string): string | null {
     if (!isStorageAvailable() || !sessionKey) return null;
     try {
+      if (userId) {
+        return window.localStorage.getItem(`${SESSION_SEAT_PREFIX}${sessionKey}_${userId}`);
+      }
       return window.localStorage.getItem(`${SESSION_SEAT_PREFIX}${sessionKey}`);
     } catch {
       return null;
@@ -105,15 +108,23 @@ export class SessionPreferencesService {
   }
 
   /**
-   * Persists selected seat ID for the session.
+   * Persists selected seat ID for the session, scoped by persona/user.
    */
-  public static saveSeatId(sessionKey: string, seatId: string | null): void {
+  public static saveSeatId(sessionKey: string, seatId: string | null, userId?: string): void {
     if (!isStorageAvailable() || !sessionKey) return;
     try {
-      if (seatId) {
-        window.localStorage.setItem(`${SESSION_SEAT_PREFIX}${sessionKey}`, seatId);
+      if (userId) {
+        if (seatId) {
+          window.localStorage.setItem(`${SESSION_SEAT_PREFIX}${sessionKey}_${userId}`, seatId);
+        } else {
+          window.localStorage.removeItem(`${SESSION_SEAT_PREFIX}${sessionKey}_${userId}`);
+        }
       } else {
-        window.localStorage.removeItem(`${SESSION_SEAT_PREFIX}${sessionKey}`);
+        if (seatId) {
+          window.localStorage.setItem(`${SESSION_SEAT_PREFIX}${sessionKey}`, seatId);
+        } else {
+          window.localStorage.removeItem(`${SESSION_SEAT_PREFIX}${sessionKey}`);
+        }
       }
     } catch (err) {
       console.warn('SessionPreferencesService: Failed to save seat selection', err);

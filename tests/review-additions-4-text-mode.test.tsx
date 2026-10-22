@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { useAuthStore } from '../src/stores/authStore';
 import { PersistenceService } from '../src/services/persistence';
@@ -411,12 +411,45 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       );
       expect(screen.queryByTestId('video-preview-badge')).not.toBeInTheDocument();
     });
+
+    it('reactively toggles Low Data indicator in SessionSeating immediately upon preference toggle without closing modal', () => {
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            currentRoute="debate"
+            seats={mockSeats}
+            sampleTurns={mockSampleTurns}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByTestId('low-data-indicator')).not.toBeInTheDocument();
+
+      // Open Preferences
+      const settingsBtn = screen.getByTestId('session-settings-btn');
+      fireEvent.click(settingsBtn);
+
+      expect(screen.getByTestId('settings-surface-modal')).toBeInTheDocument();
+
+      // Click toggle switch inside modal
+      const toggle = screen.getByTestId('low-data-toggle');
+      fireEvent.click(toggle);
+
+      // SessionSeating must reactively render the low-data-indicator immediately while modal is still open
+      expect(screen.getByTestId('low-data-indicator')).toBeInTheDocument();
+
+      // Toggle back off
+      fireEvent.click(toggle);
+      expect(screen.queryByTestId('low-data-indicator')).not.toBeInTheDocument();
+    });
   });
 
   describe('6. Local Session Seat Restoration & Missed Turns', () => {
-    it('restores the same seat on reload / return from browser state', () => {
-      // Pre-save seat selection for this session in browser demo storage
-      SessionPreferencesService.saveSeatId('debate', 'seat_priya');
+    it('restores the same seat on reload / return from browser state', async () => {
+      // Pre-save seat selection for current persona in browser demo storage
+      await useAuthStore.getState().switchPersona('user_priya');
+      SessionPreferencesService.saveSeatId('debate', 'seat_priya', 'user_priya');
 
       render(
         <MemoryRouter>
@@ -433,6 +466,74 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       // Restored seat notice is displayed
       expect(screen.getByTestId('restored-seat-notice')).toBeInTheDocument();
       expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Priya Sharma');
+    });
+
+    it('scopes restored seat to current persona and does not restore another persona\'s seat upon persona switch', async () => {
+      // 1. Log in as Aarav (user_aarav)
+      await act(async () => {
+        await useAuthStore.getState().switchPersona('user_aarav');
+      });
+      expect(useAuthStore.getState().currentUser?.id).toBe('user_aarav');
+
+      // Save seat for Aarav and Rohan
+      SessionPreferencesService.saveSeatId('debate', 'seat_aarav', 'user_aarav');
+      SessionPreferencesService.saveSeatId('debate', 'seat_rohan', 'user_rohan');
+
+      const { rerender } = render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            currentRoute="debate"
+            seats={mockSeats}
+            sampleTurns={mockSampleTurns}
+            viewMode="text"
+          />
+        </MemoryRouter>
+      );
+
+      // Restored seat for Aarav is shown
+      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Aarav Sharma');
+
+      // 2. Switch persona to Rohan (user_rohan)
+      await act(async () => {
+        await useAuthStore.getState().switchPersona('user_rohan');
+      });
+
+      // Rerender SessionSeating for the new persona
+      rerender(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            currentRoute="debate"
+            seats={mockSeats}
+            sampleTurns={mockSampleTurns}
+            viewMode="text"
+          />
+        </MemoryRouter>
+      );
+
+      // Rohan's own seat is restored because effectiveUserId changed to user_rohan
+      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Rohan Mehta');
+
+      // 3. Switch persona to Priya who has no saved seat in this session
+      await act(async () => {
+        await useAuthStore.getState().switchPersona('user_priya');
+      });
+
+      rerender(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            currentRoute="debate"
+            seats={mockSeats}
+            sampleTurns={mockSampleTurns}
+            viewMode="text"
+          />
+        </MemoryRouter>
+      );
+
+      // Priya has no saved seat, so another persona's seat is NOT restored
+      expect(screen.queryByTestId('restored-seat-notice')).not.toBeInTheDocument();
     });
 
     it('displays missed sample turns recorded while disconnected', () => {
