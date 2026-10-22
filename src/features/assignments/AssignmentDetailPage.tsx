@@ -28,6 +28,7 @@ import {
   Download,
 } from 'lucide-react';
 import { formatRelativeTime, formatDateTime } from '../../utils/formatters';
+import { canActorAccessPrivateEvidence } from '../../domain/evidenceRules';
 
 export const AssignmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -136,6 +137,54 @@ export const AssignmentDetailPage: React.FC = () => {
       setFeedbackError(err?.message || 'Failed to review submission');
     } finally {
       setIsReviewing(false);
+    }
+  };
+
+  const handleDownloadAttachment = async (ev: Evidence) => {
+    if (!currentUser) return;
+    try {
+      const isAuthorized = canActorAccessPrivateEvidence(
+        { id: currentUser.id, role: currentUser.role },
+        ev,
+        submission
+          ? [
+              {
+                evidenceIds: [ev.id],
+                reviewerId: submission.reviewerId,
+                userId: submission.userId,
+                assignmentId: submission.assignmentId,
+              },
+            ]
+          : []
+      );
+      if (!isAuthorized) {
+        alert('Unauthorized: You do not have permission to access or download this evidence attachment.');
+        return;
+      }
+
+      if (ev.fileInfo?.blobKey) {
+        const res = await demoRepository.getEvidenceAttachment(ev.id);
+        if (res?.blobUrl) {
+          const a = document.createElement('a');
+          a.href = res.blobUrl;
+          a.download = res.fileName || ev.fileInfo.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+      }
+
+      if (ev.fileInfo?.dataUrl) {
+        const a = document.createElement('a');
+        a.href = ev.fileInfo.dataUrl;
+        a.download = ev.fileInfo.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to download attachment');
     }
   };
 
@@ -463,25 +512,56 @@ export const AssignmentDetailPage: React.FC = () => {
                         <div className="flex flex-wrap items-center gap-3 text-[10px] text-slate-500">
                           {ev.location && <span>Location: {ev.location}</span>}
                           {ev.observationTime && <span>Observed: {ev.observationTime}</span>}
-                          {ev.fileInfo && (
-                            <span className="text-amber-800 font-medium flex items-center gap-1.5">
-                              <span>File: {ev.fileInfo.name} ({Math.round(ev.fileInfo.size / 1024)} KB)</span>
-                              {ev.fileInfo.dataUrl ? (
-                                <a
-                                  href={ev.fileInfo.dataUrl}
-                                  download={ev.fileInfo.name}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[10px] text-civic-indigo-700 hover:text-civic-indigo-900 bg-white px-1.5 py-0.5 rounded border border-indigo-200"
-                                >
-                                  <Download className="w-2.5 h-2.5" />
-                                  <span>Download</span>
-                                </a>
-                              ) : (
-                                <span className="text-slate-400 italic text-[9px]">(bytes not stored)</span>
-                              )}
-                            </span>
-                          )}
+                          {ev.fileInfo && (() => {
+                            const isAuthorized = canActorAccessPrivateEvidence(
+                              currentUser ? { id: currentUser.id, role: currentUser.role } : null,
+                              ev,
+                              submission
+                                ? [
+                                    {
+                                      evidenceIds: [ev.id],
+                                      reviewerId: submission.reviewerId,
+                                      userId: submission.userId,
+                                      assignmentId: submission.assignmentId,
+                                    },
+                                  ]
+                                : []
+                            );
+
+                            return (
+                              <span className="text-amber-800 font-medium flex items-center gap-1.5">
+                                <span>File: {ev.fileInfo.name} ({Math.round(ev.fileInfo.size / 1024)} KB)</span>
+                                {isAuthorized ? (
+                                  ev.fileInfo.blobKey ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownloadAttachment(ev)}
+                                      className="inline-flex items-center gap-1 text-[10px] text-civic-indigo-700 hover:text-civic-indigo-900 bg-white px-1.5 py-0.5 rounded border border-indigo-200"
+                                      title="Download attachment from browser-local IndexedDB"
+                                    >
+                                      <Download className="w-2.5 h-2.5" />
+                                      <span>Download</span>
+                                    </button>
+                                  ) : ev.fileInfo.dataUrl ? (
+                                    <a
+                                      href={ev.fileInfo.dataUrl}
+                                      download={ev.fileInfo.name}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-[10px] text-civic-indigo-700 hover:text-civic-indigo-900 bg-white px-1.5 py-0.5 rounded border border-indigo-200"
+                                    >
+                                      <Download className="w-2.5 h-2.5" />
+                                      <span>Download</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-slate-400 italic text-[9px]">(bytes not stored)</span>
+                                  )
+                                ) : (
+                                  <span className="text-slate-400 italic text-[9px]">(Private media - restricted access)</span>
+                                )}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                       <Link
@@ -681,25 +761,56 @@ export const AssignmentDetailPage: React.FC = () => {
                         <span className="capitalize">{ev.type}</span>
                         {ev.location && <span className="truncate max-w-[150px]">{ev.location}</span>}
                       </div>
-                      {ev.fileInfo && (
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px] text-slate-500">
-                          <span className="truncate">File: {ev.fileInfo.name}</span>
-                          {ev.fileInfo.dataUrl ? (
-                            <a
-                              href={ev.fileInfo.dataUrl}
-                              download={ev.fileInfo.name}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-civic-indigo-600 hover:text-civic-indigo-800 font-semibold flex items-center gap-0.5"
-                            >
-                              <Download className="w-2.5 h-2.5" />
-                              <span>Download</span>
-                            </a>
-                          ) : (
-                            <span className="text-slate-400 italic">DEMO metadata</span>
-                          )}
-                        </div>
-                      )}
+                      {ev.fileInfo && (() => {
+                        const isAuthorized = canActorAccessPrivateEvidence(
+                          currentUser ? { id: currentUser.id, role: currentUser.role } : null,
+                          ev,
+                          submission
+                            ? [
+                                {
+                                  evidenceIds: [ev.id],
+                                  reviewerId: submission.reviewerId,
+                                  userId: submission.userId,
+                                  assignmentId: submission.assignmentId,
+                                },
+                              ]
+                            : []
+                        );
+
+                        return (
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[10px] text-slate-500">
+                            <span className="truncate">File: {ev.fileInfo.name}</span>
+                            {isAuthorized ? (
+                              ev.fileInfo.blobKey ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadAttachment(ev)}
+                                  className="text-civic-indigo-600 hover:text-civic-indigo-800 font-semibold flex items-center gap-0.5"
+                                  title="Download attachment from browser-local IndexedDB"
+                                >
+                                  <Download className="w-2.5 h-2.5" />
+                                  <span>Download</span>
+                                </button>
+                              ) : ev.fileInfo.dataUrl ? (
+                                <a
+                                  href={ev.fileInfo.dataUrl}
+                                  download={ev.fileInfo.name}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-civic-indigo-600 hover:text-civic-indigo-800 font-semibold flex items-center gap-0.5"
+                                >
+                                  <Download className="w-2.5 h-2.5" />
+                                  <span>Download</span>
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 italic">DEMO metadata</span>
+                              )
+                            ) : (
+                              <span className="text-slate-400 italic">Restricted</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>

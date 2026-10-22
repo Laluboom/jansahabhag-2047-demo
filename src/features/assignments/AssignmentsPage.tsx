@@ -3,13 +3,22 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Assignment, Submission, User, Course } from '../../types/domain';
+import { Assignment, Submission, User, Course, Evidence } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
 import { Avatar } from '../../components/ui/Avatar';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { Modal } from '../../components/ui/Modal';
+import { Input, Textarea } from '../../components/ui/Input';
+import { EvidenceAttachmentStore } from '../../services/evidenceAttachmentStore';
+import {
+  ALLOWED_BINARY_FORMAT_LABELS,
+  BINARY_ATTACHMENT_SIZE_LABEL,
+  validateEvidenceAttachmentFile,
+} from '../../domain/evidenceRules';
+import { generateId } from '../../utils/id';
 import {
   FileCheck2,
   ArrowRight,
@@ -23,19 +32,38 @@ import {
   HeartHandshake,
   ChevronDown,
   BookOpen,
+  Upload,
+  Check,
+  X,
+  FileText,
 } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 
 export const AssignmentsPage: React.FC = () => {
   const { currentUser } = useAuthStore();
-  const { refreshKey } = useAppRefreshStore();
+  const { refreshKey, triggerRefresh } = useAppRefreshStore();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [cohortEvidenceList, setCohortEvidenceList] = useState<Evidence[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  // Cohort Attachment Modal State
+  const [isCohortModalOpen, setIsCohortModalOpen] = useState(false);
+  const [cohortDocType, setCohortDocType] = useState<'attendance_sheet' | 'completion_certificate'>('attendance_sheet');
+  const [cohortId, setCohortId] = useState('cohort_navchetna_grade12');
+  const [cohortTitle, setCohortTitle] = useState('Navchetna Civic Deliberation Workshop Attendance Sheet');
+  const [cohortDescription, setCohortDescription] = useState('Signed attendance sheet verifying in-person presence at Ward 24 fieldwork workshop.');
+  const [cohortAuditNotes, setCohortAuditNotes] = useState('Collected and countersigned by Teacher Kavita Rao on site.');
+  const [selectedCohortParticipantIds, setSelectedCohortParticipantIds] = useState<string[]>(['user_aarav', 'user_priya']);
+  const [cohortFile, setCohortFile] = useState<File | null>(null);
+  const [cohortFileError, setCohortFileError] = useState<string | null>(null);
+  const [isAttachingCohort, setIsAttachingCohort] = useState(false);
+  const [cohortAttachSuccess, setCohortAttachSuccess] = useState<string | null>(null);
+  const [evidenceReviewComments, setEvidenceReviewComments] = useState<Record<string, string>>({});
 
   const isTeacher = currentUser?.role === 'teacher';
 
@@ -44,16 +72,18 @@ export const AssignmentsPage: React.FC = () => {
       if (!currentUser) return;
       setIsLoading(true);
       try {
-        const [asgs, subs, allUsers, allCourses] = await Promise.all([
+        const [asgs, subs, allUsers, allCourses, allEvs] = await Promise.all([
           demoRepository.getAssignments(),
           demoRepository.getSubmissions(isTeacher ? undefined : currentUser.id),
           demoRepository.getUsers(),
           demoRepository.getCourses(),
+          demoRepository.getEvidenceList(),
         ]);
         setAssignments(asgs);
         setSubmissions(subs);
         setUsers(allUsers);
         setCourses(allCourses);
+        setCohortEvidenceList(allEvs.filter((e) => e.metadata?.isCohortAttachment));
       } catch (err) {
         console.error('Failed to load assignments', err);
       } finally {
@@ -62,6 +92,82 @@ export const AssignmentsPage: React.FC = () => {
     }
     load();
   }, [currentUser, refreshKey, isTeacher]);
+
+  const handleAttachCohortSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !cohortTitle.trim() || !cohortDescription.trim() || !cohortAuditNotes.trim()) return;
+    if (selectedCohortParticipantIds.length === 0) {
+      setCohortFileError('Please select at least one eligible participant in this cohort.');
+      return;
+    }
+
+    setIsAttachingCohort(true);
+    setCohortFileError(null);
+    try {
+      let blobKey: string | undefined = undefined;
+      if (cohortFile) {
+        blobKey = generateId('blob_cohort');
+        await EvidenceAttachmentStore.saveAttachment(blobKey, cohortFile, {
+          fileName: cohortFile.name,
+          mimeType: cohortFile.type,
+          fileSize: cohortFile.size,
+        });
+      }
+
+      const res = await demoRepository.attachCohortEvidence({
+        mentorId: currentUser.id,
+        cohortId,
+        participantIds: selectedCohortParticipantIds,
+        documentType: cohortDocType,
+        title: cohortTitle.trim(),
+        description: cohortDescription.trim(),
+        auditNotes: cohortAuditNotes.trim(),
+        fileInfo: cohortFile
+          ? {
+              name: cohortFile.name,
+              size: cohortFile.size,
+              type: cohortFile.type,
+              blobKey,
+            }
+          : undefined,
+      });
+
+      setCohortAttachSuccess(
+        `Successfully attached records for ${res.evidenceItems.length} participants with Audit Record ID: ${res.auditRecord.id}. Records are stored as Under Review.`
+      );
+      setCohortFile(null);
+      setIsCohortModalOpen(false);
+      triggerRefresh();
+    } catch (err: any) {
+      console.error('Failed to attach cohort evidence', err);
+      setCohortFileError(err?.message || 'Failed to attach cohort evidence.');
+    } finally {
+      setIsAttachingCohort(false);
+    }
+  };
+
+  const handleReviewCohortEvidence = async (
+    evidenceId: string,
+    status: 'verified' | 'revision_requested'
+  ) => {
+    if (!currentUser) return;
+    try {
+      const comment =
+        evidenceReviewComments[evidenceId] ||
+        (status === 'verified'
+          ? 'Verified cohort attendance and completion.'
+          : 'Please provide additional cohort documentation.');
+      await demoRepository.reviewEvidence({
+        evidenceId,
+        reviewerId: currentUser.id,
+        status,
+        comment,
+      });
+      triggerRefresh();
+    } catch (err: any) {
+      alert(err?.message || 'Failed to review evidence');
+    }
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -122,6 +228,11 @@ export const AssignmentsPage: React.FC = () => {
         count: civicSubmissions.filter((s) => s.status === 'submitted' || s.status === 'under_review').length,
       },
       {
+        id: 'cohort_evidence',
+        label: 'Cohort Evidence & Audits',
+        count: cohortEvidenceList.length,
+      },
+      {
         id: 'revision_requested',
         label: 'Revision Requested',
         count: civicSubmissions.filter((s) => s.status === 'revision_requested').length,
@@ -163,7 +274,16 @@ export const AssignmentsPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Button
+              size="sm"
+              onClick={() => setIsCohortModalOpen(true)}
+              className="bg-civic-teal-700 hover:bg-civic-teal-800 text-white flex items-center gap-1.5"
+              data-testid="btn-cohort-attach"
+            >
+              <FileCheck2 className="w-3.5 h-3.5" />
+              <span>Attach Cohort Sheet/Certificate</span>
+            </Button>
             <PointOfUseRulesButton
               moduleName="Assignments"
               triggerText="Review Rules"
@@ -318,6 +438,135 @@ export const AssignmentsPage: React.FC = () => {
               );
             })}
           </div>
+        ) : activeTab === 'cohort_evidence' ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+              <div>
+                <strong>Cohort Attachment Audit Records:</strong>
+                <p className="mt-0.5">
+                  Teachers and mentors can attach signed attendance registers or completion certificates on behalf of an eligible cohort. Records are held in <em>Under Review</em> status with an immutable audit record and are never automatically verified.
+                </p>
+              </div>
+            </div>
+
+            {cohortAttachSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+                <span>{cohortAttachSuccess}</span>
+                <button
+                  type="button"
+                  onClick={() => setCohortAttachSuccess(null)}
+                  className="text-emerald-600 hover:text-emerald-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {cohortEvidenceList.length === 0 ? (
+              <Card className="p-8 text-center text-slate-500 text-xs">
+                No cohort attendance or certificate records logged yet. Use "Attach Cohort Sheet/Certificate" to attach records on behalf of an eligible cohort.
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {cohortEvidenceList.map((ev) => {
+                  const commentVal = evidenceReviewComments[ev.id] || '';
+
+                  return (
+                    <Card key={ev.id} className="p-5 border-slate-200 space-y-3 bg-white shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-civic-teal-50 text-civic-teal-800 border border-civic-teal-200">
+                              {ev.id}
+                            </span>
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                              {ev.type}
+                            </span>
+                            <StatusChip status={ev.verificationStatus} />
+                          </div>
+                          <h3 className="text-base font-bold font-heading text-slate-900 mt-1">
+                            {ev.title}
+                          </h3>
+                        </div>
+
+                        <div className="text-right text-[11px] text-slate-400">
+                          <span>Participant Owner: <strong>{ev.ownerName}</strong></span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {ev.description}
+                      </p>
+
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                        <div className="font-semibold text-slate-700 flex items-center justify-between">
+                          <span>Audit Trail: {ev.metadata?.auditRecordId || 'N/A'}</span>
+                          <span>Attached: {formatRelativeTime(ev.createdAt)}</span>
+                        </div>
+                        <div>Mentor: <strong>{ev.metadata?.attachedByMentorName || 'Teacher'}</strong></div>
+                        <div>Audit Note: <em>"{ev.metadata?.auditNotes || 'Cohort record'}"</em></div>
+                        {ev.fileInfo && (
+                          <div className="pt-1 flex items-center gap-2 text-civic-teal-800 font-medium">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>File: {ev.fileInfo.name} ({(ev.fileInfo.size / 1024).toFixed(1)} KB)</span>
+                            <span className="text-[10px] text-slate-400">[{ev.fileInfo.storageType || 'IndexedDB'}]</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Review & Verify Actions */}
+                      {ev.verificationStatus === 'under_review' ? (
+                        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <input
+                            type="text"
+                            placeholder="Add reviewer verification feedback..."
+                            value={commentVal}
+                            onChange={(e) =>
+                              setEvidenceReviewComments((prev) => ({ ...prev, [ev.id]: e.target.value }))
+                            }
+                            className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 flex-1"
+                            data-testid={`input-comment-${ev.id}`}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReviewCohortEvidence(ev.id, 'revision_requested')}
+                              data-testid={`btn-revise-evidence-${ev.id}`}
+                            >
+                              <span>Request Revision</span>
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => handleReviewCohortEvidence(ev.id, 'verified')}
+                              data-testid={`btn-verify-evidence-${ev.id}`}
+                            >
+                              <Check className="w-3.5 h-3.5 mr-1" />
+                              <span>Verify (+1 Credit)</span>
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-800">
+                          <span className="font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>Verified by {ev.metadata?.reviewedBy || 'Reviewer'}</span>
+                          </span>
+                          {ev.metadata?.reviewerComment && (
+                            <span className="text-[11px] text-slate-500 italic">
+                              "{ev.metadata.reviewerComment}"
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         ) : (
           /* Submissions Queue - Title and status chip first */
           <div className="space-y-3">
@@ -421,6 +670,194 @@ export const AssignmentsPage: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Cohort Attachment Modal */}
+        <Modal
+          isOpen={isCohortModalOpen}
+          onClose={() => setIsCohortModalOpen(false)}
+          title="Attach Cohort Attendance Sheet or Certificate"
+        >
+          <form onSubmit={handleAttachCohortSubmit} className="space-y-4">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-amber-900">
+                <ShieldCheck className="w-4 h-4 text-amber-700" />
+                <span>Mentor Review Invariant</span>
+              </span>
+              <p className="text-[11px] text-amber-900 leading-relaxed">
+                Attendance sheets and certificates attached on behalf of an eligible cohort are logged with an audit record and marked <strong>Under Review</strong>. They are <strong>never automatically verified</strong>. Independent review and verification are required before credits link to student passports.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Document Type
+              </label>
+              <select
+                value={cohortDocType}
+                onChange={(e) => setCohortDocType(e.target.value as any)}
+                className="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white"
+              >
+                <option value="attendance_sheet">Attendance Sheet (In-person workshop / deliberation presence)</option>
+                <option value="completion_certificate">Completion Certificate (Cohort module or fieldwork certificate)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Eligible Cohort Identifier
+              </label>
+              <Input
+                value={cohortId}
+                onChange={(e) => setCohortId(e.target.value)}
+                placeholder="cohort_navchetna_grade12"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Eligible Cohort Participants
+              </label>
+              <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50 space-y-1.5 max-h-36 overflow-y-auto text-xs">
+                {users.filter((u) => u.role === 'participant').map((p) => {
+                  const isChecked = selectedCohortParticipantIds.includes(p.id);
+                  return (
+                    <label key={p.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCohortParticipantIds((prev) => [...prev, p.id]);
+                          } else {
+                            setSelectedCohortParticipantIds((prev) => prev.filter((id) => id !== p.id));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-civic-teal-600"
+                      />
+                      <span className="font-medium text-slate-800">{p.name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">({p.id})</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Document Title
+              </label>
+              <Input
+                value={cohortTitle}
+                onChange={(e) => setCohortTitle(e.target.value)}
+                placeholder="Title of attendance record or certificate"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Description & Context
+              </label>
+              <Textarea
+                value={cohortDescription}
+                onChange={(e) => setCohortDescription(e.target.value)}
+                placeholder="Describe the deliberative workshop or cohort session"
+                rows={2}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Audit Record Note <span className="text-rose-500">*</span>
+              </label>
+              <Textarea
+                value={cohortAuditNotes}
+                onChange={(e) => setCohortAuditNotes(e.target.value)}
+                placeholder="Provide explicit audit notes explaining how attendance or completion was observed..."
+                rows={2}
+                required
+              />
+            </div>
+
+            {/* Binary File Attachment */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Attach Attendance Sheet / Certificate File (IndexedDB Binary Store)
+              </label>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors">
+                  <Upload className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Choose File ({ALLOWED_BINARY_FORMAT_LABELS})</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,video/mp4,audio/mpeg,audio/mp3,application/pdf"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      setCohortFileError(null);
+                      if (!f) {
+                        setCohortFile(null);
+                        return;
+                      }
+                      const val = validateEvidenceAttachmentFile(f);
+                      if (!val.valid) {
+                        setCohortFileError(val.error || 'Invalid file.');
+                        setCohortFile(null);
+                        return;
+                      }
+                      setCohortFile(f);
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+                {cohortFile && (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                    <FileText className="w-3 h-3 text-blue-600" />
+                    <span className="truncate max-w-[160px] font-semibold">{cohortFile.name}</span>
+                    <span className="text-[10px] text-blue-600">({(cohortFile.size / 1024).toFixed(1)} KB)</span>
+                    <button
+                      type="button"
+                      onClick={() => setCohortFile(null)}
+                      className="text-blue-500 hover:text-blue-700 ml-1"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] text-slate-400 block mt-1">
+                Limit: {BINARY_ATTACHMENT_SIZE_LABEL}. Files are stored in browser-local IndexedDB.
+              </span>
+            </div>
+
+            {cohortFileError && (
+              <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{cohortFileError}</span>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCohortModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-civic-teal-700 hover:bg-civic-teal-800 text-white"
+                disabled={isAttachingCohort || !cohortTitle.trim() || !cohortAuditNotes.trim()}
+              >
+                {isAttachingCohort ? 'Attaching & Creating Records...' : 'Attach Cohort Records (Under Review)'}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       </div>
     );
   }

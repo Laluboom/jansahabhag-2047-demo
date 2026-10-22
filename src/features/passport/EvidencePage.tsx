@@ -8,6 +8,7 @@ import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { ArrowLeft, FileCheck2, ShieldCheck, MapPin, EyeOff, Filter, Search, Download } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
+import { canActorAccessPrivateEvidence } from '../../domain/evidenceRules';
 
 export const EvidencePage: React.FC = () => {
   const { currentUser } = useAuthStore();
@@ -38,6 +39,34 @@ export const EvidencePage: React.FC = () => {
     }
     load();
   }, [currentUser]);
+
+  const handleDownload = async (ev: Evidence) => {
+    if (!currentUser) return;
+    try {
+      if (ev.fileInfo?.blobKey) {
+        const attachment = await demoRepository.getEvidenceAttachment(ev.id);
+        if (attachment?.blobUrl) {
+          const a = document.createElement('a');
+          a.href = attachment.blobUrl;
+          a.download = attachment.fileName || ev.fileInfo.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+      }
+      if (ev.fileInfo?.dataUrl) {
+        const a = document.createElement('a');
+        a.href = ev.fileInfo.dataUrl;
+        a.download = ev.fileInfo.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to download attachment');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -185,38 +214,51 @@ export const EvidencePage: React.FC = () => {
                     </div>
                   )}
 
-                  {ev.fileInfo ? (
-                    <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-blue-900 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold truncate">{ev.fileInfo.name}</span>
-                        <span className="text-[10px] text-blue-700 shrink-0">
-                          {(ev.fileInfo.size / 1024).toFixed(1)} KB
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-blue-600 block">
-                        {ev.fileInfo.demoLabel || 'DEMO local browser file'}
-                      </span>
-                      {ev.fileInfo.dataUrl ? (
-                        <div className="pt-1">
-                          <a
-                            href={ev.fileInfo.dataUrl}
-                            download={ev.fileInfo.name}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-civic-teal-700 hover:text-civic-teal-900 bg-white px-2 py-0.5 rounded border border-civic-teal-300 shadow-2xs transition-colors"
-                            title={`Download or preview ${ev.fileInfo.name}`}
-                          >
-                            <Download className="w-3 h-3" />
-                            <span>Download / Preview File</span>
-                          </a>
+                  {ev.fileInfo ? (() => {
+                    const isAuthorized = canActorAccessPrivateEvidence(
+                      currentUser ? { id: currentUser.id, role: currentUser.role } : null,
+                      ev
+                    );
+
+                    return (
+                      <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-blue-900 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold truncate">{ev.fileInfo.name}</span>
+                          <span className="text-[10px] text-blue-700 shrink-0">
+                            {(ev.fileInfo.size / (1024 * 1024) >= 1)
+                              ? `${(ev.fileInfo.size / (1024 * 1024)).toFixed(1)} MB`
+                              : `${(ev.fileInfo.size / 1024).toFixed(1)} KB`}
+                          </span>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 italic block">
-                          No stored file bytes (illustrative metadata only)
+                        <span className="text-[10px] text-blue-600 block">
+                          {ev.fileInfo.demoLabel || 'DEMO local browser file'}
                         </span>
-                      )}
-                    </div>
-                  ) : (
+                        {isAuthorized ? (
+                          (ev.fileInfo.blobKey || ev.fileInfo.dataUrl) ? (
+                            <div className="pt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleDownload(ev)}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-civic-teal-700 hover:text-civic-teal-900 bg-white px-2 py-0.5 rounded border border-civic-teal-300 shadow-2xs transition-colors"
+                                title={`Download or preview ${ev.fileInfo.name}`}
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Download / Preview File</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-slate-500 italic block">
+                              No stored file bytes (illustrative metadata only)
+                            </span>
+                          )
+                        ) : (
+                          <span className="text-[10px] text-slate-500 italic block">
+                            Private media protected (accessible only to submitting participant, assigned reviewer, or administrator)
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })() : (
                     <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[10px] text-slate-500">
                       DEMO Description (Single-browser simulation - no remote upload server)
                     </div>

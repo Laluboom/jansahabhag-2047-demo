@@ -196,8 +196,10 @@ export interface EvidenceFileInfo {
   name: string;
   size: number;
   type: string;
+  blobKey?: string;
   dataUrl?: string;
   demoLabel?: string;
+  storageType?: 'indexeddb' | 'inline' | 'metadata_only';
 }
 
 export interface Evidence {
@@ -1305,6 +1307,21 @@ export interface ScopedModeratorAuditRecord {
   schemaVersion: number;
 }
 
+export interface CohortEvidenceAuditRecord {
+  id: string;
+  timestamp: string;
+  mentorId: string;
+  mentorName: string;
+  cohortId: string;
+  documentType: 'attendance_sheet' | 'completion_certificate';
+  participantCount: number;
+  participantIds: string[];
+  evidenceIds: string[];
+  auditNotes: string;
+  schemaVersion: number;
+  createdAt: string;
+}
+
 export interface DemoDatabase {
   schemaVersion: number;
   activeUserId: string;
@@ -1344,6 +1361,7 @@ export interface DemoDatabase {
   creditAppeals?: CreditAppeal[];
   scopedModeratorGrants?: ScopedModeratorGrant[];
   scopedModeratorAudits?: ScopedModeratorAuditRecord[];
+  cohortEvidenceAudits?: CohortEvidenceAuditRecord[];
 }
 
 declare module './index' {
