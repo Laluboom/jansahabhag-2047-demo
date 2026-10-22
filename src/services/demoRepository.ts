@@ -7205,6 +7205,16 @@ export class LocalDemoRepository implements DemoRepository {
     reason: string;
   }): Promise<WorkspaceMembership> {
     const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (params.moderatorId && params.moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${params.moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
     const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
     if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
 

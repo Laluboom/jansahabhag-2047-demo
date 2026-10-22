@@ -625,6 +625,37 @@ describe('Change Plan v2 §12: Scoped Moderator Grants & Founder-Held Delegation
       expect(dbAfter.scopedModeratorAudits?.length).toBe(auditCountBefore);
     });
 
+    it('rejects active participant passing granted moderator ID directly to moderateWorkspaceMember with zero state mutation', async () => {
+      await demoRepository.switchUser('user_aarav');
+
+      const dbBefore = await demoRepository.getDatabaseSnapshot();
+      const memBefore = dbBefore.workspaceMemberships?.find(
+        (m) => m.workspaceId === 'ws_jaipur_school_safety' && m.userId === 'user_priya'
+      );
+      const priorState = memBefore?.state;
+      const wsAuditsBefore = (dbBefore.workspaceAuditEvents || []).length;
+      const modAuditsBefore = (dbBefore.scopedModeratorAudits || []).length;
+
+      await expect(
+        demoRepository.moderateWorkspaceMember({
+          workspaceId: 'ws_jaipur_school_safety',
+          targetUserId: 'user_priya',
+          newStatus: 'restricted',
+          reason: 'Direct spoofed call to moderateWorkspaceMember',
+          moderatorId: 'user_moderator',
+        })
+      ).rejects.toThrow(/Spoof attempt rejected: Supplied actorId "user_moderator" does not match active persona "user_aarav"/i);
+
+      // Verify zero state mutation in both membership and audit logs
+      const dbAfter = await demoRepository.getDatabaseSnapshot();
+      const memAfter = dbAfter.workspaceMemberships?.find(
+        (m) => m.workspaceId === 'ws_jaipur_school_safety' && m.userId === 'user_priya'
+      );
+      expect(memAfter?.state).toBe(priorState);
+      expect((dbAfter.workspaceAuditEvents || []).length).toBe(wsAuditsBefore);
+      expect((dbAfter.scopedModeratorAudits || []).length).toBe(modAuditsBefore);
+    });
+
     it('rejects active participant passing granted moderator ID to moderateSessionDeliberation with zero state mutation', async () => {
       await demoRepository.switchUser('user_aarav');
 
@@ -695,6 +726,16 @@ describe('Change Plan v2 §12: Scoped Moderator Grants & Founder-Held Delegation
 
       await expect(
         demoRepository.moderatePlatformMembership({
+          workspaceId: 'ws_jaipur_school_safety',
+          targetUserId: 'user_priya',
+          newStatus: 'restricted',
+          reason: 'Attempt without active persona',
+          moderatorId: 'user_moderator',
+        })
+      ).rejects.toThrow(/Unauthorized: Missing active persona/i);
+
+      await expect(
+        demoRepository.moderateWorkspaceMember({
           workspaceId: 'ws_jaipur_school_safety',
           targetUserId: 'user_priya',
           newStatus: 'restricted',
