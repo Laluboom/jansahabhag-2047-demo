@@ -797,6 +797,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
       });
       setSession(updated);
       setIsCreateAssignmentOpen(false);
+      setPopupTitle('');
+      setPopupInstruction('');
+      setPopupResponseText('');
+      setUserPopupSubmission(null);
+      setRoomPopupSubmissions([]);
       setIsPopupModalOpen(true);
       setActionSuccess(
         `Popup assignment "${assignment.title}" (${popupTimeLimit}m limit) published to the room.`
@@ -2111,6 +2116,14 @@ export const DebateRoomPreviewPage: React.FC = () => {
         maxWidth="md"
       >
         <form onSubmit={handlePushPopupAssignment} className="space-y-4 text-xs text-slate-700">
+          {session.debateData?.popupAssignment && !session.debateData.popupAssignment.isClosed && (
+            <div
+              data-testid="active-replacement-notice"
+              className="p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed"
+            >
+              <strong>Active Task Replacement:</strong> Pushing a new popup task will atomically archive the currently active chamber assignment (&quot;{session.debateData.popupAssignment.title}&quot;) and prevent any further submissions to it.
+            </div>
+          )}
           <div>
             <label htmlFor="popup-title" className="block text-xs font-semibold text-slate-700 mb-1">
               Assignment Title

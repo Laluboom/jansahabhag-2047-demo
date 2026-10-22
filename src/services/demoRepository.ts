@@ -4527,8 +4527,33 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const now = new Date();
+    const nowIso = now.toISOString();
     const expiresAt = new Date(now.getTime() + input.timeLimitMinutes * 60 * 1000).toISOString();
     const assignmentId = generateId('asg_popup');
+
+    // Change Plan v2 §13 Atomic Task Replacement & Alignment:
+    // If a previous popup assignment exists for this session, atomically archive it
+    // so it cannot remain active or submittable by direct route after replacement.
+    const prevAssignmentId =
+      session.debateData.popupAssignment?.assignmentId || session.debateData.activePopupAssignmentId;
+    if (prevAssignmentId) {
+      const prevAssignment = db.assignments.find((a) => a.id === prevAssignmentId);
+      if (prevAssignment && prevAssignment.status === 'active') {
+        prevAssignment.status = 'archived';
+        prevAssignment.updatedAt = nowIso;
+      }
+      if (session.debateData.popupAssignment) {
+        session.debateData.popupAssignment.isClosed = true;
+      }
+    }
+
+    // Ensure all previous popup assignments belonging to this session are archived
+    for (const a of db.assignments) {
+      if (a.sessionId === session.id && a.isPopupAssignment && a.status === 'active') {
+        a.status = 'archived';
+        a.updatedAt = nowIso;
+      }
+    }
 
     const assignment: Assignment = {
       id: assignmentId,
@@ -4556,8 +4581,8 @@ export class LocalDemoRepository implements DemoRepository {
       isPopupAssignment: true,
       facilitatorId: input.actorId,
       schemaVersion: 1,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
     };
 
     db.assignments.push(assignment);
@@ -4569,11 +4594,11 @@ export class LocalDemoRepository implements DemoRepository {
       instruction: assignment.prompt,
       timeLimitMinutes: input.timeLimitMinutes,
       pushedBy: input.actorId,
-      pushedAt: now.toISOString(),
+      pushedAt: nowIso,
       expiresAt,
       isClosed: false,
     };
-    session.updatedAt = now.toISOString();
+    session.updatedAt = nowIso;
 
     this.saveDb(db);
     const caller = db.users.find((u) => u.id === db.activeUserId) || null;
@@ -4599,15 +4624,29 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error('Unauthorized: only the room facilitator can close a popup assignment');
     }
 
+    const nowIso = new Date().toISOString();
     if (session.debateData.popupAssignment) {
       session.debateData.popupAssignment.isClosed = true;
-      const asg = db.assignments.find((a) => a.id === session.debateData?.popupAssignment?.assignmentId);
-      if (asg) {
+    }
+
+    const asgId =
+      session.debateData.popupAssignment?.assignmentId || session.debateData.activePopupAssignmentId;
+    if (asgId) {
+      const asg = db.assignments.find((a) => a.id === asgId);
+      if (asg && asg.status === 'active') {
         asg.status = 'archived';
-        asg.updatedAt = new Date().toISOString();
+        asg.updatedAt = nowIso;
       }
     }
-    session.updatedAt = new Date().toISOString();
+
+    for (const a of db.assignments) {
+      if (a.sessionId === session.id && a.isPopupAssignment && a.status === 'active') {
+        a.status = 'archived';
+        a.updatedAt = nowIso;
+      }
+    }
+
+    session.updatedAt = nowIso;
 
     this.saveDb(db);
     const caller = db.users.find((u) => u.id === db.activeUserId) || null;

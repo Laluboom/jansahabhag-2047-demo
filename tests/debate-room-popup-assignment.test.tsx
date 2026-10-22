@@ -195,6 +195,128 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       ).rejects.toThrow(/Cannot submit for inactive assignment/);
     });
 
+    it('atomically archives prior active popup assignment upon publishing replacement, disallowing direct submission to old task while keeping new task active', async () => {
+      // 1. Facilitator publishes first popup assignment
+      await useAuthStore.getState().switchPersona('user_rohan');
+      const { assignment: asg1 } = await demoRepository.pushDebatePopupAssignment({
+        sessionId: 'sess_jaipur_01',
+        actorId: 'user_rohan',
+        title: 'First Active Chamber Task',
+        instruction: 'Initial reflection on signal timings.',
+        timeLimitMinutes: 15,
+      });
+
+      expect(asg1.status).toBe('active');
+
+      // 2. Facilitator publishes a second popup while the first is still active
+      const { session: updatedSession, assignment: asg2 } = await demoRepository.pushDebatePopupAssignment({
+        sessionId: 'sess_jaipur_01',
+        actorId: 'user_rohan',
+        title: 'Second Replacement Chamber Task',
+        instruction: 'Updated urgent prompt on pedestrian crossing guard.',
+        timeLimitMinutes: 10,
+      });
+
+      // Verify session now points to second assignment
+      expect(updatedSession.debateData?.activePopupAssignmentId).toBe(asg2.id);
+      expect(updatedSession.debateData?.popupAssignment?.assignmentId).toBe(asg2.id);
+      expect(updatedSession.debateData?.popupAssignment?.title).toBe('Second Replacement Chamber Task');
+      expect(asg2.status).toBe('active');
+
+      // Verify old assignment is atomically archived in repository
+      const oldAsg = await demoRepository.getAssignment(asg1.id);
+      expect(oldAsg).not.toBeNull();
+      expect(oldAsg?.status).toBe('archived');
+
+      // 3. Participant attempts to submit to the old assignment via direct route
+      await useAuthStore.getState().switchPersona('user_aarav');
+      await expect(
+        demoRepository.submitAssignment({
+          assignmentId: asg1.id,
+          userId: 'user_aarav',
+          content: 'Attempted submission to superseded task.',
+        })
+      ).rejects.toThrow(/Cannot submit for inactive assignment/);
+
+      // Attempting to autosave/save draft on superseded task is also rejected
+      await expect(
+        demoRepository.saveAssignmentDraft({
+          assignmentId: asg1.id,
+          userId: 'user_aarav',
+          content: 'Draft on superseded task.',
+        })
+      ).rejects.toThrow(/Cannot save draft for inactive assignment/);
+
+      // 4. Participant can submit to the newly active replacement task
+      const sub2 = await demoRepository.submitAssignment({
+        assignmentId: asg2.id,
+        userId: 'user_aarav',
+        content: 'Valid response to the active replacement task.',
+      });
+      expect(sub2.status).toBe('submitted');
+      expect(sub2.assignmentId).toBe(asg2.id);
+    });
+
+    it('preserves review and credit award workflow for participant submissions recorded prior to task replacement or closure', async () => {
+      // 1. Facilitator publishes first popup assignment
+      await useAuthStore.getState().switchPersona('user_rohan');
+      const { assignment: asg1 } = await demoRepository.pushDebatePopupAssignment({
+        sessionId: 'sess_jaipur_01',
+        actorId: 'user_rohan',
+        title: 'Prompt with Pre-Replacement Submission',
+        instruction: 'Document peak corridor delay.',
+        timeLimitMinutes: 10,
+      });
+
+      // 2. Participant Aarav submits before replacement
+      await useAuthStore.getState().switchPersona('user_aarav');
+      const sub1 = await demoRepository.submitAssignment({
+        assignmentId: asg1.id,
+        userId: 'user_aarav',
+        content: 'Observation: 4-minute delay at 8:05 AM.',
+      });
+      expect(sub1.status).toBe('submitted');
+
+      // 3. Facilitator replaces task with a new one
+      await useAuthStore.getState().switchPersona('user_rohan');
+      await demoRepository.pushDebatePopupAssignment({
+        sessionId: 'sess_jaipur_01',
+        actorId: 'user_rohan',
+        title: 'Replacement Prompt',
+        instruction: 'New prompt.',
+        timeLimitMinutes: 5,
+      });
+
+      // Verify asg1 is archived
+      const archivedAsg1 = await demoRepository.getAssignment(asg1.id);
+      expect(archivedAsg1?.status).toBe('archived');
+
+      // 4. Teacher Kavita reviews Aarav's submission for archived asg1
+      await useAuthStore.getState().switchPersona('user_kavita');
+      const teacherSubs = await demoRepository.getSubmissions(undefined, asg1.id);
+      expect(teacherSubs.length).toBe(1);
+      expect(teacherSubs[0].id).toBe(sub1.id);
+
+      const reviewedSub = await demoRepository.reviewSubmission({
+        submissionId: sub1.id,
+        reviewerId: 'user_kavita',
+        status: 'verified',
+        teacherFeedback: 'Verified observation data.',
+        score: 20,
+      });
+
+      expect(reviewedSub.status).toBe('verified');
+      expect(reviewedSub.teacherFeedback).toBe('Verified observation data.');
+
+      // 5. Verify credits awarded upon verification
+      const aaravCredits = await demoRepository.getCredits('user_aarav');
+      const verifiedCredit = aaravCredits.find(
+        (c) => c.sourceId === asg1.id && c.status === 'Verified'
+      );
+      expect(verifiedCredit).toBeDefined();
+      expect(verifiedCredit?.amount).toBe(2);
+    });
+
     it('non-facilitator cannot close popup assignment', async () => {
       await useAuthStore.getState().switchPersona('user_rohan');
       await demoRepository.pushDebatePopupAssignment({
@@ -497,6 +619,91 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
       await waitFor(() => {
         expect(screen.queryByTestId('debate-popup-assignment-modal')).not.toBeInTheDocument();
+      });
+    });
+
+    it('facilitator sees active replacement warning when publishing over an active task and UI updates atomically', async () => {
+      // Step A: Facilitator pushes first popup assignment
+      await useAuthStore.getState().switchPersona('user_rohan');
+
+      const { rerender } = render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+            <Route path="/assignments/:id" element={<AssignmentDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('push-popup-assignment-btn')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('push-popup-assignment-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('popup-title-input')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByTestId('popup-title-input'), {
+        target: { value: 'Original Active Prompt' },
+      });
+      fireEvent.change(screen.getByTestId('popup-instruction-input'), {
+        target: { value: 'Original instruction prompt.' },
+      });
+
+      fireEvent.click(screen.getByTestId('confirm-push-popup-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('debate-popup-assignment-modal')).toBeInTheDocument();
+      });
+
+      // Close modal
+      fireEvent.click(screen.getByTestId('close-popup-modal-btn'));
+
+      // Now click Push Popup Assignment button again while original is still active
+      await waitFor(() => {
+        expect(screen.getByTestId('push-popup-assignment-btn')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('push-popup-assignment-btn'));
+
+      // Verify active task replacement warning is displayed in modal
+      await waitFor(() => {
+        expect(screen.getByTestId('active-replacement-notice')).toBeInTheDocument();
+        expect(screen.getByTestId('active-replacement-notice').textContent).toContain(
+          'Active Task Replacement'
+        );
+        expect(screen.getByTestId('active-replacement-notice').textContent).toContain(
+          'Original Active Prompt'
+        );
+      });
+
+      // Fill replacement task
+      fireEvent.change(screen.getByTestId('popup-title-input'), {
+        target: { value: 'Replacement Urgent Prompt' },
+      });
+      fireEvent.change(screen.getByTestId('popup-instruction-input'), {
+        target: { value: 'Replacement instruction prompt.' },
+      });
+
+      fireEvent.click(screen.getByTestId('confirm-push-popup-btn'));
+
+      // Verify new popup modal is open with Replacement Urgent Prompt
+      await waitFor(() => {
+        expect(screen.getByTestId('debate-popup-assignment-modal')).toBeInTheDocument();
+        expect(screen.getByText('Replacement Urgent Prompt')).toBeInTheDocument();
+      });
+
+      // Close modal
+      fireEvent.click(screen.getByTestId('close-popup-modal-btn'));
+
+      // Verify active task banner now reflects Replacement Urgent Prompt
+      await waitFor(() => {
+        expect(screen.getByTestId('active-chamber-task-banner')).toBeInTheDocument();
+        expect(screen.getByTestId('active-chamber-task-banner').textContent).toContain(
+          'Replacement Urgent Prompt'
+        );
       });
     });
   });
