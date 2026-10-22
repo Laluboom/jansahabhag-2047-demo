@@ -146,15 +146,25 @@ export const SeatDetailCard: React.FC<SeatDetailCardProps> = ({
         </div>
       )}
 
-      {/* 33% Women's Reserved Allocation Badge */}
-      {seat.isReserved && (
+      {/* 33% Women's Reserved Allocation Badge (Authorized verification only) */}
+      {seat.isReserved ? (
         <div
           className="p-2 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-center gap-2"
           data-testid="seat-detail-reserved"
         >
           <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
           <span className="text-[11px] font-medium">
-            Occupies 33% Women&apos;s Reserved Allocation seat.
+            Occupies 33% Women&apos;s Reserved Allocation seat (Authorized verification).
+          </span>
+        </div>
+      ) : (
+        <div
+          className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs flex items-center gap-2"
+          data-testid="seat-detail-generic-policy"
+        >
+          <ShieldCheck className="w-4 h-4 text-civic-indigo-600 shrink-0" />
+          <span className="text-[11px]">
+            33% Reservation Policy applies per named role. Personal declarations remain confidential.
           </span>
         </div>
       )}

@@ -1,3 +1,5 @@
+import { AllocationState } from '../../types/domain';
+
 /**
  * Typed Seat & Seating View Models for Deliberative Chambers
  *
@@ -39,10 +41,11 @@ export interface SeatModel {
 
 export interface SeatingQuotaSummary {
   totalCapacity: number;
-  filledCount: number;
+  filledCount?: number;
   reservedMinimum: number;
-  reservedFilledCount: number;
-  vacanciesCount: number;
+  reservedFilledCount?: number;
+  vacanciesCount?: number;
+  isPrivacySuppressed?: boolean;
   isIllustrative?: boolean;
   illustrativeNotice?: string;
 }
@@ -67,4 +70,76 @@ export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Computes chamber-level seating quota summary by summing projected AllocationState fields:
+ * - totalCapacity: sum of alloc.totalPlaces
+ * - reservedMinimum: sum of alloc.reservedMinimum (per-named-role rounding, not global rounding!)
+ * - isPrivacySuppressed: true if any allocation is small cohort (1-3 places/occupants) or marked isPrivacySuppressed.
+ *   In that case, exact reservedFilledCount and vacanciesCount are withheld (undefined).
+ * - When not suppressed (e.g. authorized Platform Owner), sums reservedOccupiedCount and vacanciesCount.
+ */
+export function computeSeatingQuotaFromAllocations(
+  roleAllocations?: Record<string, AllocationState> | null,
+  options?: {
+    isIllustrative?: boolean;
+    illustrativeNotice?: string;
+  }
+): SeatingQuotaSummary {
+  if (!roleAllocations || Object.keys(roleAllocations).length === 0) {
+    return {
+      totalCapacity: 0,
+      filledCount: 0,
+      reservedMinimum: 0,
+      isPrivacySuppressed: false,
+      isIllustrative: Boolean(options?.isIllustrative),
+      illustrativeNotice: options?.illustrativeNotice,
+    };
+  }
+
+  const allocs = Object.values(roleAllocations);
+  let totalCapacity = 0;
+  let reservedMinimum = 0;
+  let isPrivacySuppressed = false;
+
+  for (const alloc of allocs) {
+    totalCapacity += alloc.totalPlaces || 0;
+    reservedMinimum += alloc.reservedMinimum || 0;
+    if (
+      alloc.isPrivacySuppressed ||
+      alloc.reservedOccupiedCount === undefined ||
+      alloc.vacanciesCount === undefined
+    ) {
+      isPrivacySuppressed = true;
+    }
+  }
+
+  if (isPrivacySuppressed) {
+    return {
+      totalCapacity,
+      reservedMinimum,
+      isPrivacySuppressed: true,
+      isIllustrative: Boolean(options?.isIllustrative),
+      illustrativeNotice: options?.illustrativeNotice,
+    };
+  }
+
+  const reservedFilledCount = allocs.reduce((sum, a) => sum + (a.reservedOccupiedCount ?? 0), 0);
+  const vacanciesCount = allocs.reduce((sum, a) => sum + (a.vacanciesCount ?? 0), 0);
+  const filledCount = allocs.reduce(
+    (sum, a) => sum + (a.reservedOccupiedCount ?? 0) + (a.ordinaryOccupiedCount ?? 0),
+    0
+  );
+
+  return {
+    totalCapacity,
+    filledCount,
+    reservedMinimum,
+    reservedFilledCount,
+    vacanciesCount,
+    isPrivacySuppressed: false,
+    isIllustrative: Boolean(options?.isIllustrative),
+    illustrativeNotice: options?.illustrativeNotice,
+  };
 }

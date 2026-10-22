@@ -43,9 +43,13 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
-import { SessionSeating, SeatModel, SeatStatus, SeatingQuotaSummary } from '../session';
-import { calculateReservedMinimum } from '../../services/reservationAllocationService';
-import { getFictionalReservationEligibility } from '../../data/seed/fictionalReservationDeclarations';
+import {
+  SessionSeating,
+  SeatModel,
+  SeatStatus,
+  SeatingQuotaSummary,
+  computeSeatingQuotaFromAllocations,
+} from '../session';
 
 const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
   'OPENING_STATEMENTS',
@@ -180,8 +184,12 @@ export const DebateRoomPreviewPage: React.FC = () => {
         currentActivity = `Waiting in speaking queue (${queueEntry.userRole || 'Awaiting facilitator recognition'})`;
       }
 
-      const eligibility = getFictionalReservationEligibility(member.userId);
-      const isReserved = eligibility === 'eligible';
+      // Check if caller is authorized to see actual assigned reserved occupants (e.g. platform owner)
+      // Never call getFictionalReservationEligibility; personal eligibility is strictly confidential.
+      const alloc = session.roleAllocations?.[member.role];
+      const isReserved = Boolean(
+        alloc?.reservedOccupants && alloc.reservedOccupants.includes(member.userId)
+      );
 
       return {
         id: `seat_${session.id}_${member.userId}`,
@@ -200,25 +208,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
     });
   }, [session, allUsers]);
 
-  // Quota calculation pulling directly from reservationAllocationService formula
+  // Quota calculation pulling strictly from projected roleAllocations
+  // Sum of per-role minimums and totalPlaces; never hard-coded; never recomputed from roster.
   const debateQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
-    const totalCapacity = 7; // 7 canonical formal debate roles
-    const reservedMinimum = calculateReservedMinimum(totalCapacity); // ceil(0.33 * 7) = 3
-    const roster = session?.roster || [];
-    const eligibleCount = roster.filter(
-      (r) => getFictionalReservationEligibility(r.userId) === 'eligible'
-    ).length;
-    const vacanciesCount = Math.max(0, reservedMinimum - eligibleCount);
-
-    return {
-      totalCapacity,
-      filledCount: roster.length,
-      reservedMinimum,
-      reservedFilledCount: eligibleCount,
-      vacanciesCount,
-      isIllustrative: false,
-    };
-  }, [session]);
+    return computeSeatingQuotaFromAllocations(session?.roleAllocations);
+  }, [session?.roleAllocations]);
 
   // Reservation Allocation Handlers (08C1 APIs)
   const handleFinalizeRole = async (roleName: string) => {

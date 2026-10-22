@@ -9,8 +9,13 @@ import {
   SessionSeating,
   SeatModel,
   SeatingQuotaSummary,
+  computeSeatingQuotaFromAllocations,
 } from '../src/components/session';
-import { calculateReservedMinimum } from '../src/services/reservationAllocationService';
+import {
+  calculateReservedMinimum,
+  buildAllocationState,
+  buildSessionRoleAllocations,
+} from '../src/services/reservationAllocationService';
 import { DebateRoomPreviewPage } from '../src/components/layout/DebateRoomPreviewPage';
 import { AssemblySessionPage } from '../src/features/assemblies/AssemblySessionPage';
 import { ParliamentPage } from '../src/features/previews/ParliamentPage';
@@ -43,7 +48,6 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       sideOrBench: 'For',
       status: 'speaking',
       isSpeaking: true,
-      isReserved: true,
       institution: 'Navchetna Public School, Jaipur',
       currentActivity: 'Presenting traffic count speed logs for school frontage.',
     },
@@ -268,7 +272,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       expect(screen.getByTestId('seat-detail-card')).toBeInTheDocument();
       expect(screen.getByTestId('seat-detail-institution')).toHaveTextContent('Navchetna Public School, Jaipur');
       expect(screen.getByTestId('seat-detail-activity')).toHaveTextContent('Presenting traffic count speed logs');
-      expect(screen.getByTestId('seat-detail-reserved')).toBeInTheDocument();
+      expect(screen.getByTestId('seat-detail-generic-policy')).toBeInTheDocument();
 
       // Dismiss detail card
       const closeBtn = screen.getByTestId('close-seat-detail-btn');
@@ -364,6 +368,213 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
         'Illustrative Prototype Allocation (No Enforcement Claim)'
       );
       expect(screen.getByText('Illustrative 3-seat Jaipur delegation calculation.')).toBeInTheDocument();
+    });
+
+    it('displays generic policy indicator in quota banner', () => {
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            seats={mockSeats}
+            quotaSummary={mockQuota}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByTestId('generic-policy-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('generic-policy-indicator')).toHaveTextContent(
+        /33% Women's Reservation Policy applies per named role/i
+      );
+    });
+  });
+
+  describe('Sum-of-per-role Rounding vs Global Rounding', () => {
+    it('sums per-role minimums across 7 one-place debate roles resulting in 7, not global ceil(0.33 * 7) = 3', () => {
+      const canonicalRoles = [
+        'Facilitator',
+        'Questioner',
+        'Evidence Analyst',
+        'Civic Advocate',
+        'Community Voice',
+        'Synthesiser',
+        'Rapporteur',
+      ];
+
+      // Build per-role allocations: each has 1 place -> ceil(0.33 * 1) = 1
+      const roleAllocations: Record<string, any> = {};
+      for (const role of canonicalRoles) {
+        roleAllocations[role] = buildAllocationState({
+          allocationId: `alloc_test_${role.toLowerCase().replace(/\s+/g, '_')}`,
+          allocationType: 'named_roles',
+          title: `${role} Allocation`,
+          totalPlaces: 1,
+          confirmedOccupants: [],
+        });
+        expect(roleAllocations[role].reservedMinimum).toBe(1);
+      }
+
+      const quota = computeSeatingQuotaFromAllocations(roleAllocations);
+      expect(quota.totalCapacity).toBe(7);
+      // Sum of per-role minimums is 7
+      expect(quota.reservedMinimum).toBe(7);
+      // In contrast, global rounding on the total capacity of 7 would have been ceil(0.33 * 7) = 3
+      expect(calculateReservedMinimum(7)).toBe(3);
+      expect(quota.reservedMinimum).not.toBe(calculateReservedMinimum(7));
+    });
+
+    it('sums per-role minimums across 4 two-place assembly roles resulting in 4, not global ceil(0.33 * 8) = 3', () => {
+      const zones = ['Thinker', 'Enabler', 'Troubleshooter', 'Shaper'];
+      const roleAllocations: Record<string, any> = {};
+
+      for (const zone of zones) {
+        // 2 places per role -> ceil(0.33 * 2) = 1
+        roleAllocations[zone] = buildAllocationState({
+          allocationId: `alloc_test_${zone.toLowerCase()}`,
+          allocationType: 'named_roles',
+          title: `${zone} Zone`,
+          totalPlaces: 2,
+          confirmedOccupants: [],
+        });
+        expect(roleAllocations[zone].reservedMinimum).toBe(1);
+      }
+
+      const quota = computeSeatingQuotaFromAllocations(roleAllocations);
+      expect(quota.totalCapacity).toBe(8);
+      // Sum of per-role minimums: 1 + 1 + 1 + 1 = 4
+      expect(quota.reservedMinimum).toBe(4);
+      // Global ceil on total capacity of 8 is ceil(0.33 * 8) = ceil(2.64) = 3
+      expect(calculateReservedMinimum(8)).toBe(3);
+      expect(quota.reservedMinimum).not.toBe(calculateReservedMinimum(8));
+    });
+  });
+
+  describe('Small-Cohort Privacy Suppression', () => {
+    it('withholds exact filled and vacancy counts and shows privacy banner when suppressed', () => {
+      const suppressedQuota: SeatingQuotaSummary = {
+        totalCapacity: 7,
+        reservedMinimum: 7,
+        isPrivacySuppressed: true,
+      };
+
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            seats={mockSeats}
+            quotaSummary={suppressedQuota}
+          />
+        </MemoryRouter>
+      );
+
+      // Verify privacy banner and status
+      expect(screen.getByTestId('small-cohort-privacy-banner')).toBeInTheDocument();
+      expect(screen.getByTestId('status-privacy-suppressed')).toBeInTheDocument();
+
+      // Verify counts are withheld, not displaying numbers
+      expect(screen.getByTestId('seating-quota-reserved-filled')).toHaveTextContent('Withheld (Privacy)');
+      expect(screen.getByTestId('seating-quota-vacancies')).toHaveTextContent('Withheld (Privacy)');
+      expect(screen.queryByText('Quota Met')).not.toBeInTheDocument();
+      expect(screen.queryByText('Unmet Target')).not.toBeInTheDocument();
+    });
+
+    it('shows generic policy card on seat selection instead of revealing confidential declaration', () => {
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            seats={mockSeats}
+            selectedSeatId="seat_priya"
+          />
+        </MemoryRouter>
+      );
+
+      // Detail card is open
+      expect(screen.getByTestId('seat-detail-card')).toBeInTheDocument();
+      // Generic policy note is displayed
+      expect(screen.getByTestId('seat-detail-generic-policy')).toBeInTheDocument();
+      // Confidential individual reserved status is not revealed
+      expect(screen.queryByTestId('seat-detail-reserved')).not.toBeInTheDocument();
+    });
+
+    it('shows authorized reserved badge when seat has verified isReserved place', () => {
+      const authorizedSeats: SeatModel[] = [
+        {
+          ...mockSeats[1],
+          isReserved: true,
+        },
+      ];
+
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="debate"
+            seats={authorizedSeats}
+            selectedSeatId="seat_priya"
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByTestId('seat-detail-card')).toBeInTheDocument();
+      expect(screen.getByTestId('seat-detail-reserved')).toBeInTheDocument();
+      expect(screen.getByTestId('seat-detail-reserved')).toHaveTextContent(/Occupies 33% Women's Reserved Allocation seat/i);
+    });
+  });
+
+  describe('No Individual Eligibility Reveal', () => {
+    it('does not display reserved rings/markers on seats for participant callers', async () => {
+      // Regular participant Aarav
+      await useAuthStore.getState().switchPersona('user_aarav');
+
+      render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('session-seating-container')).toBeInTheDocument();
+      });
+
+      // No seat in the chamber has individual reserved markers rendered from fictional declarations
+      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_user_priya')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_user_aarav')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_user_rohan')).not.toBeInTheDocument();
+
+      // Selecting Priya's seat reveals generic policy indicator, never personal declaration
+      const priyaSeat = screen.getByTestId('seat-item-seat_sess_jaipur_01_user_priya');
+      fireEvent.click(priyaSeat);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('seat-detail-card')).toBeInTheDocument();
+        expect(screen.getByTestId('seat-detail-generic-policy')).toBeInTheDocument();
+        expect(screen.queryByTestId('seat-detail-reserved')).not.toBeInTheDocument();
+      });
+    });
+
+    it('does not expose individual eligibility in AssemblySessionPage participant view', async () => {
+      await useAuthStore.getState().switchPersona('user_aarav');
+      await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+
+      render(
+        <MemoryRouter initialEntries={['/assemblies/assembly_jaipur_pedestrian_2026/session']}>
+          <Routes>
+            <Route path="/assemblies/:id/session" element={<AssemblySessionPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('session-seating-container')).toBeInTheDocument();
+      });
+
+      // No individual reservation rings/markers on any assembly participant seat
+      expect(screen.queryByTestId('reserved-seat-marker-seat_assembly_jaipur_pedestrian_2026_user_priya')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_assembly_jaipur_pedestrian_2026_user_aarav')).not.toBeInTheDocument();
+
+      // Generic policy indicator is present
+      expect(screen.getByTestId('generic-policy-indicator')).toBeInTheDocument();
     });
   });
 

@@ -28,9 +28,13 @@ import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
 import { StatusChip } from '../../components/ui/StatusChip';
-import { SessionSeating, SeatModel, SeatStatus, SeatingQuotaSummary } from '../../components/session';
-import { calculateReservedMinimum } from '../../services/reservationAllocationService';
-import { getFictionalReservationEligibility } from '../../data/seed/fictionalReservationDeclarations';
+import {
+  SessionSeating,
+  SeatModel,
+  SeatStatus,
+  SeatingQuotaSummary,
+  computeSeatingQuotaFromAllocations,
+} from '../../components/session';
 import {
   ArrowLeft,
   ArrowRight,
@@ -650,8 +654,12 @@ export const AssemblySessionPage: React.FC = () => {
         currentActivity = `Formally logged reservation: ${dissentRec.reason}`;
       }
 
-      const eligibility = getFictionalReservationEligibility(p.id);
-      const isReserved = eligibility === 'eligible';
+      // Check if caller is authorized to see actual assigned reserved occupants (e.g. platform owner)
+      // Never call getFictionalReservationEligibility; personal eligibility is confidential.
+      const alloc = assembly?.roleAllocations?.[roleName];
+      const isReserved = Boolean(
+        alloc?.reservedOccupants && alloc.reservedOccupants.includes(p.id)
+      );
 
       return {
         id: `seat_${assembly.id}_${p.id}`,
@@ -672,32 +680,11 @@ export const AssemblySessionPage: React.FC = () => {
     });
   }, [assembly, participants, allRoles, proposition, currentStageIndex]);
 
+  // Quota calculation pulling strictly from projected roleAllocations
+  // Sum of per-role minimums and capacities; no second calculation; no hard-coded capacity.
   const assemblyQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
-    let totalPlaces = 0;
-    if (assembly?.roleAllocations) {
-      for (const alloc of Object.values(assembly.roleAllocations)) {
-        totalPlaces += alloc.totalPlaces || 0;
-      }
-    }
-    if (totalPlaces === 0) {
-      totalPlaces = assembly?.isThreePersonMiniMode ? 3 : 24;
-    }
-
-    const reservedMinimum = calculateReservedMinimum(totalPlaces);
-    const eligibleCount = participants.filter(
-      (p) => getFictionalReservationEligibility(p.id) === 'eligible'
-    ).length;
-    const vacanciesCount = Math.max(0, reservedMinimum - eligibleCount);
-
-    return {
-      totalCapacity: totalPlaces,
-      filledCount: participants.length,
-      reservedMinimum,
-      reservedFilledCount: eligibleCount,
-      vacanciesCount,
-      isIllustrative: false,
-    };
-  }, [assembly, participants]);
+    return computeSeatingQuotaFromAllocations(assembly?.roleAllocations);
+  }, [assembly?.roleAllocations]);
 
   if (isLoading) {
     return (
