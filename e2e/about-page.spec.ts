@@ -6,6 +6,10 @@ test('About page credits founder and technical builder accurately', async ({ pag
   await expect(page.getByRole('heading', { level: 1, name: 'Connecting education with citizenship.' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Nazim M. Sandh' })).toBeVisible();
   await expect(page.getByText('Founder and Initiator', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toHaveAttribute(
+    'href',
+    'mailto:nazimsandhbehappy@gmail.com'
+  );
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
   await expect(page.getByText('Developer', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
@@ -32,5 +36,6 @@ test('About page portraits and content fit a narrow screen', async ({ page }) =>
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/about');
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 });
