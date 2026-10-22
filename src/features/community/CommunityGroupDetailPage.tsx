@@ -7,6 +7,7 @@ import { CommunityGroup, CommunityPost } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
+import { Avatar } from '../../components/ui/Avatar';
 import {
   ArrowLeft,
   MessageSquare,
@@ -14,15 +15,16 @@ import {
   Send,
   Users,
   Pin,
-  Sparkles,
   ShieldCheck,
   UserPlus,
   UserMinus,
   Lock,
   Globe,
   Tag,
+  ChevronDown,
+  Plus,
 } from 'lucide-react';
-import { formatRelativeTime, formatDate } from '../../utils/formatters';
+import { formatRelativeTime } from '../../utils/formatters';
 
 export const CommunityGroupDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,13 +33,18 @@ export const CommunityGroupDetailPage: React.FC = () => {
 
   const [group, setGroup] = useState<CommunityGroup | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [expandedPostIds, setExpandedPostIds] = useState<Set<string>>(new Set());
+
+  // New Topic Form State
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newTags, setNewTags] = useState('Pedestrian Safety, Field Tips');
-  const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
   const [isPosting, setIsPosting] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Reply State
+  const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function load() {
@@ -60,6 +67,18 @@ export const CommunityGroupDetailPage: React.FC = () => {
   }, [id, refreshKey]);
 
   const isMember = currentUser && group ? group.memberUserIds.includes(currentUser.id) : false;
+
+  const toggleExpandPost = (postId: string) => {
+    setExpandedPostIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      return next;
+    });
+  };
 
   const handleToggleMembership = async () => {
     if (!id || !currentUser || !group) return;
@@ -167,6 +186,158 @@ export const CommunityGroupDetailPage: React.FC = () => {
     );
   }
 
+  const pinnedPosts = posts.filter((p) => p.isPinned);
+  const unpinnedPosts = posts.filter((p) => !p.isPinned);
+
+  const renderThreadCard = (post: CommunityPost) => {
+    const isExpanded = expandedPostIds.has(post.id);
+    const hasLiked = currentUser ? post.likedByUserIds?.includes(currentUser.id) : false;
+
+    return (
+      <Card
+        key={post.id}
+        className="border-slate-200 p-4 sm:p-5 space-y-3 bg-white shadow-sm hover:border-slate-300 transition-all"
+      >
+        {/* Scannable Thread Title & One-Line Snippet - Title-First Browsing */}
+        <button
+          type="button"
+          onClick={() => toggleExpandPost(post.id)}
+          aria-expanded={isExpanded}
+          aria-controls={`post-detail-${post.id}`}
+          className="w-full text-left space-y-1 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500 rounded p-1"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 hover:text-civic-indigo-700 transition-colors">
+              {post.title}
+            </h3>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {post.isPinned && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold flex items-center gap-1">
+                  <Pin className="w-3 h-3" /> Pinned
+                </span>
+              )}
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 transition-transform ${
+                  isExpanded ? 'rotate-180 text-civic-indigo-600' : ''
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* One-line snippet */}
+          <p className="text-xs text-slate-600 line-clamp-1 truncate">
+            {post.content}
+          </p>
+        </button>
+
+        {/* Author avatar/initials, name, role and relative time */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <Avatar alt={post.authorName} size="sm" />
+            <span className="font-semibold text-slate-800">{post.authorName}</span>
+            <span className="text-[11px] text-slate-400 capitalize">
+              ({post.authorRole.replace('_', ' ')}) &bull; {formatRelativeTime(post.createdAt)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 text-[11px] text-slate-500">
+            <span>{post.replies.length} replies</span>
+            <span>&bull;</span>
+            <span>{post.likesCount} helpful</span>
+          </div>
+        </div>
+
+        {/* Full Thread Details Revealed on Click */}
+        {isExpanded && (
+          <div id={`post-detail-${post.id}`} className="mt-3 pt-3 border-t border-slate-200 space-y-3">
+            {/* Complete Content */}
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100">
+              {post.content}
+            </p>
+
+            {/* Tags & Helpful Reaction */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1.5">
+                {post.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleLikePost(post.id)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
+                  hasLiked
+                    ? 'bg-civic-indigo-50 text-civic-indigo-700 border border-civic-indigo-200'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <ThumbsUp className={`w-3.5 h-3.5 ${hasLiked ? 'fill-civic-indigo-600' : ''}`} />
+                <span>{post.likesCount} Helpful</span>
+              </button>
+            </div>
+
+            {/* Replies Thread */}
+            {post.replies.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-slate-100 space-y-2">
+                <span className="text-[11px] font-bold text-slate-500 uppercase block">
+                  Replies ({post.replies.length})
+                </span>
+                {post.replies.map((rep) => (
+                  <div
+                    key={rep.id}
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between font-semibold text-slate-800">
+                      <span>{rep.authorName}</span>
+                      <span className="text-[10px] text-slate-400">
+                        {formatRelativeTime(rep.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed">{rep.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Reply Input & Button */}
+            <div className="mt-2 pt-2 flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Write a peer reply..."
+                value={replyTextMap[post.id] || ''}
+                onChange={(e) =>
+                  setReplyTextMap((prev) => ({ ...prev, [post.id]: e.target.value }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddReply(post.id);
+                  }
+                }}
+                className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-civic-indigo-500"
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleAddReply(post.id)}
+                disabled={!replyTextMap[post.id]?.trim()}
+              >
+                Reply
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <Link
@@ -242,16 +413,16 @@ export const CommunityGroupDetailPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* New Post Form / Membership Guard */}
+      {/* New Topic Form / Membership Guard */}
       {isMember ? (
         <Card className="border-slate-200 p-5 space-y-3 bg-white shadow-sm">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-            <MessageSquare className="w-4 h-4 text-civic-indigo-600" />
-            <span>Share a Field Insight or Question</span>
+            <Plus className="w-4 h-4 text-civic-indigo-600" />
+            <span>New Topic: Share a Field Insight or Question</span>
           </h2>
           <form onSubmit={handleCreatePost} className="space-y-3">
             <Input
-              placeholder="Post Title (e.g. Tips for speed radar calibration during morning rush)"
+              placeholder="Topic Title (e.g. Tips for speed radar calibration during morning rush)"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required
@@ -293,126 +464,42 @@ export const CommunityGroupDetailPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Posts List */}
-      <div className="space-y-4">
+      {/* Category Headings & Scannable Thread List */}
+      <div className="space-y-6">
         {posts.length === 0 ? (
           <Card className="p-8 border-slate-200 text-center text-xs text-slate-400">
             No posts in this circle yet. Start the conversation!
           </Card>
         ) : (
-          posts.map((post) => {
-            const hasLiked = currentUser ? post.likedByUserIds?.includes(currentUser.id) : false;
-
-            return (
-              <Card
-                key={post.id}
-                className="border-slate-200 p-5 space-y-3 bg-white shadow-sm hover:border-slate-300 transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-slate-900 font-heading">
-                        {post.authorName}
-                      </span>
-                      <span className="text-[10px] text-slate-400 capitalize">
-                        ({post.authorRole.replace('_', ' ')}) &bull; {formatRelativeTime(post.createdAt)}
-                      </span>
-                    </div>
-                    <h3 className="text-base font-bold text-slate-900 mt-1">
-                      {post.title}
-                    </h3>
-                  </div>
-
-                  {post.isPinned && (
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold flex items-center gap-1 shrink-0">
-                      <Pin className="w-3 h-3" /> Pinned
-                    </span>
-                  )}
+          <>
+            {/* Pinned Category Heading */}
+            {pinnedPosts.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 pb-1 border-b border-slate-200">
+                  <Pin className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Pinned Guidelines & Key Topics ({pinnedPosts.length})</span>
+                </h2>
+                <div className="space-y-3">
+                  {pinnedPosts.map((post) => renderThreadCard(post))}
                 </div>
+              </section>
+            )}
 
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                  {post.content}
-                </p>
-
-                {/* Tags & Likes */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                  <div className="flex flex-wrap gap-1.5">
-                    {post.tags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleLikePost(post.id)}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
-                      hasLiked
-                        ? 'bg-civic-indigo-50 text-civic-indigo-700 border border-civic-indigo-200'
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                    }`}
-                  >
-                    <ThumbsUp className={`w-3.5 h-3.5 ${hasLiked ? 'fill-civic-indigo-600' : ''}`} />
-                    <span>{post.likesCount} Helpful</span>
-                  </button>
-                </div>
-
-                {/* Replies Thread */}
-                {post.replies.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase">
-                      Replies ({post.replies.length})
-                    </span>
-                    {post.replies.map((rep) => (
-                      <div
-                        key={rep.id}
-                        className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1"
-                      >
-                        <div className="flex items-center justify-between font-semibold text-slate-800">
-                          <span>{rep.authorName}</span>
-                          <span className="text-[10px] text-slate-400">
-                            {formatRelativeTime(rep.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-slate-600 leading-relaxed">{rep.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add Reply Input */}
-                <div className="mt-3 pt-2 flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Write a peer reply..."
-                    value={replyTextMap[post.id] || ''}
-                    onChange={(e) =>
-                      setReplyTextMap((prev) => ({ ...prev, [post.id]: e.target.value }))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddReply(post.id);
-                      }
-                    }}
-                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-civic-indigo-500"
-                  />
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleAddReply(post.id)}
-                    disabled={!replyTextMap[post.id]?.trim()}
-                  >
-                    Reply
-                  </Button>
-                </div>
-              </Card>
-            );
-          })
+            {/* Discussions Category Heading */}
+            <section className="space-y-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5 pb-1 border-b border-slate-200">
+                <MessageSquare className="w-3.5 h-3.5 text-civic-indigo-600" />
+                <span>
+                  {pinnedPosts.length > 0
+                    ? `Discussion Threads & Field Logs (${unpinnedPosts.length})`
+                    : `${group.category} Peer Threads (${posts.length})`}
+                </span>
+              </h2>
+              <div className="space-y-3">
+                {unpinnedPosts.map((post) => renderThreadCard(post))}
+              </div>
+            </section>
+          </>
         )}
       </div>
     </div>
