@@ -7501,6 +7501,25 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getScopedModeratorGrants(callerId?: string): Promise<ScopedModeratorGrant[]> {
     const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (callerId && effectiveActiveId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    if (callerId && !effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" cannot be used without an active persona.`
+      );
+    }
+
+    const effectiveCallerId = effectiveActiveId || callerId;
+    if (!effectiveCallerId) {
+      return [];
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveCallerId);
+
     db.scopedModeratorGrants = db.scopedModeratorGrants || [];
     const now = new Date().toISOString();
     let hasChanges = false;
@@ -7513,16 +7532,59 @@ export class LocalDemoRepository implements DemoRepository {
     if (hasChanges) {
       this.saveDb(db);
     }
-    return JSON.parse(JSON.stringify(db.scopedModeratorGrants));
+
+    // Platform Owner can read all grants including grantee emails
+    if (caller?.role === 'platform_admin') {
+      return JSON.parse(JSON.stringify(db.scopedModeratorGrants));
+    }
+
+    // Non-owner: only return grantee's own grants as a safe projection (granteeEmail redacted)
+    const ownGrants = db.scopedModeratorGrants.filter((g) => g.granteeId === effectiveCallerId);
+    const safeProjection: ScopedModeratorGrant[] = ownGrants.map((g) => {
+      const copy = { ...g };
+      delete copy.granteeEmail;
+      return copy;
+    });
+
+    return JSON.parse(JSON.stringify(safeProjection));
   }
 
   async getScopedModeratorAudits(callerId?: string): Promise<ScopedModeratorAuditRecord[]> {
     const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (callerId && effectiveActiveId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    if (callerId && !effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" cannot be used without an active persona.`
+      );
+    }
+
+    const effectiveCallerId = effectiveActiveId || callerId;
+    if (!effectiveCallerId) {
+      return [];
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveCallerId);
     db.scopedModeratorAudits = db.scopedModeratorAudits || [];
     const sorted = [...db.scopedModeratorAudits].sort(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-    return JSON.parse(JSON.stringify(sorted));
+
+    // Platform Owner can read the full audit trail
+    if (caller?.role === 'platform_admin') {
+      return JSON.parse(JSON.stringify(sorted));
+    }
+
+    // Non-owner: only audits where the caller is the actor or target
+    const scopedAudits = sorted.filter(
+      (a) => a.actorId === effectiveCallerId || a.targetId === effectiveCallerId
+    );
+
+    return JSON.parse(JSON.stringify(scopedAudits));
   }
 
   async createScopedModeratorGrant(
@@ -7535,14 +7597,23 @@ export class LocalDemoRepository implements DemoRepository {
     callerId?: string
   ): Promise<ScopedModeratorGrant> {
     const db = this.getDb();
-    const effectiveCallerId = callerId || db.activeUserId;
-    const caller = db.users.find((u) => u.id === effectiveCallerId);
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (callerId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveActiveId);
 
     // Authority guard: strictly platform_admin (Platform Owner persona)
     if (!caller || caller.role !== 'platform_admin') {
       throw new Error(
         `Unauthorized: Only the Platform Owner persona can create scoped moderator grants. ` +
-          `Current actor '${caller?.name || effectiveCallerId}' has role '${caller?.role || 'none'}'.`
+          `Current actor '${caller?.name || effectiveActiveId}' has role '${caller?.role || 'none'}'.`
       );
     }
 
@@ -7627,14 +7698,23 @@ export class LocalDemoRepository implements DemoRepository {
     callerId?: string
   ): Promise<ScopedModeratorGrant> {
     const db = this.getDb();
-    const effectiveCallerId = callerId || db.activeUserId;
-    const caller = db.users.find((u) => u.id === effectiveCallerId);
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (callerId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveActiveId);
 
     // Authority guard: strictly platform_admin
     if (!caller || caller.role !== 'platform_admin') {
       throw new Error(
         `Unauthorized: Only the Platform Owner persona can revoke scoped moderator grants. ` +
-          `Current actor '${caller?.name || effectiveCallerId}' has role '${caller?.role || 'none'}'.`
+          `Current actor '${caller?.name || effectiveActiveId}' has role '${caller?.role || 'none'}'.`
       );
     }
 
@@ -7679,7 +7759,18 @@ export class LocalDemoRepository implements DemoRepository {
     requiredScope: { type: ModeratorScopeType; sessionId?: string }
   ): Promise<{ authorized: boolean; grant?: ScopedModeratorGrant; error?: string }> {
     const db = this.getDb();
-    const result = this.verifyModeratorScopeInternal(granteeId, requiredScope, db);
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    const caller = db.users.find((u) => u.id === effectiveActiveId);
+    if (granteeId && granteeId !== effectiveActiveId && caller?.role !== 'platform_admin') {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${granteeId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    const targetGranteeId = caller?.role === 'platform_admin' ? (granteeId || effectiveActiveId) : effectiveActiveId;
+    const result = this.verifyModeratorScopeInternal(targetGranteeId, requiredScope, db);
     this.saveDb(db);
     return result;
   }
@@ -7688,19 +7779,30 @@ export class LocalDemoRepository implements DemoRepository {
     submissionId: string,
     status: 'verified' | 'revision_requested' | 'under_review',
     feedback: string,
-    moderatorId: string
+    moderatorId?: string
   ): Promise<Submission> {
     const db = this.getDb();
-    const moderator = db.users.find((u) => u.id === moderatorId);
-    if (!moderator) throw new Error(`Moderator user "${moderatorId}" not found.`);
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (moderatorId && moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
 
-    const scopeCheck = this.verifyModeratorScopeInternal(moderatorId, { type: 'assignments' }, db);
+    const actorId = effectiveActiveId;
+    const moderator = db.users.find((u) => u.id === actorId);
+    if (!moderator) throw new Error(`Moderator user "${actorId}" not found.`);
+
+    const scopeCheck = this.verifyModeratorScopeInternal(actorId, { type: 'assignments' }, db);
     if (!scopeCheck.authorized) {
       this.recordModeratorAuditSync(
         {
           grantId: scopeCheck.grant?.id,
           action: 'grant_denied',
-          actorId: moderatorId,
+          actorId,
           actorName: moderator.name,
           actorRole: moderator.role,
           scopeType: 'assignments',
@@ -7721,7 +7823,7 @@ export class LocalDemoRepository implements DemoRepository {
     const now = new Date().toISOString();
     submission.status = status;
     submission.teacherFeedback = feedback.trim();
-    submission.reviewerId = moderatorId;
+    submission.reviewerId = actorId;
     submission.reviewedAt = now;
     submission.updatedAt = now;
 
@@ -7729,7 +7831,7 @@ export class LocalDemoRepository implements DemoRepository {
       {
         grantId: scopeCheck.grant?.id,
         action: 'grant_used',
-        actorId: moderatorId,
+        actorId,
         actorName: moderator.name,
         actorRole: moderator.role,
         scopeType: 'assignments',
@@ -7749,19 +7851,30 @@ export class LocalDemoRepository implements DemoRepository {
     targetUserId: string;
     newStatus: 'restricted' | 'removed' | 'active';
     reason: string;
-    moderatorId: string;
+    moderatorId?: string;
   }): Promise<WorkspaceMembership> {
     const db = this.getDb();
-    const moderator = db.users.find((u) => u.id === params.moderatorId);
-    if (!moderator) throw new Error(`Moderator user "${params.moderatorId}" not found.`);
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (params.moderatorId && params.moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${params.moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
 
-    const scopeCheck = this.verifyModeratorScopeInternal(params.moderatorId, { type: 'memberships' }, db);
+    const actorId = effectiveActiveId;
+    const moderator = db.users.find((u) => u.id === actorId);
+    if (!moderator) throw new Error(`Moderator user "${actorId}" not found.`);
+
+    const scopeCheck = this.verifyModeratorScopeInternal(actorId, { type: 'memberships' }, db);
     if (!scopeCheck.authorized) {
       this.recordModeratorAuditSync(
         {
           grantId: scopeCheck.grant?.id,
           action: 'grant_denied',
-          actorId: params.moderatorId,
+          actorId,
           actorName: moderator.name,
           actorRole: moderator.role,
           scopeType: 'memberships',
@@ -7778,7 +7891,7 @@ export class LocalDemoRepository implements DemoRepository {
 
     return this.moderateWorkspaceMember({
       workspaceId: params.workspaceId,
-      moderatorId: params.moderatorId,
+      moderatorId: actorId,
       targetUserId: params.targetUserId,
       newStatus: params.newStatus,
       reason: params.reason,
@@ -7790,14 +7903,25 @@ export class LocalDemoRepository implements DemoRepository {
     actionType: 'mute_participant' | 'flag_speech' | 'clear_queue';
     targetUserId: string;
     reason: string;
-    moderatorId: string;
+    moderatorId?: string;
   }): Promise<{ success: boolean; details: string; audit: ScopedModeratorAuditRecord }> {
     const db = this.getDb();
-    const moderator = db.users.find((u) => u.id === params.moderatorId);
-    if (!moderator) throw new Error(`Moderator user "${params.moderatorId}" not found.`);
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (params.moderatorId && params.moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${params.moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const actorId = effectiveActiveId;
+    const moderator = db.users.find((u) => u.id === actorId);
+    if (!moderator) throw new Error(`Moderator user "${actorId}" not found.`);
 
     const scopeCheck = this.verifyModeratorScopeInternal(
-      params.moderatorId,
+      actorId,
       { type: 'named_session', sessionId: params.sessionId },
       db
     );
@@ -7807,7 +7931,7 @@ export class LocalDemoRepository implements DemoRepository {
         {
           grantId: scopeCheck.grant?.id,
           action: 'grant_denied',
-          actorId: params.moderatorId,
+          actorId,
           actorName: moderator.name,
           actorRole: moderator.role,
           scopeType: 'named_session',
@@ -7851,7 +7975,7 @@ export class LocalDemoRepository implements DemoRepository {
       {
         grantId: scopeCheck.grant?.id,
         action: 'grant_used',
-        actorId: params.moderatorId,
+        actorId,
         actorName: moderator.name,
         actorRole: moderator.role,
         scopeType: 'named_session',

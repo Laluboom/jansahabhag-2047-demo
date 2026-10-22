@@ -356,21 +356,21 @@ export interface DemoRepository {
     submissionId: string,
     status: 'verified' | 'revision_requested' | 'under_review',
     feedback: string,
-    moderatorId: string
+    moderatorId?: string
   ): Promise<Submission>;
   moderatePlatformMembership(params: {
     workspaceId: string;
     targetUserId: string;
     newStatus: 'restricted' | 'removed' | 'active';
     reason: string;
-    moderatorId: string;
+    moderatorId?: string;
   }): Promise<WorkspaceMembership>;
   moderateSessionDeliberation(params: {
     sessionId: string;
     actionType: 'mute_participant' | 'flag_speech' | 'clear_queue';
     targetUserId: string;
     reason: string;
-    moderatorId: string;
+    moderatorId?: string;
   }): Promise<{ success: boolean; details: string; audit: ScopedModeratorAuditRecord }>;
 
   // Demo operations
