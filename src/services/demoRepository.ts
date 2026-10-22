@@ -1171,11 +1171,11 @@ export class LocalDemoRepository implements DemoRepository {
   async getSubmissions(userId?: string, assignmentId?: string): Promise<Submission[]> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isTeacher = activeUser?.role === 'teacher';
+    const isReviewer = activeUser?.role === 'teacher' || activeUser?.role === 'facilitator' || activeUser?.role === 'platform_admin';
 
-    // Security & persona boundary: non-teachers can only query their own submissions
+    // Security & persona boundary: non-reviewers can only query their own submissions
     let targetUserId = userId;
-    if (!isTeacher) {
+    if (!isReviewer) {
       if (userId && userId !== db.activeUserId) {
         return [];
       }
@@ -1226,15 +1226,15 @@ export class LocalDemoRepository implements DemoRepository {
     if (!sub) return null;
 
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isTeacher = activeUser?.role === 'teacher';
+    const isReviewer = activeUser?.role === 'teacher' || activeUser?.role === 'facilitator' || activeUser?.role === 'platform_admin';
 
     // Draft privacy: drafts are only accessible by their author
     if (sub.status === 'draft' && sub.userId !== db.activeUserId) {
       return null;
     }
 
-    // Non-teachers can only access their own submissions
-    if (!isTeacher && sub.userId !== db.activeUserId) {
+    // Non-reviewers can only access their own submissions
+    if (!isReviewer && sub.userId !== db.activeUserId) {
       return null;
     }
 
@@ -1357,22 +1357,28 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
+    if (asg.isPopupAssignment && asg.dueDate && new Date(asg.dueDate).getTime() < Date.now()) {
+      throw new Error('Cannot submit for expired assignment');
+    }
+
     const isUhv = this.isUhvAssignment(asg, db);
     if (!isUhv && (!input.content || !input.content.trim())) {
       throw new Error('Observation notes cannot be empty on submission');
     }
 
     if (!isUhv) {
-      if (!input.evidenceIds || input.evidenceIds.length === 0) {
+      if (asg.requiredEvidenceType && (!input.evidenceIds || input.evidenceIds.length === 0)) {
         throw new Error('At least one evidence record is required for assignment submission');
       }
-      for (const eid of input.evidenceIds) {
-        const ev = db.evidence.find((e) => e.id === eid);
-        if (!ev) {
-          throw new Error(`Evidence ${eid} not found`);
-        }
-        if (ev.ownerId !== input.userId) {
-          throw new Error('Unauthorized: cannot attach evidence owned by another participant');
+      if (input.evidenceIds && input.evidenceIds.length > 0) {
+        for (const eid of input.evidenceIds) {
+          const ev = db.evidence.find((e) => e.id === eid);
+          if (!ev) {
+            throw new Error(`Evidence ${eid} not found`);
+          }
+          if (ev.ownerId !== input.userId) {
+            throw new Error('Unauthorized: cannot attach evidence owned by another participant');
+          }
         }
       }
     }
@@ -4272,8 +4278,10 @@ export class LocalDemoRepository implements DemoRepository {
     if (!session.debateData) {
       throw new Error(`Session ${sessionId} has no active debate data`);
     }
-    if (actorId !== session.facilitatorId) {
-      throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) can advance speaking turns`);
+    const isFacilitator = actorId === session.facilitatorId;
+    const isActiveSpeaker = session.debateData.activeSpeakerId === actorId;
+    if (!isFacilitator && !isActiveSpeaker) {
+      throw new Error(`Unauthorized actor action: only facilitator (${session.facilitatorId}) or recognized speaker can advance or yield speaking turns`);
     }
     if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
       throw new Error('Session is closed: cannot advance speaking turns in a closed session');
@@ -4419,6 +4427,190 @@ export class LocalDemoRepository implements DemoRepository {
     session.updatedAt = new Date().toISOString();
     this.saveDb(db);
     const caller = db.users.find((u) => u.id === (db.activeUserId || input.userId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
+  }
+
+  // Debate Room Controls & Popup Assignments (Change Plan v2 §13)
+  async castDebateVote(
+    sessionId: string,
+    userId: string,
+    stance: 'for' | 'against' | 'abstain'
+  ): Promise<Session> {
+    const db = this.getDb();
+    if (userId !== db.activeUserId) {
+      throw new Error('Unauthorized: cannot cast vote for another persona');
+    }
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+    if (session.debateData.currentPhase === 'CLOSED' || session.debateData.currentPhase === 'REPORT_PUBLISHED') {
+      throw new Error('Cannot vote in a closed debate chamber');
+    }
+
+    session.debateData.votes = session.debateData.votes || {};
+    session.debateData.votes[userId] = stance;
+    session.updatedAt = new Date().toISOString();
+
+    this.saveDb(db);
+    const caller = db.users.find((u) => u.id === db.activeUserId) || null;
+    return this.projectSessionForCaller(session, caller, db);
+  }
+
+  async getDebateVotes(sessionId: string): Promise<Record<string, 'for' | 'against' | 'abstain'>> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    return session?.debateData?.votes ? JSON.parse(JSON.stringify(session.debateData.votes)) : {};
+  }
+
+  async updateDebateSpeechTimer(
+    sessionId: string,
+    actorId: string,
+    timer: { speakerId?: string | null; secondsRemaining: number; totalSeconds: number; isRunning: boolean }
+  ): Promise<Session> {
+    const db = this.getDb();
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no active debate data`);
+    }
+
+    session.debateData.speechTimer = {
+      speakerId: timer.speakerId ?? session.debateData.activeSpeakerId ?? null,
+      secondsRemaining: timer.secondsRemaining,
+      totalSeconds: timer.totalSeconds,
+      isRunning: timer.isRunning,
+      lastUpdated: new Date().toISOString(),
+    };
+    session.updatedAt = new Date().toISOString();
+
+    this.saveDb(db);
+    const caller = db.users.find((u) => u.id === (db.activeUserId || actorId)) || null;
+    return this.projectSessionForCaller(session, caller, db);
+  }
+
+  async pushDebatePopupAssignment(input: {
+    sessionId: string;
+    actorId: string;
+    title: string;
+    instruction: string;
+    timeLimitMinutes: number;
+  }): Promise<{ session: Session; assignment: Assignment }> {
+    const db = this.getDb();
+    if (input.actorId !== db.activeUserId) {
+      throw new Error(`Unauthorized: actor "${input.actorId}" does not match active persona "${db.activeUserId}"`);
+    }
+    const session = db.sessions.find((s) => s.id === input.sessionId);
+    if (!session) {
+      throw new Error(`Session ${input.sessionId} not found`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${input.sessionId} has no debate data`);
+    }
+    // Facilitator publication authorization boundary
+    if (session.facilitatorId !== input.actorId) {
+      throw new Error('Unauthorized: only the room facilitator can publish a popup assignment');
+    }
+    if (!input.title || !input.title.trim()) {
+      throw new Error('Popup assignment title cannot be empty');
+    }
+    if (!input.instruction || !input.instruction.trim()) {
+      throw new Error('Popup assignment instruction cannot be empty');
+    }
+    if (!input.timeLimitMinutes || input.timeLimitMinutes <= 0) {
+      throw new Error('Time limit must be greater than zero');
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + input.timeLimitMinutes * 60 * 1000).toISOString();
+    const assignmentId = generateId('asg_popup');
+
+    const assignment: Assignment = {
+      id: assignmentId,
+      courseId: 'course_deliberation_02',
+      sessionId: session.id,
+      assignmentType: 'civic_assignment',
+      title: input.title.trim(),
+      prompt: input.instruction.trim(),
+      rubric: [
+        {
+          criterion: 'Chamber Motion Grounding',
+          maxPoints: 10,
+          description: 'Direct response to chamber prompt and discussion on school corridor safety.',
+        },
+        {
+          criterion: 'Evidence or Civic Reasoning',
+          maxPoints: 10,
+          description: 'Grounding in speed logs, field observations, or pedestrian rights.',
+        },
+      ],
+      creditsReward: 2,
+      status: 'active',
+      dueDate: expiresAt,
+      timeLimitMinutes: input.timeLimitMinutes,
+      isPopupAssignment: true,
+      facilitatorId: input.actorId,
+      schemaVersion: 1,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+
+    db.assignments.push(assignment);
+
+    session.debateData.activePopupAssignmentId = assignmentId;
+    session.debateData.popupAssignment = {
+      assignmentId,
+      title: assignment.title,
+      instruction: assignment.prompt,
+      timeLimitMinutes: input.timeLimitMinutes,
+      pushedBy: input.actorId,
+      pushedAt: now.toISOString(),
+      expiresAt,
+      isClosed: false,
+    };
+    session.updatedAt = now.toISOString();
+
+    this.saveDb(db);
+    const caller = db.users.find((u) => u.id === db.activeUserId) || null;
+    return {
+      session: this.projectSessionForCaller(session, caller, db),
+      assignment: JSON.parse(JSON.stringify(assignment)),
+    };
+  }
+
+  async closeDebatePopupAssignment(sessionId: string, actorId: string): Promise<Session> {
+    const db = this.getDb();
+    if (actorId !== db.activeUserId) {
+      throw new Error(`Unauthorized: actor "${actorId}" does not match active persona "${db.activeUserId}"`);
+    }
+    const session = db.sessions.find((s) => s.id === sessionId);
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    if (!session.debateData) {
+      throw new Error(`Session ${sessionId} has no debate data`);
+    }
+    if (session.facilitatorId !== actorId) {
+      throw new Error('Unauthorized: only the room facilitator can close a popup assignment');
+    }
+
+    if (session.debateData.popupAssignment) {
+      session.debateData.popupAssignment.isClosed = true;
+      const asg = db.assignments.find((a) => a.id === session.debateData?.popupAssignment?.assignmentId);
+      if (asg) {
+        asg.status = 'archived';
+        asg.updatedAt = new Date().toISOString();
+      }
+    }
+    session.updatedAt = new Date().toISOString();
+
+    this.saveDb(db);
+    const caller = db.users.find((u) => u.id === db.activeUserId) || null;
     return this.projectSessionForCaller(session, caller, db);
   }
 

@@ -305,6 +305,9 @@ export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
             rules: [],
           };
         }
+        if (!session.debateData.votes) {
+          session.debateData.votes = {};
+        }
       }
     }
 
