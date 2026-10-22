@@ -56,7 +56,10 @@ export const RoleAwareAssistantSurface: React.FC<RoleAwareAssistantSurfaceProps>
       try {
         const fetchedGrants = await demoRepository.getScopedModeratorGrants(currentUser.id);
         grants = fetchedGrants.filter(
-          (g) => g.status === 'active' && (!g.expiresAt || new Date(g.expiresAt) > new Date())
+          (g) =>
+            g.granteeId === currentUser.id &&
+            g.status === 'active' &&
+            (!g.expiresAt || new Date(g.expiresAt) > new Date())
         );
       } catch (err) {
         console.error('Failed to load moderator grants for assistant', err);

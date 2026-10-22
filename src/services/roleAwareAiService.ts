@@ -153,6 +153,7 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
 
   // --------------------------------------------------------------------------
   // SCOPED MODERATOR SUGGESTIONS: Draft report summaries (by scope)
+  // Labeled clearly as fictional demo structures, not live analytics
   // --------------------------------------------------------------------------
   {
     id: 'sug_mod_summary_asg',
@@ -162,19 +163,19 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
     roleTarget: 'moderator',
     scopeType: 'assignments',
     originalContent:
-      'Aggregated Overview of Public Field Submissions (Safe Streets 2047):\n' +
-      '• Public Evidence Logs Analyzed: 12 verified public survey records across Mansarovar & RTU Kota cohorts.\n' +
-      '• Observable Field Patterns: 75% of public road audit records note vehicle speeds exceeding 40 km/h during school opening hours.\n' +
-      '• Media Compliance Check: 100% of attached media adhere to face-consent guidelines; 0 unconsented faces detected.\n' +
+      'Draft Report Summary (Fictional Demonstration Sample):\n' +
+      '• Illustrative Log Digest: Demonstrates report layout (sample scenario: fictional public submissions for Safe Streets demo campaign).\n' +
+      '• Illustrative Observation Pattern: Sample pattern showing how speed trends in school corridors would be formatted for review.\n' +
+      '• Media Consent Verification: Format for showing media compliance flags (illustrative demo check; actual evidence verification is strictly performed by human reviewers).\n' +
       '• Data Privacy Safeguard: Strict boundary verified — 0 private student vault records and 0 private UHV reflection logs were accessed or included in this advisory synthesis.\n' +
-      '• Advisory Note for Moderator: 2 public survey logs have been flagged for duplicate location tags; ready for human reviewer check.',
+      '• Advisory Note for Moderator: Illustrative queue flag (sample note: 2 duplicate tags flagged for human check; AI makes no binding determinations).',
     content:
-      'Aggregated Overview of Public Field Submissions (Safe Streets 2047):\n' +
-      '• Public Evidence Logs Analyzed: 12 verified public survey records across Mansarovar & RTU Kota cohorts.\n' +
-      '• Observable Field Patterns: 75% of public road audit records note vehicle speeds exceeding 40 km/h during school opening hours.\n' +
-      '• Media Compliance Check: 100% of attached media adhere to face-consent guidelines; 0 unconsented faces detected.\n' +
+      'Draft Report Summary (Fictional Demonstration Sample):\n' +
+      '• Illustrative Log Digest: Demonstrates report layout (sample scenario: fictional public submissions for Safe Streets demo campaign).\n' +
+      '• Illustrative Observation Pattern: Sample pattern showing how speed trends in school corridors would be formatted for review.\n' +
+      '• Media Consent Verification: Format for showing media compliance flags (illustrative demo check; actual evidence verification is strictly performed by human reviewers).\n' +
       '• Data Privacy Safeguard: Strict boundary verified — 0 private student vault records and 0 private UHV reflection logs were accessed or included in this advisory synthesis.\n' +
-      '• Advisory Note for Moderator: 2 public survey logs have been flagged for duplicate location tags; ready for human reviewer check.',
+      '• Advisory Note for Moderator: Illustrative queue flag (sample note: 2 duplicate tags flagged for human check; AI makes no binding determinations).',
     metadata: {
       auditBoundaryNote:
         'Advisory report summary only. Human moderator conducts actual review. AI does not decide verification, credits, or sanctions.',
@@ -188,19 +189,19 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
     roleTarget: 'moderator',
     scopeType: 'memberships',
     originalContent:
-      'Aggregated Digest of Team Workspaces (Change Plan v2 §11):\n' +
-      '• Collaborative Workspaces Monitored: 3 active groups (Jaipur Pedestrian Action, Navchetna Student Council, Kota Deliberation Circle).\n' +
-      '• Decorum Standard: Group channel discussions adhered to respectful dialogue standards; 0 profanity or harassment alerts.\n' +
-      '• Safeguard Compliance: Open channel transparency maintained. Direct unmoderated private student messaging remains disabled.\n' +
-      '• Data Privacy Boundary: No student private vaults or personal UHV self-reflection journals were read.\n' +
-      '• Advisory Note for Moderator: All active workspaces operating in good standing; no membership restrictions or interventions recommended.',
+      'Draft Report Summary (Fictional Demonstration Sample):\n' +
+      '• Fictional Workspace Digest Layout: Illustrates workspace conduct monitoring format (sample groups: Safe Streets team and student councils).\n' +
+      '• Decorum Monitoring Format: Demonstrates channel activity and decorum reporting (illustrative demo scenario; no disciplinary actions taken by automated tools).\n' +
+      '• Safeguard Compliance Reminder: Open channel transparency enforced; direct unmoderated private messaging is disabled by platform rules.\n' +
+      '• Data Privacy Boundary: Zero private student vaults or personal UHV self-reflection journals are accessed or ingested.\n' +
+      '• Advisory Note for Moderator: Illustrative queue summary for human moderator review; human decision primacy strictly maintained.',
     content:
-      'Aggregated Digest of Team Workspaces (Change Plan v2 §11):\n' +
-      '• Collaborative Workspaces Monitored: 3 active groups (Jaipur Pedestrian Action, Navchetna Student Council, Kota Deliberation Circle).\n' +
-      '• Decorum Standard: Group channel discussions adhered to respectful dialogue standards; 0 profanity or harassment alerts.\n' +
-      '• Safeguard Compliance: Open channel transparency maintained. Direct unmoderated private student messaging remains disabled.\n' +
-      '• Data Privacy Boundary: No student private vaults or personal UHV self-reflection journals were read.\n' +
-      '• Advisory Note for Moderator: All active workspaces operating in good standing; no membership restrictions or interventions recommended.',
+      'Draft Report Summary (Fictional Demonstration Sample):\n' +
+      '• Fictional Workspace Digest Layout: Illustrates workspace conduct monitoring format (sample groups: Safe Streets team and student councils).\n' +
+      '• Decorum Monitoring Format: Demonstrates channel activity and decorum reporting (illustrative demo scenario; no disciplinary actions taken by automated tools).\n' +
+      '• Safeguard Compliance Reminder: Open channel transparency enforced; direct unmoderated private messaging is disabled by platform rules.\n' +
+      '• Data Privacy Boundary: Zero private student vaults or personal UHV self-reflection journals are accessed or ingested.\n' +
+      '• Advisory Note for Moderator: Illustrative queue summary for human moderator review; human decision primacy strictly maintained.',
     metadata: {
       auditBoundaryNote:
         'Advisory digest only. Any membership status modifications or warnings are issued solely by authorized human moderators.',
@@ -215,19 +216,19 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
     scopeType: 'named_session',
     scopeSessionId: 'sess_jaipur_01',
     originalContent:
-      'Jaipur Youth Assembly (sess_jaipur_01) Decorum Digest:\n' +
-      '• Registered Chamber Attendance: 24 active seats with 33% women\'s representation verified.\n' +
-      '• Queue Decorum: Alternating speaker queue executed orderly; average speech length 1m 45s (within 2m limit).\n' +
-      '• Conduct & Recording: 0 unconsented live recordings attempted; respectful parliamentary language observed.\n' +
-      '• Boundary Check: Student personal journals and private UHV values reflections were not accessed or processed.\n' +
-      '• Advisory Note for Moderator: Chamber proceedings met deliberative standing orders; ready for facilitator archive sign-off.',
+      'Draft Report Summary (Fictional Demonstration Sample):\n' +
+      '• Fictional Session Decorum Layout: Illustrative format for session sess_jaipur_01 deliberative standing order review.\n' +
+      '• Sample Turn Timing Digest: Demonstrates presentation of floor speech durations (fictional example figures for demo illustration).\n' +
+      '• Recording Rule Adherence: Format for logging media recording complaints (illustrative demo check; no recording permitted without facilitator consent).\n' +
+      '• Boundary Confirmation: Student personal reflection journals and private UHV values reflections were not accessed or processed.\n' +
+      '• Advisory Note for Moderator: Illustrative summary prepared for human session co-moderator; automated AI never decides speaking order or sanctions.',
     content:
-      'Jaipur Youth Assembly (sess_jaipur_01) Decorum Digest:\n' +
-      '• Registered Chamber Attendance: 24 active seats with 33% women\'s representation verified.\n' +
-      '• Queue Decorum: Alternating speaker queue executed orderly; average speech length 1m 45s (within 2m limit).\n' +
-      '• Conduct & Recording: 0 unconsented live recordings attempted; respectful parliamentary language observed.\n' +
-      '• Boundary Check: Student personal journals and private UHV values reflections were not accessed or processed.\n' +
-      '• Advisory Note for Moderator: Chamber proceedings met deliberative standing orders; ready for facilitator archive sign-off.',
+      'Draft Report Summary (Fictional Demonstration Sample):\n' +
+      '• Fictional Session Decorum Layout: Illustrative format for session sess_jaipur_01 deliberative standing order review.\n' +
+      '• Sample Turn Timing Digest: Demonstrates presentation of floor speech durations (fictional example figures for demo illustration).\n' +
+      '• Recording Rule Adherence: Format for logging media recording complaints (illustrative demo check; no recording permitted without facilitator consent).\n' +
+      '• Boundary Confirmation: Student personal reflection journals and private UHV values reflections were not accessed or processed.\n' +
+      '• Advisory Note for Moderator: Illustrative summary prepared for human session co-moderator; automated AI never decides speaking order or sanctions.',
     metadata: {
       auditBoundaryNote:
         'Advisory summary only. Session facilitator and moderator retain exclusive authority over speaking turns and decorum determinations.',
@@ -261,14 +262,33 @@ export class RoleAwareAiService {
       candidates = SEEDED_ROLE_SUGGESTIONS.filter((s) => s.roleTarget === 'facilitator');
     } else if (effectiveRole === 'moderator') {
       // Must respect active scope from scoped moderator grants (Change Plan v2 §12)
+      // Strictly verify granteeId matches user.id, status is active, and unexpired
+      const now = new Date();
       const validActiveGrants = activeGrants.filter(
-        (g) => g.status === 'active' && (!g.expiresAt || new Date(g.expiresAt) > new Date())
+        (g) =>
+          g.granteeId === user.id &&
+          g.status === 'active' &&
+          (!g.expiresAt || new Date(g.expiresAt) > now)
       );
-      const activeScopeTypes = new Set(validActiveGrants.map((g) => g.scope.type));
 
-      candidates = SEEDED_ROLE_SUGGESTIONS.filter(
-        (s) => s.roleTarget === 'moderator' && s.scopeType && activeScopeTypes.has(s.scopeType)
+      const hasAssignmentsScope = validActiveGrants.some((g) => g.scope.type === 'assignments');
+      const hasMembershipsScope = validActiveGrants.some((g) => g.scope.type === 'memberships');
+      const activeSessionIds = new Set(
+        validActiveGrants
+          .filter((g) => g.scope.type === 'named_session' && g.scope.sessionId)
+          .map((g) => g.scope.sessionId as string)
       );
+
+      candidates = SEEDED_ROLE_SUGGESTIONS.filter((s) => {
+        if (s.roleTarget !== 'moderator') return false;
+        if (s.scopeType === 'assignments') return hasAssignmentsScope;
+        if (s.scopeType === 'memberships') return hasMembershipsScope;
+        if (s.scopeType === 'named_session') {
+          // Exact session ID check: only show if the moderator holds a grant for this specific session
+          return Boolean(s.scopeSessionId && activeSessionIds.has(s.scopeSessionId));
+        }
+        return false;
+      });
     } else {
       // General informational fallback for other administrative or institution roles
       candidates = [];

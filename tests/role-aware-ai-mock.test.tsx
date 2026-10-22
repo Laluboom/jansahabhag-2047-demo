@@ -205,6 +205,105 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
       const sugs = RoleAwareAiService.getSuggestionsForContext(mockUser, []);
       expect(sugs).toEqual([]);
     });
+
+    it('regression: excludes session summary when moderator is granted only a different session ID', async () => {
+      const mockUser = {
+        id: 'user_mod_diff_ses',
+        name: 'Different Session Mod',
+        role: 'moderator' as const,
+        email: 'mod.diff@test.com',
+        username: 'mod.diff',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        institutionId: 'inst_rtu_kota',
+        institutionName: 'RTU Kota',
+        programmeIds: [],
+        bio: 'Kota session moderator',
+        age: 26,
+        location: 'Kota',
+        badgeCount: 0,
+        totalCredits: 0,
+        schemaVersion: 1,
+        createdAt: '2026-10-01T00:00:00Z',
+        updatedAt: '2026-10-01T00:00:00Z',
+      };
+
+      // Grant is for 'sess_kota_02', NOT 'sess_jaipur_01'
+      const differentSessionGrant: ScopedModeratorGrant[] = [
+        {
+          id: 'grant_mod_kota_01',
+          granteeId: 'user_mod_diff_ses',
+          granteeName: 'Different Session Mod',
+          granteeRole: 'moderator',
+          grantorId: 'user_admin',
+          grantorName: 'Admin',
+          grantorRole: 'platform_admin',
+          scope: {
+            type: 'named_session',
+            sessionId: 'sess_kota_02',
+            sessionTitle: 'Kota Deliberation Assembly',
+            description: 'Queue moderation for sess_kota_02',
+          },
+          reason: 'Session co-moderation for Kota',
+          createdAt: '2026-10-01T00:00:00Z',
+          expiresAt: '2026-12-01T00:00:00Z',
+          status: 'active',
+          schemaVersion: 1,
+        },
+      ];
+
+      const sugs = RoleAwareAiService.getSuggestionsForContext(mockUser, differentSessionGrant);
+
+      // Must NOT return sess_jaipur_01 summary
+      expect(sugs.length).toBe(0);
+      expect(sugs.some((s) => s.scopeSessionId === 'sess_jaipur_01')).toBe(false);
+      expect(sugs.some((s) => s.title.includes('sess_jaipur_01'))).toBe(false);
+    });
+
+    it('regression: excludes grants belonging to another grantee and does not show their scope summaries', async () => {
+      const mockUserA = {
+        id: 'user_mod_alice',
+        name: 'Alice Moderator',
+        role: 'moderator' as const,
+        email: 'alice@test.com',
+        username: 'alice.mod',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        institutionId: 'inst_navchetna_jaipur',
+        institutionName: 'Navchetna School',
+        programmeIds: [],
+        bio: 'Alice',
+        age: 27,
+        location: 'Jaipur',
+        badgeCount: 0,
+        totalCredits: 0,
+        schemaVersion: 1,
+        createdAt: '2026-10-01T00:00:00Z',
+        updatedAt: '2026-10-01T00:00:00Z',
+      };
+
+      // Grant belongs to user_mod_bob, NOT user_mod_alice
+      const bobGrants: ScopedModeratorGrant[] = [
+        {
+          id: 'grant_bob_asg',
+          granteeId: 'user_mod_bob',
+          granteeName: 'Bob Moderator',
+          granteeRole: 'moderator',
+          grantorId: 'user_admin',
+          grantorName: 'Admin',
+          grantorRole: 'platform_admin',
+          scope: { type: 'assignments', description: 'Bob assignment review' },
+          reason: 'Grant for Bob only',
+          createdAt: '2026-10-01T00:00:00Z',
+          expiresAt: '2026-12-01T00:00:00Z',
+          status: 'active',
+          schemaVersion: 1,
+        },
+      ];
+
+      const sugs = RoleAwareAiService.getSuggestionsForContext(mockUserA, bobGrants);
+
+      // Must reject bobGrants because granteeId !== mockUserA.id
+      expect(sugs).toEqual([]);
+    });
   });
 
   describe('4. Strict Privacy Isolation: No Private Evidence or UHV Reflections', () => {
