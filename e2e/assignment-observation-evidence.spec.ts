@@ -112,11 +112,11 @@ test.describe('Package 03: Jaipur Assignment, Observation & Evidence Lifecycle',
     await page.goto('/assignments/asg_obs_03');
     await expect(page.getByText(/Exemplary fieldwork observation with rigorous pedestrian delay data/i)).toBeVisible();
 
-    // Verify Civic Credit Ledger shows verified credits (+10 for submission, +5 for observation evidence)
+    // Verify Civic Credit Ledger shows verified credits (+2 pending submission verified by mentor, and +1 verified field evidence)
     await page.goto('/passport/credits');
     await expect(page.getByText(/Submitted assignment: Pedestrian Flow Interview with 5 Peers/i)).toBeVisible();
     await expect(page.getByText(/Verified field evidence: Madhyam Marg Crossing Incident & Tally Log/i)).toBeVisible();
     await expect(page.getByText('Total Verified')).toBeVisible();
-    await expect(page.getByText('60 Credits')).toBeVisible();
+    await expect(page.getByText('20 Credits')).toBeVisible();
   });
 });
