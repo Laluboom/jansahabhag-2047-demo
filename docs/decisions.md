@@ -92,3 +92,10 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
 | OD.19 | **For the fictional demo, cover every named role and limited place, including Assembly functional roles and capacity-limited events/programmes.** | §2 distinguishes open participation from limited selections and allocated roles. Any later production boundary still needs a separate policy review. |
 
 **Pre-launch review:** §9 also calls for qualified legal review before public launch and does not claim that the same legal requirement applies universally. The Master PRD's legal and privacy launch gates remain open. No legal conclusion or owner approval is recorded here.
+
+## Further owner direction recorded 22 October 2026
+
+- **Demo participant ages:** every fictional demo participant must be at least 18. This extends the earlier Aarav-only age correction and applies to seed personas and visible demo signup copy. It does not set the real-participant age, consent or safeguarding policy for a future release.
+- **UHV seven-day practice:** wait for the Vadodara–Savli workshop source and confirmed attribution before building workshop-based activities. No new media is approved; retain placeholders.
+- **Scoped moderator grants:** include a clearly labelled browser simulation of founder-controlled, scope-limited, expiring and auditable moderator grants in the competition demo. Real authority enforcement remains a server-side task.
+- **Publication:** after remaining owner-dependent items and the combined demo review are complete, the owner has approved pushing and deploying the accepted build. Do not publish intermediate unreviewed branches.

@@ -20,10 +20,10 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [ ] Add sample text mode, low-data setting and short text turns in session pages. Real reconnect continuity requires a multi-user backend.
 - [ ] Complete the Debate Room popup assignment journey and check remaining speaker/queue/vote controls against the plan.
 - [ ] Design offline evidence storage beyond the current small local browser attachments: MP3/MP4, stated size limits, teacher/mentor uploads, review and Passport linkage. IndexedDB and real sync require separate implementation.
-- [ ] Prepare the seven-day UHV practice only after its source, attribution, spelling and rights are confirmed, or use explicitly provisional original content if the owner chooses that approach. Keep reflections private and credit-free.
+- [ ] Wait for the Vadodara–Savli workshop source, attribution, speaker spelling and rights before building the seven-day UHV practice. Keep reflections private and credit-free; use no new media yet.
 - [ ] Add a role-aware AI mock within the approved human-decision boundaries, if needed for the demo. Founder video awaits approved media.
-- [ ] Decide whether a scoped moderator-grant simulation belongs in this competition demo; production enforcement requires a backend.
-- [ ] Verify all fictional persona ages if the owner adopts an 18+ demo policy; Aarav is already 18. Keep the approved Jaipur story.
+- [ ] Build the owner-approved scoped moderator-grant simulation for this competition demo; production enforcement requires a backend.
+- [ ] Update all fictional demo participant ages to 18+ as approved on 22 Oct; Aarav is already 18. Keep the approved Jaipur story.
 - [ ] Reconcile the Master PRD route/control inventory and review the dependency audit deliberately.
 - [ ] Accessibility and performance cleanup: 320 lint warnings in the main checkout (0 errors; full `eslint .` also scans sub-agy worktrees), and a 652.5 kB main JS chunk still triggers Vite's warning.
 
