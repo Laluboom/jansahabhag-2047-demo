@@ -22,6 +22,7 @@ import {
   FACE_CONSENT_WARNING_TEXT,
   ALLOWED_EVIDENCE_FORMAT_LABELS,
 } from '../../domain/evidenceRules';
+import { RoleAwareAssistantSurface } from '../ai/RoleAwareAssistantSurface';
 
 export const HelpRulebooksPage: React.FC = () => {
   return (
@@ -229,6 +230,9 @@ export const HelpRulebooksPage: React.FC = () => {
           </p>
         </div>
       </Card>
+
+      {/* Role-Aware Assistant Surface (Change Plan v2 & Review Additions 5) */}
+      <RoleAwareAssistantSurface />
     </div>
   );
 };

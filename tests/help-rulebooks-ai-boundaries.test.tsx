@@ -14,7 +14,7 @@ describe('HelpRulebooksPage - AI Boundaries Policy Panel', () => {
 
     // Header and core premise
     expect(screen.getByRole('heading', { name: /AI Boundaries: Policy & Principles/i })).toBeInTheDocument();
-    expect(screen.getByText(/AI assists, people decide\./i)).toBeInTheDocument();
+    expect(screen.getAllByText(/AI assists, people decide\./i).length).toBeGreaterThanOrEqual(1);
 
     // Permitted assistance items
     expect(screen.getByText(/Where AI may assist \(if built\)/i)).toBeInTheDocument();
