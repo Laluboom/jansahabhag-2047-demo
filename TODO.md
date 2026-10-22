@@ -1,9 +1,9 @@
 # Remaining work and handback
 
-## Combined demo verification (22 Oct 2026)
+## Combined demo verification (23 Oct 2026)
 
 - [x] Merge the four reviewed sub-agy branches for the landing page, session seating, evidence privacy, and title-first browsing into `autobuild`.
-- [x] Production build and 466 unit/UI tests pass after the adult-persona, Rules, team-board and scoped-moderator merges; all 38 baseline browser checks passed after the first three.
+- [x] Production build and 517 unit/UI tests pass after the text-mode, role-aware AI and offline-evidence merges; all 38 earlier baseline browser checks passed before those last feature merges.
 - [x] Browser acceptance: 37 of 38 tests passed first run. The sole failure was an ambiguous assembly test selector introduced by the new seat buttons; the selector was repaired and both assembly browser tests passed on rerun.
 - [ ] Inspect the combined build in the browser with the owner before publishing. The branch is local and ahead of `origin/autobuild`; these merges have not been pushed or deployed.
 
@@ -17,15 +17,15 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [x] Evidence privacy, consent and recording notices, report workflow, and guarded moderation queue for the browser demo.
 - [x] Added contextual point-of-use Rules controls across Home, Learn, Assignments, Workspace, Projects, Community, Passport and UHV; preserved existing Debate, Assembly, Parliament and Event rules.
 - [x] Added project team seats, milestone boards and joined-project Workspace tiles; preserved the invite-only Jaipur room and labelled single-browser simulation.
-- [ ] Add sample text mode, low-data setting and short text turns in session pages. Real reconnect continuity requires a multi-user backend.
+- [x] Added text mode, a low-data setting, sample turns and browser-local seat restoration scoped to each demo persona. Real multi-user reconnect continuity requires a backend.
 - [ ] Complete the Debate Room popup assignment journey and check remaining speaker/queue/vote controls against the plan.
-- [ ] Design offline evidence storage beyond the current small local browser attachments: MP3/MP4, stated size limits, teacher/mentor uploads, review and Passport linkage. IndexedDB and real sync require separate implementation.
+- [x] Added browser-local IndexedDB evidence attachments for JPEG, PNG, MP3, MP4 and PDF up to 10 MB, with visible storage failures, teacher/mentor cohort uploads, review and Passport linkage. Remote sync still requires a backend.
 - [ ] Wait for the Vadodara–Savli workshop source, attribution, speaker spelling and rights before building the seven-day UHV practice. Keep reflections private and credit-free; use no new media yet.
-- [ ] Add a role-aware AI mock within the approved human-decision boundaries, if needed for the demo. Founder video awaits approved media.
+- [x] Added deterministic role-aware AI demo suggestions with exact moderator-grant scope, fictional labels and human-decision boundaries. Founder video awaits approved media.
 - [x] Built the owner-approved scoped moderator-grant simulation with audit, expiry, revoke and active-persona guards; production enforcement requires a backend.
 - [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; kept the approved Jaipur story.
 - [ ] Reconcile the Master PRD route/control inventory and review the dependency audit deliberately.
-- [ ] Accessibility and performance cleanup: 320 lint warnings in the main checkout (0 errors; full `eslint .` also scans sub-agy worktrees), and a 652.5 kB main JS chunk still triggers Vite's warning.
+- [ ] Accessibility and performance cleanup: The final lint count remains to be measured after feature integration, and a 688 kB main JS chunk still triggers Vite's warning.
 
 ## After the competition demo
 
