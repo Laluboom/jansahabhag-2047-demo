@@ -132,6 +132,7 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
       // Check helper and derive expected earliest future fictional Jaipur event
       const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-10-22T08:00:00Z'));
       expect(earliestFutureEvent).toBeDefined();
+      if (!earliestFutureEvent) throw new Error('Expected earliestFutureEvent to be defined');
       expect(earliestFutureEvent.id).toBe('evt_jaipur_limited_05');
       expect(earliestFutureEvent.date).toBe('2026-10-25');
 
@@ -159,6 +160,49 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('omits upcoming event card and returns undefined when clock is after all seeded events (1 November 2026)', () => {
+    // Fixed clock: Nov 1, 2026 12:00:00Z (after all seeded events in October 2026)
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-01T12:00:00Z'));
+
+    try {
+      const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-11-01T12:00:00Z'));
+      expect(earliestFutureEvent).toBeUndefined();
+
+      const { container } = render(
+        <MemoryRouter initialEntries={['/welcome']}>
+          <Routes>
+            <Route path="/welcome" element={<WelcomePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // Card is omitted and no past event is falsely labelled upcoming
+      expect(screen.queryByTestId('welcome-upcoming-session-card')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Upcoming Event/i)).not.toBeInTheDocument();
+      expect(container.textContent).not.toContain('evt_jaipur_limited_05');
+      expect(container.textContent).not.toContain('Oct 25, 2026');
+      expect(container.textContent).not.toContain('Oct 12, 2026');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('handles same-day event timing correctly before and after start time', () => {
+    // evt_jaipur_limited_05 is on 2026-10-25 at 10:00 AM
+    // Case 1: Same day before start time (e.g. 09:00:00Z) -> is upcoming
+    const beforeStart = new Date('2026-10-25T09:00:00Z');
+    const eventBefore = getEarliestFutureJaipurEvent(beforeStart);
+    expect(eventBefore).toBeDefined();
+    expect(eventBefore?.id).toBe('evt_jaipur_limited_05');
+
+    // Case 2: Same day after start time (e.g. 10:30:00Z) -> evt_jaipur_limited_05 is no longer upcoming, moves to next (evt_jaipur_compliant_06 on 2026-10-26)
+    const afterStart = new Date('2026-10-25T10:30:00Z');
+    const eventAfter = getEarliestFutureJaipurEvent(afterStart);
+    expect(eventAfter).toBeDefined();
+    expect(eventAfter?.id).toBe('evt_jaipur_compliant_06');
   });
 
   it('surfaces 33% platform rule as at least one-third of limited seats and named roles, rounded up, without implying statutory law or universal reservation', () => {

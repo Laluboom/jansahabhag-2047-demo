@@ -140,19 +140,40 @@ const ICON_TILES: IconTile[] = [
   },
 ];
 
+const parseEventStartUtc = (dateStr: string, timeStr?: string): number => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  let hours = 0;
+  let minutes = 0;
+  if (timeStr) {
+    const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      const ampm = match[3] ? match[3].toUpperCase() : null;
+      if (ampm === 'PM' && hours < 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+    }
+  }
+  return Date.UTC(year, month - 1, day, hours, minutes, 0, 0);
+};
+
 export const getEarliestFutureJaipurEvent = (now: Date = new Date()) => {
-  const todayIso = now.toISOString().slice(0, 10);
+  const nowUtc = now.getTime();
   const jaipurEvents = seedEvents.filter(
     (e) => (e.location.includes('Jaipur') || e.title.includes('Jaipur')) && e.status === 'upcoming'
   );
   const future = jaipurEvents
-    .filter((e) => e.date > todayIso)
-    .sort((a, b) => a.date.localeCompare(b.date));
+    .filter((e) => parseEventStartUtc(e.date, e.startTime) > nowUtc)
+    .sort((a, b) => {
+      const diff = parseEventStartUtc(a.date, a.startTime) - parseEventStartUtc(b.date, b.startTime);
+      if (diff !== 0) return diff;
+      return a.id.localeCompare(b.id);
+    });
 
   if (future.length > 0) {
     return future[0];
   }
-  return jaipurEvents.find((e) => e.id === 'evt_jaipur_limited_05') || jaipurEvents[0];
+  return undefined;
 };
 
 const formatEventDate = (dateStr: string) => {
