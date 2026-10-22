@@ -22,7 +22,7 @@ import {
   POLICY_VERSION,
   buildParliamentDelegationIllustration,
 } from '../../services/reservationAllocationService';
-import { SessionSeating, SeatModel, SeatingQuotaSummary } from '../../components/session';
+import { SessionSeating, SeatModel, SeatingQuotaSummary, SessionTextTurn } from '../../components/session';
 
 export const ParliamentPage: React.FC = () => {
   const [selectedMotionModal, setSelectedMotionModal] = useState<boolean>(false);
@@ -344,9 +344,33 @@ export const ParliamentPage: React.FC = () => {
       <SessionSeating
         layout="parliament"
         currentRoute="parliament"
+        sessionId="parliament_plenary_2026"
         seats={parliamentSeats}
         quotaSummary={parliamentQuotaSummary}
         activeSpeakerId="seat_parl_priya"
+        sampleTurns={[
+          {
+            id: 'turn_parl_1',
+            authorName: 'Priya Sharma',
+            authorRole: 'Lead Motion Sponsor',
+            timestamp: '11:00 AM',
+            text: 'Tabled National Motion #07: Mandatory 25 km/h school perimeter zones and safe pedestrian corridors across Tier-2 municipal corporations.',
+          },
+          {
+            id: 'turn_parl_2',
+            authorName: 'Ananya Sen',
+            authorRole: 'Civic Scrutiny Spokesperson',
+            timestamp: '11:08 AM',
+            text: 'Chamber Inquiry: Clarification requested on AMRUT 2.0 capital allocation guarantees vs municipal engineering capacity in Rajasthan.',
+          },
+          {
+            id: 'turn_parl_3',
+            authorName: 'Youth Advisory Panel',
+            authorRole: 'Presiding Speaker',
+            timestamp: '11:15 AM',
+            text: 'Chamber recognized Government sponsor for two-minute clarification on statutory guidelines.',
+          },
+        ]}
         isIllustrative={true}
         title="National Youth Parliament Plenary Chamber"
         subtitle="Apex horseshoe layout with Presiding Speaker, Government, Opposition & Cross-benches"

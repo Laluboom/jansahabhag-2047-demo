@@ -49,7 +49,9 @@ import {
   SeatStatus,
   SeatingQuotaSummary,
   computeSeatingQuotaFromAllocations,
+  SessionTextTurn,
 } from '../session';
+import { SessionPreferencesService } from '../../services/sessionPreferencesService';
 
 const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
   'OPENING_STATEMENTS',
@@ -208,6 +210,42 @@ export const DebateRoomPreviewPage: React.FC = () => {
   const debateQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
     return computeSeatingQuotaFromAllocations(session?.roleAllocations);
   }, [session?.roleAllocations]);
+
+  // Sample Turns for Text Mode
+  const debateSampleTurns: SessionTextTurn[] = React.useMemo(() => {
+    if (session?.debateData?.contributions && session.debateData.contributions.length > 0) {
+      return session.debateData.contributions.map((c) => ({
+        id: c.id,
+        authorName: c.userName,
+        authorRole: c.phase ? c.phase.replace(/_/g, ' ') : undefined,
+        text: c.text,
+        timestamp: formatDate(c.timestamp),
+      }));
+    }
+    return [
+      {
+        id: 'turn_deb_1',
+        authorName: 'Priya Sharma',
+        authorRole: 'Evidence Analyst',
+        timestamp: '10:14 AM',
+        text: 'Field speed radar log indicates 420 vehicles/hour exceeding 40 km/h in school zone.',
+      },
+      {
+        id: 'turn_deb_2',
+        authorName: 'Aarav Sharma',
+        authorRole: 'Questioner',
+        timestamp: '10:18 AM',
+        text: 'How will raised crosswalk tables accommodate heavy emergency fire tender access?',
+      },
+      {
+        id: 'turn_deb_3',
+        authorName: 'Rohan Mehta',
+        authorRole: 'Facilitator',
+        timestamp: '10:22 AM',
+        text: 'Recognized floor questioner. Response window opened for evidence presentation.',
+      },
+    ];
+  }, [session?.debateData?.contributions]);
 
   // Reservation Allocation Handlers (08C1 APIs)
   const handleFinalizeRole = async (roleName: string) => {
@@ -711,12 +749,21 @@ export const DebateRoomPreviewPage: React.FC = () => {
               <Scale className="w-4 h-4" />
               <span>Shared Live Session Engine — Mode: Debate Room</span>
             </div>
-            <span
-              className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 normal-case tracking-normal"
-              data-testid="video-preview-badge"
-            >
-              Video Preview: Text-First Active (OD.4)
-            </span>
+            {SessionPreferencesService.getLowDataPreference() ? (
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 normal-case tracking-normal"
+                data-testid="low-data-video-notice"
+              >
+                Low Data Mode: Video Preview Suppressed
+              </span>
+            ) : (
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 normal-case tracking-normal"
+                data-testid="video-preview-badge"
+              >
+                Video Preview: Text-First Active (OD.4)
+              </span>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
             Jaipur Youth Pedestrian Safety Debate Room
@@ -871,9 +918,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
       <SessionSeating
         layout="debate"
         currentRoute="debate"
+        sessionId={session?.id || 'sess_jaipur_01'}
         seats={debateSeats}
         quotaSummary={debateQuotaSummary}
         activeSpeakerId={activeSpeakerId}
+        sampleTurns={debateSampleTurns}
         title="Debate Room Chamber Seating"
         subtitle="Facing Proposition (For) & Opposition (Against) benches with Facilitator rostrum"
       />

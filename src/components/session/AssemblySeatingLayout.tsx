@@ -8,6 +8,8 @@ interface AssemblySeatingLayoutProps {
   selectedSeatId?: string | null;
   onSelectSeat?: (seat: SeatModel) => void;
   activeSpeakerId?: string | null;
+  suppressAnimation?: boolean;
+  textMode?: boolean;
 }
 
 export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
@@ -15,6 +17,8 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
   selectedSeatId,
   onSelectSeat,
   activeSpeakerId,
+  suppressAnimation = false,
+  textMode = false,
 }) => {
   // Categorize seats into:
   // 1. Procedural Leadership (Chair / Facilitator / Co-Chair)
@@ -133,6 +137,8 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               </div>
             ))}
@@ -178,6 +184,8 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
                       seat={seat}
                       isSelected={selectedSeatId === seat.id}
                       onSelect={onSelectSeat}
+                      suppressAnimation={suppressAnimation}
+                      textMode={textMode}
                     />
                   ))
                 ) : (
@@ -202,6 +210,8 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
                 seat={seat}
                 isSelected={selectedSeatId === seat.id}
                 onSelect={onSelectSeat}
+                suppressAnimation={suppressAnimation}
+                textMode={textMode}
               />
             ))}
           </div>

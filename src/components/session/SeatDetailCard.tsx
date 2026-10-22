@@ -16,12 +16,16 @@ interface SeatDetailCardProps {
   seat: SeatModel;
   onClose?: () => void;
   className?: string;
+  textMode?: boolean;
+  suppressAnimation?: boolean;
 }
 
 export const SeatDetailCard: React.FC<SeatDetailCardProps> = ({
   seat,
   onClose,
   className = '',
+  textMode = false,
+  suppressAnimation = false,
 }) => {
   const isSpeaking = Boolean(seat.isSpeaking || seat.status === 'speaking');
   const isVacant = seat.status === 'vacant';
@@ -38,13 +42,13 @@ export const SeatDetailCard: React.FC<SeatDetailCardProps> = ({
       <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative shrink-0">
-            {seat.avatar && !isVacant ? (
+            {!textMode && seat.avatar && !isVacant ? (
               <Avatar
                 src={seat.avatar}
                 alt={seat.name}
                 fallback={initials}
                 size="md"
-                className={isSpeaking ? 'ring-2 ring-emerald-500' : ''}
+                className={isSpeaking ? (suppressAnimation ? 'ring-2 ring-emerald-500' : 'ring-2 ring-emerald-500') : ''}
               />
             ) : (
               <div
@@ -55,6 +59,7 @@ export const SeatDetailCard: React.FC<SeatDetailCardProps> = ({
                     ? 'bg-emerald-600 text-white'
                     : 'bg-civic-indigo-100 text-civic-indigo-800'
                 }`}
+                data-testid={`seat-detail-initials-${seat.id}`}
               >
                 {isVacant ? '—' : initials}
               </div>

@@ -8,6 +8,8 @@ interface DebateSeatingLayoutProps {
   selectedSeatId?: string | null;
   onSelectSeat?: (seat: SeatModel) => void;
   activeSpeakerId?: string | null;
+  suppressAnimation?: boolean;
+  textMode?: boolean;
 }
 
 export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
@@ -15,6 +17,8 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
   selectedSeatId,
   onSelectSeat,
   activeSpeakerId,
+  suppressAnimation = false,
+  textMode = false,
 }) => {
   // Categorize seats into:
   // 1. Moderator / Presiding bench (Facilitator, Rapporteur, or sideOrBench === 'Moderator')
@@ -91,6 +95,8 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               </div>
             ))
@@ -105,7 +111,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
       {/* CENTER: Active Speaker Rostrum / Floor Podium */}
       <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 max-w-md mx-auto text-center space-y-2">
         <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-400">
-          <Mic className="w-4 h-4 motion-safe:animate-pulse" />
+          <Mic className={`w-4 h-4 ${suppressAnimation || textMode ? '' : 'motion-safe:animate-pulse'}`} />
           <span>Central Speaker&apos;s Podium</span>
         </div>
 
@@ -117,6 +123,8 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                 testId={`seat-podium-${activeSpeakerSeat.id}`}
                 isSelected={selectedSeatId === activeSpeakerSeat.id}
                 onSelect={onSelectSeat}
+                suppressAnimation={suppressAnimation}
+                textMode={textMode}
               />
             </div>
             <p className="text-[11px] text-slate-300">
@@ -157,6 +165,8 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               ))
             ) : (
@@ -192,6 +202,8 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               ))
             ) : (
@@ -230,6 +242,8 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                 seat={seat}
                 isSelected={selectedSeatId === seat.id}
                 onSelect={onSelectSeat}
+                suppressAnimation={suppressAnimation}
+                textMode={textMode}
               />
             ))}
           </div>

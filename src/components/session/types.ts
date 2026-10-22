@@ -50,6 +50,16 @@ export interface SeatingQuotaSummary {
   illustrativeNotice?: string;
 }
 
+export interface SessionTextTurn {
+  id: string;
+  authorName: string;
+  authorRole?: string;
+  text: string;
+  timestamp: string;
+  phaseOrStage?: string;
+  isMissedTurn?: boolean;
+}
+
 export interface SessionSeatingProps {
   layout: SeatingLayoutMode;
   title?: string;
@@ -63,6 +73,13 @@ export interface SessionSeatingProps {
   illustrativeDisclaimer?: string;
   currentRoute?: 'debate' | 'assembly' | 'parliament';
   className?: string;
+  // Review Additions #4 (Text Mode & Persistence)
+  sessionId?: string;
+  sampleTurns?: SessionTextTurn[];
+  viewMode?: 'chamber' | 'text';
+  onViewModeChange?: (mode: 'chamber' | 'text') => void;
+  lowDataMode?: boolean;
+  currentUserId?: string;
 }
 
 export function getInitials(name: string): string {
