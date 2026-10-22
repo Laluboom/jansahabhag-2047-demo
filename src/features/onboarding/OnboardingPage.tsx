@@ -3,13 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { CheckCircle2, MapPin, Sparkles, ArrowRight, BookOpen } from 'lucide-react';
+import { CheckCircle2, MapPin, Sparkles, ArrowRight, BookOpen, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export const OnboardingPage: React.FC = () => {
   const { currentUser } = useAuthStore();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedTrack, setSelectedTrack] = useState('civic_academy');
+  const [age, setAge] = useState<number>(currentUser?.age || 18);
+  const [ageError, setAgeError] = useState<string | null>(null);
+
+  const handleAgeChange = (val: string) => {
+    const parsed = parseInt(val, 10);
+    if (isNaN(parsed)) {
+      setAge(0);
+      setAgeError('Please enter a valid age in years.');
+    } else {
+      setAge(parsed);
+      if (parsed < 18) {
+        setAgeError('Participants must be 18 or older to sign up. Demo participation is restricted to 18+ per platform policy (no real identity verification claimed).');
+      } else {
+        setAgeError(null);
+      }
+    }
+  };
 
   const tracks = [
     {
@@ -44,6 +61,22 @@ export const OnboardingPage: React.FC = () => {
         <p className="text-sm text-slate-600">
           Representing <strong>{currentUser?.institutionName}</strong> in Jaipur.
         </p>
+      </div>
+
+      {/* 18+ Participant Age Requirement Policy Banner */}
+      <div
+        className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950 flex items-start gap-2.5 shadow-2xs"
+        data-testid="onboarding-age-requirement-notice"
+      >
+        <ShieldCheck className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+        <div className="space-y-0.5">
+          <span className="font-semibold text-amber-900 block">
+            18+ Participant Age Requirement
+          </span>
+          <p className="text-slate-700 leading-relaxed">
+            Platform demo policy requires every participant to be 18 years of age or older. This is an owner-defined demo policy; no real identity verification is claimed or performed.
+          </p>
+        </div>
       </div>
 
       {step === 1 ? (
@@ -88,8 +121,63 @@ export const OnboardingPage: React.FC = () => {
             })}
           </div>
 
+          {/* Age Confirmation Input */}
+          <div className="pt-4 border-t border-slate-100 space-y-2" data-testid="age-input-section">
+            <div>
+              <label htmlFor="participant-age-input" className="block text-xs font-bold text-slate-800">
+                Participant Age Confirmation (Years)
+              </label>
+              <p className="text-[11px] text-slate-500">
+                Platform requirement: Participants must be 18 or older to sign up and participate.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                id="participant-age-input"
+                type="number"
+                min={1}
+                max={120}
+                value={age === 0 ? '' : age}
+                onChange={(e) => handleAgeChange(e.target.value)}
+                className={`w-36 px-3 py-2 text-xs rounded-lg border font-medium ${
+                  ageError || age < 18
+                    ? 'border-rose-400 bg-rose-50/30 text-rose-900 focus:ring-rose-500'
+                    : 'border-slate-300 focus:ring-civic-indigo-500'
+                } focus:outline-none focus:ring-2`}
+                data-testid="participant-age-input"
+              />
+              <span className="text-xs text-slate-500">
+                {age >= 18 ? 'Eligible for demo participation (18+)' : 'Ineligible (< 18)'}
+              </span>
+            </div>
+            {(ageError || age < 18) && (
+              <div
+                className="flex items-center gap-1.5 text-xs text-rose-600 font-medium"
+                data-testid="age-error-message"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>
+                  {ageError ||
+                    'Participants must be 18 or older to sign up. Demo participation is restricted to 18+ per platform policy.'}
+                </span>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-end pt-4 border-t border-slate-100">
-            <Button onClick={() => setStep(2)}>
+            <Button
+              onClick={() => {
+                if (age < 18) {
+                  setAgeError(
+                    'Participants must be 18 or older to sign up. Demo participation is restricted to 18+ per platform policy (no real identity verification claimed).'
+                  );
+                  return;
+                }
+                setStep(2);
+              }}
+              disabled={age < 18}
+              data-testid="onboarding-continue-btn"
+            >
               <span>Continue</span>
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
@@ -106,6 +194,9 @@ export const OnboardingPage: React.FC = () => {
             </h2>
             <p className="text-xs text-slate-600 max-w-md mx-auto mt-1">
               You are ready to access your personalized participant dashboard, track course modules, and prepare evidence for the upcoming Jaipur Pedestrian Safety Assembly.
+            </p>
+            <p className="text-xs font-semibold text-civic-teal-700 mt-2" data-testid="confirmed-age-display">
+              Confirmed Age: {age} years &bull; 18+ Participant Requirement Satisfied
             </p>
           </div>
 

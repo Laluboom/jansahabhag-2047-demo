@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   FlaskConical,
   BookOpen,
@@ -67,14 +68,33 @@ export const ResearchLabPage: React.FC = () => {
         description="Collaborative research workspace linking student field data with university urban planning faculties and CRRI datasets."
       />
 
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
-          <FlaskConical className="w-6 h-6 text-civic-teal-600" />
-          <span>Research Lab: Empirical Studies & Datasets</span>
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Academic peer review, empirical urban data synthesis, and published research working papers.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
+            <FlaskConical className="w-6 h-6 text-civic-teal-600" />
+            <span>Research Lab: Empirical Studies & Datasets</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Academic peer review, empirical urban data synthesis, and published research working papers.
+          </p>
+        </div>
+        <PointOfUseRulesButton
+          moduleName="Research Lab"
+          triggerText="Lab Rules"
+          modalTitle="Research Lab Academic & Data Standards"
+          description="Guidelines governing open dataset publication and research inquiry."
+          rules={[
+            {
+              title: 'Empirical Data Verification',
+              description: 'Research papers must be backed by verifiable field observations, traffic counts, or surveyed sample sizes.',
+            },
+            {
+              title: 'Open Data & Academic Ethics',
+              description: 'Datasets are open for non-commercial educational review. Individual participant identities are protected.',
+            },
+          ]}
+          testId="research-lab-rules-btn"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

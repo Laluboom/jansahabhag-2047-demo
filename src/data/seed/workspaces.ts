@@ -34,14 +34,14 @@ export const canonicalWorkspaceRulebook: WorkspaceRulebook = {
       id: 'ws_rule_04',
       title: '4. Evidence Standards & Privacy Protection',
       content:
-        'Evidence, traffic counts, and road photos uploaded must not expose personal vehicle registration numbers, private residential interiors, or identifiable faces of minors without consent. All contributions are persistent and non-anonymous.',
+        'Evidence, traffic counts, and road photos uploaded must not expose personal vehicle registration numbers, private residential interiors, or identifiable faces without consent. All contributions are persistent and non-anonymous.',
       isSafeguarding: true,
     },
     {
       id: 'ws_rule_05',
-      title: '5. Age Safeguards & Mentorship Boundaries',
+      title: '5. Mentorship Boundaries & Open Channels',
       content:
-        'Faculty and adult mentors participate in open, group-visible channels. Direct unmoderated 1-on-1 private messaging between adults and minors is disabled by default to safeguard youth participants.',
+        'Faculty and adult mentors participate in open, group-visible channels. Direct unmoderated 1-on-1 private messaging is disabled by default to safeguard participants.',
       isSafeguarding: true,
     },
     {

@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { ThreadMotif } from '../../components/layout/ThreadMotif';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { formatRelativeTime } from '../../utils/formatters';
 import {
   Award,
@@ -84,6 +85,27 @@ export const ParticipantDashboardPage: React.FC = () => {
         </div>
 
         <div className="flex min-w-0 flex-wrap items-stretch gap-2">
+          <PointOfUseRulesButton
+            moduleName="Platform Rules"
+            triggerText="Platform Rules"
+            modalTitle="Platform Operating Rules & Standards"
+            description="Core operational policies for JanSahabhag 2047 demo participation."
+            rules={[
+              {
+                title: 'Participant Eligibility & Policy',
+                description: 'Every demo participant must be 18 or older per platform policy. No real identity verification is claimed or performed.',
+              },
+              {
+                title: 'Verified Civic Action Credit Ledger',
+                description: 'Starting balance is 10 Credits. Eligible verified civic activities award 1 or 2 Credits; personal reflections carry 0 credits to maintain voluntary reflection.',
+              },
+              {
+                title: 'Persistent & Non-Anonymous Participation',
+                description: 'Deliberative remarks, evidence uploads, and votes are linked to registered participant profiles for accountability.',
+              },
+            ]}
+            testId="dashboard-rules-btn"
+          />
           <Link to="/passport" className="min-w-0 flex-1 sm:flex-none">
             <Button variant="outline" size="sm" className="h-full w-full text-xs">
               <Award className="w-4 h-4 mr-1.5 text-civic-saffron-600" />

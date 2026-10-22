@@ -56,6 +56,22 @@ export const DemoLoginPage: React.FC = () => {
           </p>
         </div>
 
+        {/* 18+ Participant Age Requirement Policy Banner */}
+        <div
+          className="p-3.5 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-slate-300 flex items-start gap-3 shadow-xs"
+          data-testid="participant-age-requirement-notice"
+        >
+          <ShieldCheck className="w-5 h-5 text-civic-teal-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-semibold text-white block">
+              18+ Participant Age Requirement
+            </span>
+            <p className="text-slate-300 leading-relaxed">
+              Platform demo policy requires every participant to be 18 years of age or older. All seeded personas represent participants aged 18 and above. This is an owner-defined demo policy; no real identity verification is claimed or performed.
+            </p>
+          </div>
+        </div>
+
         {/* Persona Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPrimary.map((user) => {

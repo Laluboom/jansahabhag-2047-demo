@@ -8,6 +8,7 @@ import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   BookOpen,
   Clock,
@@ -89,12 +90,35 @@ export const CoursesPage: React.FC = () => {
             </p>
           </div>
 
-          <Link to="/learn">
-            <Button size="sm" variant="outline">
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-              <span>Back to Civic Learn</span>
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <PointOfUseRulesButton
+              moduleName="Universal Human Values"
+              triggerText="UHV Study Rules"
+              modalTitle="UHV / Jeevan Vidya Study Charter"
+              description="Voluntary self-exploration charter and study principles."
+              rules={[
+                {
+                  title: 'Voluntary Inquiry & Non-Graded Reflection',
+                  description: 'Exploratory self-study modules invite personal observation and open inquiry. Ideological agreement is never graded or evaluated.',
+                },
+                {
+                  title: 'Zero Civic Credit Policy',
+                  description: 'Personal values reflections earn 0 Civic Credits to protect self-inquiry from external gamification or competitive scoring.',
+                },
+                {
+                  title: 'Private Journal Isolation',
+                  description: 'Reflections are saved privately in your local browser and are not shared with teachers, peer review queues, or the public Civic Passport.',
+                },
+              ]}
+              testId="uhv-rules-btn"
+            />
+            <Link to="/learn">
+              <Button size="sm" variant="outline">
+                <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+                <span>Back to Civic Learn</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Fictional Demo Material Disclosure Banner */}
@@ -290,6 +314,27 @@ export const CoursesPage: React.FC = () => {
             Structured civic modules in a fictional browser demo.
           </p>
         </div>
+        <PointOfUseRulesButton
+          moduleName="Civic Learning"
+          triggerText="Learning Rules"
+          modalTitle="Civic Academy Learning Guidelines"
+          description="Operating standards and credit award rules for civic learning courses."
+          rules={[
+            {
+              title: 'Self-Paced Learning & Study Modules',
+              description: 'Courses provide self-paced, open-access civic education covering municipal structures, traffic observation, and deliberative dialogue.',
+            },
+            {
+              title: 'Learning Credit Award (+1 Credit)',
+              description: 'Completing all interactive lessons in a verified civic course automatically records +1 Learning Credit in your Civic Passport.',
+            },
+            {
+              title: 'Academic Integrity & Non-Commercial Purpose',
+              description: 'All course content and participant responses are non-commercial educational exercises in public citizenship.',
+            },
+          ]}
+          testId="learn-rules-btn"
+        />
       </div>
 
       {/* Distinct UHV Stream Link Banner */}

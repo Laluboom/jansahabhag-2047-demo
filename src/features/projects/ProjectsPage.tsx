@@ -7,6 +7,7 @@ import { Project, ProjectStatus } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Textarea } from '../../components/ui/Input';
 import {
@@ -131,10 +132,33 @@ export const ProjectsPage: React.FC = () => {
           </p>
         </div>
 
-        <Button size="sm" variant="saffron" onClick={() => setIsCreateModalOpen(true)}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          <span>Start Initiative</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <PointOfUseRulesButton
+            moduleName="Projects"
+            triggerText="Project Rules"
+            modalTitle="Civic Action Projects & Milestones Rules"
+            description="Guidelines governing youth civic initiatives, fieldwork milestones, and credits."
+            rules={[
+              {
+                title: 'Action-Oriented Civic Purpose',
+                description: 'Projects address observable neighbourhood civic needs (e.g. pedestrian speed calming, crossing visibility) in non-partisan collaboration.',
+              },
+              {
+                title: 'Milestone Verification & Credit Awards (+2 Credits)',
+                description: 'Completing each verified milestone awards +2 Civic Action Credits in your Civic Passport upon mentor review.',
+              },
+              {
+                title: 'Open Team Membership',
+                description: 'Teams collaborate in open workspaces with persistent participant identification. Non-commercial and public-spirited contributions only.',
+              },
+            ]}
+            testId="projects-rules-btn"
+          />
+          <Button size="sm" variant="saffron" onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            <span>Start Initiative</span>
+          </Button>
+        </div>
       </div>
 
       {/* Demo Disclosure Banner */}

@@ -8,6 +8,7 @@ import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   ArrowLeft,
   MessageSquare,
@@ -373,6 +374,28 @@ export const CommunityGroupDetailPage: React.FC = () => {
               <Users className="w-3.5 h-3.5" />
               <strong>{group.memberUserIds.length}</strong> Members
             </span>
+
+            <PointOfUseRulesButton
+              moduleName="Community Circle"
+              triggerText="Rules"
+              modalTitle={`${group.name} — Circle Rules`}
+              description="Guidelines governing discussion and peer interaction in this circle."
+              rules={[
+                {
+                  title: 'Constructive Civic Discourse',
+                  description: 'All comments and replies must support peer learning and constructive community feedback.',
+                },
+                {
+                  title: 'Accountable Identification',
+                  description: 'Postings are linked to your demo profile. Anonymous or harassing content is not permitted.',
+                },
+                {
+                  title: 'Circle Moderation',
+                  description: 'Topic threads are moderated. Inappropriate content may be reported or removed.',
+                },
+              ]}
+              testId="group-detail-rules-btn"
+            />
 
             <Button
               size="sm"

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   Lightbulb,
   Sparkles,
@@ -110,15 +111,34 @@ export const IdeaLabPage: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          size="sm"
-          variant="primary"
-          onClick={() => setIsSubmitModalOpen(true)}
-          className="flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Propose Innovation</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <PointOfUseRulesButton
+            moduleName="Idea Lab"
+            triggerText="Lab Rules"
+            modalTitle="Idea Lab Innovation Guidelines"
+            description="Standards for proposing and endorsing civic innovations."
+            rules={[
+              {
+                title: 'Community-Focused Innovation',
+                description: 'Ideas must focus on practical, low-cost civic interventions supporting safer public spaces.',
+              },
+              {
+                title: 'Open Knowledge & Safety',
+                description: 'Proposals must adhere to basic safety standards and avoid proprietary or commercial advertising.',
+              },
+            ]}
+            testId="idea-lab-rules-btn"
+          />
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => setIsSubmitModalOpen(true)}
+            className="flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Propose Innovation</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

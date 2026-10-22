@@ -7,6 +7,7 @@ import { Lesson, Course, Enrolment, Assignment } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   ArrowLeft,
   ArrowRight,
@@ -122,15 +123,38 @@ export const LessonPage: React.FC = () => {
           <ArrowLeft className="w-4 h-4" />
           <span>{isUhv ? 'Back to Universal Human Values' : `Back to ${course.title}`}</span>
         </Link>
-        {isCompleted && (
-          isUhv ? (
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800">
-              Module Completed
-            </span>
-          ) : (
-            <StatusChip status="completed" />
-          )
-        )}
+        <div className="flex items-center gap-2">
+          <PointOfUseRulesButton
+            moduleName="Lesson"
+            triggerText="Rules"
+            modalTitle={`${lesson.title} — Lesson Rules`}
+            description="Guidelines governing lesson completion and reflections."
+            rules={[
+              {
+                title: isUhv ? 'Personal Study Reflection' : 'Interactive Lesson Completion',
+                description: isUhv
+                  ? 'Your reflection is stored locally in your private journal and not submitted for grading.'
+                  : 'Complete the lesson activities to mark this unit done and advance course progress.',
+              },
+              {
+                title: 'Credit Invariant',
+                description: isUhv
+                  ? 'UHV lessons carry 0 credits by design to ensure unpressured, genuine introspection.'
+                  : 'Lessons contribute toward the full course completion credit (+1 Learning Credit).',
+              },
+            ]}
+            testId="lesson-rules-btn"
+          />
+          {isCompleted && (
+            isUhv ? (
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800">
+                Module Completed
+              </span>
+            ) : (
+              <StatusChip status="completed" />
+            )
+          )}
+        </div>
       </div>
 
       {/* Lesson Header Card */}

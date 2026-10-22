@@ -7,6 +7,7 @@ import { Event, EventType } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   Calendar,
   MapPin,
@@ -59,14 +60,35 @@ export const EventsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
-          <Calendar className="w-7 h-7 text-civic-indigo-600" />
-          <span>Civic Events & Deliberation Sessions</span>
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Workshops, expert masterclasses, school zone audits, and Youth Assembly deliberation chambers.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
+            <Calendar className="w-7 h-7 text-civic-indigo-600" />
+            <span>Civic Events & Deliberation Sessions</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Workshops, expert masterclasses, school zone audits, and Youth Assembly deliberation chambers.
+          </p>
+        </div>
+        <PointOfUseRulesButton
+          moduleName="Civic Events"
+          triggerText="Event Rules"
+          modalTitle="Civic Events & Attendance Guidelines"
+          description="Operating policies for event attendance, capacity management, and seat reservations."
+          hasSeatQuotaRule={true}
+          quotaContext="Limited Capacity Events"
+          rules={[
+            {
+              title: 'Active Participation Requirement',
+              description: 'Participants register for workshops and deliberation sessions under registered demo personas.',
+            },
+            {
+              title: 'Safe Vantage Point Protocols',
+              description: 'Field audits require designated adult mentors and safe observation distances.',
+            },
+          ]}
+          testId="events-rules-btn"
+        />
       </div>
 
       {/* Filter Tabs */}

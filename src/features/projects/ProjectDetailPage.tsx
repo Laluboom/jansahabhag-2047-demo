@@ -7,6 +7,7 @@ import { Project, Evidence, User } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Avatar } from '../../components/ui/Avatar';
@@ -182,7 +183,30 @@ export const ProjectDetailPage: React.FC = () => {
             </span>
             <span className="text-xs text-slate-400 font-mono font-medium">{project.id}</span>
           </div>
-          <StatusChip status={project.status} />
+          <div className="flex items-center gap-2">
+            <PointOfUseRulesButton
+              moduleName="Project"
+              triggerText="Rules"
+              modalTitle={`${project.title} — Rules & Milestone Standards`}
+              description="Standards governing field evidence milestones and civic credits."
+              rules={[
+                {
+                  title: 'Verifiable Milestone Completion',
+                  description: 'Each project milestone requires verifiable field evidence before mentor review and credit award.',
+                },
+                {
+                  title: 'Milestone Credit Award (+2 Credits)',
+                  description: 'Verified milestones record +2 Civic Action Credits in the project lead and contributor Passports.',
+                },
+                {
+                  title: 'Team Accountability',
+                  description: 'Collaborative team tasks are group-visible and non-anonymous.',
+                },
+              ]}
+              testId="project-detail-rules-btn"
+            />
+            <StatusChip status={project.status} />
+          </div>
         </div>
 
         <div>

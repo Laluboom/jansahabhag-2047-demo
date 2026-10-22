@@ -38,6 +38,7 @@ import {
   Scale,
   Shield,
   ShieldAlert,
+  ExternalLink,
   AlertCircle,
   Info,
   X,
@@ -876,8 +877,17 @@ export const AssemblyDetailPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t flex justify-end">
-              <Button size="sm" variant="primary" onClick={() => setShowRulebookModal(false)}>
+            <div className="pt-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <Link
+                to="/help"
+                onClick={() => setShowRulebookModal(false)}
+                className="inline-flex items-center gap-1.5 font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded py-1"
+                data-testid="assembly-full-rulebook-link"
+              >
+                <span>Open Full Rulebook Index</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+              <Button size="sm" variant="primary" onClick={() => setShowRulebookModal(false)} data-testid="close-assembly-rulebook-btn-footer">
                 Close Rulebook
               </Button>
             </div>

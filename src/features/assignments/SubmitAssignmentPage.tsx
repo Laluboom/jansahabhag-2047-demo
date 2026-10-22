@@ -27,6 +27,7 @@ import {
   X,
   Flag,
   VideoOff,
+  ExternalLink,
 } from 'lucide-react';
 import {
   NO_RECORDING_RULE_TITLE,
@@ -730,7 +731,7 @@ export const SubmitAssignmentPage: React.FC = () => {
               )}
 
               {/* Point-of-use Media & Consent Notice */}
-              <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 space-y-1">
+              <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 space-y-1.5">
                 <div className="flex items-center gap-1.5 font-bold text-amber-900">
                   <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
                   <span>Field Evidence Rules: {NO_RECORDING_RULE_TITLE}</span>
@@ -738,6 +739,17 @@ export const SubmitAssignmentPage: React.FC = () => {
                 <p className="text-[11px] text-amber-950 leading-relaxed">
                   Recording is strictly off by default during all sessions and fieldwork. <strong>{FACE_CONSENT_WARNING_TEXT}</strong> All new evidence is private by default.
                 </p>
+                <div className="pt-1 border-t border-amber-200/60 flex items-center justify-between text-[11px]">
+                  <span className="text-amber-800">Operating standards apply to all evidence uploads.</span>
+                  <Link
+                    to="/help"
+                    className="font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-civic-indigo-500 rounded"
+                    data-testid="submit-evidence-rulebook-link"
+                  >
+                    <span>Full Rulebook</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
               </div>
 
               {availableEvidence.length === 0 ? (

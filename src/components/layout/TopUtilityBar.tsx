@@ -237,9 +237,14 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                     <span className="font-semibold text-sm text-slate-900 font-heading">
                       {user.name}
                     </span>
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                      {formatRoleName(user.role)}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                        {formatRoleName(user.role)}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200" data-testid={`persona-age-${user.id}`}>
+                        {user.age || 18} yrs
+                      </span>
+                    </div>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5 truncate">{user.institutionName}</p>
                   <p className="text-xs text-slate-600 mt-1 line-clamp-2">{user.bio}</p>

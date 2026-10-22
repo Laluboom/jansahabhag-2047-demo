@@ -688,6 +688,18 @@ export const EventDetailPage: React.FC = () => {
                 <strong>Single-Browser Demonstration Notice:</strong> This competition demo runs in a single browser with persona
                 switching. Role authority is enforced based on the active persona profile.
               </div>
+
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500">Explore complete procedural guidelines and standing orders.</span>
+                <Link
+                  to="/help"
+                  className="font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-civic-indigo-500 rounded py-0.5 px-1"
+                  data-testid="event-full-rulebook-link"
+                >
+                  <span>Full Rulebook</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
           )}
         </div>

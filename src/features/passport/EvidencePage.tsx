@@ -5,6 +5,7 @@ import { demoRepository } from '../../services/demoRepository';
 import { Evidence } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import { ArrowLeft, FileCheck2, ShieldCheck, MapPin, EyeOff, Filter, Search, Download } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 
@@ -79,8 +80,31 @@ export const EvidencePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="text-xs px-3 py-1.5 rounded-xl bg-civic-teal-50 border border-civic-teal-200 text-civic-teal-900 font-semibold shrink-0">
-          {evidenceList.length} Traceable Records
+        <div className="flex items-center gap-2 shrink-0">
+          <PointOfUseRulesButton
+            moduleName="Evidence"
+            triggerText="Evidence Rules"
+            modalTitle="Field Evidence & Media Guidelines"
+            description="Standards governing observable evidence records and privacy."
+            rules={[
+              {
+                title: 'Consent & Privacy Protection',
+                description: 'Photos must not expose private vehicle registration numbers, private residential interiors, or identifiable faces without explicit consent.',
+              },
+              {
+                title: 'Durable Storage Constraints',
+                description: 'Files are stored in local browser persistence up to 250 KB (PDF, PNG, JPG).',
+              },
+              {
+                title: 'Verification Statuses',
+                description: 'Newly uploaded records begin as private and unverified until validated by an assigned mentor or facilitator.',
+              },
+            ]}
+            testId="evidence-rules-btn"
+          />
+          <div className="text-xs px-3 py-1.5 rounded-xl bg-civic-teal-50 border border-civic-teal-200 text-civic-teal-900 font-semibold">
+            {evidenceList.length} Traceable Records
+          </div>
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { VerificationBadge } from './VerificationBadge';
 import { CreditAppealModal } from './CreditAppealModal';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   Award,
   BookOpen,
@@ -131,7 +132,33 @@ export const PassportPage: React.FC = () => {
         </div>
 
         {/* Quick Links inside Passport */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800 text-xs">
+          <PointOfUseRulesButton
+            moduleName="Civic Passport"
+            triggerText="Passport Rules"
+            modalTitle="Civic Passport Portfolio & Credit Rules"
+            description="Operating rules governing civic credentials, activity ledgers, and credit awards."
+            rules={[
+              {
+                title: 'Evidence-Based Portfolio (Not a Moral Score)',
+                description: 'The Civic Passport records observable civic actions, verified coursework, and deliberative contributions. It never assigns moral or character rankings.',
+              },
+              {
+                title: 'Deterministic Credit Invariants',
+                description: 'Participants start with 10 Credits. Eligible verified activities award fixed amounts (+1 or +2 credits). Unverified submissions remain pending and uncounted.',
+              },
+              {
+                title: 'Zero Credit for Personal Reflection',
+                description: 'UHV values reflections and personal debate notes award 0 credits by design to ensure unpressured, genuine reflection.',
+              },
+              {
+                title: 'Non-Transferable Credential',
+                description: 'Entries are permanently attached to registered participant profiles in durable local storage.',
+              },
+            ]}
+            className="bg-slate-800/80 text-white border-slate-700 hover:bg-slate-700"
+            testId="passport-rules-btn"
+          />
           <Link to="/passport/credits">
             <Button size="sm" variant="outline" className="bg-slate-800/80 text-white border-slate-700 hover:bg-slate-700">
               <Award className="w-3.5 h-3.5 mr-1 text-civic-saffron-400" />
@@ -176,6 +203,17 @@ export const PassportPage: React.FC = () => {
           <p>
             This application is a fictional single-browser simulation. Walkthroughs and review workflows demonstrate prototype capabilities locally; English demo with Hindi pending review. No production verification, external credentialing, or real-world municipal authority is claimed.
           </p>
+        </div>
+        <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px]">
+          <span className="text-slate-500">Read comprehensive credit award rules and audit standards in the rulebook.</span>
+          <Link
+            to="/help"
+            className="font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-civic-indigo-500 rounded py-0.5 px-1"
+            data-testid="passport-full-rulebook-link"
+          >
+            <span>Full Rulebook</span>
+            <ExternalLink className="w-3 h-3" />
+          </Link>
         </div>
       </Card>
 

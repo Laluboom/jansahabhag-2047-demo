@@ -7,6 +7,7 @@ import { Course, Lesson, Enrolment } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   BookOpen,
   Clock,
@@ -114,7 +115,30 @@ export const CourseDetailPage: React.FC = () => {
               {isUhv ? 'Personal Reflection Track' : `${course.track.replace('_', ' ')} \u2022 ${course.level}`}
             </span>
           </div>
-          {enrolment && <StatusChip status={enrolment.status} />}
+          <div className="flex items-center gap-2">
+            <PointOfUseRulesButton
+              moduleName="Course"
+              triggerText="Course Rules"
+              modalTitle={`${course.title} — Operating Rules`}
+              description={`Applicable study guidelines and credit standards for ${course.title}.`}
+              rules={[
+                {
+                  title: isUhv ? 'Voluntary Self-Study' : 'Lesson Progression',
+                  description: isUhv
+                    ? 'Study modules are open for personal inquiry. Responses are saved privately and never graded.'
+                    : 'Complete lessons sequentially to demonstrate mastery and unlock your completion credit.',
+                },
+                {
+                  title: isUhv ? 'No Credit Award' : 'Learning Credit (+1 Credit)',
+                  description: isUhv
+                    ? 'Universal Human Values modules carry 0 credits to preserve genuine reflection.'
+                    : 'Completing all course lessons awards +1 Learning Credit to your Civic Passport.',
+                },
+              ]}
+              testId="course-detail-rules-btn"
+            />
+            {enrolment && <StatusChip status={enrolment.status} />}
+          </div>
         </div>
 
         <div>

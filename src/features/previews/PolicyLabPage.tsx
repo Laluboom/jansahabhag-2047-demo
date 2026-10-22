@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   Scale,
   FileText,
@@ -65,14 +66,33 @@ export const PolicyLabPage: React.FC = () => {
         description="Translating youth assembly consensus into formal statutory amendments and municipal standing committee model bylaws."
       />
 
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
-          <Scale className="w-6 h-6 text-civic-indigo-600" />
-          <span>Policy Lab: Legislative Drafting & Model Bylaws</span>
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Model municipal policies and legislative draft bills prepared directly from Youth Assembly propositions.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
+            <Scale className="w-6 h-6 text-civic-indigo-600" />
+            <span>Policy Lab: Legislative Drafting & Model Bylaws</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Model municipal policies and legislative draft bills prepared directly from Youth Assembly propositions.
+          </p>
+        </div>
+        <PointOfUseRulesButton
+          moduleName="Policy Lab"
+          triggerText="Policy Rules"
+          modalTitle="Policy Lab Drafting & Deputation Guidelines"
+          description="Guidelines governing municipal draft propositions and deputation packages."
+          rules={[
+            {
+              title: 'Democratic Origin Requirement',
+              description: 'Model bylaws must trace directly back to verified propositions finalized by youth assemblies.',
+            },
+            {
+              title: 'Non-Partisan Technical Drafting',
+              description: 'Drafts focus on concrete engineering specifications, municipal budget allocations, and road safety enforcement.',
+            },
+          ]}
+          testId="policy-lab-rules-btn"
+        />
       </div>
 
       <div className="space-y-4">

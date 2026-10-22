@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DemoPreviewBadge } from '../ui/DemoPreviewBadge';
 import { Card, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { PointOfUseRulesButton } from '../ui/PointOfUseRulesButton';
 import {
   Layers,
   Building2,
@@ -37,6 +38,27 @@ export const WorkspacePreviewPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <PointOfUseRulesButton
+            moduleName="Workspace"
+            triggerText="Workspace Rules"
+            modalTitle="Workspace Operating Guidelines"
+            description="Operating standards for scoped team collaboration workspaces."
+            rules={[
+              {
+                title: 'Persistent & Named Identification',
+                description: 'Workspace members interact under registered usernames. Anonymous or unmonitored posting is disabled.',
+              },
+              {
+                title: 'Direct Messaging Safeguards',
+                description: 'Faculty and mentors participate in open, group-visible channels. Direct unmoderated private messaging is disabled by default.',
+              },
+              {
+                title: 'Evidence Upload Standards',
+                description: 'Shared photos and documents must respect face consent and private residential boundaries up to 250 KB file limits.',
+              },
+            ]}
+            testId="workspace-preview-rules-btn"
+          />
           <Link to="/projects">
             <Button size="sm" variant="primary">
               <Target className="w-4 h-4 mr-1.5" />
