@@ -9,6 +9,8 @@ interface ParliamentSeatingLayoutProps {
   onSelectSeat?: (seat: SeatModel) => void;
   activeSpeakerId?: string | null;
   isIllustrative?: boolean;
+  suppressAnimation?: boolean;
+  textMode?: boolean;
 }
 
 export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = ({
@@ -17,6 +19,8 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
   onSelectSeat,
   activeSpeakerId,
   isIllustrative = true,
+  suppressAnimation = false,
+  textMode = false,
 }) => {
   // Categorize seats into:
   // 1. Speaker Bench (Presiding Speaker / Deputy Speaker)
@@ -108,6 +112,8 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               </div>
             ))
@@ -144,6 +150,8 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               ))
             ) : (
@@ -179,6 +187,8 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
                   onSelect={onSelectSeat}
+                  suppressAnimation={suppressAnimation}
+                  textMode={textMode}
                 />
               ))
             ) : (
@@ -215,6 +225,8 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 seat={seat}
                 isSelected={selectedSeatId === seat.id}
                 onSelect={onSelectSeat}
+                suppressAnimation={suppressAnimation}
+                textMode={textMode}
               />
             ))
           ) : (

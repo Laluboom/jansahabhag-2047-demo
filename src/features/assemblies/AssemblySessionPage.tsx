@@ -34,6 +34,7 @@ import {
   SeatStatus,
   SeatingQuotaSummary,
   computeSeatingQuotaFromAllocations,
+  SessionTextTurn,
 } from '../../components/session';
 import {
   ArrowLeft,
@@ -687,6 +688,42 @@ export const AssemblySessionPage: React.FC = () => {
     return computeSeatingQuotaFromAllocations(assembly?.roleAllocations);
   }, [assembly?.roleAllocations]);
 
+  // Sample Deliberative Turns for Text Mode
+  const assemblySampleTurns: SessionTextTurn[] = React.useMemo(() => {
+    if (contributions && contributions.length > 0) {
+      return contributions.map((c) => ({
+        id: c.id,
+        authorName: c.userName,
+        authorRole: c.stage ? `Stage: ${c.stage}` : undefined,
+        text: c.text,
+        timestamp: formatDate(c.createdAt),
+      }));
+    }
+    return [
+      {
+        id: 'turn_asm_1',
+        authorName: 'Priya Sharma',
+        authorRole: 'Thinker',
+        timestamp: '10:05 AM',
+        text: 'Defined problem frame: peak morning drop-off pedestrian bottleneck outside Gate 2.',
+      },
+      {
+        id: 'turn_asm_2',
+        authorName: 'Vikram Joshi',
+        authorRole: 'Enabler',
+        timestamp: '10:15 AM',
+        text: 'Verified IRC-99 bulb-out engineering geometry feasibility along northern pedestrian path.',
+      },
+      {
+        id: 'turn_asm_3',
+        authorName: 'Karan Deshmukh',
+        authorRole: 'Troubleshooter',
+        timestamp: '10:25 AM',
+        text: 'Logged formal reservation on monsoon drainage runoff and side road deflection.',
+      },
+    ];
+  }, [contributions]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading assembly deliberative chamber">
@@ -970,9 +1007,11 @@ export const AssemblySessionPage: React.FC = () => {
       <SessionSeating
         layout="assembly"
         currentRoute="assembly"
+        sessionId={assembly.id || 'assembly_jaipur_pedestrian_2026'}
         seats={assemblySeats}
         quotaSummary={assemblyQuotaSummary}
         activeSpeakerId={assembly.activeSpeakerId}
+        sampleTurns={assemblySampleTurns}
         title="Youth Assembly Deliberative Chamber Seating"
         subtitle="Four balanced functional zones: Thinker, Enabler, Troubleshooter, Shaper & Procedural Rostrum"
       />

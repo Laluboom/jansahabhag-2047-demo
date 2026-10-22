@@ -9,6 +9,8 @@ interface SeatItemProps {
   onSelect?: (seat: SeatModel) => void;
   compact?: boolean;
   testId?: string;
+  textMode?: boolean;
+  suppressAnimation?: boolean;
 }
 
 export const SeatItem: React.FC<SeatItemProps> = ({
@@ -17,6 +19,8 @@ export const SeatItem: React.FC<SeatItemProps> = ({
   onSelect,
   compact = false,
   testId,
+  textMode = false,
+  suppressAnimation = false,
 }) => {
   const isSpeaking = Boolean(seat.isSpeaking || seat.status === 'speaking');
   const isVacant = seat.status === 'vacant';
@@ -30,7 +34,9 @@ export const SeatItem: React.FC<SeatItemProps> = ({
   };
 
   const statusColors: Record<string, string> = {
-    speaking: 'bg-emerald-500 ring-2 ring-emerald-200 motion-safe:animate-pulse',
+    speaking: textMode || suppressAnimation
+      ? 'bg-emerald-500 ring-2 ring-emerald-200'
+      : 'bg-emerald-500 ring-2 ring-emerald-200 motion-safe:animate-pulse',
     active: 'bg-civic-teal-500',
     present: 'bg-civic-indigo-500',
     waiting: 'bg-amber-500',
@@ -75,13 +81,13 @@ export const SeatItem: React.FC<SeatItemProps> = ({
       <div className="flex items-center gap-2">
         {/* Avatar or Initials Badge with Speaking Indicator */}
         <div className="relative shrink-0">
-          {seat.avatar && !isVacant ? (
+          {!textMode && seat.avatar && !isVacant ? (
             <Avatar
               src={seat.avatar}
               alt={seat.name}
               fallback={initials}
               size={compact ? 'sm' : 'md'}
-              className={isSpeaking ? 'ring-2 ring-emerald-500 ring-offset-1' : ''}
+              className={isSpeaking ? (suppressAnimation ? 'ring-2 ring-emerald-500 ring-offset-1' : 'ring-2 ring-emerald-500 ring-offset-1') : ''}
             />
           ) : (
             <div
@@ -94,6 +100,7 @@ export const SeatItem: React.FC<SeatItemProps> = ({
                   ? 'bg-emerald-600 text-white border-emerald-500 ring-2 ring-emerald-300'
                   : 'bg-civic-indigo-100 text-civic-indigo-800 border-civic-indigo-200'
               }`}
+              data-testid={`initials-badge-${seat.id}`}
             >
               {isVacant ? '—' : initials}
             </div>
