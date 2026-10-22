@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { ThreadMotif } from '../../components/layout/ThreadMotif';
+import { seedEvents, seedSessions } from '../../data/seed/events';
 import {
   Sparkles,
   BookOpen,
@@ -16,6 +16,12 @@ import {
   CheckCircle2,
   Users,
   HeartHandshake,
+  MessageSquare,
+  Landmark,
+  FolderGit2,
+  Calendar,
+  Clock,
+  MapPin,
 } from 'lucide-react';
 
 interface CivicLoopStep {
@@ -70,14 +76,134 @@ const CIVIC_LOOP_STEPS: CivicLoopStep[] = [
   },
 ];
 
+interface IconTile {
+  id: string;
+  label: string;
+  to: string;
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+  description: string;
+  colorClasses: {
+    bg: string;
+    text: string;
+    borderHover: string;
+  };
+}
+
+const ICON_TILES: IconTile[] = [
+  {
+    id: 'learn',
+    label: 'Learn',
+    to: '/learn',
+    icon: BookOpen,
+    description: 'Civic Academy',
+    colorClasses: { bg: 'bg-indigo-50', text: 'text-indigo-700', borderHover: 'hover:border-indigo-400' },
+  },
+  {
+    id: 'debate',
+    label: 'Debate',
+    to: '/debate-room',
+    icon: MessageSquare,
+    description: 'Deliberation Room',
+    colorClasses: { bg: 'bg-cyan-50', text: 'text-cyan-700', borderHover: 'hover:border-cyan-400' },
+  },
+  {
+    id: 'assembly',
+    label: 'Assembly',
+    to: '/assemblies',
+    icon: Vote,
+    description: 'Youth Assembly',
+    colorClasses: { bg: 'bg-amber-50', text: 'text-amber-800', borderHover: 'hover:border-amber-400' },
+  },
+  {
+    id: 'parliament',
+    label: 'Parliament',
+    to: '/parliament',
+    icon: Landmark,
+    description: 'Youth Parliament',
+    colorClasses: { bg: 'bg-purple-50', text: 'text-purple-700', borderHover: 'hover:border-purple-400' },
+  },
+  {
+    id: 'projects',
+    label: 'Projects',
+    to: '/projects',
+    icon: FolderGit2,
+    description: 'Labs & Civic Action',
+    colorClasses: { bg: 'bg-rose-50', text: 'text-rose-700', borderHover: 'hover:border-rose-400' },
+  },
+  {
+    id: 'uhv',
+    label: 'UHV/Jeevan Vidya',
+    to: '/uhv',
+    icon: HeartHandshake,
+    description: 'Independent Stream',
+    colorClasses: { bg: 'bg-teal-50', text: 'text-teal-700', borderHover: 'hover:border-teal-400' },
+  },
+];
+
+const parseEventStartUtc = (dateStr: string, timeStr?: string): number => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  let hours = 0;
+  let minutes = 0;
+  if (timeStr) {
+    const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+    if (match) {
+      hours = parseInt(match[1], 10);
+      minutes = parseInt(match[2], 10);
+      const ampm = match[3] ? match[3].toUpperCase() : null;
+      if (ampm === 'PM' && hours < 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+    }
+  }
+  return Date.UTC(year, month - 1, day, hours, minutes, 0, 0);
+};
+
+export const getEarliestFutureJaipurEvent = (now: Date = new Date()) => {
+  const nowUtc = now.getTime();
+  const jaipurEvents = seedEvents.filter(
+    (e) => (e.location.includes('Jaipur') || e.title.includes('Jaipur')) && e.status === 'upcoming'
+  );
+  const future = jaipurEvents
+    .filter((e) => parseEventStartUtc(e.date, e.startTime) > nowUtc)
+    .sort((a, b) => {
+      const diff = parseEventStartUtc(a.date, a.startTime) - parseEventStartUtc(b.date, b.startTime);
+      if (diff !== 0) return diff;
+      return a.id.localeCompare(b.id);
+    });
+
+  if (future.length > 0) {
+    return future[0];
+  }
+  return undefined;
+};
+
+const formatEventDate = (dateStr: string) => {
+  try {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 export const WelcomePage: React.FC = () => {
-  const { switchPersona } = useAuthStore();
+  const { switchPersona, currentUser } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleStartAaravJourney = async () => {
-    await switchPersona('user_aarav');
+  const handleEnterPlatform = async () => {
+    if (!currentUser) {
+      await switchPersona('user_aarav');
+    }
     navigate('/dashboard');
   };
+
+  const upcomingEvent = getEarliestFutureJaipurEvent();
+  const matchingSession = upcomingEvent ? seedSessions.find((s) => s.eventId === upcomingEvent.id) : undefined;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-4">
@@ -91,13 +217,18 @@ export const WelcomePage: React.FC = () => {
           <h1 className="text-3xl sm:text-5xl font-extrabold font-heading text-white tracking-tight leading-tight">
             JanSahabhag <span className="text-civic-saffron-400">2047</span>
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            An interactive single-browser simulation of the National Youth Civic Engagement Platform. Walk alongside <strong>Aarav Sharma (18, Jaipur)</strong> as field evidence leads to democratic deliberation, municipal policy, and a verified Civic Passport.
+          <p className="text-lg sm:text-xl font-medium text-slate-200 tracking-wide">
+            Learn. Deliberate. Lead.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3 pt-4">
-            <Button size="lg" variant="saffron" onClick={handleStartAaravJourney}>
-              <span>Begin Aarav's Journey</span>
+          <div className="flex flex-wrap items-center gap-3 pt-3">
+            <Button
+              size="lg"
+              variant="saffron"
+              onClick={handleEnterPlatform}
+              data-testid="enter-platform-button"
+            >
+              <span>Enter the platform</span>
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Link to="/demo-login">
@@ -122,7 +253,7 @@ export const WelcomePage: React.FC = () => {
         <div className="absolute -right-4 top-0 w-64 h-64 rounded-full bg-civic-saffron-500/10 blur-3xl" />
       </div>
 
-      {/* Five-step Civic Loop Strip */}
+      {/* Five-step Civic Loop Strip (shown once beneath the hero) */}
       <nav
         aria-label="Five-step civic loop"
         data-testid="welcome-civic-loop"
@@ -170,24 +301,134 @@ export const WelcomePage: React.FC = () => {
         </ol>
       </nav>
 
-      {/* 33% Women's Reservation Policy Notice */}
+      {/* Six concise linked icon tiles */}
+      <section aria-label="Core Platform Modules" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Core Platform Modules
+          </h2>
+          <span className="text-xs text-slate-400 font-medium">
+            Direct navigation
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {ICON_TILES.map((tile) => (
+            <Link
+              key={tile.id}
+              to={tile.to}
+              data-testid={`welcome-tile-${tile.id}`}
+              className={`group flex flex-col items-center text-center p-3.5 rounded-xl border border-slate-200 bg-white ${tile.colorClasses.borderHover} hover:shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500`}
+            >
+              <div
+                className={`w-10 h-10 rounded-xl ${tile.colorClasses.bg} ${tile.colorClasses.text} flex items-center justify-center mb-2 transition-transform group-hover:scale-105`}
+              >
+                <tile.icon className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <span className="text-sm font-bold text-slate-900 group-hover:text-civic-indigo-700 leading-snug">
+                {tile.label}
+              </span>
+              <span className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                {tile.description}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Real Upcoming Session Card derived from earliest future fictional Jaipur event */}
+      {upcomingEvent && (
+        <section aria-label="Upcoming Session" data-testid="welcome-upcoming-session-card">
+          <Card className="border-slate-200 bg-white overflow-hidden p-0 shadow-xs">
+            <div className="bg-gradient-to-r from-civic-indigo-900 to-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-civic-saffron-500/20 text-civic-saffron-300 border border-civic-saffron-400/30">
+                  Upcoming Event
+                </span>
+                <span className="text-xs text-slate-300 font-medium">
+                  Fictional Jaipur Demo
+                </span>
+              </div>
+              <span className="text-xs text-slate-400">
+                Single-browser simulation
+              </span>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
+                  {upcomingEvent.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                  {upcomingEvent.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
+                  <span>{formatEventDate(upcomingEvent.date)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
+                  <span>{upcomingEvent.startTime} – {upcomingEvent.endTime}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{upcomingEvent.location}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div className="flex items-center gap-2">
+                  {matchingSession?.assemblyId ? (
+                    <>
+                      <Link to={`/assemblies/${matchingSession.assemblyId}/session`}>
+                        <Button size="sm" variant="primary">
+                          <span>Open Assembly Session</span>
+                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </Button>
+                      </Link>
+                      <Link to={`/events/${upcomingEvent.id}`}>
+                        <Button size="sm" variant="outline">
+                          <span>Event Details</span>
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <Link to={`/events/${upcomingEvent.id}`}>
+                      <Button size="sm" variant="primary">
+                        <span>View Event Details</span>
+                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+                <span className="text-xs text-slate-500 italic">
+                  Capacity: {upcomingEvent.capacity} participants • 33% Platform Rule applies
+                </span>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* 33% Platform Rule Banner */}
       <div
         data-testid="welcome-reservation-policy-banner"
         className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs sm:text-sm text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
       >
         <div className="flex items-start sm:items-center gap-2.5">
           <span className="inline-flex items-center px-2 py-0.5 rounded font-semibold text-xs bg-amber-200 text-amber-900 shrink-0">
-            33% Policy
+            33% Platform Rule
           </span>
           <p className="text-slate-800 leading-snug">
-            <strong>Policy in this fictional demo:</strong> at least 33% of applicable allocated seats and named roles, rounded up separately for each allocation, are reserved for women. Documented exceptions require recorded administrative approval.
+            <strong>Platform Rule:</strong> At least one-third of limited seats and named roles, rounded up separately for each allocation, are reserved for women. Open participation slots are unreserved. This simulation rule is a platform policy rather than statutory law. Documented exceptions require recorded administrative approval.
           </p>
         </div>
         <Link
           to="/help"
           className="inline-flex items-center gap-1 font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
         >
-          <span>View Rulebook</span>
+          <span>View Rules</span>
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
       </div>
@@ -212,57 +453,16 @@ export const WelcomePage: React.FC = () => {
         </Link>
       </div>
 
-      {/* Thread Motif */}
-      <ThreadMotif currentStage="evidence" />
-
-      {/* Journey Stages Grid */}
-      <div>
-        <h2 className="text-xl font-bold font-heading text-slate-900 mb-4">
-          The 5 Pillars of the Participant Journey
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-slate-200">
-            <div className="w-10 h-10 rounded-xl bg-civic-indigo-100 text-civic-indigo-700 flex items-center justify-center mb-3">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold font-heading text-slate-900">1. Civic Academy</h3>
-            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Complete structured lessons on field observation, pedestrian flow desire lines, and foundational civic competencies.
-            </p>
-          </Card>
-
-          <Card className="border-slate-200">
-            <div className="w-10 h-10 rounded-xl bg-civic-teal-100 text-civic-teal-700 flex items-center justify-center mb-3">
-              <Vote className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold font-heading text-slate-900">2. Youth Assembly</h3>
-            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Deliberate with assigned roles (Questioner, Evidence Analyst, Synthesiser) to build a consensus proposition with preserved dissent.
-            </p>
-          </Card>
-
-          <Card className="border-slate-200">
-            <div className="w-10 h-10 rounded-xl bg-civic-saffron-100 text-civic-saffron-800 flex items-center justify-center mb-3">
-              <Award className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold font-heading text-slate-900">3. Civic Passport</h3>
-            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Every verified observation, reflection, and assembly contribution earns transparent Civic Credits and verifiable passport credentials.
-            </p>
-          </Card>
-        </div>
-      </div>
-
-      {/* Reviewer Guidance */}
-      <Card className="bg-slate-50 border-slate-200 p-6">
+      {/* Reviewer Quick Guide */}
+      <Card className="bg-slate-50 border-slate-200 p-5">
         <h3 className="text-sm font-bold font-heading text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-civic-indigo-600" />
           Reviewer Quick Guide
         </h3>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Teacher Kavita Rao</strong> at any time to review Aarav's submitted assignments.</span>
+            <span>Switch to <strong>Teacher Kavita Rao</strong> to review Aarav's submitted assignments.</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
@@ -270,14 +470,47 @@ export const WelcomePage: React.FC = () => {
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Admin Dev Patel</strong> or <strong>Ananya Verma</strong> to review institutional metrics.</span>
+            <span>Switch to <strong>Admin Dev Patel</strong> or <strong>Ananya Verma</strong> for institutional metrics.</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Use <strong>Reset Demo Data</strong> from the Profile or Top Bar whenever you wish to restart.</span>
+            <span>Use <strong>Reset Demo Data</strong> from the Profile or Top Bar to restore initial state.</span>
           </li>
         </ul>
       </Card>
+
+      {/* Welcome Page Footer */}
+      <footer
+        role="contentinfo"
+        aria-label="Welcome page footer"
+        className="border-t border-slate-200 pt-6 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500"
+      >
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-slate-700">JanSahabhag 2047</span>
+          <span>&bull;</span>
+          <span>Interactive single-browser simulation</span>
+        </div>
+        <nav aria-label="Footer links" className="flex items-center gap-6">
+          <Link
+            to="/help"
+            className="font-medium text-slate-600 hover:text-civic-indigo-600 transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
+          >
+            Rules
+          </Link>
+          <Link
+            to="/about"
+            className="font-medium text-slate-600 hover:text-civic-indigo-600 transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
+          >
+            About Us
+          </Link>
+          <a
+            href="mailto:nazimsandhbehappy@gmail.com"
+            className="font-medium text-slate-600 hover:text-civic-indigo-600 transition-colors underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
+          >
+            Contact
+          </a>
+        </nav>
+      </footer>
     </div>
   );
 };

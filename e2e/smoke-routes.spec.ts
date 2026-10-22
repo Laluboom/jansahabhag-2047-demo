@@ -15,6 +15,7 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
   test('loads all README static and dynamic seeded routes with valid content', async ({ page }) => {
     const routesToTest = [
       // Core Participant Routes
+      { path: '/', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i },
       { path: '/welcome', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i },
       { path: '/onboarding', headingRegex: /Participant Onboarding|Civic Track/i },
       { path: '/dashboard', headingRegex: /Civic Journey Dashboard|Welcome back, Aarav Sharma/i },

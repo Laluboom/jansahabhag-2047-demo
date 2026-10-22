@@ -15,8 +15,8 @@ export interface RouteDefinition {
 
 export const ALL_61_ROUTES: RouteDefinition[] = [
   { index: 1, pattern: '/demo-login', url: '/demo-login', headingRegex: /Select a Persona|Demo Personas|JanSahabhag 2047|Enter JanSahabhag/i, controlRegex: /Enter JanSahabhag|Aarav Sharma/i, screenshotDesktop: '01-desktop-demo-login.png' },
-  { index: 2, pattern: '/', url: '/', expectedUrlRegex: /\/dashboard$/, headingRegex: /Civic Journey Dashboard|Welcome back/i, controlRegex: /Continue Learning|Civic Passport|Civic Credits/i },
-  { index: 3, pattern: '/welcome', url: '/welcome', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i, controlRegex: /Begin Aarav|Explore All Personas|Explore Curriculum|Join Assembly/i },
+  { index: 2, pattern: '/', url: '/', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i, controlRegex: /Enter the platform|Begin Aarav|Explore All Personas|Explore Curriculum|Join Assembly/i },
+  { index: 3, pattern: '/welcome', url: '/welcome', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i, controlRegex: /Enter the platform|Begin Aarav|Explore All Personas|Explore Curriculum|Join Assembly/i },
   { index: 4, pattern: '/onboarding', url: '/onboarding', headingRegex: /Participant Onboarding|Civic Track/i, controlRegex: /Complete Onboarding|Continue|Civic Track/i },
   { index: 5, pattern: '/dashboard', url: '/dashboard', headingRegex: /Civic Journey Dashboard|Welcome back/i, controlRegex: /Continue Learning|Civic Passport|Civic Credits/i, screenshotDesktop: '02-desktop-dashboard.png', screenshotMobile: '02-mobile-dashboard.png' },
   { index: 6, pattern: '/profile', url: '/profile', headingRegex: /Profile & Demo Settings|Civic Profile|Aarav Sharma/i, controlRegex: /Reset Demo Data|Storage Key/i },

@@ -97,7 +97,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />,
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WelcomePage />
+          </Suspense>
+        ),
       },
       {
         path: 'welcome',

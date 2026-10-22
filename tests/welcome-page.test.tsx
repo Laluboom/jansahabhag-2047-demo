@@ -1,19 +1,59 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { WelcomePage } from '../src/features/welcome/WelcomePage';
+import { WelcomePage, getEarliestFutureJaipurEvent } from '../src/features/welcome/WelcomePage';
 import { useAuthStore } from '../src/stores/authStore';
 import { PersistenceService } from '../src/services/persistence';
+import { seedEvents } from '../src/data/seed/events';
 
-describe('WelcomePage Quick Improvements Integration Tests', () => {
+describe('WelcomePage & Root Landing Integration Tests', () => {
   beforeEach(async () => {
     window.localStorage.clear();
     PersistenceService.resetDatabase();
     await useAuthStore.getState().initialize();
   });
 
-  it('renders the accessible five-step civic loop with links to matching existing routes', () => {
+  it('renders refined first screen with JanSahabhag 2047, Learn. Deliberate. Lead., primary Enter button, and no explanatory hero paragraph', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Title and tagline
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/JanSahabhag 2047/i);
+    expect(screen.getByText('Learn. Deliberate. Lead.')).toBeInTheDocument();
+
+    // Primary Enter button
+    const enterBtn = screen.getByRole('button', { name: /enter the platform/i });
+    expect(enterBtn).toBeInTheDocument();
+
+    // No explanatory hero paragraph
+    expect(container.textContent).not.toContain('An interactive single-browser simulation of the National Youth Civic Engagement Platform. Walk alongside');
+    expect(container.textContent).not.toContain('frontend-first');
+  });
+
+  it('navigates to dashboard as Aarav Sharma when clicking Enter the platform or persona selection', async () => {
+    render(
+      <MemoryRouter initialEntries={['/welcome']}>
+        <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/dashboard" element={<div data-testid="dashboard-screen">Civic Dashboard</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const enterBtn = screen.getByRole('button', { name: /enter the platform/i });
+    fireEvent.click(enterBtn);
+
+    expect(await screen.findByTestId('dashboard-screen')).toBeInTheDocument();
+    expect(useAuthStore.getState().currentUser?.id).toBe('user_aarav');
+  });
+
+  it('renders the accessible five-step civic loop once beneath the hero with links to matching existing routes', () => {
     render(
       <MemoryRouter initialEntries={['/welcome']}>
         <Routes>
@@ -22,8 +62,8 @@ describe('WelcomePage Quick Improvements Integration Tests', () => {
       </MemoryRouter>
     );
 
-    const nav = screen.getByRole('navigation', { name: /five-step civic loop/i });
-    expect(nav).toBeInTheDocument();
+    const navs = screen.getAllByRole('navigation', { name: /five-step civic loop/i });
+    expect(navs).toHaveLength(1);
 
     const expectedSteps = [
       { name: 'Learn', route: '/learn', subtitle: 'Civic Academy' },
@@ -43,7 +83,153 @@ describe('WelcomePage Quick Improvements Integration Tests', () => {
     });
 
     // UHV must NOT be an item inside the civic loop navigation
-    expect(nav).not.toHaveTextContent(/Jeevan Vidya/i);
+    expect(navs[0]).not.toHaveTextContent(/Jeevan Vidya/i);
+  });
+
+  it('renders six concise linked icon tiles for Learn, Debate, Assembly, Parliament, Projects, UHV/Jeevan Vidya', () => {
+    render(
+      <MemoryRouter initialEntries={['/welcome']}>
+        <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const expectedTiles = [
+      { id: 'learn', name: 'Learn', route: '/learn' },
+      { id: 'debate', name: 'Debate', route: '/debate-room' },
+      { id: 'assembly', name: 'Assembly', route: '/assemblies' },
+      { id: 'parliament', name: 'Parliament', route: '/parliament' },
+      { id: 'projects', name: 'Projects', route: '/projects' },
+      { id: 'uhv', name: 'UHV/Jeevan Vidya', route: '/uhv' },
+    ];
+
+    expectedTiles.forEach((tile) => {
+      const tileEl = screen.getByTestId(`welcome-tile-${tile.id}`);
+      expect(tileEl).toBeInTheDocument();
+      expect(tileEl).toHaveAttribute('href', tile.route);
+      expect(tileEl).toHaveTextContent(tile.name);
+    });
+  });
+
+  it('renders upcoming event card with earliest future fictional Jaipur event relative to a fixed clock and correct linked event', () => {
+    // Fixed clock: Oct 22, 2026 08:00:00Z
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-22T08:00:00Z'));
+
+    try {
+      render(
+        <MemoryRouter initialEntries={['/welcome']}>
+          <Routes>
+            <Route path="/welcome" element={<WelcomePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const sessionCard = screen.getByTestId('welcome-upcoming-session-card');
+      expect(sessionCard).toBeInTheDocument();
+
+      // Check helper and derive expected earliest future fictional Jaipur event
+      const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-10-22T08:00:00Z'));
+      expect(earliestFutureEvent).toBeDefined();
+      if (!earliestFutureEvent) throw new Error('Expected earliestFutureEvent to be defined');
+      expect(earliestFutureEvent.id).toBe('evt_jaipur_limited_05');
+      expect(earliestFutureEvent.date).toBe('2026-10-25');
+
+      // Assert event date is genuinely future relative to fixed clock 2026-10-22
+      const eventTime = new Date(earliestFutureEvent.date).getTime();
+      const clockTime = new Date('2026-10-22T08:00:00Z').getTime();
+      expect(eventTime).toBeGreaterThan(clockTime);
+
+      // Card title, description, time, and location are derived from event source
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.title);
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.location);
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.startTime);
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.endTime);
+      expect(sessionCard).toHaveTextContent(/Oct 25, 2026/i);
+
+      // Past Oct 12 date must NOT appear as upcoming
+      expect(sessionCard).not.toHaveTextContent('Oct 12, 2026');
+
+      // Since evt_jaipur_limited_05 has no Assembly session, only its event details link is shown
+      const eventDetailsLink = within(sessionCard).getByRole('link', { name: /view event details/i });
+      expect(eventDetailsLink).toHaveAttribute('href', `/events/${earliestFutureEvent.id}`);
+
+      // Must not show open assembly session button when there is no assembly session
+      expect(within(sessionCard).queryByRole('link', { name: /open assembly session/i })).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('omits upcoming event card and returns undefined when clock is after all seeded events (1 November 2026)', () => {
+    // Fixed clock: Nov 1, 2026 12:00:00Z (after all seeded events in October 2026)
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-01T12:00:00Z'));
+
+    try {
+      const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-11-01T12:00:00Z'));
+      expect(earliestFutureEvent).toBeUndefined();
+
+      const { container } = render(
+        <MemoryRouter initialEntries={['/welcome']}>
+          <Routes>
+            <Route path="/welcome" element={<WelcomePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // Card is omitted and no past event is falsely labelled upcoming
+      expect(screen.queryByTestId('welcome-upcoming-session-card')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Upcoming Event/i)).not.toBeInTheDocument();
+      expect(container.textContent).not.toContain('evt_jaipur_limited_05');
+      expect(container.textContent).not.toContain('Oct 25, 2026');
+      expect(container.textContent).not.toContain('Oct 12, 2026');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('handles same-day event timing correctly before and after start time', () => {
+    // evt_jaipur_limited_05 is on 2026-10-25 at 10:00 AM
+    // Case 1: Same day before start time (e.g. 09:00:00Z) -> is upcoming
+    const beforeStart = new Date('2026-10-25T09:00:00Z');
+    const eventBefore = getEarliestFutureJaipurEvent(beforeStart);
+    expect(eventBefore).toBeDefined();
+    expect(eventBefore?.id).toBe('evt_jaipur_limited_05');
+
+    // Case 2: Same day after start time (e.g. 10:30:00Z) -> evt_jaipur_limited_05 is no longer upcoming, moves to next (evt_jaipur_compliant_06 on 2026-10-26)
+    const afterStart = new Date('2026-10-25T10:30:00Z');
+    const eventAfter = getEarliestFutureJaipurEvent(afterStart);
+    expect(eventAfter).toBeDefined();
+    expect(eventAfter?.id).toBe('evt_jaipur_compliant_06');
+  });
+
+  it('surfaces 33% platform rule as at least one-third of limited seats and named roles, rounded up, without implying statutory law or universal reservation', () => {
+    render(
+      <MemoryRouter initialEntries={['/welcome']}>
+        <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const policyBanner = screen.getByTestId('welcome-reservation-policy-banner');
+    expect(policyBanner).toBeInTheDocument();
+    expect(policyBanner).toHaveTextContent(
+      /at least one-third of limited seats and named roles, rounded up separately for each allocation/i
+    );
+    expect(policyBanner).toHaveTextContent(/Open participation slots are unreserved/i);
+    expect(policyBanner).toHaveTextContent(/platform policy rather than statutory law/i);
+    expect(policyBanner).toHaveTextContent(/Documented exceptions require recorded administrative approval/i);
+
+    // Link to rules
+    const rulesLink = screen.getByRole('link', { name: /view rules/i });
+    expect(rulesLink).toHaveAttribute('href', '/help');
+
+    // Must not overclaim national statutory law or universal production enforcement
+    expect(policyBanner).not.toHaveTextContent(/national statutory law/i);
+    expect(policyBanner).not.toHaveTextContent(/production enforcement/i);
   });
 
   it('maintains UHV distinct from the civic loop with a dedicated notice and link', () => {
@@ -64,7 +250,7 @@ describe('WelcomePage Quick Improvements Integration Tests', () => {
     expect(uhvLink).toHaveAttribute('href', '/uhv');
   });
 
-  it('surfaces a concise 33% reservation message linked to the rulebook and framed only as demo policy', () => {
+  it('renders footer links Rules, About Us, and Contact (mailto:nazimsandhbehappy@gmail.com)', () => {
     render(
       <MemoryRouter initialEntries={['/welcome']}>
         <Routes>
@@ -73,24 +259,20 @@ describe('WelcomePage Quick Improvements Integration Tests', () => {
       </MemoryRouter>
     );
 
-    const policyBanner = screen.getByTestId('welcome-reservation-policy-banner');
-    expect(policyBanner).toBeInTheDocument();
-    expect(policyBanner).toHaveTextContent(/Policy in this fictional demo/i);
-    expect(policyBanner).toHaveTextContent(
-      /at least 33% of applicable allocated seats and named roles, rounded up separately for each allocation/i
-    );
-    expect(policyBanner).toHaveTextContent(/Documented exceptions require recorded administrative approval/i);
+    const footer = screen.getByRole('contentinfo', { name: /welcome page footer/i });
+    expect(footer).toBeInTheDocument();
 
-    // Verifies link to existing rulebook
-    const rulebookLink = screen.getByRole('link', { name: /view rulebook/i });
-    expect(rulebookLink).toHaveAttribute('href', '/help');
+    const rulesLink = within(footer).getByRole('link', { name: /^Rules$/i });
+    expect(rulesLink).toHaveAttribute('href', '/help');
 
-    // Must not overclaim national law or universal production enforcement
-    expect(policyBanner).not.toHaveTextContent(/national law/i);
-    expect(policyBanner).not.toHaveTextContent(/production enforcement/i);
+    const aboutLink = within(footer).getByRole('link', { name: /^About Us$/i });
+    expect(aboutLink).toHaveAttribute('href', '/about');
+
+    const contactLink = within(footer).getByRole('link', { name: /^Contact$/i });
+    expect(contactLink).toHaveAttribute('href', 'mailto:nazimsandhbehappy@gmail.com');
   });
 
-  it('removes internal jargon like "frontend-first" while preserving the Jaipur story and single-browser simulation', () => {
+  it('preserves single-browser simulation labelling and reviewer guide', () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/welcome']}>
         <Routes>
@@ -99,35 +281,10 @@ describe('WelcomePage Quick Improvements Integration Tests', () => {
       </MemoryRouter>
     );
 
-    // Jargon check
-    expect(container.textContent).not.toContain('frontend-first');
-
-    // Fictional Jaipur story and Aarav persona check
-    expect(container.textContent).toContain('Aarav Sharma (18, Jaipur)');
-
-    // Single-browser simulation framing
+    // Simulation framing
     expect(container.textContent).toContain('single-browser simulation');
-
-    // Journey entry actions
-    expect(screen.getByRole('button', { name: /begin aarav's journey/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /explore all personas/i })).toHaveAttribute('href', '/demo-login');
     expect(screen.getByRole('link', { name: /about the people behind jansahabhag/i })).toHaveAttribute('href', '/about');
-  });
-
-  it('navigates to dashboard as Aarav Sharma when clicking Begin Journey', async () => {
-    render(
-      <MemoryRouter initialEntries={['/welcome']}>
-        <Routes>
-          <Route path="/welcome" element={<WelcomePage />} />
-          <Route path="/dashboard" element={<div data-testid="dashboard-screen">Dashboard</div>} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    const beginBtn = screen.getByRole('button', { name: /begin aarav's journey/i });
-    fireEvent.click(beginBtn);
-
-    expect(await screen.findByTestId('dashboard-screen')).toBeInTheDocument();
-    expect(useAuthStore.getState().currentUser?.id).toBe('user_aarav');
+    expect(screen.getByText(/Reviewer Quick Guide/i)).toBeInTheDocument();
   });
 });
