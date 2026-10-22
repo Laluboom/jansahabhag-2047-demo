@@ -90,3 +90,57 @@ export function canActorAccessPrivateEvidence(
   // Blanket access denied for other roles (unrelated teachers, facilitators, institution admins, peers)
   return false;
 }
+
+export interface ModerationCaseAccessItem {
+  id: string;
+  reporterId: string;
+  reviewerId?: string;
+}
+
+/**
+ * Evaluates whether an actor can view a moderation case.
+ * In accordance with content safety and privacy rules:
+ * Permits ONLY:
+ * 1. Platform administrator or programme manager ('platform_admin' | 'programme_manager')
+ * 2. Assigned reviewer for this specific case (actor.id === case.reviewerId)
+ * 3. Case reporter (actor.id === case.reporterId)
+ * Unauthorized participants and unrelated staff cannot view cases or leak private target data.
+ */
+export function canActorViewModerationCase(
+  actor: EvidenceAccessActor | null | undefined,
+  modCase: ModerationCaseAccessItem
+): boolean {
+  if (!actor) return false;
+  if (actor.role === 'platform_admin' || actor.role === 'programme_manager') {
+    return true;
+  }
+  if (modCase.reviewerId && actor.id === modCase.reviewerId) {
+    return true;
+  }
+  if (actor.id === modCase.reporterId) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Evaluates whether an actor can update a moderation case (status, notes, resolutionDetails).
+ * In accordance with content safety governance:
+ * Permits ONLY:
+ * 1. Platform administrator or programme manager ('platform_admin' | 'programme_manager')
+ * 2. Already assigned reviewer per the stored case record (actor.id === case.reviewerId)
+ * Participant self-assignment is strictly prohibited.
+ */
+export function canActorUpdateModerationCase(
+  actor: EvidenceAccessActor | null | undefined,
+  modCase: ModerationCaseAccessItem
+): boolean {
+  if (!actor) return false;
+  if (actor.role === 'platform_admin' || actor.role === 'programme_manager') {
+    return true;
+  }
+  if (modCase.reviewerId && actor.id === modCase.reviewerId) {
+    return true;
+  }
+  return false;
+}

@@ -403,11 +403,21 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       expect(modCase.notes).not.toContain('Sensitive Private Field Survey');
       expect(modCase.notes).toContain(`Private evidence item ${privateEv.id}`);
 
-      // Priya (unrelated persona) retrieves moderation cases: notes are redacted
+      // Priya (unrelated persona) retrieves moderation cases: case is completely hidden from unauthorized persona
       await demoRepository.switchUser('user_priya');
       const priyaCases = await demoRepository.getModerationCases();
       const priyaView = priyaCases.find((c) => c.id === modCase.id);
-      expect(priyaView?.notes).toBe('Protected private evidence under review.');
+      expect(priyaView).toBeUndefined();
+      expect(priyaCases.some((c) => c.targetId === privateEv.id)).toBe(false);
+      expect(priyaCases.some((c) => c.reason?.includes('Self-flagging private file'))).toBe(false);
+      expect(priyaCases.some((c) => c.reporterId === 'user_aarav')).toBe(false);
+
+      // Aarav (the active reporter) retrieves moderation cases: can see his own reported case
+      await demoRepository.switchUser('user_aarav');
+      const aaravCases = await demoRepository.getModerationCases();
+      const aaravView = aaravCases.find((c) => c.id === modCase.id);
+      expect(aaravView).toBeDefined();
+      expect(aaravView?.reason).toBe('Self-flagging private file for redaction');
 
       // Admin retrieves moderation cases: notes and reason are visible
       await demoRepository.switchUser('user_admin');
@@ -479,6 +489,143 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       await expect(
         demoRepository.updateModerationCase(modCase.id, { status: 'actioned' })
       ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
+    });
+
+    it('blocks participant self-assignment attempts and unauthorized reviewer grants', async () => {
+      await demoRepository.switchUser('user_admin');
+      const modCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_admin',
+        targetType: 'evidence',
+        targetId: 'ev_aarav_traffic_count_01',
+        reason: 'Audit case for self-assignment tests',
+      });
+
+      // Switch to unprivileged participant Priya
+      await demoRepository.switchUser('user_priya');
+
+      // Attempt 1: Participant tries to bypass check by setting update.reviewerId to her own ID
+      await expect(
+        demoRepository.updateModerationCase(modCase.id, {
+          reviewerId: 'user_priya',
+          status: 'under_review',
+        })
+      ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
+
+      // Attempt 2: Participant tries to update reviewerId only
+      await expect(
+        demoRepository.updateModerationCase(modCase.id, {
+          reviewerId: 'user_priya',
+        })
+      ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
+
+      // Attempt 3: Participant tries to invoke dedicated admin-only reviewer grant path
+      await expect(
+        demoRepository.assignModerationCaseReviewer(modCase.id, 'user_priya')
+      ).rejects.toThrow(/Unauthorized: only administrators may assign or reassign case reviewers/i);
+
+      // Verify case in database remains unaltered
+      await demoRepository.switchUser('user_admin');
+      const adminCases = await demoRepository.getModerationCases();
+      const stored = adminCases.find((c) => c.id === modCase.id);
+      expect(stored?.reviewerId).toBeUndefined();
+      expect(stored?.status).toBe('open');
+    });
+
+    it('enforces unauthorized list visibility: participant does not see other users cases or leak private data', async () => {
+      // Admin creates a case
+      await demoRepository.switchUser('user_admin');
+      const adminCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_admin',
+        targetType: 'evidence',
+        targetId: 'ev_aarav_traffic_count_01',
+        reason: 'Admin confidential reason regarding radar discrepancies',
+      });
+
+      // Aarav creates a case
+      await demoRepository.switchUser('user_aarav');
+      const aaravCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_aarav',
+        targetType: 'evidence',
+        targetId: 'ev_aarav_traffic_count_01',
+        reason: 'Aarav private report reason for speed estimates',
+      });
+
+      // Switch to Priya who has not reported any case in this test
+      await demoRepository.switchUser('user_priya');
+      const priyaInitialCases = await demoRepository.getModerationCases();
+      // Priya sees only her own reported cases (or cases assigned to her)
+      expect(priyaInitialCases.find((c) => c.id === adminCase.id)).toBeUndefined();
+      expect(priyaInitialCases.find((c) => c.id === aaravCase.id)).toBeUndefined();
+      expect(priyaInitialCases.some((c) => c.reporterId !== 'user_priya')).toBe(false);
+
+      // Now Priya reports her own case
+      const priyaCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_priya',
+        targetType: 'evidence',
+        targetId: 'ev_aarav_traffic_count_01',
+        reason: 'Priya own report regarding lighting at crossroad',
+      });
+
+      const priyaCasesAfter = await demoRepository.getModerationCases();
+      // Priya sees her own case
+      expect(priyaCasesAfter.find((c) => c.id === priyaCase.id)).toBeDefined();
+      // Priya still DOES NOT see Aarav or Admin cases
+      expect(priyaCasesAfter.find((c) => c.id === adminCase.id)).toBeUndefined();
+      expect(priyaCasesAfter.find((c) => c.id === aaravCase.id)).toBeUndefined();
+      expect(priyaCasesAfter.every((c) => c.reporterId === 'user_priya')).toBe(true);
+    });
+
+    it('allows valid admin updates and reviewer assignment while blocking arbitrary field tampering', async () => {
+      await demoRepository.switchUser('user_admin');
+      const modCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_admin',
+        targetType: 'evidence',
+        targetId: 'ev_aarav_traffic_count_01',
+        reason: 'Valid admin update test',
+      });
+
+      // Valid admin starts review and assigns reviewer
+      const underReview = await demoRepository.updateModerationCase(modCase.id, {
+        status: 'under_review',
+        reviewerId: 'user_admin',
+        notes: 'Under review by platform admin.',
+      });
+      expect(underReview.status).toBe('under_review');
+      expect(underReview.reviewerId).toBe('user_admin');
+      expect(underReview.notes).toBe('Under review by platform admin.');
+
+      // Valid admin uses dedicated assignModerationCaseReviewer method to delegate to Dev
+      const reassigned = await demoRepository.assignModerationCaseReviewer(modCase.id, 'user_dev');
+      expect(reassigned.reviewerId).toBe('user_dev');
+
+      // Dev (programme_manager and assigned reviewer) resolves the case
+      await demoRepository.switchUser('user_dev');
+      const resolved = await demoRepository.updateModerationCase(modCase.id, {
+        status: 'actioned',
+        resolutionDetails: 'Speed logs verified against radar metadata; advisory issued.',
+        notes: 'Action completed by Dev Patel.',
+      });
+      expect(resolved.status).toBe('actioned');
+      expect(resolved.resolutionDetails).toContain('Speed logs verified');
+
+      // Attempt to tamper with protected fields (targetId, reporterId, reason, id) must throw
+      await expect(
+        demoRepository.updateModerationCase(modCase.id, {
+          targetId: 'ev_tampered_id',
+        } as any)
+      ).rejects.toThrow(/Cannot modify protected moderation case field: targetId/i);
+
+      await expect(
+        demoRepository.updateModerationCase(modCase.id, {
+          reporterId: 'user_someone_else',
+        } as any)
+      ).rejects.toThrow(/Cannot modify protected moderation case field: reporterId/i);
+
+      await expect(
+        demoRepository.updateModerationCase(modCase.id, {
+          reason: 'Tampered reason text',
+        } as any)
+      ).rejects.toThrow(/Cannot modify protected moderation case field: reason/i);
     });
   });
 

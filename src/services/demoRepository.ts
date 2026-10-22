@@ -94,11 +94,16 @@ declare module './repository' {
       reason: string;
       severity?: ModerationSeverity;
     }): Promise<ModerationCase>;
+    assignModerationCaseReviewer(caseId: string, reviewerId: string): Promise<ModerationCase>;
   }
 }
 import { PersistenceService } from './persistence';
 import { generateId } from '../utils/id';
-import { canActorAccessPrivateEvidence } from '../domain/evidenceRules';
+import {
+  canActorAccessPrivateEvidence,
+  canActorViewModerationCase,
+  canActorUpdateModerationCase,
+} from '../domain/evidenceRules';
 
 export function createAssemblyRoleData(
   assemblyId: string,
@@ -6279,9 +6284,14 @@ export class LocalDemoRepository implements DemoRepository {
   async getModerationCases(): Promise<ModerationCase[]> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const actor = activeUser ? { id: activeUser.id, role: activeUser.role } : null;
+    if (!activeUser) return [];
 
-    const cases: ModerationCase[] = JSON.parse(JSON.stringify(db.moderationCases || []));
+    const actor = { id: activeUser.id, role: activeUser.role };
+    const allCases: ModerationCase[] = db.moderationCases || [];
+
+    // Return only admin/staff-authorized cases or the active reporter's own cases
+    const visibleCases = allCases.filter((c) => canActorViewModerationCase(actor, c));
+    const cases: ModerationCase[] = JSON.parse(JSON.stringify(visibleCases));
 
     // Avoid leaking private target details in moderation records visible to unauthorized personas
     for (const c of cases) {
@@ -6316,22 +6326,89 @@ export class LocalDemoRepository implements DemoRepository {
 
   async updateModerationCase(caseId: string, update: Partial<ModerationCase>): Promise<ModerationCase> {
     const db = this.getDb();
-    const c = db.moderationCases.find((m) => m.id === caseId);
+    const c = (db.moderationCases || []).find((m) => m.id === caseId);
     if (!c) throw new Error(`Moderation case ${caseId} not found`);
 
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isStaffOrAdmin =
-      activeUser?.role === 'platform_admin' ||
-      activeUser?.role === 'programme_manager' ||
-      activeUser?.role === 'teacher' ||
-      activeUser?.role === 'facilitator';
+    if (!activeUser) {
+      throw new Error('Unauthorized: authentication required to update moderation cases.');
+    }
 
-    // Allow update if caller is staff/admin OR if active persona is updating with reviewerId
-    if (!isStaffOrAdmin && update.reviewerId !== activeUser?.id && c.reviewerId !== activeUser?.id) {
+    const actor = { id: activeUser.id, role: activeUser.role };
+    const isAdmin = activeUser.role === 'platform_admin' || activeUser.role === 'programme_manager';
+
+    // Remove self-assignment path: only programme_manager/platform_admin or an already assigned
+    // authorised reviewer (per stored case record c) can update status/notes
+    if (!canActorUpdateModerationCase(actor, c)) {
       throw new Error('Unauthorized: only moderation reviewers or administrators may update moderation cases.');
     }
 
-    Object.assign(c, update, { updatedAt: new Date().toISOString() });
+    // Only platform_admin or programme_manager can grant / assign reviewerId
+    if (!isAdmin && update.reviewerId !== undefined && update.reviewerId !== c.reviewerId) {
+      throw new Error('Unauthorized: only administrators may assign or reassign case reviewers.');
+    }
+
+    // No arbitrary Partial<ModerationCase> field update should let callers change protected identity, target, or reporter data
+    if (update.id !== undefined && update.id !== c.id) {
+      throw new Error('Cannot modify protected moderation case field: id.');
+    }
+    if (update.targetType !== undefined && update.targetType !== c.targetType) {
+      throw new Error('Cannot modify protected moderation case field: targetType.');
+    }
+    if (update.targetId !== undefined && update.targetId !== c.targetId) {
+      throw new Error('Cannot modify protected moderation case field: targetId.');
+    }
+    if (update.reporterId !== undefined && update.reporterId !== c.reporterId) {
+      throw new Error('Cannot modify protected moderation case field: reporterId.');
+    }
+    if (update.reason !== undefined && update.reason !== c.reason) {
+      throw new Error('Cannot modify protected moderation case field: reason.');
+    }
+    if (update.createdAt !== undefined && update.createdAt !== c.createdAt) {
+      throw new Error('Cannot modify protected moderation case field: createdAt.');
+    }
+    if (update.schemaVersion !== undefined && update.schemaVersion !== c.schemaVersion) {
+      throw new Error('Cannot modify protected moderation case field: schemaVersion.');
+    }
+
+    // Apply allowed fields only
+    if (update.status !== undefined) {
+      c.status = update.status;
+    }
+    if (update.notes !== undefined) {
+      c.notes = update.notes;
+    }
+    if (update.resolutionDetails !== undefined) {
+      c.resolutionDetails = update.resolutionDetails;
+    }
+    if (isAdmin && update.reviewerId !== undefined) {
+      c.reviewerId = update.reviewerId;
+    }
+    if (isAdmin && update.severity !== undefined) {
+      c.severity = update.severity;
+    }
+
+    c.updatedAt = new Date().toISOString();
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(c));
+  }
+
+  async assignModerationCaseReviewer(caseId: string, reviewerId: string): Promise<ModerationCase> {
+    const db = this.getDb();
+    const c = (db.moderationCases || []).find((m) => m.id === caseId);
+    if (!c) throw new Error(`Moderation case ${caseId} not found`);
+
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isAdmin =
+      activeUser?.role === 'platform_admin' ||
+      activeUser?.role === 'programme_manager';
+
+    if (!isAdmin) {
+      throw new Error('Unauthorized: only administrators may assign or reassign case reviewers.');
+    }
+
+    c.reviewerId = reviewerId;
+    c.updatedAt = new Date().toISOString();
     this.saveDb(db);
     return JSON.parse(JSON.stringify(c));
   }
