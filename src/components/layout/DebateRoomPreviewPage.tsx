@@ -43,6 +43,9 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
+import { SessionSeating, SeatModel, SeatStatus, SeatingQuotaSummary } from '../session';
+import { calculateReservedMinimum } from '../../services/reservationAllocationService';
+import { getFictionalReservationEligibility } from '../../data/seed/fictionalReservationDeclarations';
 
 const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
   'OPENING_STATEMENTS',
@@ -129,6 +132,93 @@ export const DebateRoomPreviewPage: React.FC = () => {
     setSelectedRoleForAudits(null);
     loadSessionData();
   }, [currentUser?.id, targetSessionId]);
+
+  // Typed Seating View Models for SessionSeating (Facing Benches Layout)
+  const debateSeats: SeatModel[] = React.useMemo(() => {
+    if (!session) return [];
+    const roster = session.roster || [];
+    const activeSpkId = session.debateData?.activeSpeakerId;
+    const queue = session.debateData?.speakingQueue || [];
+    const motionText = session.debateData?.motion;
+
+    return roster.map((member) => {
+      const userDetail = allUsers.find((u) => u.id === member.userId);
+      const isSpeaking = Boolean(
+        member.isSpeaking ||
+        (activeSpkId && member.userId === activeSpkId)
+      );
+      const queueEntry = queue.find(
+        (q) => q.userId === member.userId && (q.status === 'waiting' || q.status === 'speaking')
+      );
+
+      // Map role to facing benches (Moderator, For, Against)
+      const roleLower = (member.role || '').toLowerCase();
+      let sideOrBench = 'General Bench';
+      if (roleLower.includes('facilitator') || roleLower.includes('rapporteur')) {
+        sideOrBench = 'Moderator';
+      } else if (roleLower.includes('advocate') || roleLower.includes('analyst')) {
+        sideOrBench = 'For';
+      } else if (
+        roleLower.includes('questioner') ||
+        roleLower.includes('voice') ||
+        roleLower.includes('synthesiser')
+      ) {
+        sideOrBench = 'Against';
+      }
+
+      let status: SeatStatus = 'active';
+      if (isSpeaking) {
+        status = 'speaking';
+      } else if (queueEntry) {
+        status = 'waiting';
+      }
+
+      let currentActivity = `Deliberating in ${member.role} capacity on safe school corridor motion.`;
+      if (isSpeaking) {
+        currentActivity = `Addressing chamber on motion: "${motionText || 'Pedestrian Safety'}"`;
+      } else if (queueEntry) {
+        currentActivity = `Waiting in speaking queue (${queueEntry.userRole || 'Awaiting facilitator recognition'})`;
+      }
+
+      const eligibility = getFictionalReservationEligibility(member.userId);
+      const isReserved = eligibility === 'eligible';
+
+      return {
+        id: `seat_${session.id}_${member.userId}`,
+        userId: member.userId,
+        name: member.name || userDetail?.name || member.userId,
+        avatar: userDetail?.avatar,
+        role: member.role,
+        sideOrBench,
+        status,
+        isSpeaking,
+        isReserved,
+        institution: userDetail?.institutionName || 'Jaipur Youth Deliberation Network',
+        currentActivity,
+        bio: userDetail?.bio,
+      };
+    });
+  }, [session, allUsers]);
+
+  // Quota calculation pulling directly from reservationAllocationService formula
+  const debateQuotaSummary: SeatingQuotaSummary = React.useMemo(() => {
+    const totalCapacity = 7; // 7 canonical formal debate roles
+    const reservedMinimum = calculateReservedMinimum(totalCapacity); // ceil(0.33 * 7) = 3
+    const roster = session?.roster || [];
+    const eligibleCount = roster.filter(
+      (r) => getFictionalReservationEligibility(r.userId) === 'eligible'
+    ).length;
+    const vacanciesCount = Math.max(0, reservedMinimum - eligibleCount);
+
+    return {
+      totalCapacity,
+      filledCount: roster.length,
+      reservedMinimum,
+      reservedFilledCount: eligibleCount,
+      vacanciesCount,
+      isIllustrative: false,
+    };
+  }, [session]);
 
   // Reservation Allocation Handlers (08C1 APIs)
   const handleFinalizeRole = async (roleName: string) => {
@@ -787,6 +877,17 @@ export const DebateRoomPreviewPage: React.FC = () => {
           })}
         </div>
       </Card>
+
+      {/* Reusable Accessible SessionSeating Component (Debate Layout) */}
+      <SessionSeating
+        layout="debate"
+        currentRoute="debate"
+        seats={debateSeats}
+        quotaSummary={debateQuotaSummary}
+        activeSpeakerId={activeSpeakerId}
+        title="Debate Room Chamber Seating"
+        subtitle="Facing Proposition (For) & Opposition (Against) benches with Facilitator rostrum"
+      />
 
       {/* Debate Reservation Rulebook Point-of-Use Banner */}
       <DebateReservationRulebookBanner
