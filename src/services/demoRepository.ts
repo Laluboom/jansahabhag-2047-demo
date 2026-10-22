@@ -98,6 +98,7 @@ declare module './repository' {
 }
 import { PersistenceService } from './persistence';
 import { generateId } from '../utils/id';
+import { canActorAccessPrivateEvidence } from '../domain/evidenceRules';
 
 export function createAssemblyRoleData(
   assemblyId: string,
@@ -1879,21 +1880,17 @@ export class LocalDemoRepository implements DemoRepository {
   }): Promise<Evidence[]> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isReviewerOrAdmin =
-      activeUser?.role === 'teacher' ||
-      activeUser?.role === 'facilitator' ||
-      activeUser?.role === 'platform_admin' ||
-      activeUser?.role === 'institution_admin';
+    const actor = activeUser ? { id: activeUser.id, role: activeUser.role } : null;
 
     let evs = db.evidence;
     if (options?.ownerId) evs = evs.filter((e) => e.ownerId === options.ownerId);
     if (options?.visibility) evs = evs.filter((e) => e.visibility === options.visibility);
     if (options?.verificationStatus) evs = evs.filter((e) => e.verificationStatus === options.verificationStatus);
 
-    // Cross-persona privacy guard: private evidence is only visible to its owner, reviewer, or admin
+    // Cross-persona privacy guard: private evidence is only visible to owner, assigned reviewer, or programme admin
     evs = evs.filter((e) => {
       if (e.visibility === 'private') {
-        return e.ownerId === db.activeUserId || isReviewerOrAdmin;
+        return canActorAccessPrivateEvidence(actor, e, db.submissions);
       }
       return true;
     });
@@ -1901,7 +1898,7 @@ export class LocalDemoRepository implements DemoRepository {
     const cloned: Evidence[] = JSON.parse(JSON.stringify(evs));
     // DataUrl protection: do not expose raw file dataUrl to unauthorized personas
     for (const item of cloned) {
-      if (item.ownerId !== db.activeUserId && !isReviewerOrAdmin) {
+      if (!canActorAccessPrivateEvidence(actor, item, db.submissions)) {
         if (item.fileInfo?.dataUrl) {
           delete item.fileInfo.dataUrl;
         }
@@ -1913,23 +1910,19 @@ export class LocalDemoRepository implements DemoRepository {
   async getEvidence(evidenceId: string): Promise<Evidence | null> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isReviewerOrAdmin =
-      activeUser?.role === 'teacher' ||
-      activeUser?.role === 'facilitator' ||
-      activeUser?.role === 'platform_admin' ||
-      activeUser?.role === 'institution_admin';
+    const actor = activeUser ? { id: activeUser.id, role: activeUser.role } : null;
 
     const ev = db.evidence.find((e) => e.id === evidenceId);
     if (!ev) return null;
 
-    // Cross-persona privacy guard: private evidence is not accessible to unauthorized participants
-    if (ev.visibility === 'private' && ev.ownerId !== db.activeUserId && !isReviewerOrAdmin) {
+    // Cross-persona privacy guard: private evidence is not accessible to unauthorized personas
+    if (ev.visibility === 'private' && !canActorAccessPrivateEvidence(actor, ev, db.submissions)) {
       return null;
     }
 
     const cloned: Evidence = JSON.parse(JSON.stringify(ev));
     // DataUrl protection: do not expose raw file dataUrl to unauthorized personas
-    if (cloned.ownerId !== db.activeUserId && !isReviewerOrAdmin) {
+    if (!canActorAccessPrivateEvidence(actor, cloned, db.submissions)) {
       if (cloned.fileInfo?.dataUrl) {
         delete cloned.fileInfo.dataUrl;
       }
@@ -1991,10 +1984,20 @@ export class LocalDemoRepository implements DemoRepository {
     severity?: ModerationSeverity;
   }): Promise<ModerationCase> {
     const db = this.getDb();
+
+    // 1. Require reporterId === activeUserId
+    if (!params.reporterId || params.reporterId !== db.activeUserId) {
+      throw new Error(
+        `Unauthorized: reporterId (${params.reporterId}) must match the active session persona (${db.activeUserId}).`
+      );
+    }
+
     const reporter = db.users.find((u) => u.id === params.reporterId);
     if (!reporter) {
       throw new Error(`Reporter user ${params.reporterId} not found`);
     }
+
+    const actor = { id: reporter.id, role: reporter.role };
 
     const trimmedReason = params.reason?.trim();
     if (!trimmedReason || trimmedReason.length < 3) {
@@ -2007,15 +2010,47 @@ export class LocalDemoRepository implements DemoRepository {
       if (!ev) {
         throw new Error(`Evidence item ${params.targetId} not found`);
       }
-      targetSummary = `Evidence: "${ev.title}" (owner: ${ev.ownerName})`;
+
+      // Reject UHV-linked evidence
+      if (ev.assignmentId) {
+        const asg = db.assignments.find((a) => a.id === ev.assignmentId);
+        if (asg && this.isUhvAssignment(asg, db)) {
+          throw new Error('Private UHV reflections and UHV-linked records cannot be reported or shared.');
+        }
+      }
+
+      // Verify reporter can access private target
+      if (ev.visibility === 'private' && !canActorAccessPrivateEvidence(actor, ev, db.submissions)) {
+        throw new Error('Unauthorized: cannot report private evidence not accessible to you.');
+      }
+
+      // Avoid leaking private target details in moderation records
+      targetSummary =
+        ev.visibility === 'private'
+          ? `Private evidence item ${ev.id}`
+          : `Evidence: "${ev.title}" (owner: ${ev.ownerName})`;
     } else if (params.targetType === 'submission') {
       const sub = db.submissions.find((s) => s.id === params.targetId);
       if (!sub) {
         throw new Error(`Submission ${params.targetId} not found`);
       }
+
+      // Reject UHV-linked submissions
       if (this.isUhvSubmission(sub, db)) {
         throw new Error('Private UHV reflections are protected and cannot be reported or shared.');
       }
+
+      // Verify reporter can access target submission
+      const canAccessSub =
+        sub.userId === db.activeUserId ||
+        sub.reviewerId === db.activeUserId ||
+        actor.role === 'programme_manager' ||
+        actor.role === 'platform_admin';
+
+      if (!canAccessSub) {
+        throw new Error('Unauthorized: cannot report submission not accessible to you.');
+      }
+
       const asg = db.assignments.find((a) => a.id === sub.assignmentId);
       targetSummary = `Submission for: "${asg?.title || sub.assignmentId}" (user: ${sub.userId})`;
     } else {
@@ -6243,13 +6278,58 @@ export class LocalDemoRepository implements DemoRepository {
   // Moderation
   async getModerationCases(): Promise<ModerationCase[]> {
     const db = this.getDb();
-    return JSON.parse(JSON.stringify(db.moderationCases));
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const actor = activeUser ? { id: activeUser.id, role: activeUser.role } : null;
+
+    const cases: ModerationCase[] = JSON.parse(JSON.stringify(db.moderationCases || []));
+
+    // Avoid leaking private target details in moderation records visible to unauthorized personas
+    for (const c of cases) {
+      if (c.targetType === 'evidence') {
+        const ev = db.evidence.find((e) => e.id === c.targetId);
+        if (
+          ev &&
+          ev.visibility === 'private' &&
+          !canActorAccessPrivateEvidence(actor, ev, db.submissions) &&
+          c.reporterId !== db.activeUserId
+        ) {
+          c.notes = 'Protected private evidence under review.';
+        }
+      } else if (c.targetType === 'contribution') {
+        const sub = db.submissions.find((s) => s.id === c.targetId);
+        if (sub) {
+          const canAccessSub =
+            sub.userId === db.activeUserId ||
+            sub.reviewerId === db.activeUserId ||
+            actor?.role === 'programme_manager' ||
+            actor?.role === 'platform_admin' ||
+            c.reporterId === db.activeUserId;
+          if (!canAccessSub) {
+            c.notes = 'Protected submission under review.';
+          }
+        }
+      }
+    }
+
+    return cases;
   }
 
   async updateModerationCase(caseId: string, update: Partial<ModerationCase>): Promise<ModerationCase> {
     const db = this.getDb();
     const c = db.moderationCases.find((m) => m.id === caseId);
     if (!c) throw new Error(`Moderation case ${caseId} not found`);
+
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isStaffOrAdmin =
+      activeUser?.role === 'platform_admin' ||
+      activeUser?.role === 'programme_manager' ||
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator';
+
+    // Allow update if caller is staff/admin OR if active persona is updating with reviewerId
+    if (!isStaffOrAdmin && update.reviewerId !== activeUser?.id && c.reviewerId !== activeUser?.id) {
+      throw new Error('Unauthorized: only moderation reviewers or administrators may update moderation cases.');
+    }
 
     Object.assign(c, update, { updatedAt: new Date().toISOString() });
     this.saveDb(db);

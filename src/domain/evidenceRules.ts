@@ -32,20 +32,61 @@ export interface EvidenceAccessActor {
   role: string;
 }
 
+export interface LinkedSubmissionInfo {
+  evidenceIds: string[];
+  reviewerId?: string;
+  userId?: string;
+  assignmentId?: string;
+}
+
+export interface EvidenceAccessItem {
+  id?: string;
+  ownerId: string;
+  visibility?: string;
+  assignmentId?: string;
+}
+
 /**
- * Evaluates whether an actor can access private evidence.
- * Preserves owner, reviewer (teacher, facilitator), and admin boundaries.
+ * Evaluates whether an actor can access a private evidence record.
+ * In accordance with Review Additions 3 and V2 evidence rules:
+ * Permits ONLY:
+ * 1. Evidence owner (actor.id === evidence.ownerId)
+ * 2. Assigned reviewer (actor.id === linkedSubmission.reviewerId for a submission referencing this evidence)
+ * 3. Programme administrator or platform admin ('programme_manager' | 'platform_admin')
+ * Blanket teacher, facilitator, and institution_admin access is strictly disallowed.
  */
 export function canActorAccessPrivateEvidence(
   actor: EvidenceAccessActor | null | undefined,
-  evidenceOwnerId: string
+  evidenceOrOwnerId: string | EvidenceAccessItem,
+  submissions: LinkedSubmissionInfo[] = []
 ): boolean {
   if (!actor) return false;
-  if (actor.id === evidenceOwnerId) return true;
-  return (
-    actor.role === 'teacher' ||
-    actor.role === 'facilitator' ||
-    actor.role === 'platform_admin' ||
-    actor.role === 'institution_admin'
-  );
+
+  const ownerId = typeof evidenceOrOwnerId === 'string' ? evidenceOrOwnerId : evidenceOrOwnerId.ownerId;
+  const evidenceId = typeof evidenceOrOwnerId === 'string' ? undefined : evidenceOrOwnerId.id;
+  const assignmentId = typeof evidenceOrOwnerId === 'string' ? undefined : evidenceOrOwnerId.assignmentId;
+
+  // 1. Evidence owner has access
+  if (actor.id === ownerId) {
+    return true;
+  }
+
+  // 2. Explicit administrator access (programme_manager or platform_admin)
+  if (actor.role === 'programme_manager' || actor.role === 'platform_admin') {
+    return true;
+  }
+
+  // 3. Assigned reviewer access via linked submission
+  if (submissions && submissions.length > 0) {
+    const isAssigned = submissions.some((s) => {
+      if (s.reviewerId !== actor.id) return false;
+      if (evidenceId && s.evidenceIds && s.evidenceIds.includes(evidenceId)) return true;
+      if (assignmentId && s.assignmentId === assignmentId && s.userId === ownerId) return true;
+      return false;
+    });
+    if (isAssigned) return true;
+  }
+
+  // Blanket access denied for other roles (unrelated teachers, facilitators, institution admins, peers)
+  return false;
 }

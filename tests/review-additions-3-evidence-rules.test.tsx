@@ -77,7 +77,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       expect(retrieved?.visibility).toBe('private');
     });
 
-    it('enforces visibility boundaries: owner, teacher, facilitator, admin can view private evidence, peer cannot', async () => {
+    it('enforces visibility boundaries: owner, assigned reviewer, admin can view private evidence, unrelated teacher/facilitator cannot', async () => {
       // Create private evidence owned by Aarav
       const ev = await demoRepository.addEvidence({
         ownerId: 'user_aarav',
@@ -108,37 +108,96 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       await demoRepository.switchUser('user_priya');
       const priyaEv = await demoRepository.getEvidence(ev.id);
       expect(priyaEv).toBeNull();
-
       const priyaList = await demoRepository.getEvidenceList();
       expect(priyaList.some((e) => e.id === ev.id)).toBe(false);
 
-      // 3. Teacher (Kavita) CAN access private evidence (reviewer boundary)
+      // 3. Unrelated teacher (Kavita) cannot access private evidence before assignment
       await demoRepository.switchUser('user_kavita');
-      const teacherEv = await demoRepository.getEvidence(ev.id);
-      expect(teacherEv).not.toBeNull();
-      expect(teacherEv?.id).toBe(ev.id);
+      const unassignedTeacherEv = await demoRepository.getEvidence(ev.id);
+      expect(unassignedTeacherEv).toBeNull();
+      const teacherListBefore = await demoRepository.getEvidenceList();
+      expect(teacherListBefore.some((e) => e.id === ev.id)).toBe(false);
 
-      // 4. Facilitator (Rohan) CAN access private evidence (reviewer boundary)
+      // 4. Unrelated facilitator (Rohan) CANNOT access private evidence
       await demoRepository.switchUser('user_rohan');
       const facilitatorEv = await demoRepository.getEvidence(ev.id);
-      expect(facilitatorEv).not.toBeNull();
-      expect(facilitatorEv?.id).toBe(ev.id);
+      expect(facilitatorEv).toBeNull();
+      const facilitatorList = await demoRepository.getEvidenceList();
+      expect(facilitatorList.some((e) => e.id === ev.id)).toBe(false);
 
       // 5. Admin (user_admin) CAN access private evidence
       await demoRepository.switchUser('user_admin');
       const adminEv = await demoRepository.getEvidence(ev.id);
       expect(adminEv).not.toBeNull();
       expect(adminEv?.id).toBe(ev.id);
+
+      // Now create a submission linking this evidence assigned to teacher Kavita
+      await demoRepository.switchUser('user_aarav');
+      const sub = await demoRepository.submitAssignment({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Crossroad delay analysis with linked evidence.',
+        evidenceIds: [ev.id],
+      });
+      // Assign reviewer to Kavita
+      const db = PersistenceService.loadDatabase();
+      const foundSub = db.submissions.find((s) => s.id === sub.id);
+      if (foundSub) {
+        foundSub.reviewerId = 'user_kavita';
+        PersistenceService.saveDatabase(db);
+      }
+
+      // 6. Assigned reviewer (Kavita) now CAN access private evidence
+      await demoRepository.switchUser('user_kavita');
+      const assignedTeacherEv = await demoRepository.getEvidence(ev.id);
+      expect(assignedTeacherEv).not.toBeNull();
+      expect(assignedTeacherEv?.id).toBe(ev.id);
+      const teacherListAfter = await demoRepository.getEvidenceList();
+      expect(teacherListAfter.some((e) => e.id === ev.id)).toBe(true);
+
+      // 7. Unrelated facilitator (Rohan) STILL cannot access
+      await demoRepository.switchUser('user_rohan');
+      expect(await demoRepository.getEvidence(ev.id)).toBeNull();
     });
 
     it('canActorAccessPrivateEvidence helper matches domain boundary specifications', () => {
+      // Owner has access
       expect(canActorAccessPrivateEvidence({ id: 'u1', role: 'participant' }, 'u1')).toBe(true);
+      expect(canActorAccessPrivateEvidence({ id: 'u1', role: 'participant' }, { ownerId: 'u1' })).toBe(true);
+
+      // Unrelated participant does not have access
       expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'participant' }, 'u1')).toBe(false);
-      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'teacher' }, 'u1')).toBe(true);
-      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'facilitator' }, 'u1')).toBe(true);
+
+      // Blanket access denied for teacher, facilitator, institution_admin
+      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'teacher' }, 'u1')).toBe(false);
+      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'facilitator' }, 'u1')).toBe(false);
+      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'institution_admin' }, 'u1')).toBe(false);
+
+      // Programme manager and platform admin have access
+      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'programme_manager' }, 'u1')).toBe(true);
       expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'platform_admin' }, 'u1')).toBe(true);
-      expect(canActorAccessPrivateEvidence({ id: 'u2', role: 'institution_admin' }, 'u1')).toBe(true);
+
+      // Assigned reviewer via linked submission has access
+      expect(
+        canActorAccessPrivateEvidence(
+          { id: 'u_reviewer', role: 'teacher' },
+          { id: 'ev_01', ownerId: 'u1' },
+          [{ evidenceIds: ['ev_01'], reviewerId: 'u_reviewer' }]
+        )
+      ).toBe(true);
+
+      // Unassigned reviewer does not have access
+      expect(
+        canActorAccessPrivateEvidence(
+          { id: 'u_other_teacher', role: 'teacher' },
+          { id: 'ev_01', ownerId: 'u1' },
+          [{ evidenceIds: ['ev_01'], reviewerId: 'u_reviewer' }]
+        )
+      ).toBe(false);
+
+      // Null or undefined actor
       expect(canActorAccessPrivateEvidence(null, 'u1')).toBe(false);
+      expect(canActorAccessPrivateEvidence(undefined, 'u1')).toBe(false);
     });
   });
 
@@ -161,7 +220,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('rejects reporting private UHV reflections into civic moderation queue', async () => {
-      // Create UHV submission
+      // Create UHV submission as user_meera
       await demoRepository.switchUser('user_meera');
       const uhvSub = await demoRepository.submitAssignment({
         assignmentId: 'asg_uhv_08',
@@ -170,9 +229,10 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
         evidenceIds: [],
       });
 
+      // Active user reporting UHV submission
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_aarav',
+          reporterId: 'user_meera',
           targetType: 'submission',
           targetId: uhvSub.id,
           reason: 'Trying to flag personal inquiry',
@@ -206,7 +266,67 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
   });
 
   describe('5. Civic Reporting Path & Moderation Queue', () => {
+    it('requires reporterId to match active session persona', async () => {
+      await demoRepository.switchUser('user_aarav');
+      await expect(
+        demoRepository.reportEvidenceOrSubmission({
+          reporterId: 'user_priya',
+          targetType: 'evidence',
+          targetId: 'ev_aarav_traffic_count_01',
+          reason: 'Mismatch reporter test',
+        })
+      ).rejects.toThrow(/reporterId \(user_priya\) must match the active session persona \(user_aarav\)/i);
+    });
+
+    it('verifies reporter can access target: unauthorized persona cannot report another person private evidence or submission', async () => {
+      // Aarav creates private evidence
+      await demoRepository.switchUser('user_aarav');
+      const privateEv = await demoRepository.addEvidence({
+        ownerId: 'user_aarav',
+        ownerName: 'Aarav Sharma',
+        type: 'observation',
+        title: 'Secret Traffic Count',
+        description: 'Private count data',
+        source: 'Observation',
+        visibility: 'private',
+        verificationStatus: 'under_review',
+        tags: ['Private'],
+      });
+
+      // Priya attempts to report Aarav's private evidence
+      await demoRepository.switchUser('user_priya');
+      await expect(
+        demoRepository.reportEvidenceOrSubmission({
+          reporterId: 'user_priya',
+          targetType: 'evidence',
+          targetId: privateEv.id,
+          reason: 'Trying to report evidence I cannot access',
+        })
+      ).rejects.toThrow(/cannot report private evidence not accessible to you/i);
+
+      // Aarav creates private submission
+      await demoRepository.switchUser('user_aarav');
+      const privateSub = await demoRepository.submitAssignment({
+        assignmentId: 'asg_obs_03',
+        userId: 'user_aarav',
+        content: 'Confidential submission text',
+        evidenceIds: [privateEv.id],
+      });
+
+      // Priya attempts to report Aarav's submission
+      await demoRepository.switchUser('user_priya');
+      await expect(
+        demoRepository.reportEvidenceOrSubmission({
+          reporterId: 'user_priya',
+          targetType: 'submission',
+          targetId: privateSub.id,
+          reason: 'Trying to report submission I cannot access',
+        })
+      ).rejects.toThrow(/cannot report submission not accessible to you/i);
+    });
+
     it('creates a moderation case when reporting a civic evidence item', async () => {
+      await demoRepository.switchUser('user_priya');
       const modCase = await demoRepository.reportEvidenceOrSubmission({
         reporterId: 'user_priya',
         targetType: 'evidence',
@@ -231,7 +351,8 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       expect(found?.status).toBe('open');
     });
 
-    it('creates a moderation case when reporting a civic submission', async () => {
+    it('creates a moderation case when reporting a civic submission by legitimate owner', async () => {
+      await demoRepository.switchUser('user_aarav');
       // Aarav submits civic assignment
       const sub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
@@ -240,25 +361,67 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
 
+      // Aarav legitimately reports/flags his submission
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_priya',
+        reporterId: 'user_aarav',
         targetType: 'submission',
         targetId: sub.id,
-        reason: 'Reported observation contains unsubstantiated claims about signal malfunction.',
+        reason: 'Observer requesting self-flag and review for erroneous speed estimates.',
         severity: 'high',
       });
 
       expect(modCase.status).toBe('open');
       expect(modCase.targetId).toBe(sub.id);
       expect(modCase.severity).toBe('high');
-      expect(modCase.reporterId).toBe('user_priya');
-      expect(modCase.notes).toContain('priya.s');
+      expect(modCase.reporterId).toBe('user_aarav');
+      expect(modCase.notes).toContain('aarav.s');
+    });
+
+    it('avoids leaking private target details in moderation records visible to unauthorized personas', async () => {
+      await demoRepository.switchUser('user_aarav');
+      const privateEv = await demoRepository.addEvidence({
+        ownerId: 'user_aarav',
+        ownerName: 'Aarav Sharma',
+        type: 'observation',
+        title: 'Sensitive Private Field Survey',
+        description: 'Contains sensitive local residential names',
+        source: 'Log',
+        visibility: 'private',
+        verificationStatus: 'under_review',
+        tags: ['Private'],
+      });
+
+      // Aarav reports his own private evidence
+      const modCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_aarav',
+        targetType: 'evidence',
+        targetId: privateEv.id,
+        reason: 'Self-flagging private file for redaction',
+      });
+
+      // Ensure raw case note sanitized target summary (does not leak "Sensitive Private Field Survey")
+      expect(modCase.notes).not.toContain('Sensitive Private Field Survey');
+      expect(modCase.notes).toContain(`Private evidence item ${privateEv.id}`);
+
+      // Priya (unrelated persona) retrieves moderation cases: notes are redacted
+      await demoRepository.switchUser('user_priya');
+      const priyaCases = await demoRepository.getModerationCases();
+      const priyaView = priyaCases.find((c) => c.id === modCase.id);
+      expect(priyaView?.notes).toBe('Protected private evidence under review.');
+
+      // Admin retrieves moderation cases: notes and reason are visible
+      await demoRepository.switchUser('user_admin');
+      const adminCases = await demoRepository.getModerationCases();
+      const adminView = adminCases.find((c) => c.id === modCase.id);
+      expect(adminView?.reason).toBe('Self-flagging private file for redaction');
+      expect(adminView?.notes).toContain(`Private evidence item ${privateEv.id}`);
     });
 
     it('requires at least 3 characters for reporting reason', async () => {
+      await demoRepository.switchUser('user_aarav');
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_priya',
+          reporterId: 'user_aarav',
           targetType: 'evidence',
           targetId: 'ev_aarav_traffic_count_01',
           reason: 'ab',
@@ -270,9 +433,9 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       await demoRepository.switchUser('user_admin');
       await useAuthStore.getState().initialize();
 
-      // Report an evidence item
+      // Report an evidence item as user_admin
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_priya',
+        reporterId: 'user_admin',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Potential privacy violation: pedestrian faces unblurred in background photo.',
@@ -290,7 +453,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
         expect(screen.getByText(modCase.id)).toBeInTheDocument();
       });
       expect(screen.getByText(/Potential privacy violation: pedestrian faces unblurred in background photo\./i)).toBeInTheDocument();
-      expect(screen.getAllByText(/user_priya/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/user_admin/i).length).toBeGreaterThanOrEqual(1);
 
       // Begin Review action for the open case
       const beginReviewBtns = screen.getAllByRole('button', { name: /Begin Review/i });
@@ -300,6 +463,22 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
         const updated = (await demoRepository.getModerationCases()).find((c) => c.id === modCase.id);
         expect(updated?.status).toBe('under_review');
       });
+    });
+
+    it('guards updateModerationCase against unauthorized non-staff users', async () => {
+      await demoRepository.switchUser('user_admin');
+      const modCase = await demoRepository.reportEvidenceOrSubmission({
+        reporterId: 'user_admin',
+        targetType: 'evidence',
+        targetId: 'ev_aarav_traffic_count_01',
+        reason: 'Test moderation update guard',
+      });
+
+      // Switch to unprivileged user Priya
+      await demoRepository.switchUser('user_priya');
+      await expect(
+        demoRepository.updateModerationCase(modCase.id, { status: 'actioned' })
+      ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
     });
   });
 
