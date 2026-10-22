@@ -36,7 +36,13 @@ import {
   ALLOWED_EVIDENCE_FORMAT_LABELS,
   ALLOWED_EVIDENCE_MIME_TYPES,
   MAX_EVIDENCE_FILE_BYTES,
+  MAX_BINARY_ATTACHMENT_BYTES,
+  BINARY_ATTACHMENT_SIZE_LABEL,
+  ALLOWED_BINARY_FORMAT_LABELS,
+  validateEvidenceAttachmentFile,
 } from '../../domain/evidenceRules';
+import { EvidenceAttachmentStore } from '../../services/evidenceAttachmentStore';
+import { generateId } from '../../utils/id';
 
 const buildSubmissionSchema = (isUhv: boolean) =>
   z.object({
@@ -100,6 +106,8 @@ export const SubmitAssignmentPage: React.FC = () => {
     type: string;
     dataUrl?: string;
   } | null>(null);
+  const [selectedRawBlob, setSelectedRawBlob] = useState<Blob | File | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isCreatingEvidence, setIsCreatingEvidence] = useState(false);
 
@@ -334,38 +342,79 @@ export const SubmitAssignmentPage: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setFileError(null);
+    if (previewBlobUrl) {
+      URL.revokeObjectURL(previewBlobUrl);
+      setPreviewBlobUrl(null);
+    }
     if (!file) {
       setSelectedFile(null);
+      setSelectedRawBlob(null);
       return;
     }
 
-    const allowedMime = [...ALLOWED_EVIDENCE_MIME_TYPES] as string[];
-    if (!allowedMime.includes(file.type)) {
-      setFileError(`Unsupported file type. Please select a ${ALLOWED_EVIDENCE_FORMAT_LABELS} file.`);
-      setSelectedFile(null);
-      return;
+    // Check file format & size limits for IndexedDB binary storage (or legacy DataURL fallback)
+    const validation = validateEvidenceAttachmentFile(file);
+    if (!validation.valid) {
+      // Legacy CSV / TXT / WebP check
+      const isLegacyFormat = ['image/webp', 'text/plain', 'text/csv'].includes(file.type);
+      if (isLegacyFormat) {
+        if (file.size > MAX_EVIDENCE_FILE_BYTES) {
+          setFileError(
+            `File size (${(file.size / 1024).toFixed(1)} KB) exceeds conservative browser storage limit of 250 KB. Please select a smaller file.`
+          );
+          setSelectedFile(null);
+          setSelectedRawBlob(null);
+          return;
+        }
+      } else {
+        setFileError(validation.error || `Unsupported file type. Please select a ${ALLOWED_BINARY_FORMAT_LABELS} file.`);
+        setSelectedFile(null);
+        setSelectedRawBlob(null);
+        return;
+      }
     }
 
-    const maxBytes = MAX_EVIDENCE_FILE_BYTES; // 250 KB conservative limit for durable browser storage
-    if (file.size > maxBytes) {
-      setFileError(`File size (${(file.size / 1024).toFixed(1)} KB) exceeds conservative browser storage limit of 250 KB. Please select a smaller file.`);
-      setSelectedFile(null);
-      return;
+    setSelectedRawBlob(file);
+    let objectUrl: string | undefined = undefined;
+    if (typeof window !== 'undefined' && window.URL && typeof window.URL.createObjectURL === 'function') {
+      try {
+        objectUrl = window.URL.createObjectURL(file);
+        setPreviewBlobUrl(objectUrl);
+      } catch {
+        // fallback
+      }
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setSelectedFile({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        dataUrl: typeof reader.result === 'string' ? reader.result : undefined,
-      });
-    };
-    reader.onerror = () => {
-      setFileError('Failed to read file locally.');
-    };
-    reader.readAsDataURL(file);
+    setSelectedFile({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      dataUrl: objectUrl,
+    });
+  };
+
+  const handleUseOfflineCleanupExample = () => {
+    setNewEvTitle('Community Park & Storm Drain Local Cleanup Photo');
+    setNewEvDesc(
+      'Field photo captured during offline youth-led community cleanup at Mansarovar Sector 3 park and storm drain, collecting 42 kg of segregated plastic waste.'
+    );
+    setNewEvType('image');
+    setNewEvSource('Offline Community Action Field Log');
+    setNewEvLocation('Mansarovar Sector 3 Public Park & Drain, Jaipur');
+    setNewEvTime('Offline Fieldwork (Sunday 7:30 AM - 9:30 AM)');
+
+    // Create a mock binary blob (approx 2.4 MB) to demonstrate truthful browser-local IndexedDB persistence
+    const mockBlob = new Blob(
+      ['PNG_MOCK_CLEANUP_PHOTO_BINARY_DATA_PAYLOAD'.repeat(60000)],
+      { type: 'image/png' }
+    );
+    setSelectedRawBlob(mockBlob);
+    setSelectedFile({
+      name: 'fictional_local_cleanup_photo.png',
+      size: 2457600,
+      type: 'image/png',
+    });
+    setFileError(null);
   };
 
   const handleCreateMockEvidence = async (e: React.FormEvent) => {
@@ -374,6 +423,16 @@ export const SubmitAssignmentPage: React.FC = () => {
 
     setIsCreatingEvidence(true);
     try {
+      let blobKey: string | undefined = undefined;
+      if (selectedRawBlob && selectedFile) {
+        blobKey = generateId('blob_ev');
+        await EvidenceAttachmentStore.saveAttachment(blobKey, selectedRawBlob, {
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type,
+          fileSize: selectedFile.size,
+        });
+      }
+
       const created = await demoRepository.addEvidence({
         ownerId: currentUser.id,
         ownerName: currentUser.name,
@@ -392,13 +451,15 @@ export const SubmitAssignmentPage: React.FC = () => {
               name: selectedFile.name,
               size: selectedFile.size,
               type: selectedFile.type,
-              dataUrl: selectedFile.dataUrl,
-              demoLabel: 'DEMO local browser file (no remote server upload)',
+              blobKey,
+              storageType: 'indexeddb',
+              demoLabel: 'Browser-local IndexedDB binary attachment (DEMO)',
             }
           : undefined,
         metadata: {
           isDemoSimulation: true,
-          demoNotice: 'Single-browser simulation - stored in browser storage',
+          demoNotice: 'Single-browser simulation - stored in browser storage (IndexedDB)',
+          storageEngine: 'IndexedDB (Browser-Local)',
           ...(selectedFile
             ? { fileName: selectedFile.name, fileSize: selectedFile.size }
             : { demoDescriptionOnly: true }),
@@ -412,6 +473,11 @@ export const SubmitAssignmentPage: React.FC = () => {
       setNewEvTitle('');
       setNewEvDesc('');
       setSelectedFile(null);
+      setSelectedRawBlob(null);
+      if (previewBlobUrl) {
+        URL.revokeObjectURL(previewBlobUrl);
+        setPreviewBlobUrl(null);
+      }
       setFileError(null);
       setIsAddEvidenceModalOpen(false);
     } catch (err: any) {
@@ -974,7 +1040,7 @@ export const SubmitAssignmentPage: React.FC = () => {
             </label>
 
             {/* Concise Consent & Limit Warning Next to Picker */}
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-1">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-1.5">
               <div className="flex items-center gap-1.5 font-bold text-amber-900">
                 <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
                 <span>Consent & File Limits</span>
@@ -985,30 +1051,56 @@ export const SubmitAssignmentPage: React.FC = () => {
               <p className="text-[11px] text-slate-600 leading-relaxed">
                 Allowed formats: <strong>{ALLOWED_EVIDENCE_FORMAT_LABELS}</strong>. Actual file limit: <strong>250 KB</strong> (durable browser storage limit).
               </p>
+              <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950 space-y-1">
+                <span className="font-bold text-emerald-900 block">
+                  Browser-Local IndexedDB Binary Attachment Store
+                </span>
+                <span className="text-slate-600 block">
+                  Accepts <strong>{ALLOWED_BINARY_FORMAT_LABELS}</strong> up to <strong>{BINARY_ATTACHMENT_SIZE_LABEL}</strong>. Binary media is stored directly in your local browser IndexedDB, avoiding large localStorage data URLs.
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors">
                 <Upload className="w-3.5 h-3.5 text-slate-500" />
-                <span>Select Local File</span>
+                <span>Select Local File (JPEG, PNG, MP4, MP3, PDF)</span>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,text/csv"
+                  accept="image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp3,application/pdf,text/plain,text/csv"
                   onChange={handleFileChange}
                   className="sr-only"
                 />
               </label>
+
+              <button
+                type="button"
+                onClick={handleUseOfflineCleanupExample}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-800 transition-colors"
+                data-testid="btn-use-offline-cleanup-example"
+              >
+                <span>Use Offline Cleanup Photo Example</span>
+              </button>
 
               {selectedFile && (
                 <div className="flex items-center gap-2 p-1.5 px-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900">
                   <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   <span className="font-semibold truncate max-w-[180px]">{selectedFile.name}</span>
                   <span className="text-[10px] text-blue-700 shrink-0">
-                    ({(selectedFile.size / 1024).toFixed(1)} KB)
+                    {(selectedFile.size / (1024 * 1024) >= 1)
+                      ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+                      : `${(selectedFile.size / 1024).toFixed(1)} KB`}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setSelectedFile(null)}
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setSelectedRawBlob(null);
+                      if (previewBlobUrl) {
+                        URL.revokeObjectURL(previewBlobUrl);
+                        setPreviewBlobUrl(null);
+                      }
+                    }}
                     className="text-blue-500 hover:text-blue-700 ml-1"
                     aria-label="Remove selected file"
                   >
@@ -1026,6 +1118,20 @@ export const SubmitAssignmentPage: React.FC = () => {
                   alt="Local selected preview"
                   className="max-h-24 rounded border border-slate-300 object-cover"
                 />
+              </div>
+            )}
+
+            {selectedFile && selectedFile.type.startsWith('video/') && (
+              <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg inline-block">
+                <span className="text-[10px] text-slate-400 block mb-1">Local Video Attachment (MP4):</span>
+                <span className="text-xs text-slate-700 font-semibold">{selectedFile.name}</span>
+              </div>
+            )}
+
+            {selectedFile && selectedFile.type.startsWith('audio/') && (
+              <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg inline-block">
+                <span className="text-[10px] text-slate-400 block mb-1">Local Audio Attachment (MP3):</span>
+                <span className="text-xs text-slate-700 font-semibold">{selectedFile.name}</span>
               </div>
             )}
 

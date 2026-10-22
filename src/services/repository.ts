@@ -98,6 +98,38 @@ export interface DemoRepository {
   getEvidenceList(options?: { ownerId?: string; visibility?: string; verificationStatus?: string }): Promise<Evidence[]>;
   getEvidence(evidenceId: string): Promise<Evidence | null>;
   addEvidence(evidence: Omit<Evidence, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>): Promise<Evidence>;
+  getEvidenceAttachment(evidenceId: string): Promise<{
+    blobKey: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    blob: Blob;
+    blobUrl?: string | null;
+  } | null>;
+  attachCohortEvidence(params: {
+    mentorId: string;
+    cohortId: string;
+    participantIds: string[];
+    documentType: 'attendance_sheet' | 'completion_certificate';
+    title: string;
+    description: string;
+    auditNotes: string;
+    fileInfo?: {
+      name: string;
+      size: number;
+      type: string;
+      blobKey?: string;
+      dataUrl?: string;
+    };
+    assignmentId?: string;
+  }): Promise<{ evidenceItems: Evidence[]; auditRecord: import('../types/domain').CohortEvidenceAuditRecord }>;
+  reviewEvidence(params: {
+    evidenceId: string;
+    reviewerId: string;
+    status: 'verified' | 'revision_requested';
+    comment?: string;
+  }): Promise<Evidence>;
+  getCohortEvidenceAudits(cohortId?: string): Promise<import('../types/domain').CohortEvidenceAuditRecord[]>;
 
   // Assemblies & Deliberation
   getAssemblies(userId?: string): Promise<Assembly[]>;

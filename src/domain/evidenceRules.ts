@@ -3,7 +3,55 @@
  * Review Additions 3 and V2 Evidence Rules.
  */
 
-export const MAX_EVIDENCE_FILE_BYTES = 250 * 1024; // 250 KB conservative storage limit
+export const MAX_EVIDENCE_FILE_BYTES = 250 * 1024; // 250 KB conservative storage limit for inline DataURL
+
+// IndexedDB binary attachment limits (Change Plan v2 #10 / Review Additions #3)
+export const MAX_BINARY_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB reliable single-browser demo limit
+export const BINARY_ATTACHMENT_SIZE_LABEL = '10 MB';
+
+export const ALLOWED_BINARY_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'video/mp4',
+  'audio/mpeg',
+  'audio/mp3',
+  'application/pdf',
+] as const;
+
+export const ALLOWED_BINARY_FORMAT_LABELS = 'JPEG, PNG, MP4, MP3, PDF';
+
+export function isAllowedBinaryMimeType(mime: string): boolean {
+  if (!mime) return false;
+  const normalized = mime.toLowerCase();
+  return (
+    normalized === 'image/jpeg' ||
+    normalized === 'image/jpg' ||
+    normalized === 'image/png' ||
+    normalized === 'video/mp4' ||
+    normalized === 'audio/mpeg' ||
+    normalized === 'audio/mp3' ||
+    normalized === 'application/pdf'
+  );
+}
+
+export function validateEvidenceAttachmentFile(file: { name: string; size: number; type: string }): {
+  valid: boolean;
+  error?: string;
+} {
+  if (!isAllowedBinaryMimeType(file.type)) {
+    return {
+      valid: false,
+      error: `Unsupported file type (${file.type || 'unknown'}). Allowed formats: ${ALLOWED_BINARY_FORMAT_LABELS}.`,
+    };
+  }
+  if (file.size > MAX_BINARY_ATTACHMENT_BYTES) {
+    return {
+      valid: false,
+      error: `File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds browser-local demo attachment limit of ${BINARY_ATTACHMENT_SIZE_LABEL}.`,
+    };
+  }
+  return { valid: true };
+}
 
 export const ALLOWED_EVIDENCE_MIME_TYPES = [
   'image/jpeg',

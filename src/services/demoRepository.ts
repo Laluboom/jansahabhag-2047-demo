@@ -55,7 +55,10 @@ import {
   AllocationState,
   AllocationAuditRecord,
   AllocationStatus,
+  CohortEvidenceAuditRecord,
 } from '../types/domain';
+import { EvidenceAttachmentStore } from './evidenceAttachmentStore';
+import { MAX_BINARY_ATTACHMENT_BYTES } from '../domain/evidenceRules';
 import {
   buildAllocationState,
   canUserRsvpAllocation,
@@ -1901,11 +1904,14 @@ export class LocalDemoRepository implements DemoRepository {
     });
 
     const cloned: Evidence[] = JSON.parse(JSON.stringify(evs));
-    // DataUrl protection: do not expose raw file dataUrl to unauthorized personas
+    // Media protection: do not expose raw file dataUrl or blobKey to unauthorized personas
     for (const item of cloned) {
       if (!canActorAccessPrivateEvidence(actor, item, db.submissions)) {
         if (item.fileInfo?.dataUrl) {
           delete item.fileInfo.dataUrl;
+        }
+        if (item.fileInfo?.blobKey) {
+          delete item.fileInfo.blobKey;
         }
       }
     }
@@ -1926,13 +1932,49 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const cloned: Evidence = JSON.parse(JSON.stringify(ev));
-    // DataUrl protection: do not expose raw file dataUrl to unauthorized personas
+    // Media protection: do not expose raw file dataUrl or blobKey to unauthorized personas
     if (!canActorAccessPrivateEvidence(actor, cloned, db.submissions)) {
       if (cloned.fileInfo?.dataUrl) {
         delete cloned.fileInfo.dataUrl;
       }
+      if (cloned.fileInfo?.blobKey) {
+        delete cloned.fileInfo.blobKey;
+      }
     }
     return cloned;
+  }
+
+  async getEvidenceAttachment(evidenceId: string): Promise<{
+    blobKey: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    blob: Blob;
+    blobUrl?: string | null;
+  } | null> {
+    const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const actor = activeUser ? { id: activeUser.id, role: activeUser.role } : null;
+
+    const ev = db.evidence.find((e) => e.id === evidenceId);
+    if (!ev) return null;
+
+    // Access boundary check: only owner, assigned reviewer, programme_manager, or platform_admin
+    if (!canActorAccessPrivateEvidence(actor, ev, db.submissions)) {
+      throw new Error('Unauthorized: You do not have permission to access or download this evidence attachment.');
+    }
+
+    const blobKey = ev.fileInfo?.blobKey;
+    if (!blobKey) return null;
+
+    const attachment = await EvidenceAttachmentStore.getAttachment(blobKey);
+    if (!attachment) return null;
+
+    const blobUrl = await EvidenceAttachmentStore.getAttachmentBlobUrl(blobKey);
+    return {
+      ...attachment,
+      blobUrl,
+    };
   }
 
   async addEvidence(
@@ -1951,15 +1993,34 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
-    const maxFileBytes = 250 * 1024;
-    if (evidenceInput.fileInfo?.size && evidenceInput.fileInfo.size > maxFileBytes) {
-      throw new Error(
-        `File size (${Math.round(evidenceInput.fileInfo.size / 1024)} KB) exceeds durable browser storage limit of 250 KB.`
-      );
+    // Size limit & storage type validation
+    if (evidenceInput.fileInfo?.size) {
+      const isIndexedDb =
+        Boolean(evidenceInput.fileInfo.blobKey) ||
+        evidenceInput.fileInfo.storageType === 'indexeddb';
+
+      if (isIndexedDb) {
+        if (evidenceInput.fileInfo.size > MAX_BINARY_ATTACHMENT_BYTES) {
+          throw new Error(
+            `File size (${Math.round(evidenceInput.fileInfo.size / (1024 * 1024))} MB) exceeds single-browser demo attachment limit of 10 MB.`
+          );
+        }
+        // Avoid huge DataURLs in localStorage
+        if (evidenceInput.fileInfo.dataUrl) {
+          delete evidenceInput.fileInfo.dataUrl;
+        }
+      } else {
+        const maxFileBytes = 250 * 1024;
+        if (evidenceInput.fileInfo.size > maxFileBytes) {
+          throw new Error(
+            `File size (${Math.round(evidenceInput.fileInfo.size / 1024)} KB) exceeds durable browser storage limit of 250 KB.`
+          );
+        }
+      }
     }
 
     // Force newly created evidence to unverified/under_review for all personas.
-    // Mentors/teachers cannot self-mint verified evidence; verification must proceed via reviewSubmission.
+    // Mentors/teachers cannot self-mint verified evidence; verification must proceed via reviewSubmission or reviewEvidence.
     let verificationStatus: VerificationStatus = 'under_review';
     if (evidenceInput.verificationStatus === 'unverified') {
       verificationStatus = 'unverified';
@@ -1978,6 +2039,240 @@ export class LocalDemoRepository implements DemoRepository {
     db.evidence.push(newEvidence);
     this.saveDb(db);
     return JSON.parse(JSON.stringify(newEvidence));
+  }
+
+  // Teacher / Mentor path to attach cohort attendance sheet or certificate
+  async attachCohortEvidence(params: {
+    mentorId: string;
+    cohortId: string;
+    participantIds: string[];
+    documentType: 'attendance_sheet' | 'completion_certificate';
+    title: string;
+    description: string;
+    auditNotes: string;
+    fileInfo?: {
+      name: string;
+      size: number;
+      type: string;
+      blobKey?: string;
+      dataUrl?: string;
+    };
+    assignmentId?: string;
+  }): Promise<{ evidenceItems: Evidence[]; auditRecord: CohortEvidenceAuditRecord }> {
+    const db = this.getDb();
+    if (params.mentorId !== db.activeUserId) {
+      throw new Error('Unauthorized: mentorId must match the active session persona.');
+    }
+
+    const mentor = db.users.find((u) => u.id === params.mentorId);
+    if (!mentor) {
+      throw new Error(`Mentor user ${params.mentorId} not found.`);
+    }
+
+    if (
+      mentor.role !== 'teacher' &&
+      mentor.role !== 'facilitator' &&
+      mentor.role !== 'programme_manager' &&
+      mentor.role !== 'platform_admin'
+    ) {
+      throw new Error(
+        'Unauthorized: Only teachers, mentors, or administrators may attach cohort attendance sheets or certificates.'
+      );
+    }
+
+    if (!params.participantIds || params.participantIds.length === 0) {
+      throw new Error('At least one eligible cohort participant must be specified.');
+    }
+
+    if (!params.auditNotes || params.auditNotes.trim().length < 3) {
+      throw new Error('Audit record notes must contain at least 3 characters.');
+    }
+
+    const now = new Date().toISOString();
+    const auditId = generateId('audit_cohort');
+    const createdEvs: Evidence[] = [];
+
+    for (const pId of params.participantIds) {
+      const participant = db.users.find((u) => u.id === pId);
+      if (!participant) continue;
+
+      // Clean fileInfo to avoid storing huge DataURLs in localStorage
+      let cleanFileInfo = undefined;
+      if (params.fileInfo) {
+        cleanFileInfo = {
+          name: params.fileInfo.name,
+          size: params.fileInfo.size,
+          type: params.fileInfo.type,
+          blobKey: params.fileInfo.blobKey,
+          storageType: 'indexeddb' as const,
+          demoLabel: 'Cohort verified record (IndexedDB browser-local)',
+        };
+      }
+
+      const newEv: Evidence = {
+        id: generateId('ev_cohort'),
+        ownerId: participant.id,
+        ownerName: participant.name,
+        type: params.documentType === 'attendance_sheet' ? 'attendance' : 'document',
+        title: params.title.trim(),
+        description: params.description.trim(),
+        source: `Cohort Mentor Record: ${mentor.name}`,
+        visibility: 'private', // private by default to protect individual student data
+        verificationStatus: 'under_review', // Review status, NOT automatic verification!
+        tags: [
+          'Cohort',
+          params.documentType === 'attendance_sheet' ? 'Attendance' : 'Certificate',
+          params.cohortId,
+        ],
+        assignmentId: params.assignmentId,
+        fileInfo: cleanFileInfo,
+        metadata: {
+          isCohortAttachment: true,
+          cohortId: params.cohortId,
+          documentType: params.documentType,
+          attachedByMentorId: mentor.id,
+          attachedByMentorName: mentor.name,
+          attachedAt: now,
+          auditNotes: params.auditNotes.trim(),
+          auditRecordId: auditId,
+          reviewStatus: 'pending_review',
+        },
+        schemaVersion: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      db.evidence.push(newEv);
+      createdEvs.push(newEv);
+    }
+
+    const auditRecord: CohortEvidenceAuditRecord = {
+      id: auditId,
+      timestamp: now,
+      mentorId: mentor.id,
+      mentorName: mentor.name,
+      cohortId: params.cohortId,
+      documentType: params.documentType,
+      participantCount: params.participantIds.length,
+      participantIds: params.participantIds,
+      evidenceIds: createdEvs.map((e) => e.id),
+      auditNotes: params.auditNotes.trim(),
+      schemaVersion: 1,
+      createdAt: now,
+    };
+
+    if (!db.cohortEvidenceAudits) {
+      db.cohortEvidenceAudits = [];
+    }
+    db.cohortEvidenceAudits.push(auditRecord);
+
+    this.saveDb(db);
+    return {
+      evidenceItems: JSON.parse(JSON.stringify(createdEvs)),
+      auditRecord: JSON.parse(JSON.stringify(auditRecord)),
+    };
+  }
+
+  // Review & verify evidence record (by reviewer/teacher/mentor)
+  async reviewEvidence(params: {
+    evidenceId: string;
+    reviewerId: string;
+    status: 'verified' | 'revision_requested';
+    comment?: string;
+  }): Promise<Evidence> {
+    const db = this.getDb();
+    if (params.reviewerId !== db.activeUserId) {
+      throw new Error('Unauthorized: reviewerId must match the active session persona.');
+    }
+
+    const reviewer = db.users.find((u) => u.id === params.reviewerId);
+    if (!reviewer) {
+      throw new Error(`Reviewer user ${params.reviewerId} not found.`);
+    }
+
+    if (
+      reviewer.role !== 'teacher' &&
+      reviewer.role !== 'facilitator' &&
+      reviewer.role !== 'programme_manager' &&
+      reviewer.role !== 'platform_admin'
+    ) {
+      throw new Error(
+        'Unauthorized: Only teachers, mentors, or administrators may review and verify evidence.'
+      );
+    }
+
+    const ev = db.evidence.find((e) => e.id === params.evidenceId);
+    if (!ev) {
+      throw new Error(`Evidence item ${params.evidenceId} not found.`);
+    }
+
+    // Mentors cannot review their own evidence records
+    if (ev.ownerId === reviewer.id) {
+      throw new Error('Unauthorized: Mentors cannot review their own evidence records.');
+    }
+
+    const now = new Date().toISOString();
+    ev.verificationStatus = params.status === 'verified' ? 'verified' : 'under_review';
+    if (!ev.metadata) ev.metadata = {};
+    ev.metadata.reviewStatus = params.status;
+    ev.metadata.reviewedBy = reviewer.name;
+    ev.metadata.reviewedById = reviewer.id;
+    ev.metadata.reviewedAt = now;
+    if (params.comment) {
+      ev.metadata.reviewerComment = params.comment;
+    }
+    ev.updatedAt = now;
+
+    // If verified, award +1 Observation credit to participant if not already awarded
+    if (params.status === 'verified') {
+      const existingCredit = db.credits.find(
+        (c) => c.sourceType === 'evidence' && c.sourceId === ev.id && c.status === 'Verified'
+      );
+      if (!existingCredit) {
+        db.credits.push({
+          id: generateId('tx'),
+          userId: ev.ownerId,
+          amount: 1,
+          dimension: 'Observation',
+          reason: `Verified field evidence record (${ev.title.slice(0, 40)}) reviewed by ${reviewer.name}`,
+          sourceType: 'evidence',
+          sourceId: ev.id,
+          status: 'Verified',
+          createdAt: now,
+          schemaVersion: 1,
+        });
+
+        const owner = db.users.find((u) => u.id === ev.ownerId);
+        if (owner) {
+          owner.totalCredits = (owner.totalCredits || 0) + 1;
+        }
+      }
+    }
+
+    // Notify participant
+    db.notifications.push({
+      id: generateId('notif'),
+      userId: ev.ownerId,
+      title: params.status === 'verified' ? 'Evidence Record Verified!' : 'Revision Requested on Evidence',
+      message: params.comment ? params.comment.slice(0, 100) : (params.status === 'verified' ? 'Your evidence record was verified.' : 'Please revise your evidence.'),
+      type: 'review',
+      isRead: false,
+      targetRoute: '/passport/evidence',
+      createdAt: now,
+      schemaVersion: 1,
+    });
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(ev));
+  }
+
+  async getCohortEvidenceAudits(cohortId?: string): Promise<CohortEvidenceAuditRecord[]> {
+    const db = this.getDb();
+    let audits = db.cohortEvidenceAudits || [];
+    if (cohortId) {
+      audits = audits.filter((a) => a.cohortId === cohortId);
+    }
+    return JSON.parse(JSON.stringify(audits));
   }
 
   // Civic Moderation Reporting (Review Additions 3 & V2 Evidence Rules)
@@ -5585,6 +5880,7 @@ export class LocalDemoRepository implements DemoRepository {
       activeUser?.role === 'teacher' ||
       activeUser?.role === 'facilitator' ||
       activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'programme_manager' ||
       activeUser?.role === 'platform_admin';
 
     let refls = db.reflections.filter((r) => {
@@ -5786,11 +6082,13 @@ export class LocalDemoRepository implements DemoRepository {
   async getPassport(userId: string): Promise<PassportView> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const actor = activeUser ? { id: activeUser.id, role: activeUser.role } : null;
     const isOwner = db.activeUserId === userId;
     const isStaff =
       activeUser?.role === 'teacher' ||
       activeUser?.role === 'facilitator' ||
       activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'programme_manager' ||
       activeUser?.role === 'platform_admin';
 
     const targetUser = db.users.find((u) => u.id === userId);
@@ -5859,6 +6157,17 @@ export class LocalDemoRepository implements DemoRepository {
     if (!isOwner && !isStaff) {
       verifiedEvidence = verifiedEvidence.filter((e) => e.visibility !== 'private');
     }
+    const clonedVerified: Evidence[] = JSON.parse(JSON.stringify(verifiedEvidence));
+    for (const item of clonedVerified) {
+      if (!canActorAccessPrivateEvidence(actor, item, db.submissions)) {
+        if (item.fileInfo?.dataUrl) {
+          delete item.fileInfo.dataUrl;
+        }
+        if (item.fileInfo?.blobKey) {
+          delete item.fileInfo.blobKey;
+        }
+      }
+    }
 
     const completedCourses = db.enrolments.filter((e) => {
       if (e.userId !== userId || e.status !== 'completed') return false;
@@ -5874,7 +6183,7 @@ export class LocalDemoRepository implements DemoRepository {
       totalCredits,
       pendingCredits: pendingCreditsTotal,
       creditsByDimension,
-      verifiedEvidence: JSON.parse(JSON.stringify(verifiedEvidence)),
+      verifiedEvidence: clonedVerified,
       completedCoursesCount: completedCourses.length,
       assembliesParticipatedCount: assemblies.length,
     };
@@ -5888,6 +6197,7 @@ export class LocalDemoRepository implements DemoRepository {
       activeUser?.role === 'teacher' ||
       activeUser?.role === 'facilitator' ||
       activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'programme_manager' ||
       activeUser?.role === 'platform_admin';
     if (!isOwner && !isStaff) {
       throw new Error('Unauthorized: cannot access credit ledger of another persona');
@@ -6043,6 +6353,7 @@ export class LocalDemoRepository implements DemoRepository {
       activeUser?.role === 'teacher' ||
       activeUser?.role === 'facilitator' ||
       activeUser?.role === 'institution_admin' ||
+      activeUser?.role === 'programme_manager' ||
       activeUser?.role === 'platform_admin';
     if (!isOwner && !isStaff) {
       throw new Error('Unauthorized: cannot access credit appeals of another persona');
