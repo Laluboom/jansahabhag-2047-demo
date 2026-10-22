@@ -10,6 +10,7 @@ import {
   canonicalWorkspaceRulebook,
 } from '../data/seed/workspaces';
 import { seedEvents } from '../data/seed/events';
+import { seedModeratorGrants, seedModeratorAudits } from '../data/seed/moderatorGrants';
 import { buildAllocationState, buildAssemblyRoleAllocations, buildSessionRoleAllocations } from './reservationAllocationService';
 
 export interface Migration {
@@ -882,6 +883,27 @@ export function normalizeAssemblyRoleAllocationRecords(db: DemoDatabase): DemoDa
   return db;
 }
 
+export function normalizeModeratorGrantRecords(db: DemoDatabase): DemoDatabase {
+  if (!db || typeof db !== 'object') return db;
+  if (!Array.isArray(db.scopedModeratorGrants) || db.scopedModeratorGrants.length === 0) {
+    db.scopedModeratorGrants = JSON.parse(JSON.stringify(seedModeratorGrants));
+  } else {
+    // Check expiry dynamically
+    const now = new Date().toISOString();
+    db.scopedModeratorGrants.forEach((grant) => {
+      if (grant.status === 'active' && grant.expiresAt && grant.expiresAt <= now) {
+        grant.status = 'expired';
+      }
+    });
+  }
+
+  if (!Array.isArray(db.scopedModeratorAudits) || db.scopedModeratorAudits.length === 0) {
+    db.scopedModeratorAudits = JSON.parse(JSON.stringify(seedModeratorAudits));
+  }
+
+  return db;
+}
+
 export function runMigrations(storedData: any): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
@@ -905,6 +927,7 @@ export function runMigrations(storedData: any): DemoDatabase {
   normalizePassportAndCreditRecords(migrated);
   normalizeEventAllocationRecords(migrated);
   normalizeAssemblyRoleAllocationRecords(migrated);
+  normalizeModeratorGrantRecords(migrated);
   migrated.schemaVersion = CURRENT_SCHEMA_VERSION;
   return migrated;
 }

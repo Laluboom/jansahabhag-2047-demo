@@ -4,7 +4,8 @@ export type UserRole =
   | 'facilitator'
   | 'institution_admin'
   | 'programme_manager'
-  | 'platform_admin';
+  | 'platform_admin'
+  | 'moderator';
 
 export type Visibility = 'public' | 'institution' | 'assembly' | 'private';
 
@@ -1244,6 +1245,66 @@ export interface Workspace {
   updatedAt: string;
 }
 
+// ============================================================================
+// Scoped Moderator Grants & Audit Model (Change Plan v2 §12)
+// Platform-wide founder-held delegation distinct from workspace-local roles
+// ============================================================================
+
+export type ModeratorScopeType = 'assignments' | 'memberships' | 'named_session';
+
+export interface ModeratorScope {
+  type: ModeratorScopeType;
+  /** For 'named_session', the specific sessionId this grant permits moderation in */
+  sessionId?: string;
+  sessionTitle?: string;
+  /** Plain-text bounds of the delegated authority */
+  description?: string;
+}
+
+export type ModeratorGrantStatus = 'active' | 'revoked' | 'expired';
+
+export interface ScopedModeratorGrant {
+  id: string;
+  granteeId: string;
+  granteeName: string;
+  granteeRole: UserRole;
+  granteeEmail?: string;
+  grantorId: string; // Platform Owner / Founder persona ID ('user_admin')
+  grantorName: string;
+  grantorRole: 'platform_admin';
+  scope: ModeratorScope;
+  reason: string;
+  createdAt: string;
+  expiresAt: string; // ISO 8601
+  status: ModeratorGrantStatus;
+  revokedAt?: string;
+  revokedBy?: string; // userId of platform owner
+  revocationReason?: string;
+  schemaVersion: number;
+}
+
+export type ScopedModeratorAuditAction =
+  | 'grant_created'
+  | 'grant_revoked'
+  | 'grant_used'
+  | 'grant_denied';
+
+export interface ScopedModeratorAuditRecord {
+  id: string;
+  grantId?: string;
+  action: ScopedModeratorAuditAction;
+  actorId: string;
+  actorName: string;
+  actorRole: string;
+  scopeType: ModeratorScopeType;
+  targetId?: string;
+  details: string;
+  outcome: 'success' | 'denied';
+  denialReason?: string;
+  timestamp: string;
+  schemaVersion: number;
+}
+
 export interface DemoDatabase {
   schemaVersion: number;
   activeUserId: string;
@@ -1281,6 +1342,8 @@ export interface DemoDatabase {
   workspaceActions?: WorkspaceAction[];
   workspaceAuditEvents?: WorkspaceAuditEvent[];
   creditAppeals?: CreditAppeal[];
+  scopedModeratorGrants?: ScopedModeratorGrant[];
+  scopedModeratorAudits?: ScopedModeratorAuditRecord[];
 }
 
 declare module './index' {

@@ -32,6 +32,10 @@ import {
   CreditAppeal,
   AllocationState,
   AllocationAuditRecord,
+  ScopedModeratorGrant,
+  ScopedModeratorAuditRecord,
+  ModeratorScope,
+  ModeratorScopeType,
 } from '../types/domain';
 import {
   DashboardData,
@@ -329,6 +333,45 @@ export interface DemoRepository {
     reason: string;
   }): Promise<WorkspaceAuditEvent>;
   getWorkspaceAuditEvents(workspaceId: string, callerUserId: string): Promise<WorkspaceAuditEvent[]>;
+
+  // Scoped Moderator Grants & Audit (Change Plan v2 §12)
+  getScopedModeratorGrants(callerId?: string): Promise<ScopedModeratorGrant[]>;
+  getScopedModeratorAudits(callerId?: string): Promise<ScopedModeratorAuditRecord[]>;
+  createScopedModeratorGrant(input: {
+    granteeId: string;
+    scope: ModeratorScope;
+    durationDays: number;
+    reason: string;
+  }, callerId?: string): Promise<ScopedModeratorGrant>;
+  revokeScopedModeratorGrant(
+    grantId: string,
+    reason: string,
+    callerId?: string
+  ): Promise<ScopedModeratorGrant>;
+  verifyModeratorScope(
+    granteeId: string,
+    requiredScope: { type: ModeratorScopeType; sessionId?: string }
+  ): Promise<{ authorized: boolean; grant?: ScopedModeratorGrant; error?: string }>;
+  moderateAssignmentSubmission(
+    submissionId: string,
+    status: 'verified' | 'revision_requested' | 'under_review',
+    feedback: string,
+    moderatorId: string
+  ): Promise<Submission>;
+  moderatePlatformMembership(params: {
+    workspaceId: string;
+    targetUserId: string;
+    newStatus: 'restricted' | 'removed' | 'active';
+    reason: string;
+    moderatorId: string;
+  }): Promise<WorkspaceMembership>;
+  moderateSessionDeliberation(params: {
+    sessionId: string;
+    actionType: 'mute_participant' | 'flag_speech' | 'clear_queue';
+    targetUserId: string;
+    reason: string;
+    moderatorId: string;
+  }): Promise<{ success: boolean; details: string; audit: ScopedModeratorAuditRecord }>;
 
   // Demo operations
   resetDemo(): Promise<void>;
