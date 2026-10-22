@@ -68,9 +68,9 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
     });
 
     // Verify status badges for preview/planned modules
-    expect(links[3]).toHaveTextContent('Simulation'); // Debate Room
-    expect(links[5]).toHaveTextContent('Prototype'); // Youth Parliament
-    expect(links[6]).toHaveTextContent('Simulation'); // Workspace
+    expect(links[3]).toHaveTextContent('Practice mode'); // Debate Room
+    expect(links[5]).toHaveTextContent('Preview'); // Youth Parliament
+    expect(links[6]).toHaveTextContent('Practice mode'); // Workspace
     expect(links[10]).toHaveTextContent('Stream'); // UHV / Jeevan Vidya
 
     // Verify utilities are kept outside the learner navigation sequence
