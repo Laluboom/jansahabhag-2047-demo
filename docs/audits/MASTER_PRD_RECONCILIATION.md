@@ -63,3 +63,179 @@ This reconciliation is a document and code comparison. HTTP HEAD checks on 12 Oc
 **15 October isolated Workspace and Passport note:** [Package 06 acceptance](PACKAGE_06_WORKSPACE_ACCEPTANCE_2026-10-15.md) and [Package 07 acceptance](PACKAGE_07_PASSPORT_ACCEPTANCE_2026-10-15.md) record the unmerged feature chain through `agy/j-20261015-101359-krqe`. The latest isolated branch passed independent build, 204 unit tests and 21 browser tests. It adds private fictional Workspace access and traceable Passport/Credits, but does not change the root or deployed comparison above. Reservation enforcement, combined acceptance and deployed verification remain open.
 
 **15 October isolated Workspace note:** [Package 06 acceptance](PACKAGE_06_WORKSPACE_ACCEPTANCE_2026-10-15.md) records branch `agy/j-20261015-085907-5uxl` with an invite-only private Jaipur room, username invitation, rule acknowledgement and scoped moderation; its independent build, 197 unit tests and 19 browser tests passed. The root/deployed comparison above has not changed. Server-enforced access and combined/deployed acceptance remain open.
+
+---
+
+## 23 October 2026 audit appendix: Master PRD v3.1 route, control, and demo-boundary reconciliation
+
+### 1. Audit Context and Governing Authority
+
+- **Audit Date:** 23 October 2026
+- **Governing Baseline:** [Master PRD Archive v3.1](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3, Part A §§A1–A21, Part B §§1–15, Part C §§1–15; [Supplementary PRD v2.0 on 33% Women's Reservation](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx).
+- **Repository Checkout:** Worktree branch `agy/j-20261022-232747-tao3` incorporating all merged packages (Packages 01–11 and 21–22 October additions). Build passes; 517 unit tests across 38 test suites pass.
+- **Owner Overrides Recorded from [Product Decisions](../decisions.md):**
+  1. *Delivery & Competition Target (OD.1, OD.3):* The target is the connected single-browser competition demo for Hack for Social Cause (HSC portal submission completed; team preparing for next stage). Youth Parliament and Stakeholder Routing are explicitly approved as labelled clickable prototypes.
+  2. *Story & Data (OD.2, OD.9):* Fictional Jaipur pedestrian-safety story (Aarav Sharma, Navchetna Public School); fictional seed data only. Real participant or pilot data collection is not approved.
+  3. *Architecture & Persistence (OD.14):* Single-browser client simulation using `localStorage` and `IndexedDB`. Zero server backend, zero multi-user real-time sync, and no server-side route guards.
+  4. *Media & Bandwidth (OD.4):* Text-first deliberative champing with labelled video preview. Live WebRTC/video providers are deferred to future production.
+  5. *Workspace Scope (OD.5):* Fictional Jaipur Workspace is invite-only and private. Other workspace access policies remain open.
+  6. *Founder & Developer Identity (OD.6, 22 Oct 2026):* Confirmed Nazim M. Sandh as Founder and Visesh Akbari as Developer (technical system builder only, no idea credit). Contact email `nazimsandhbehappy@gmail.com` added to `/about`. Extended biography remains an unsupplied placeholder.
+  7. *Language (OD.8):* Working Jaipur demo is English only. Hindi and Rajasthani selectors remain disclaimed and pending qualified bilingual review; no unwired strings are claimed as translated.
+  8. *AI Governance (OD.10):* Local deterministic AI mock with illustrative disclaimer and grantee matching; no live third-party LLM API or live provider key is integrated.
+  9. *33% Women's Reservation Policy (OD.15–OD.19):* Applied to every named role and limited place in the fictional demo (Assembly roles, Debate roles, capacity-limited events) using `ceil(0.33 × allocated places)` per activity without pooling. Unmet places remain vacant; departures allowed only through simulated owner-approved exceptions with full audit records. Real-world gender collection or inference is forbidden.
+  10. *Participant Age Policy (21 & 22 Oct 2026):* All fictional seed personas set to age ≥ 18 (Aarav Sharma updated to 18). Real-world minor safeguarding and parental consent workflows remain production requirements.
+  11. *Civic Passport Credit Model (21 & 22 Oct 2026):* 10 starting balance, 1–2 credits earned per verified activity (+1 Learning, +2 Contribution [pending mentor review], +1 Observation, +2 Assembly joining, +1 Assembly contribution, +1 Collaboration, +2 Civic Action, +1 Reflection). Strictly 0 credits for private UHV reflections, retained dissent, and private debate journals.
+  12. *Scoped Moderator Grants (22 Oct 2026):* Clearly labelled browser simulation of founder-controlled, scope-limited, expiring, and auditable moderator grants on `/admin/moderator-grants`.
+  13. *Curriculum & Workshop Pause (OD.13, 22 Oct 2026):* Wait for Vadodara–Savli workshop source and confirmed attribution before building workshop activities; no new media.
+
+---
+
+### 2. Concrete Route Inventory (`src/app/router.tsx`)
+
+A line-by-line syntax inventory of [src/app/router.tsx](../../src/app/router.tsx) accounts for exactly **63 declared route entries** (1 standalone, 1 root layout, 1 index child, 38 static child routes, 16 dynamic parameterized child routes, 5 alias redirects, and 1 catch-all fallback):
+
+| # | Declared Path | Rendered Component | Master PRD Mapping & Status | Route Status & Guard Notes |
+|---|---|---|---|---|
+| 1 | `/demo-login` | `DemoLoginPage` | Part A §A6: Persona simulation | **Keep (Simulation):** Top-level persona switcher; client-side only. |
+| 2 | `/` | `AppShell` | Opening §1: Platform shell | **Keep (Layout):** Top bar, sidebar, and breadcrumbs wrapper. |
+| 3 | `(index) /` | `WelcomePage` | Opening §1, Part A §A3 | **Keep (Static):** Landing page with 5-stage method. |
+| 4 | `welcome` | `WelcomePage` | Opening §1, Part A §A3 | **Keep (Static):** Canonical welcome and method route. |
+| 5 | `about` | `AboutPage` | Part A §A5 (Founder Profile, OD.6) | **Keep (Static):** Founder & Developer cards; email present, bio placeholder. |
+| 6 | `onboarding` | `OnboardingPage` | Part A §A3, Part C §1 | **Keep (Static):** Role & interest onboarding flow. |
+| 7 | `dashboard` | `ParticipantDashboardPage` | Canonical Learner Item 1 (Opening §1, §A4) | **Keep (Static):** Learner dashboard, task cards, rulebook trigger. |
+| 8 | `profile` | `ProfilePage` | Canonical Learner Item 9 (Opening §1, §A4) | **Keep (Static):** Profile details, 18+ age flag, low-data preference. |
+| 9 | `notifications` | `NotificationsPage` | Opening §1 (Utility) | **Keep (Static):** Notification list and activity alerts. |
+| 10 | `learn` | `CoursesPage` | Canonical Learner Item 2 (Opening §1, §A4) | **Keep (Static):** Course catalog, category filter, rulebook trigger. |
+| 11 | `learn/:courseId` | `CourseDetailPage` | Part B §9 (Civic Academy) | **Keep (Dynamic):** Course syllabus and module list. |
+| 12 | `learn/:courseId/lesson/:lessonId` | `LessonPage` | Part B §9 (Civic Academy) | **Keep (Dynamic):** Lesson content, reflection, +1 credit claim. |
+| 13 | `assignments` | `AssignmentsPage` | Canonical Learner Item 3 (Opening §1, §A4) | **Keep (Static):** General civic assignments list, rulebook trigger. |
+| 14 | `assignments/:id` | `AssignmentDetailPage` | Part A §A11, Part B §12 | **Keep (Dynamic):** Assignment task brief and rubric. |
+| 15 | `assignments/:id/submit` | `SubmitAssignmentPage` | Part A §A11, Part C §5 | **Keep (Dynamic):** Form, IndexedDB evidence attachment, 250 KB limit. |
+| 16 | `participate` | `ActivitiesPage` | Opening §1, Part B §8 | **Keep (Static):** Legacy participation hub rendering ActivitiesPage. |
+| 17 | `activities` | `ActivitiesPage` | Opening §1, Part B §8 | **Keep (Static):** Civic activities list. |
+| 18 | `events` | `EventsPage` | Opening §1, Part B §8 | **Keep (Static):** Community events list with 33% reservation badge. |
+| 19 | `events/:id` | `EventDetailPage` | Opening §1, Part B §8 | **Keep (Dynamic):** Event detail and RSVP with quota check. |
+| 20 | `community` | `CommunityPage` | Canonical Learner Item 9 (Opening §1, §A4) | **Keep (Static):** Civic groups and Wall of Democracy feed. |
+| 21 | `community/groups/:id` | `CommunityGroupDetailPage` | Part B §5, Part C §9 | **Keep (Dynamic):** Discussion group topics and thread viewer. |
+| 22 | `assemblies` | `AssembliesPage` | Canonical Learner Item 5 (Opening §1, §A4) | **Keep (Static):** Youth Assembly list with 33% reservation check. |
+| 23 | `assemblies/:id` | `AssemblyDetailPage` | Part A §A9 (Youth Assembly) | **Keep (Dynamic):** Assembly roadmap and 4-role allocation briefing. |
+| 24 | `assemblies/:id/session` | `AssemblySessionPage` | Part A §A9 (Deliberative Chamber) | **Keep (Dynamic):** 6 stages, 4 role zones, dissent retention, rulebook. |
+| 25 | `propositions/:id` | `PropositionDetailPage` | Part A §A9.6 (Propositions) | **Keep (Dynamic):** Proposition clauses, dissent record, final status. |
+| 26 | `propositions/:id/revisions` | `PropositionRevisionsPage` | Part A §A9.6 (Revisions) | **Keep (Dynamic):** Amendment audit trail and dissent logs. |
+| 27 | `projects` | `ProjectsPage` | Canonical Learner Item 8 (Opening §1, §A4) | **Keep (Static):** Civic projects list, rulebook trigger. |
+| 28 | `projects/:id` | `ProjectDetailPage` | Part B §7.4 (Civic Innovation) | **Keep (Dynamic):** Project milestones, roster, and evidence feed. |
+| 29 | `issues` | `CivicIssuesPage` | Part B §14 (Civic Issues Map) | **Keep (Static):** Issue observation cards and coordinates list. |
+| 30 | `issues/:id` | `IssueDetailPage` | Part B §14 (Issue Detail) | **Keep (Dynamic):** Observation details and evidence submission. |
+| 31 | `passport` | `PassportPage` | Canonical Learner Item 10 (Opening §1, §A4) | **Keep (Static):** 6-dimension credit radar, verified ledger, export. |
+| 32 | `passport/credits` | `CreditsPage` | Opening §3, Part C §6 | **Keep (Static):** Dimension transaction ledger; 0-credit explanations. |
+| 33 | `credits` | `Navigate to /passport/credits` | Alias route | **Keep (Alias):** Enforces canonical naming. |
+| 34 | `passport/evidence` | `EvidencePage` | Part A §A11, Part C §5 | **Keep (Static):** Evidence vault, IndexedDB attachments, privacy levels. |
+| 35 | `passport/achievements` | `AchievementsPage` | Part B §7.6 (Identity) | **Keep (Static):** Civic milestones and badge unlocks. |
+| 36 | `labs/ideas` | `IdeaLabPage` | Part B §15 (Idea Lab) | **Keep (Preview):** Collaborative idea formulation preview. |
+| 37 | `labs/research` | `ResearchLabPage` | Part B §7.4 (Research Lab) | **Keep (Preview):** Evidence synthesis preview. |
+| 38 | `labs/policy` | `PolicyLabPage` | Part B §7.4 (Policy Lab) | **Keep (Preview):** Policy brief formulation preview. |
+| 39 | `parliament` | `ParliamentPage` | Canonical Learner Item 6 (Opening §1, §A10) | **Keep (Prototype):** Labelled educational simulation per Opening §1. |
+| 40 | `stakeholders` | `StakeholdersPage` | Opening §3, Part C §8 (OD.12) | **Keep (Prototype):** Labelled municipal routing preview. |
+| 41 | `studio` | `StudioPage` | Part A §A4, Part B §8 | **Keep (Preview):** Content creator preview (Unguarded at router). |
+| 42 | `debate-room` | `DebateRoomPreviewPage` | Canonical Learner Item 4 (Opening §1, §A8) | **Keep (Static):** Motion chamber, 33% quota tags, text mode toggle. |
+| 43 | `debate-room/:id` | `DebateRoomPreviewPage` | Part A §A8 (Debate Room) | **Keep (Dynamic):** Contextual debate session room. |
+| 44 | `events/:id/debate-room` | `DebateRoomPreviewPage` | Part A §A8 (Event Debate) | **Keep (Dynamic):** Event-linked debate room. |
+| 45 | `debates` | `Navigate to /debate-room` | Alias route | **Keep (Alias):** Enforces canonical naming. |
+| 46 | `workspace` | `WorkspacePage` | Canonical Learner Item 7 (Opening §1, §A12) | **Keep (Static):** Supervised room, discussions, task board, rules. |
+| 47 | `workspace/:id` | `WorkspacePage` | Part A §A12 (Workspace Room) | **Keep (Dynamic):** Contextual workspace instance. |
+| 48 | `workspaces` | `Navigate to /workspace` | Alias route | **Keep (Alias):** Enforces canonical naming. |
+| 49 | `workspaces/:id` | `WorkspacePage` | Alias route | **Keep (Dynamic Alias):** Contextual workspace plural alias. |
+| 50 | `uhv` | `CoursesPage` | Canonical Learner Item 11 (Opening §1, §A11) | **Keep (Static):** Dedicated UHV stream; non-scored 0-credit baseline. |
+| 51 | `uhv/learn` | `Navigate to /uhv` | Alias route | **Keep (Alias):** Enforces canonical naming. |
+| 52 | `help` | `HelpRulebooksPage` | Opening §1, Part A §A13 | **Keep (Static):** Comprehensive contextual rulebooks repository. |
+| 53 | `settings` | `Navigate to /profile` | Alias route | **Keep (Alias):** Redirects to unified profile and preferences. |
+| 54 | `institution/dashboard` | `InstitutionDashboardPage` | Opening §1, Part B §8 | **Keep (Static):** Cohort metrics (Unguarded at router). |
+| 55 | `institution/participants` | `ParticipantsPage` | Part B §5 (Institution Roster) | **Keep (Static):** Student cohort management (Unguarded at router). |
+| 56 | `institution/programmes` | `InstitutionProgrammesPage` | Part B §5 (Programmes) | **Keep (Static):** Institution-level programmes (Unguarded at router). |
+| 57 | `admin/dashboard` | `AdminDashboardPage` | Opening §1, Part A §A6 (Owner Console) | **Keep (Static):** Command console, safety alerts (Unguarded at router). |
+| 58 | `admin/programmes` | `AdminProgrammesPage` | Part A §A6, Part B §8 | **Keep (Static):** State mission programmes (Unguarded at router). |
+| 59 | `admin/content` | `AdminContentPage` | Part A §A6, Part B §9 | **Keep (Static):** Course & task authoring (Unguarded at router). |
+| 60 | `admin/moderation` | `AdminModerationPage` | Part A §A6, Part C §9 | **Keep (Static):** Moderation queue & escalations (Unguarded at router). |
+| 61 | `admin/moderator-grants` | `AdminModeratorGrantsPage` | Part A §A6.3 (OD 22 Oct 2026) | **Keep (Static):** Scoped moderator grant simulation & audit log. |
+| 62 | `analytics` | `AnalyticsPage` | Opening §3, Part A §A18 | **Keep (Preview):** Illustrative civic intelligence metrics. |
+| 63 | `*` | `NotFoundPage` | System Error / Recovery | **Keep (Catch-all):** 404 error page with navigation recovery. |
+
+---
+
+### 3. Visible Point-of-Use Controls Inventory
+
+The codebase implements explicit, point-of-use interactive controls across all primary user surfaces:
+
+1. **Contextual Point-of-Use Rulebooks (`PointOfUseRulesButton.tsx`):**
+   - *Placement:* Rendered on 12 module surfaces: Dashboard (`/dashboard`), Learn (`/learn`), Assignments (`/assignments`), Submit Assignment (`/assignments/:id/submit`), Assemblies (`/assemblies`), Assembly Session (`/assemblies/:id/session`), Debate Room (`/debate-room`), Parliament (`/parliament`), Projects (`/projects`), Community (`/community`), Passport (`/passport`), and Rulebooks (`/help`).
+   - *Behavior:* Accessible modal dialog (`aria-haspopup="dialog"`, `aria-expanded`, Escape key close) displaying contextual procedure rules, conduct expectations, 33% seat quota notices (when applicable), and a deep link to `/help`.
+2. **Youth Assembly Deliberative Chamber Controls (`AssemblySessionPage.tsx`):**
+   - *Stage Progression:* 6 sequential stage navigation buttons (Frame, Think, Enable, Troubleshoot, Shape, Final Assembly). Stage advancement and closing are gated to the Chair/Facilitator persona (`user_rohan`).
+   - *Role Zones & Prompts:* 4 non-hierarchical role zone triggers: Thinker (Framing Question / Root Cause), Enabler (Feasibility / Resource Factor), Troubleshooter (Failure Risk / Red-Flag Action), and Shaper (Policy Clause / Proposition Text).
+   - *Dissent Retention:* Dedicated dissent input and preservation toggle. Preserved dissent records persist across proposition amendments and are exported into the final proposition object.
+   - *Chamber Mechanics:* Clarification request queue, turn countdown timer, seating roster with active role indicators, and mock AI copilot suggestions.
+3. **Debate Room Controls (`DebateRoomPreviewPage.tsx`):**
+   - *Motion & Turn Controls:* Motion banner with current stage label, speaker spotlight, and countdown turn timer.
+   - *Seating & Quota Display:* 5-category seating chart (Moderator, For, Against, Questioner, Audience) displaying participant initials, mic status, and explicit 33% reservation tags.
+   - *Speaking Queue:* Ordered queue with join/leave queue action buttons.
+   - *Bandwidth & Evidence Controls:* Text-First Active badge/toggle (OD.4) and tabbed evidence/sources drawer.
+   - *Zero-Credit Journal:* Private reflection journal explicitly tagged with 0 civic credits.
+4. **Assignment Submission & Evidence Controls (`SubmitAssignmentPage.tsx`, `EvidencePage.tsx`):**
+   - *Attachment Controls:* Multi-format file attachment button backed by browser `IndexedDB` with strict transaction completion, 250 KB file size validation, and allowed extension filtering (`.pdf`, `.jpg`, `.png`, `.txt`).
+   - *Safeguarding Warnings:* Prominent face consent warning checkbox and session recording prohibition disclosure.
+   - *Save & Submit:* Save Draft button (local persistence) and Submit Assignment button (+2 credits held in Pending status until mentor review).
+5. **Supervised Workspace Controls (`WorkspacePage.tsx`):**
+   - *Access & Policy:* Invite-only room banner with room rules acknowledgement modal.
+   - *Collaboration Controls:* Persistent discussion thread message composer, Kanban task board status toggles, shared files attachment list, and member directory with 33% reservation status tags.
+   - *Moderation Trigger:* In-room Report Issue / Moderation Escalation button.
+6. **Youth Parliament Simulation Controls (`ParliamentPage.tsx`):**
+   - *Chamber Controls:* Division / voting preview button, Order Paper panel toggle, Speaker spotlight, and Treasury/Opposition benches layout with 33% quota tags.
+7. **Founder Scoped Moderator Grants Controls (`AdminModeratorGrantsPage.tsx`):**
+   - *Grant Creator:* Modal form allowing the Platform Owner (`user_admin`) to select a grantee persona, choose a scoped role template (Assignment Manager, Workspace Moderator, Session Chair, Community Moderator, Facilitator), bind a resource scope (Jaipur Workspace, Assembly, Debate, Programme), specify an expiry date, and provide a mandatory reason.
+   - *Active Grants Ledger:* Interactive table displaying active grants with a one-click Revoke action.
+   - *Immutable Audit Trail:* Read-only event ledger logging all grant and revocation transactions with timestamps and actor IDs.
+8. **Top Utility Bar Controls (`TopUtilityBar.tsx`):**
+   - *Persona Switcher:* Dropdown selecting between 7 primary simulated personas.
+   - *Session Preferences:* Modal toggle for Low-Data / Text Mode.
+   - *Language Selector:* Dropdown with English, Hindi (Demo), and Rajasthani (Demo); labelled illustrative pending bilingual review per OD.8.
+
+---
+
+### 4. Genuinely Missing Master PRD Items (Source Heading vs App File/Route)
+
+The following 12 items represent material requirements from Master PRD v3.1 that are absent, simulated, or deferred in the current single-browser demonstration:
+
+| ID | Requirement Area | Master PRD v3.1 Heading / Section | Current App File / Route Reference | Implementation Gap & Handover Status |
+|---|---|---|---|---|
+| **M.1** | Shared Live Session Engine & In-Room Mode Switching | Part A §A7 ("Shared Live Session Engine and Transitions"); §A20.2 | `src/app/router.tsx`; `src/features/assemblies/AssemblySessionPage.tsx`; `src/components/layout/DebateRoomPreviewPage.tsx` | PRD specifies a single persistent Session Room object allowing authorized in-room mode switching ("Switch to Debate Room", "Switch to Youth Assembly") without dropping roster, chat, or files. The app implements separate, static routes (`/debate-room`, `/assemblies/:id/session`) with no shared live engine or dynamic mode switching. |
+| **M.2** | Pop-Up Task Cards / Non-Blocking Launch Panels | Part A §A11 ("Assignments: Pop-Up Task Cards and Two Separate Types", §A11.1) | `src/features/dashboard/ParticipantDashboardPage.tsx`; `src/features/assignments/AssignmentsPage.tsx` | PRD requires accessible assignment pop-up/task-card launch panels directly from dashboard/lesson without navigating away. App currently uses full-page routes (`/assignments/:id`, `/assignments/:id/submit`). |
+| **M.3** | Live External AI Providers & Governance Pipeline | Part A §A14 ("Role-Aware AI Assistant and AI Governance", §A14.1); Part C §10 | `src/services/roleAwareAiService.ts`; `src/features/administration/AdminDashboardPage.tsx` | PRD specifies replaceable external LLM provider interfaces (OpenAI, Gemini, Anthropic), automated data-tier redaction, and token cost tracking. App uses a local deterministic mock with illustrative disclaimer (OD.10); live provider integration is deferred. |
+| **M.4** | Interactive GIS / Spatial Map Renderer | Part B §14 ("Civic Issues Map", §14.1–14.3) | `src/features/issues/CivicIssuesPage.tsx`; `src/types/domain.ts` | PRD specifies a geospatial issues map with 6 location privacy levels and spatial clustering. App stores lat/long metadata in seed data and renders a card list; no interactive map engine (Leaflet/Mapbox) or GIS query layer is integrated. |
+| **M.5** | Cloud Resumable Binary Storage & Upload Protocol | Part A §A11, §A15; Part C §5 ("Evidence & Verification") | `src/features/assignments/SubmitAssignmentPage.tsx`; `src/services/indexedDbEvidenceService.ts` | PRD requires cloud object storage, chunked resumable upload (Tus/S3), virus scan, and storage access controls. App stores files locally in browser IndexedDB (capped at 250 KB); no cloud storage or resumable network upload exists. |
+| **M.6** | Router-Level RBAC Guards & Server Authorization | Opening §1; Part A §A4; Part A §A6 ("Owner Console and Moderator Delegation") | `src/app/router.tsx` | PRD mandates hiding/blocking operational consoles without authorized scopes. App router exposes `/admin/*` and `/institution/*` statically without route guards or redirects; access control relies solely on UI sidebar filtering and persona disclaimer banners (OD.14). |
+| **M.7** | Bilingual Hindi Content Localization | Opening §3; Part A §A15 ("Multilingual UX, Accessibility and Low Bandwidth"); OD.8 | `src/components/layout/TopUtilityBar.tsx`; `src/stores/authStore.ts` | PRD requires full English and Hindi coverage. Language dropdown sets `activeLanguage` in memory but is not connected to a translation dictionary; all UI copy remains English pending bilingual review per OD.8. |
+| **M.8** | Statutory Minor Safeguarding & Guardian Consent | Opening §2 ("Public launch gate"); Part C §1 ("Identity & Safeguarding") | `src/features/auth-demo/DemoLoginPage.tsx`; `src/types/domain.ts` | PRD specifies age-tiered safeguarding, parental/guardian consent verification, and statutory DPDP/COPPA workflows. App sets all fictional personas to age ≥ 18 (OD 21/22 Oct 2026); real-world child safeguarding remains future production work. |
+| **M.9** | Live Municipal Stakeholder Dispatch Pipeline | Part A §A4; Part C §8 ("Stakeholder Engagement"); OD.3, OD.12 | `src/features/previews/StakeholdersPage.tsx` | PRD specifies automated routing to municipal departments with status updates. App implements a labelled clickable preview of department cards without external grievance API integration (OD.3, OD.12). |
+| **M.10** | UHV Workshop-Based Content Expansion | Part A §A11.2; Part B §11; OD.13, OD 22 Oct 2026 | `src/features/learning/CoursesPage.tsx`; `src/data/seed/courses.ts` | PRD specifies a 7-day practice workshop curriculum for UHV. App provides a standalone UHV stream with placeholder seed courses; content expansion is paused per OD 22 Oct 2026 pending Vadodara–Savli workshop source and attribution. |
+| **M.11** | Founder Extended Biography & Credentials Management | Part A §A5 ("Founder Profile and Platform Identity"); OD.6, OD 22 Oct 2026 | `src/features/about/AboutPage.tsx`; `src/features/administration/AdminDashboardPage.tsx` | PRD specifies managing founder profile and credentials via Owner Console > Platform Identity. App displays confirmed founder Nazim M. Sandh and contact email `nazimsandhbehappy@gmail.com` on `/about` (OD.6), but extended biography, achievements, and self-service identity editor remain unsupplied placeholders. |
+| **M.12** | Independent Production Verification of Civic Credits | Opening §3; Part C §§5–6 ("Civic Credits"); OD 21/22 Oct 2026 | `src/features/passport/PassportPage.tsx`; `src/services/demoRepository.ts` | PRD specifies 6 verification types, 5 verification levels, cryptographic signing, and an appeals workflow. App implements the approved credit arithmetic (10 start, 1–2 per task, pending facilitator review, 0 for UHV/dissent/debate), but verification is simulated locally without external cryptographic or institutional attestation. |
+
+---
+
+### 5. Placeholders for Materials Not Supplied
+
+The following placeholders are deliberately maintained in accordance with owner instructions:
+1. **Founder Extended Biography & Formal Credentials (`/about`):** Confirmed portrait, name (Nazim M. Sandh), title ("Founder & Platform Owner"), and project contact email (`nazimsandhbehappy@gmail.com`) are displayed. Detailed biographical narrative and formal credentials remain an unpopulated placeholder pending owner submission.
+2. **UHV Workshop Source & Media Assets (`/uhv`):** Seed courses preserve textual placeholders. No workshop-specific exercises, audio, or video files are integrated pending the Vadodara–Savli workshop source and confirmed attribution (OD.13, 22 Oct 2026).
+3. **Municipal Stakeholder Recipients (`/stakeholders`):** Department preview cards preserve illustrative contact routing without live municipal ticket dispatch (OD.12).
+4. **Third-Party AI Inference Keys (`roleAwareAiService.ts`):** Deterministic mock responses operate without live API keys, displaying prominent illustrative notices (OD.10).
+
+---
+
+### 6. Competition-Demo Handoff Summary and Remaining Uncertainties
+
+- **Competition-Demo Scope Completeness:** The connected single-browser demonstration path for the Jaipur pedestrian-safety story (Aarav Sharma: Learn → Observe Field Evidence → Deliberate in Youth Assembly with Dissent → Join Supervised Workspace → Civic Passport & Ledger) is fully implemented, internally consistent, and backed by 517 passing unit tests and 38 browser tests.
+- **Demo vs. Production Boundary:** The codebase is strictly a client-rendered React/Vite demonstration using browser `localStorage` and `IndexedDB`. It does not possess server authority, multi-user concurrency, real-time synchronization, or external API connectivity.
+- **Remaining Gaps and Uncertainties:**
+  1. *Presentation Flow & Script:* The live five-minute judging demo script and stage navigation timing for HSC evaluation remain open.
+  2. *Public Launch Roadmap:* Dates, hosting budget, backend stack selection (OD.14), legal/safeguarding audits, and bilingual reviewer appointment for production release remain undecided.
