@@ -57,6 +57,14 @@ export const AboutPage: React.FC = () => (
           <div className="space-y-2 p-6 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Founder and Initiator</p>
             <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
+            <div className="pt-2 text-sm font-semibold">
+              <a
+                href="mailto:nazimsandhbehappy@gmail.com"
+                className="break-all text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500"
+              >
+                nazimsandhbehappy@gmail.com
+              </a>
+            </div>
           </div>
         </article>
 
