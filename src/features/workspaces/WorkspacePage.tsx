@@ -10,9 +10,11 @@ import {
   WorkspaceAuditEvent,
   WorkspaceActionType,
   User,
+  Project,
 } from '../../types/domain';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { StatusChip } from '../../components/ui/StatusChip';
 import { Input, Textarea } from '../../components/ui/Input';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { formatDateTime, formatDate } from '../../utils/formatters';
@@ -43,6 +45,7 @@ import {
   Tag,
   AlertCircle,
   Ban,
+  Target,
 } from 'lucide-react';
 
 export const WorkspacePage: React.FC = () => {
@@ -56,6 +59,7 @@ export const WorkspacePage: React.FC = () => {
   const [actions, setActions] = useState<WorkspaceAction[]>([]);
   const [auditEvents, setAuditEvents] = useState<WorkspaceAuditEvent[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [joinedProjects, setJoinedProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
@@ -107,10 +111,19 @@ export const WorkspacePage: React.FC = () => {
       setIsLoading(true);
       setPageError(null);
       try {
-        const users = await demoRepository.getUsers();
-        if (mounted) setAllUsers(users);
-
         const currentUserId = currentUser?.id || 'user_aarav';
+        const [users, allProjects] = await Promise.all([
+          demoRepository.getUsers(),
+          demoRepository.getProjects(),
+        ]);
+        if (mounted) {
+          setAllUsers(users);
+          const userProjects = allProjects.filter(
+            (p) => p.memberUserIds.includes(currentUserId) || p.leadUserId === currentUserId
+          );
+          setJoinedProjects(userProjects);
+        }
+
         const ws = await demoRepository.getWorkspace(currentWorkspaceId, currentUserId);
         if (!mounted) return;
 
@@ -638,6 +651,105 @@ export const WorkspacePage: React.FC = () => {
           </div>
         </Card>
       )}
+
+      {/* 6b. Joined Projects as Clear Tiles */}
+      <div className="space-y-3" data-testid="section-joined-projects">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
+          <div>
+            <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
+              <Target className="w-4 h-4 text-civic-saffron-600" />
+              <span>Your Joined Projects & Teams</span>
+            </h3>
+            <p className="text-xs text-slate-500">
+              Civic action teams and student micro-initiatives you belong to.
+            </p>
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-700 self-start sm:self-auto">
+            {joinedProjects.length} Joined {joinedProjects.length === 1 ? 'Project' : 'Projects'}
+          </span>
+        </div>
+
+        {joinedProjects.length === 0 ? (
+          <div className="p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-center text-xs text-slate-500">
+            You are not enrolled in any project teams for this persona.
+            <div className="mt-2">
+              <Link to="/projects">
+                <Button size="sm" variant="outline" className="text-xs">
+                  Explore Civic Projects
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {joinedProjects.map((p) => {
+              const isLead = p.leadUserId === currentUser?.id;
+              const completedCount = p.milestones.filter((m) => m.isCompleted).length;
+              const totalCount = p.milestones.length;
+              const progress = Math.round((completedCount / (totalCount || 1)) * 100);
+
+              return (
+                <Card
+                  key={p.id}
+                  className="p-4 border-slate-200 bg-white hover:border-civic-teal-400 hover:shadow-xs transition-all flex flex-col justify-between"
+                  data-testid={`joined-project-tile-${p.id}`}
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                          isLead
+                            ? 'bg-civic-saffron-100 text-civic-saffron-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {isLead ? 'Project Lead' : 'Team Member'}
+                      </span>
+                      <StatusChip status={p.status === 'completed' ? 'completed' : 'active'} />
+                    </div>
+
+                    <h4 className="font-bold text-sm text-slate-900 font-heading leading-snug line-clamp-1">
+                      {p.title}
+                    </h4>
+
+                    <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                      {p.civicObjective}
+                    </p>
+
+                    {/* Milestone Progress */}
+                    <div className="space-y-1 pt-1">
+                      <div className="flex justify-between text-[10px] text-slate-500">
+                        <span>Milestones: {completedCount}/{totalCount} Done</span>
+                        <span className="font-bold text-slate-700">{progress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-civic-teal-600 h-1.5 rounded-full"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{p.memberUserIds.length} Members</span>
+                    </span>
+
+                    <Link to={`/projects/${p.id}`}>
+                      <Button size="sm" variant="outline" className="text-xs h-7 px-2.5">
+                        <span>Open Team Board</span>
+                        <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* 7. Removed / Restricted Warnings */}
       {currentMembership?.state === 'removed' && (

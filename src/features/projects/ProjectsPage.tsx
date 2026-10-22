@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Project, ProjectStatus } from '../../types/domain';
+import { Project, ProjectStatus, User } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Textarea } from '../../components/ui/Input';
+import { Avatar } from '../../components/ui/Avatar';
+import { getInitials } from '../../components/session/types';
 import {
   Target,
   Users,
@@ -27,6 +29,7 @@ export const ProjectsPage: React.FC = () => {
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
 
   const [projects, setProjects] = useState<Project[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -38,8 +41,12 @@ export const ProjectsPage: React.FC = () => {
     async function load() {
       setIsLoading(true);
       try {
-        const list = await demoRepository.getProjects();
+        const [list, users] = await Promise.all([
+          demoRepository.getProjects(),
+          demoRepository.getUsers(),
+        ]);
         setProjects(list);
+        setAllUsers(users);
       } catch (err) {
         console.error('Failed to load projects', err);
       } finally {
@@ -281,6 +288,10 @@ export const ProjectsPage: React.FC = () => {
           const completedCount = proj.milestones.filter((m) => m.isCompleted).length;
           const totalCount = proj.milestones.length;
           const progress = Math.round((completedCount / (totalCount || 1)) * 100);
+          const doingCount = totalCount - completedCount > 0 ? 1 : 0;
+          const todoCount = Math.max(0, totalCount - completedCount - doingCount);
+
+          const members = allUsers.filter((u) => proj.memberUserIds.includes(u.id));
 
           return (
             <Card
@@ -290,10 +301,18 @@ export const ProjectsPage: React.FC = () => {
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    {completedCount}/{totalCount} Milestones Done
-                  </span>
-                  <StatusChip status={proj.status} />
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
+                    <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      {completedCount} Done
+                    </span>
+                    <span className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      {doingCount} Doing
+                    </span>
+                    <span className="text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                      {todoCount} To do
+                    </span>
+                  </div>
+                  <StatusChip status={proj.status === 'completed' ? 'completed' : 'active'} />
                 </div>
 
                 <CardTitle className="text-base font-bold text-slate-900 font-heading">
@@ -307,7 +326,7 @@ export const ProjectsPage: React.FC = () => {
                 {/* Progress bar */}
                 <div className="space-y-1 pt-1">
                   <div className="flex justify-between text-[11px] text-slate-500 font-medium">
-                    <span>Progress</span>
+                    <span>Milestone Execution</span>
                     <span className="font-bold text-slate-700">{progress}%</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -319,15 +338,28 @@ export const ProjectsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{proj.memberUserIds.length} Team Members</span>
-                </span>
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center -space-x-1.5 overflow-hidden">
+                    {members.slice(0, 4).map((member) => (
+                      <div key={member.id} title={member.name} className="ring-1 ring-white rounded-full">
+                        <Avatar
+                          src={member.avatar}
+                          alt={member.name}
+                          fallback={getInitials(member.name)}
+                          size="sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {proj.memberUserIds.length} Team Seats
+                  </span>
+                </div>
 
                 <Link to={`/projects/${proj.id}`}>
                   <Button size="sm" variant="outline" className="text-xs">
-                    <span>View Roadmap</span>
+                    <span>Open Team Board</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1" />
                   </Button>
                 </Link>
