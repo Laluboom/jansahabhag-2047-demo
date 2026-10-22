@@ -35,6 +35,7 @@ export const DemoLoginPage: React.FC = () => {
     'user_ananya',
     'user_dev',
     'user_admin',
+    'user_moderator',
   ];
 
   const filteredPrimary = users.filter((u) => primaryPersonas.includes(u.id));
@@ -96,7 +97,7 @@ export const DemoLoginPage: React.FC = () => {
                   <Avatar src={user.avatar} alt={user.name} size="lg" />
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-semibold text-civic-teal-400 uppercase tracking-wider block">
-                      {formatRoleName(user.role)}
+                      {user.role === 'moderator' ? 'Scoped Moderator' : formatRoleName(user.role)}
                     </span>
                     <h2 className="text-base font-bold font-heading text-white truncate">
                       {user.name}
@@ -119,6 +120,7 @@ export const DemoLoginPage: React.FC = () => {
                     {user.role === 'institution_admin' && 'School Admin'}
                     {user.role === 'programme_manager' && 'State Mission'}
                     {user.role === 'platform_admin' && 'Platform Admin'}
+                    {user.role === 'moderator' && 'Scoped Moderator'}
                   </span>
                   <div className="flex items-center gap-1 text-xs font-semibold text-civic-indigo-400 group-hover:text-civic-indigo-300">
                     <span>Continue</span>

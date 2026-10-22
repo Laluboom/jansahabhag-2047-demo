@@ -55,6 +55,10 @@ import {
   AllocationState,
   AllocationAuditRecord,
   AllocationStatus,
+  ScopedModeratorGrant,
+  ScopedModeratorAuditRecord,
+  ModeratorScope,
+  ModeratorScopeType,
 } from '../types/domain';
 import {
   buildAllocationState,
@@ -1575,8 +1579,20 @@ export class LocalDemoRepository implements DemoRepository {
   async reviewSubmission(input: SubmissionReviewInput): Promise<Submission> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    if (activeUser?.role !== 'teacher') {
-      throw new Error('Unauthorized: only teachers may review submissions');
+    const isTeacher = activeUser?.role === 'teacher';
+    let isAuthorizedScopedMod = false;
+    let activeGrant: ScopedModeratorGrant | undefined;
+
+    if (!isTeacher && activeUser) {
+      const scopeCheck = this.verifyModeratorScopeInternal(activeUser.id, { type: 'assignments' }, db);
+      if (scopeCheck.authorized && scopeCheck.grant) {
+        isAuthorizedScopedMod = true;
+        activeGrant = scopeCheck.grant;
+      }
+    }
+
+    if (!isTeacher && !isAuthorizedScopedMod) {
+      throw new Error('Unauthorized: only teachers may review submissions (or authorized scoped moderators with active assignments grant)');
     }
     if (input.reviewerId !== db.activeUserId) {
       throw new Error('Unauthorized: reviewerId must match active user');
@@ -1629,6 +1645,23 @@ export class LocalDemoRepository implements DemoRepository {
     submission.reviewedAt = now;
     if (input.score !== undefined) submission.score = input.score;
     submission.updatedAt = now;
+
+    if (isAuthorizedScopedMod && activeGrant) {
+      this.recordModeratorAuditSync(
+        {
+          grantId: activeGrant.id,
+          action: 'grant_used',
+          actorId: activeUser!.id,
+          actorName: activeUser!.name,
+          actorRole: activeUser!.role,
+          scopeType: 'assignments',
+          targetId: submission.id,
+          details: `Scoped moderator reviewed submission "${submission.id}" (status: ${input.status}).`,
+          outcome: 'success',
+        },
+        db
+      );
+    }
 
     const reviewerName = activeUser?.name || 'Reviewer';
 
@@ -2878,6 +2911,23 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Authority guard: Strictly restricted to platform_admin
     if (!actor || actor.role !== 'platform_admin') {
+      if (actor?.role === 'moderator' || this.hasAnyModeratorGrant(callerId, db)) {
+        this.recordModeratorAuditSync(
+          {
+            action: 'grant_denied',
+            actorId: callerId,
+            actorName: actor?.name || 'Moderator',
+            actorRole: actor?.role || 'moderator',
+            scopeType: 'named_session',
+            targetId: assemblyId,
+            details: `Blocked 33% reservation exception override attempt for Assembly role "${roleName}". Scoped moderators cannot bypass the 33% rule.`,
+            outcome: 'denied',
+            denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+          },
+          db
+        );
+        this.saveDb(db);
+      }
       throw new Error(
         `Unauthorized: Only Platform Owner (role: platform_admin) can approve reservation exceptions. ` +
         `Current persona "${callerId}" (role: "${actor?.role || 'unknown'}") cannot approve exceptions.`
@@ -4950,6 +5000,23 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Authority guard: Strictly restricted to platform_admin
     if (!actor || actor.role !== 'platform_admin') {
+      if (actor?.role === 'moderator' || this.hasAnyModeratorGrant(callerId, db)) {
+        this.recordModeratorAuditSync(
+          {
+            action: 'grant_denied',
+            actorId: callerId,
+            actorName: actor?.name || 'Moderator',
+            actorRole: actor?.role || 'moderator',
+            scopeType: 'named_session',
+            targetId: sessionId,
+            details: `Blocked 33% reservation exception override attempt for Session role "${roleName}". Scoped moderators cannot bypass the 33% rule.`,
+            outcome: 'denied',
+            denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+          },
+          db
+        );
+        this.saveDb(db);
+      }
       throw new Error(
         `Unauthorized: Only Platform Owner (role: platform_admin) can approve reservation exceptions. ` +
         `Current persona "${callerId}" (role: "${actor?.role || 'unknown'}") cannot approve exceptions.`
@@ -5450,6 +5517,23 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Authority guard: Strictly restricted to platform_admin
     if (!actor || actor.role !== 'platform_admin') {
+      if (actor?.role === 'moderator' || this.hasAnyModeratorGrant(callerId, db)) {
+        this.recordModeratorAuditSync(
+          {
+            action: 'grant_denied',
+            actorId: callerId,
+            actorName: actor?.name || 'Moderator',
+            actorRole: actor?.role || 'moderator',
+            scopeType: 'assignments',
+            targetId: eventId,
+            details: `Blocked 33% reservation exception override attempt for Event "${eventId}". Scoped moderators cannot bypass the 33% rule.`,
+            outcome: 'denied',
+            denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+          },
+          db
+        );
+        this.saveDb(db);
+      }
       throw new Error(
         `Unauthorized: Only Platform Owner (role: platform_admin) can approve reservation exceptions. ` +
         `Current persona "${callerId}" (role: "${actor?.role || 'unknown'}") cannot approve exceptions.`
@@ -7121,11 +7205,32 @@ export class LocalDemoRepository implements DemoRepository {
     reason: string;
   }): Promise<WorkspaceMembership> {
     const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error(`Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.`);
+    }
+    if (params.moderatorId && params.moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${params.moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
     const ws = (db.workspaces || []).find((w) => w.id === params.workspaceId);
     if (!ws) throw new Error(`Workspace ${params.workspaceId} not found`);
 
     const isOwnerOrMod = ws.ownerId === params.moderatorId || (ws.moderatorIds || []).includes(params.moderatorId);
+    let isPlatformScopedMod = false;
+    let activeGrant: ScopedModeratorGrant | undefined;
+
     if (!isOwnerOrMod) {
+      const scopeCheck = this.verifyModeratorScopeInternal(params.moderatorId, { type: 'memberships' }, db);
+      if (scopeCheck.authorized && scopeCheck.grant) {
+        isPlatformScopedMod = true;
+        activeGrant = scopeCheck.grant;
+      }
+    }
+
+    if (!isOwnerOrMod && !isPlatformScopedMod) {
       throw new Error(`Unauthorized: Scoped moderation violation. User ${params.moderatorId} is not a designated moderator of workspace "${ws.title}".`);
     }
 
@@ -7181,6 +7286,23 @@ export class LocalDemoRepository implements DemoRepository {
       details: { newStatus: params.newStatus, reason: trimmedReason },
       schemaVersion: 1,
     });
+
+    if (isPlatformScopedMod && activeGrant) {
+      this.recordModeratorAuditSync(
+        {
+          grantId: activeGrant.id,
+          action: 'grant_used',
+          actorId: params.moderatorId,
+          actorName: moderator?.name || 'Moderator',
+          actorRole: moderator?.role || 'moderator',
+          scopeType: 'memberships',
+          targetId: params.workspaceId,
+          details: `Platform scoped moderator updated membership for ${params.targetUserId} in workspace "${ws.title}" to "${params.newStatus}".`,
+          outcome: 'success',
+        },
+        db
+      );
+    }
 
     this.saveDb(db);
 
@@ -7270,6 +7392,616 @@ export class LocalDemoRepository implements DemoRepository {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return JSON.parse(JSON.stringify(events));
+  }
+
+  // ============================================================================
+  // Scoped Moderator Grants & Audit Service Boundary (Change Plan v2 §12)
+  // Platform-wide founder-held delegation under Platform Owner control
+  // ============================================================================
+
+  recordModeratorAuditSync(
+    audit: Omit<ScopedModeratorAuditRecord, 'id' | 'timestamp' | 'schemaVersion'>,
+    db?: DemoDatabase
+  ): ScopedModeratorAuditRecord {
+    const targetDb = db || this.getDb();
+    targetDb.scopedModeratorAudits = targetDb.scopedModeratorAudits || [];
+    const entry: ScopedModeratorAuditRecord = {
+      id: generateId('aud_grant'),
+      timestamp: new Date().toISOString(),
+      schemaVersion: 1,
+      ...audit,
+    };
+    targetDb.scopedModeratorAudits.push(entry);
+    if (!db) {
+      this.saveDb(targetDb);
+    }
+    return entry;
+  }
+
+  hasAnyModeratorGrant(userId?: string, db?: DemoDatabase): boolean {
+    if (!userId) return false;
+    const targetDb = db || this.getDb();
+    const grants = targetDb.scopedModeratorGrants || [];
+    return grants.some((g) => g.granteeId === userId);
+  }
+
+  verifyModeratorScopeInternal(
+    granteeId: string,
+    requiredScope: { type: ModeratorScopeType; sessionId?: string },
+    db: DemoDatabase
+  ): { authorized: boolean; grant?: ScopedModeratorGrant; error?: string } {
+    db.scopedModeratorGrants = db.scopedModeratorGrants || [];
+    const now = new Date().toISOString();
+
+    const userGrants = db.scopedModeratorGrants.filter((g) => g.granteeId === granteeId);
+    if (userGrants.length === 0) {
+      return {
+        authorized: false,
+        error: `No moderator grant found for user "${granteeId}".`,
+      };
+    }
+
+    const matchingScopeGrants = userGrants.filter((g) => g.scope.type === requiredScope.type);
+    if (matchingScopeGrants.length === 0) {
+      const activeOtherScopes = userGrants
+        .filter((g) => g.status === 'active' && g.expiresAt > now)
+        .map((g) => g.scope.type)
+        .join(', ');
+      return {
+        authorized: false,
+        error: `Cross-scope access denied: User has grants for [${activeOtherScopes || 'none'}], but requested scope "${requiredScope.type}".`,
+      };
+    }
+
+    if (requiredScope.type === 'named_session' && requiredScope.sessionId) {
+      const sessionGrant = matchingScopeGrants.find(
+        (g) => g.scope.sessionId === requiredScope.sessionId
+      );
+      if (!sessionGrant) {
+        const heldSessions = matchingScopeGrants
+          .map((g) => g.scope.sessionId)
+          .filter(Boolean)
+          .join(', ');
+        return {
+          authorized: false,
+          error: `Cross-session access denied: Scoped grant is limited to session(s) [${heldSessions || 'none'}], requested session "${requiredScope.sessionId}".`,
+        };
+      }
+    }
+
+    for (const grant of matchingScopeGrants) {
+      if (
+        requiredScope.type === 'named_session' &&
+        requiredScope.sessionId &&
+        grant.scope.sessionId !== requiredScope.sessionId
+      ) {
+        continue;
+      }
+
+      if (grant.status === 'revoked') {
+        return {
+          authorized: false,
+          grant,
+          error: `Grant "${grant.id}" was revoked by platform owner: ${grant.revocationReason || 'Revoked'}.`,
+        };
+      }
+
+      if (grant.expiresAt && grant.expiresAt <= now) {
+        grant.status = 'expired';
+        return {
+          authorized: false,
+          grant,
+          error: `Grant "${grant.id}" expired at ${grant.expiresAt}.`,
+        };
+      }
+
+      if (grant.status === 'active') {
+        return {
+          authorized: true,
+          grant,
+        };
+      }
+    }
+
+    return {
+      authorized: false,
+      error: `No active, unexpired grant found for scope "${requiredScope.type}".`,
+    };
+  }
+
+  async getScopedModeratorGrants(callerId?: string): Promise<ScopedModeratorGrant[]> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (callerId && effectiveActiveId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    if (callerId && !effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" cannot be used without an active persona.`
+      );
+    }
+
+    const effectiveCallerId = effectiveActiveId || callerId;
+    if (!effectiveCallerId) {
+      return [];
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveCallerId);
+
+    db.scopedModeratorGrants = db.scopedModeratorGrants || [];
+    const now = new Date().toISOString();
+    let hasChanges = false;
+    for (const grant of db.scopedModeratorGrants) {
+      if (grant.status === 'active' && grant.expiresAt && grant.expiresAt <= now) {
+        grant.status = 'expired';
+        hasChanges = true;
+      }
+    }
+    if (hasChanges) {
+      this.saveDb(db);
+    }
+
+    // Platform Owner can read all grants including grantee emails
+    if (caller?.role === 'platform_admin') {
+      return JSON.parse(JSON.stringify(db.scopedModeratorGrants));
+    }
+
+    // Non-owner: only return grantee's own grants as a safe projection (granteeEmail redacted)
+    const ownGrants = db.scopedModeratorGrants.filter((g) => g.granteeId === effectiveCallerId);
+    const safeProjection: ScopedModeratorGrant[] = ownGrants.map((g) => {
+      const copy = { ...g };
+      delete copy.granteeEmail;
+      return copy;
+    });
+
+    return JSON.parse(JSON.stringify(safeProjection));
+  }
+
+  async getScopedModeratorAudits(callerId?: string): Promise<ScopedModeratorAuditRecord[]> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (callerId && effectiveActiveId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    if (callerId && !effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" cannot be used without an active persona.`
+      );
+    }
+
+    const effectiveCallerId = effectiveActiveId || callerId;
+    if (!effectiveCallerId) {
+      return [];
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveCallerId);
+    db.scopedModeratorAudits = db.scopedModeratorAudits || [];
+    const sorted = [...db.scopedModeratorAudits].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    // Platform Owner can read the full audit trail
+    if (caller?.role === 'platform_admin') {
+      return JSON.parse(JSON.stringify(sorted));
+    }
+
+    // Non-owner: only audits where the caller is the actor or target
+    const scopedAudits = sorted.filter(
+      (a) => a.actorId === effectiveCallerId || a.targetId === effectiveCallerId
+    );
+
+    return JSON.parse(JSON.stringify(scopedAudits));
+  }
+
+  async createScopedModeratorGrant(
+    input: {
+      granteeId: string;
+      scope: ModeratorScope;
+      durationDays: number;
+      reason: string;
+    },
+    callerId?: string
+  ): Promise<ScopedModeratorGrant> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (callerId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveActiveId);
+
+    // Authority guard: strictly platform_admin (Platform Owner persona)
+    if (!caller || caller.role !== 'platform_admin') {
+      throw new Error(
+        `Unauthorized: Only the Platform Owner persona can create scoped moderator grants. ` +
+          `Current actor '${caller?.name || effectiveActiveId}' has role '${caller?.role || 'none'}'.`
+      );
+    }
+
+    const grantee = db.users.find((u) => u.id === input.granteeId);
+    if (!grantee) {
+      throw new Error(`Grantee user "${input.granteeId}" not found in registered users.`);
+    }
+
+    const trimmedReason = input.reason.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error('A substantive justification reason is required to create a moderator grant (at least 3 characters).');
+    }
+
+    if (!input.scope || !['assignments', 'memberships', 'named_session'].includes(input.scope.type)) {
+      throw new Error(`Invalid grant scope type: "${input.scope?.type}". Must be 'assignments', 'memberships', or 'named_session'.`);
+    }
+
+    if (input.scope.type === 'named_session') {
+      if (!input.scope.sessionId) {
+        throw new Error('A valid sessionId is required when creating a named_session moderator grant.');
+      }
+      const session = db.sessions.find((s) => s.id === input.scope.sessionId);
+      if (!session) {
+        throw new Error(`Target session "${input.scope.sessionId}" not found.`);
+      }
+      input.scope.sessionTitle = session.title;
+    }
+
+    if (!input.durationDays || input.durationDays <= 0) {
+      throw new Error('Grant duration must be greater than zero days.');
+    }
+
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + input.durationDays * 86400000).toISOString();
+    const grantId = generateId('grant_mod');
+
+    const grant: ScopedModeratorGrant = {
+      id: grantId,
+      granteeId: grantee.id,
+      granteeName: grantee.name,
+      granteeRole: grantee.role,
+      granteeEmail: grantee.email,
+      grantorId: caller.id,
+      grantorName: `${caller.name} (Platform Owner)`,
+      grantorRole: 'platform_admin',
+      scope: {
+        ...input.scope,
+        description: input.scope.description || `Platform delegation for ${input.scope.type}`,
+      },
+      reason: trimmedReason,
+      createdAt: now,
+      expiresAt,
+      status: 'active',
+      schemaVersion: 1,
+    };
+
+    db.scopedModeratorGrants = db.scopedModeratorGrants || [];
+    db.scopedModeratorGrants.push(grant);
+
+    this.recordModeratorAuditSync(
+      {
+        grantId: grant.id,
+        action: 'grant_created',
+        actorId: caller.id,
+        actorName: caller.name,
+        actorRole: caller.role,
+        scopeType: input.scope.type,
+        targetId: grantee.id,
+        details: `Platform Owner granted ${input.durationDays}-day scoped authority for ${input.scope.type} to ${grantee.name} (${grantee.id}): ${trimmedReason}`,
+        outcome: 'success',
+      },
+      db
+    );
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(grant));
+  }
+
+  async revokeScopedModeratorGrant(
+    grantId: string,
+    reason: string,
+    callerId?: string
+  ): Promise<ScopedModeratorGrant> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (callerId && callerId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${callerId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const caller = db.users.find((u) => u.id === effectiveActiveId);
+
+    // Authority guard: strictly platform_admin
+    if (!caller || caller.role !== 'platform_admin') {
+      throw new Error(
+        `Unauthorized: Only the Platform Owner persona can revoke scoped moderator grants. ` +
+          `Current actor '${caller?.name || effectiveActiveId}' has role '${caller?.role || 'none'}'.`
+      );
+    }
+
+    db.scopedModeratorGrants = db.scopedModeratorGrants || [];
+    const grant = db.scopedModeratorGrants.find((g) => g.id === grantId);
+    if (!grant) {
+      throw new Error(`Scoped moderator grant "${grantId}" not found.`);
+    }
+
+    const trimmedReason = reason.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error('A substantive reason is required to revoke a moderator grant (at least 3 characters).');
+    }
+
+    const now = new Date().toISOString();
+    grant.status = 'revoked';
+    grant.revokedAt = now;
+    grant.revokedBy = caller.id;
+    grant.revocationReason = trimmedReason;
+
+    this.recordModeratorAuditSync(
+      {
+        grantId: grant.id,
+        action: 'grant_revoked',
+        actorId: caller.id,
+        actorName: caller.name,
+        actorRole: caller.role,
+        scopeType: grant.scope.type,
+        targetId: grant.id,
+        details: `Platform Owner revoked grant ${grant.id} for ${grant.granteeName}: ${trimmedReason}`,
+        outcome: 'success',
+      },
+      db
+    );
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(grant));
+  }
+
+  async verifyModeratorScope(
+    granteeId: string,
+    requiredScope: { type: ModeratorScopeType; sessionId?: string }
+  ): Promise<{ authorized: boolean; grant?: ScopedModeratorGrant; error?: string }> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    const caller = db.users.find((u) => u.id === effectiveActiveId);
+    if (granteeId && granteeId !== effectiveActiveId && caller?.role !== 'platform_admin') {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${granteeId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+    const targetGranteeId = caller?.role === 'platform_admin' ? (granteeId || effectiveActiveId) : effectiveActiveId;
+    const result = this.verifyModeratorScopeInternal(targetGranteeId, requiredScope, db);
+    this.saveDb(db);
+    return result;
+  }
+
+  async moderateAssignmentSubmission(
+    submissionId: string,
+    status: 'verified' | 'revision_requested' | 'under_review',
+    feedback: string,
+    moderatorId?: string
+  ): Promise<Submission> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (moderatorId && moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const actorId = effectiveActiveId;
+    const moderator = db.users.find((u) => u.id === actorId);
+    if (!moderator) throw new Error(`Moderator user "${actorId}" not found.`);
+
+    const scopeCheck = this.verifyModeratorScopeInternal(actorId, { type: 'assignments' }, db);
+    if (!scopeCheck.authorized) {
+      this.recordModeratorAuditSync(
+        {
+          grantId: scopeCheck.grant?.id,
+          action: 'grant_denied',
+          actorId,
+          actorName: moderator.name,
+          actorRole: moderator.role,
+          scopeType: 'assignments',
+          targetId: submissionId,
+          details: `Assignment submission moderation denied: ${scopeCheck.error}`,
+          outcome: 'denied',
+          denialReason: scopeCheck.error,
+        },
+        db
+      );
+      this.saveDb(db);
+      throw new Error(`Unauthorized: Scoped assignment moderation denied. ${scopeCheck.error}`);
+    }
+
+    const submission = db.submissions.find((s) => s.id === submissionId);
+    if (!submission) throw new Error(`Submission ${submissionId} not found`);
+
+    const now = new Date().toISOString();
+    submission.status = status;
+    submission.teacherFeedback = feedback.trim();
+    submission.reviewerId = actorId;
+    submission.reviewedAt = now;
+    submission.updatedAt = now;
+
+    this.recordModeratorAuditSync(
+      {
+        grantId: scopeCheck.grant?.id,
+        action: 'grant_used',
+        actorId,
+        actorName: moderator.name,
+        actorRole: moderator.role,
+        scopeType: 'assignments',
+        targetId: submission.id,
+        details: `Scoped moderator marked submission "${submission.id}" as "${status}": ${feedback.trim() || 'Reviewed'}`,
+        outcome: 'success',
+      },
+      db
+    );
+
+    this.saveDb(db);
+    return JSON.parse(JSON.stringify(submission));
+  }
+
+  async moderatePlatformMembership(params: {
+    workspaceId: string;
+    targetUserId: string;
+    newStatus: 'restricted' | 'removed' | 'active';
+    reason: string;
+    moderatorId?: string;
+  }): Promise<WorkspaceMembership> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (params.moderatorId && params.moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${params.moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const actorId = effectiveActiveId;
+    const moderator = db.users.find((u) => u.id === actorId);
+    if (!moderator) throw new Error(`Moderator user "${actorId}" not found.`);
+
+    const scopeCheck = this.verifyModeratorScopeInternal(actorId, { type: 'memberships' }, db);
+    if (!scopeCheck.authorized) {
+      this.recordModeratorAuditSync(
+        {
+          grantId: scopeCheck.grant?.id,
+          action: 'grant_denied',
+          actorId,
+          actorName: moderator.name,
+          actorRole: moderator.role,
+          scopeType: 'memberships',
+          targetId: params.workspaceId,
+          details: `Platform membership moderation denied: ${scopeCheck.error}`,
+          outcome: 'denied',
+          denialReason: scopeCheck.error,
+        },
+        db
+      );
+      this.saveDb(db);
+      throw new Error(`Unauthorized: Scoped membership moderation denied. ${scopeCheck.error}`);
+    }
+
+    return this.moderateWorkspaceMember({
+      workspaceId: params.workspaceId,
+      moderatorId: actorId,
+      targetUserId: params.targetUserId,
+      newStatus: params.newStatus,
+      reason: params.reason,
+    });
+  }
+
+  async moderateSessionDeliberation(params: {
+    sessionId: string;
+    actionType: 'mute_participant' | 'flag_speech' | 'clear_queue';
+    targetUserId: string;
+    reason: string;
+    moderatorId?: string;
+  }): Promise<{ success: boolean; details: string; audit: ScopedModeratorAuditRecord }> {
+    const db = this.getDb();
+    const effectiveActiveId = db.activeUserId;
+    if (!effectiveActiveId) {
+      throw new Error('Unauthorized: Missing active persona. Privileged action requires an authenticated active persona.');
+    }
+    if (params.moderatorId && params.moderatorId !== effectiveActiveId) {
+      throw new Error(
+        `Spoof attempt rejected: Supplied actorId "${params.moderatorId}" does not match active persona "${effectiveActiveId}".`
+      );
+    }
+
+    const actorId = effectiveActiveId;
+    const moderator = db.users.find((u) => u.id === actorId);
+    if (!moderator) throw new Error(`Moderator user "${actorId}" not found.`);
+
+    const scopeCheck = this.verifyModeratorScopeInternal(
+      actorId,
+      { type: 'named_session', sessionId: params.sessionId },
+      db
+    );
+
+    if (!scopeCheck.authorized) {
+      const audit = this.recordModeratorAuditSync(
+        {
+          grantId: scopeCheck.grant?.id,
+          action: 'grant_denied',
+          actorId,
+          actorName: moderator.name,
+          actorRole: moderator.role,
+          scopeType: 'named_session',
+          targetId: params.sessionId,
+          details: `Session deliberation moderation denied: ${scopeCheck.error}`,
+          outcome: 'denied',
+          denialReason: scopeCheck.error,
+        },
+        db
+      );
+      this.saveDb(db);
+      throw new Error(`Unauthorized: Scoped session moderation denied. ${scopeCheck.error}`);
+    }
+
+    const session = db.sessions.find((s) => s.id === params.sessionId);
+    if (!session) throw new Error(`Session "${params.sessionId}" not found.`);
+
+    const trimmedReason = params.reason.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error('A substantive reason is required for session moderation (at least 3 characters).');
+    }
+
+    let details = '';
+    if (params.actionType === 'clear_queue') {
+      if (session.debateData?.speakingQueue) {
+        session.debateData.speakingQueue = [];
+      }
+      details = `Cleared speaking queue in session "${session.title}": ${trimmedReason}`;
+    } else if (params.actionType === 'mute_participant') {
+      if (session.debateData?.speakingQueue) {
+        session.debateData.speakingQueue = session.debateData.speakingQueue.filter(
+          (q) => q.userId !== params.targetUserId
+        );
+      }
+      details = `Muted participant ${params.targetUserId} in session "${session.title}": ${trimmedReason}`;
+    } else {
+      details = `Flagged speech for participant ${params.targetUserId} in session "${session.title}": ${trimmedReason}`;
+    }
+
+    const audit = this.recordModeratorAuditSync(
+      {
+        grantId: scopeCheck.grant?.id,
+        action: 'grant_used',
+        actorId,
+        actorName: moderator.name,
+        actorRole: moderator.role,
+        scopeType: 'named_session',
+        targetId: params.sessionId,
+        details,
+        outcome: 'success',
+      },
+      db
+    );
+
+    this.saveDb(db);
+    return {
+      success: true,
+      details,
+      audit,
+    };
   }
 
   // Demo operations

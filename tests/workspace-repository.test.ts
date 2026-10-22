@@ -126,6 +126,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       );
 
       // Remove Kabir Khan
+      await demoRepository.switchUser('user_rohan');
       await demoRepository.moderateWorkspaceMember({
         workspaceId: WS_ID,
         moderatorId: 'user_rohan',
@@ -356,6 +357,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       ).rejects.toThrow(/Scoped moderation violation/i);
 
       // Ananya Verma is Institution Admin elsewhere
+      await demoRepository.switchUser('user_ananya');
       await expect(
         demoRepository.moderateWorkspaceMember({
           workspaceId: WS_ID,
@@ -368,6 +370,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     });
 
     it('allows room moderator to restrict or remove a member with documented reason', async () => {
+      await demoRepository.switchUser('user_kavita');
       const restricted = await demoRepository.moderateWorkspaceMember({
         workspaceId: WS_ID,
         moderatorId: 'user_kavita',
@@ -392,6 +395,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     });
 
     it('completely denies removed member from accessing workspace content', async () => {
+      await demoRepository.switchUser('user_kavita');
       await demoRepository.moderateWorkspaceMember({
         workspaceId: WS_ID,
         moderatorId: 'user_kavita',
@@ -412,6 +416,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     });
 
     it('prevents removing or restricting the workspace owner', async () => {
+      await demoRepository.switchUser('user_rohan');
       await expect(
         demoRepository.moderateWorkspaceMember({
           workspaceId: WS_ID,

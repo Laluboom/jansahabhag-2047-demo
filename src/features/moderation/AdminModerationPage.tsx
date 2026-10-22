@@ -127,16 +127,25 @@ export const AdminModerationPage: React.FC = () => {
       </Link>
 
       {/* Notice Banner */}
-      <div className="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl flex items-start gap-3 text-xs text-indigo-950">
-        <Info className="w-4 h-4 text-civic-indigo-600 shrink-0 mt-0.5" />
-        <div className="space-y-0.5">
-          <p className="font-semibold">
-            Human-in-the-Loop Moderation Protocol
-          </p>
-          <p className="text-indigo-900/80 leading-relaxed">
-            Automated scanning flags anomalous wording or rapid repetition. In accordance with platform governance, all moderation decisions (Open &rarr; Under Review &rarr; Actioned / No Action) require human reviewer affirmation and recorded reasoning.
-          </p>
+      <div className="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl flex items-start justify-between gap-3 text-xs text-indigo-950">
+        <div className="flex items-start gap-3">
+          <Info className="w-4 h-4 text-civic-indigo-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="font-semibold">
+              Human-in-the-Loop Moderation Protocol &bull; Change Plan v2 §12
+            </p>
+            <p className="text-indigo-900/80 leading-relaxed">
+              Automated scanning flags anomalous wording or rapid repetition. All moderation actions require human reviewer affirmation and recorded reasoning. Scoped moderators with active grants can moderate assignments or memberships.
+            </p>
+          </div>
         </div>
+        <Link
+          to="/admin/moderator-grants"
+          className="shrink-0 inline-flex items-center gap-1 font-semibold text-civic-indigo-700 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg hover:bg-indigo-50"
+        >
+          <span>Scoped Grants Console</span>
+          <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+        </Link>
       </div>
 
       <div>

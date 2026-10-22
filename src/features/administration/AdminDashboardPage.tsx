@@ -92,6 +92,12 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link to="/admin/moderator-grants">
+            <Button size="sm" variant="outline" className="border-civic-teal-700 text-civic-teal-300 hover:bg-slate-800">
+              <ShieldCheck className="w-4 h-4 mr-1.5 text-civic-teal-400" />
+              <span>Scoped Grants ({snapshot.scopedModeratorGrants?.length || 0})</span>
+            </Button>
+          </Link>
           <Link to="/admin/moderation">
             <Button size="sm" variant="saffron">
               <AlertTriangle className="w-4 h-4 mr-1.5" />
@@ -163,7 +169,7 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Admin Modules Quick Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card hoverable className="p-5 border-slate-200 flex flex-col justify-between">
           <div className="space-y-2">
             <Layers className="w-6 h-6 text-civic-indigo-600" />
@@ -174,6 +180,19 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
           <Link to="/admin/programmes" className="mt-4">
             <Button size="sm" variant="outline" className="w-full">Manage Programmes</Button>
+          </Link>
+        </Card>
+
+        <Card hoverable className="p-5 border-slate-200 flex flex-col justify-between">
+          <div className="space-y-2">
+            <ShieldCheck className="w-6 h-6 text-civic-teal-600" />
+            <CardTitle className="text-base font-bold text-slate-900">Scoped Moderator Grants</CardTitle>
+            <p className="text-xs text-slate-600">
+              Founder-held time-bounded delegations for assignments, memberships, or sessions ({snapshot.scopedModeratorGrants?.length || 0} grants).
+            </p>
+          </div>
+          <Link to="/admin/moderator-grants" className="mt-4">
+            <Button size="sm" variant="outline" className="w-full">Manage Delegations</Button>
           </Link>
         </Card>
 

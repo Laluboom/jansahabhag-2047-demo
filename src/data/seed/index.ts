@@ -26,6 +26,7 @@ import {
   seedWorkspaceAuditEvents,
   canonicalWorkspaceRulebook,
 } from './workspaces';
+import { seedModeratorGrants, seedModeratorAudits } from './moderatorGrants';
 
 export {
   seedWorkspaces,
@@ -33,6 +34,8 @@ export {
   seedWorkspaceActions,
   seedWorkspaceAuditEvents,
   canonicalWorkspaceRulebook,
+  seedModeratorGrants,
+  seedModeratorAudits,
 };
 
 export const CURRENT_SCHEMA_VERSION = 3;
@@ -70,6 +73,8 @@ export const seedDatabase: DemoDatabase = {
   workspaceMemberships: seedWorkspaceMemberships,
   workspaceActions: seedWorkspaceActions,
   workspaceAuditEvents: seedWorkspaceAuditEvents,
+  scopedModeratorGrants: seedModeratorGrants,
+  scopedModeratorAudits: seedModeratorAudits,
 };
 
 export function getFreshSeedDatabase(): DemoDatabase {

@@ -70,6 +70,7 @@ const InstitutionProgrammesPage = lazy(() => import('../features/institutions/Pr
 const AdminDashboardPage = lazy(() => import('../features/administration/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })));
 const AdminProgrammesPage = lazy(() => import('../features/administration/AdminProgrammesPage').then((m) => ({ default: m.AdminProgrammesPage })));
 const AdminContentPage = lazy(() => import('../features/administration/AdminContentPage').then((m) => ({ default: m.AdminContentPage })));
+const AdminModeratorGrantsPage = lazy(() => import('../features/administration/AdminModeratorGrantsPage').then((m) => ({ default: m.AdminModeratorGrantsPage })));
 const AdminModerationPage = lazy(() => import('../features/moderation/AdminModerationPage').then((m) => ({ default: m.AdminModerationPage })));
 const AnalyticsPage = lazy(() => import('../features/analytics/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
 
@@ -562,6 +563,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
             <AdminModerationPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'admin/moderator-grants',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <AdminModeratorGrantsPage />
           </Suspense>
         ),
       },
