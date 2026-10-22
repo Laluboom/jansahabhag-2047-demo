@@ -850,13 +850,13 @@ export const PropositionDetailPage: React.FC = () => {
                 <span>Post-Outcome Civic & Ethical Reflection</span>
               </h3>
               <span className="text-[10px] font-bold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-200">
-                +5 Reflection Credits
+                +1 Reflection Credit
               </span>
             </div>
 
             {reflectionSuccess ? (
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
-                <span>Reflection recorded! +5 Reflection credits have been saved to your Civic Passport.</span>
+                <span>Reflection recorded! +1 Reflection credit has been saved to your Civic Passport.</span>
                 <Link to="/passport">
                   <Button size="sm" variant="teal">View Passport</Button>
                 </Link>
@@ -903,7 +903,7 @@ export const PropositionDetailPage: React.FC = () => {
 
                 <div className="flex justify-end">
                   <Button size="sm" variant="teal" type="submit" isLoading={isSubmittingReflection}>
-                    <span>Save Reflection (+5 Credits)</span>
+                    <span>Save Reflection (+1 Credit)</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1" />
                   </Button>
                 </div>

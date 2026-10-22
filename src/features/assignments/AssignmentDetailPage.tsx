@@ -596,7 +596,7 @@ export const AssignmentDetailPage: React.FC = () => {
                 <p className="text-xs text-amber-800">
                   {isUhv
                     ? 'You have a saved draft for this reflection. Continue editing to record your notes.'
-                    : 'You have a saved draft for this assignment. Continue editing to submit for review and earn +10 Credits.'}
+                    : 'You have a saved draft for this assignment. Continue editing to submit for review and earn +2 Credits.'}
                 </p>
               </div>
               <Link to={`/assignments/${assignment.id}/submit`}>
@@ -751,7 +751,7 @@ export const AssignmentDetailPage: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   <div className="text-[11px] text-amber-900 bg-amber-50/80 p-2.5 rounded-lg border border-amber-200">
-                    Fictional local mentor action: Accepting this submission verifies the attached observation evidence and awards +5 Observation Credits. Requesting revision returns actionable feedback to the participant.
+                    Fictional local mentor action: Accepting this submission verifies the attached observation evidence and awards +1 Observation Credit. Requesting revision returns actionable feedback to the participant.
                   </div>
 
                   <Textarea

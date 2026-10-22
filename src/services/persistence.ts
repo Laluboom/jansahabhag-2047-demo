@@ -41,8 +41,8 @@ export class PersistenceService {
       const parsed = JSON.parse(raw);
       const migrated = runMigrations(parsed);
 
-      // If migrated version is different, persist back
-      if (parsed.schemaVersion !== migrated.schemaVersion) {
+      // If migrated version is different or contents were normalized, persist back
+      if (parsed.schemaVersion !== migrated.schemaVersion || raw !== JSON.stringify(migrated)) {
         this.saveDatabase(migrated);
       }
 

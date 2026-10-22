@@ -34,17 +34,17 @@ describe('Package 07 — Evidence-based Passport and Explainable Credits', () =>
       );
       expect(pendingSubCredit).toBeDefined();
       expect(pendingSubCredit?.status).toBe('Pending');
-      expect(pendingSubCredit?.amount).toBe(10);
+      expect(pendingSubCredit?.amount).toBe(2);
       expect(pendingSubCredit?.dimension).toBe('Contribution');
 
       const dashboardAfterSubmit = await demoRepository.getDashboard('user_aarav');
       // Verified total must not count pending credit
       expect(dashboardAfterSubmit.creditSummary.total).toBe(initialVerifiedCredits);
-      expect(dashboardAfterSubmit.creditSummary.pendingCredits).toBeGreaterThanOrEqual(10);
+      expect(dashboardAfterSubmit.creditSummary.pendingCredits).toBeGreaterThanOrEqual(2);
 
       // 3. Passport entry must be self_reported and pending review
       const passportAfterSubmit = await demoRepository.getPassport('user_aarav');
-      expect(passportAfterSubmit.pendingCredits).toBeGreaterThanOrEqual(10);
+      expect(passportAfterSubmit.pendingCredits).toBeGreaterThanOrEqual(2);
       const pendingPassportEntry = passportAfterSubmit.entries.find(
         (p) => p.sourceReferenceId === submitted.id || p.sourceReferenceId === 'asg_obs_03'
       );
@@ -224,14 +224,14 @@ describe('Package 07 — Evidence-based Passport and Explainable Credits', () =>
 
       expect(action).toBeDefined();
 
-      // Check +5 Collaboration credit awarded
+      // Check +1 Collaboration credit awarded
       const credits = await demoRepository.getCredits('user_aarav');
       const actionCredit = credits.find(
         (c) => c.sourceType === 'workspace' && c.sourceId === action.id
       );
       expect(actionCredit).toBeDefined();
       expect(actionCredit?.dimension).toBe('Collaboration');
-      expect(actionCredit?.amount).toBe(5);
+      expect(actionCredit?.amount).toBe(1);
       expect(actionCredit?.sourceRoute).toBe('/workspaces/ws_jaipur_school_safety');
 
       // Check passport entry
@@ -241,7 +241,7 @@ describe('Package 07 — Evidence-based Passport and Explainable Credits', () =>
       );
       expect(passEntry).toBeDefined();
       expect(passEntry?.category).toBe('civic_action');
-      expect(passEntry?.creditsAwarded).toBe(5);
+      expect(passEntry?.creditsAwarded).toBe(1);
       expect(passEntry?.sourceRoute).toBe('/workspaces/ws_jaipur_school_safety');
     });
   });

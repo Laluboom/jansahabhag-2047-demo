@@ -252,7 +252,7 @@ export const ProjectDetailPage: React.FC = () => {
               <span>Implementation Roadmap & Milestones</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Each completed milestone awards +10 Civic Action Credits and generates a verifiable Passport record.
+              Each completed milestone awards +2 Civic Action Credits and generates a verifiable Passport record.
             </p>
           </div>
           <span className="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-700">
@@ -312,12 +312,12 @@ export const ProjectDetailPage: React.FC = () => {
                   className="shrink-0 self-start sm:self-center"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                  <span>Mark Complete (+10 Credits)</span>
+                  <span>Mark Complete (+2 Credits)</span>
                 </Button>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold shrink-0 self-start sm:self-center bg-emerald-100/60 px-2.5 py-1 rounded-lg">
                   <Award className="w-3.5 h-3.5" />
-                  <span>+10 Civic Action Awarded</span>
+                  <span>+2 Civic Action Awarded</span>
                 </div>
               )}
             </div>

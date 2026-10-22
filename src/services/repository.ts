@@ -1,5 +1,6 @@
 import {
   User,
+  UserRole,
   Institution,
   Programme,
   Course,
@@ -48,6 +49,18 @@ export interface DemoRepository {
   getUser(userId: string): Promise<User | null>;
   switchUser(userId: string): Promise<User>;
   switchPersona(userId: string): Promise<User>;
+  createParticipant(input: {
+    name: string;
+    email: string;
+    institutionId: string;
+    institutionName: string;
+    programmeIds?: string[];
+    bio?: string;
+    age?: number;
+    location?: string;
+    avatar?: string;
+    role?: UserRole;
+  }): Promise<User>;
 
   // Dashboard
   getDashboard(userId: string): Promise<DashboardData>;

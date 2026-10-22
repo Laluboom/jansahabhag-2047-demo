@@ -208,7 +208,7 @@ export const LessonPage: React.FC = () => {
               onClick={handleCompleteLesson}
             >
               <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              <span>{isUhv ? 'Mark Module Complete' : 'Mark Lesson Complete (+5 Credits)'}</span>
+              <span>{isUhv ? 'Mark Module Complete' : 'Mark Lesson Complete (+1 Credit)'}</span>
             </Button>
           ) : (
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg">

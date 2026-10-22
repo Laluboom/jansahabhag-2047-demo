@@ -356,7 +356,7 @@ export const AssemblySessionPage: React.FC = () => {
 
       setNewContribText('');
       setSelectedEvidenceIds([]);
-      setContribSuccessMsg('Substantive contribution submitted! +5 Deliberation Credits awarded.');
+      setContribSuccessMsg('Substantive contribution submitted! +1 Deliberation Credit awarded.');
       triggerRefresh();
       setTimeout(() => setContribSuccessMsg(null), 4000);
     } catch (err) {
@@ -1385,7 +1385,7 @@ export const AssemblySessionPage: React.FC = () => {
                     <span>Civic Reflection Recorded!</span>
                   </div>
                   <p className="text-slate-600">
-                    Your reflective essay has been added to your Passport history and <strong>+5 Reflection Credits</strong> have been awarded.
+                    Your reflective essay has been added to your Passport history and <strong>+1 Reflection Credit</strong> has been awarded.
                   </p>
                 </div>
               ) : (
@@ -1436,10 +1436,10 @@ export const AssemblySessionPage: React.FC = () => {
 
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-[11px] text-slate-500">
-                      Earns +5 Reflection Credits in Passport
+                      Earns +1 Reflection Credit in Passport
                     </span>
                     <Button size="sm" variant="teal" type="submit" isLoading={isSubmittingReflection}>
-                      <span>Submit Reflection (+5)</span>
+                      <span>Submit Reflection (+1)</span>
                       <ArrowRight className="w-3.5 h-3.5 ml-1" />
                     </Button>
                   </div>
@@ -1502,7 +1502,7 @@ export const AssemblySessionPage: React.FC = () => {
 
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[11px] text-slate-500">
-                  Awards <strong>+5 Deliberation Credits</strong>
+                  Awards <strong>+1 Deliberation Credit</strong>
                 </span>
                 <Button
                   size="sm"

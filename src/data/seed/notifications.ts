@@ -5,7 +5,7 @@ export const seedNotifications: Notification[] = [
   {
     id: 'notif_aarav_01',
     userId: 'user_aarav',
-    title: 'Assignment Verified (+10 Credits)',
+    title: 'Assignment Verified (+2 Credits)',
     message: 'Teacher Kavita Rao verified your field traffic count for Navchetna Gate.',
     type: 'review',
     isRead: false,
