@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { seedEvents, seedSessions } from '../../data/seed/events';
 import {
   Sparkles,
   BookOpen,
@@ -139,6 +140,36 @@ const ICON_TILES: IconTile[] = [
   },
 ];
 
+export const getEarliestFutureJaipurEvent = (now: Date = new Date()) => {
+  const todayIso = now.toISOString().slice(0, 10);
+  const jaipurEvents = seedEvents.filter(
+    (e) => (e.location.includes('Jaipur') || e.title.includes('Jaipur')) && e.status === 'upcoming'
+  );
+  const future = jaipurEvents
+    .filter((e) => e.date > todayIso)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (future.length > 0) {
+    return future[0];
+  }
+  return jaipurEvents.find((e) => e.id === 'evt_jaipur_limited_05') || jaipurEvents[0];
+};
+
+const formatEventDate = (dateStr: string) => {
+  try {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 export const WelcomePage: React.FC = () => {
   const { switchPersona, currentUser } = useAuthStore();
   const navigate = useNavigate();
@@ -149,6 +180,9 @@ export const WelcomePage: React.FC = () => {
     }
     navigate('/dashboard');
   };
+
+  const upcomingEvent = getEarliestFutureJaipurEvent();
+  const matchingSession = upcomingEvent ? seedSessions.find((s) => s.eventId === upcomingEvent.id) : undefined;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-4">
@@ -280,68 +314,81 @@ export const WelcomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Real Upcoming Session Card using existing fictional Jaipur data */}
-      <section aria-label="Upcoming Session" data-testid="welcome-upcoming-session-card">
-        <Card className="border-slate-200 bg-white overflow-hidden p-0 shadow-xs">
-          <div className="bg-gradient-to-r from-civic-indigo-900 to-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-civic-saffron-500/20 text-civic-saffron-300 border border-civic-saffron-400/30">
-                Upcoming Deliberation
-              </span>
-              <span className="text-xs text-slate-300 font-medium">
-                Jaipur School Zone Pedestrian Safety Youth Assembly 2026
+      {/* Real Upcoming Session Card derived from earliest future fictional Jaipur event */}
+      {upcomingEvent && (
+        <section aria-label="Upcoming Session" data-testid="welcome-upcoming-session-card">
+          <Card className="border-slate-200 bg-white overflow-hidden p-0 shadow-xs">
+            <div className="bg-gradient-to-r from-civic-indigo-900 to-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-civic-saffron-500/20 text-civic-saffron-300 border border-civic-saffron-400/30">
+                  Upcoming Event
+                </span>
+                <span className="text-xs text-slate-300 font-medium">
+                  Fictional Jaipur Demo
+                </span>
+              </div>
+              <span className="text-xs text-slate-400">
+                Single-browser simulation
               </span>
             </div>
-            <span className="text-xs text-slate-400">
-              Single-browser simulation
-            </span>
-          </div>
-          <div className="p-5 space-y-4">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
-                Jaipur Youth Pedestrian Safety Assembly — Deliberation Session
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                Live deliberation on the Madhyam Marg safe school corridor proposition. Student delegate <strong>Aarav Sharma (18, Jaipur)</strong> serves as Questioner alongside Evidence Analyst Priya Sharma and Facilitator Rohan Mehta.
-              </p>
-            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
+                  {upcomingEvent.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                  {upcomingEvent.description}
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
-                <span>Monday, Oct 12, 2026</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
+                  <span>{formatEventDate(upcomingEvent.date)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
+                  <span>{upcomingEvent.startTime} – {upcomingEvent.endTime}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{upcomingEvent.location}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
-                <span>10:00 AM – 01:00 PM</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-civic-indigo-600 shrink-0" aria-hidden="true" />
-                <span className="truncate">Navchetna Community Hall & Hybrid Chamber, Jaipur</span>
-              </div>
-            </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-              <div className="flex items-center gap-2">
-                <Link to="/assemblies/assembly_jaipur_pedestrian_2026/session">
-                  <Button size="sm" variant="primary">
-                    <span>Open Assembly Session</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </Link>
-                <Link to="/events/evt_jaipur_assembly_01">
-                  <Button size="sm" variant="outline">
-                    <span>Event Details</span>
-                  </Button>
-                </Link>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div className="flex items-center gap-2">
+                  {matchingSession?.assemblyId ? (
+                    <>
+                      <Link to={`/assemblies/${matchingSession.assemblyId}/session`}>
+                        <Button size="sm" variant="primary">
+                          <span>Open Assembly Session</span>
+                          <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                        </Button>
+                      </Link>
+                      <Link to={`/events/${upcomingEvent.id}`}>
+                        <Button size="sm" variant="outline">
+                          <span>Event Details</span>
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <Link to={`/events/${upcomingEvent.id}`}>
+                      <Button size="sm" variant="primary">
+                        <span>View Event Details</span>
+                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+                <span className="text-xs text-slate-500 italic">
+                  Capacity: {upcomingEvent.capacity} participants • 33% Platform Rule applies
+                </span>
               </div>
-              <span className="text-xs text-slate-500 italic">
-                Linked Proposition: PROP-JAIPUR-01 (Tabletop Crosswalk)
-              </span>
             </div>
-          </div>
-        </Card>
-      </section>
+          </Card>
+        </section>
+      )}
 
       {/* 33% Platform Rule Banner */}
       <div

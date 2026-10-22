@@ -1,10 +1,11 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { WelcomePage } from '../src/features/welcome/WelcomePage';
+import { WelcomePage, getEarliestFutureJaipurEvent } from '../src/features/welcome/WelcomePage';
 import { useAuthStore } from '../src/stores/authStore';
 import { PersistenceService } from '../src/services/persistence';
+import { seedEvents } from '../src/data/seed/events';
 
 describe('WelcomePage & Root Landing Integration Tests', () => {
   beforeEach(async () => {
@@ -111,29 +112,53 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     });
   });
 
-  it('renders one real upcoming session card using existing fictional Jaipur data', () => {
-    render(
-      <MemoryRouter initialEntries={['/welcome']}>
-        <Routes>
-          <Route path="/welcome" element={<WelcomePage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+  it('renders upcoming event card with earliest future fictional Jaipur event relative to a fixed clock and correct linked event', () => {
+    // Fixed clock: Oct 22, 2026 08:00:00Z
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-22T08:00:00Z'));
 
-    const sessionCard = screen.getByTestId('welcome-upcoming-session-card');
-    expect(sessionCard).toBeInTheDocument();
-    expect(sessionCard).toHaveTextContent(/Jaipur Youth Pedestrian Safety Assembly — Deliberation Session/i);
-    expect(sessionCard).toHaveTextContent(/Aarav Sharma \(18, Jaipur\)/i);
-    expect(sessionCard).toHaveTextContent(/Questioner/i);
-    expect(sessionCard).toHaveTextContent(/Madhyam Marg/i);
-    expect(sessionCard).toHaveTextContent(/Navchetna Community Hall/i);
+    try {
+      render(
+        <MemoryRouter initialEntries={['/welcome']}>
+          <Routes>
+            <Route path="/welcome" element={<WelcomePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
 
-    // Verify session action link
-    const sessionLink = within(sessionCard).getByRole('link', { name: /open assembly session/i });
-    expect(sessionLink).toHaveAttribute('href', '/assemblies/assembly_jaipur_pedestrian_2026/session');
+      const sessionCard = screen.getByTestId('welcome-upcoming-session-card');
+      expect(sessionCard).toBeInTheDocument();
 
-    const eventLink = within(sessionCard).getByRole('link', { name: /event details/i });
-    expect(eventLink).toHaveAttribute('href', '/events/evt_jaipur_assembly_01');
+      // Check helper and derive expected earliest future fictional Jaipur event
+      const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-10-22T08:00:00Z'));
+      expect(earliestFutureEvent).toBeDefined();
+      expect(earliestFutureEvent.id).toBe('evt_jaipur_limited_05');
+      expect(earliestFutureEvent.date).toBe('2026-10-25');
+
+      // Assert event date is genuinely future relative to fixed clock 2026-10-22
+      const eventTime = new Date(earliestFutureEvent.date).getTime();
+      const clockTime = new Date('2026-10-22T08:00:00Z').getTime();
+      expect(eventTime).toBeGreaterThan(clockTime);
+
+      // Card title, description, time, and location are derived from event source
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.title);
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.location);
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.startTime);
+      expect(sessionCard).toHaveTextContent(earliestFutureEvent.endTime);
+      expect(sessionCard).toHaveTextContent(/Oct 25, 2026/i);
+
+      // Past Oct 12 date must NOT appear as upcoming
+      expect(sessionCard).not.toHaveTextContent('Oct 12, 2026');
+
+      // Since evt_jaipur_limited_05 has no Assembly session, only its event details link is shown
+      const eventDetailsLink = within(sessionCard).getByRole('link', { name: /view event details/i });
+      expect(eventDetailsLink).toHaveAttribute('href', `/events/${earliestFutureEvent.id}`);
+
+      // Must not show open assembly session button when there is no assembly session
+      expect(within(sessionCard).queryByRole('link', { name: /open assembly session/i })).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('surfaces 33% platform rule as at least one-third of limited seats and named roles, rounded up, without implying statutory law or universal reservation', () => {
