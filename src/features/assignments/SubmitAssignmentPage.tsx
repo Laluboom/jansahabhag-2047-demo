@@ -21,10 +21,21 @@ import {
   Save,
   Clock,
   ShieldCheck,
+  ShieldAlert,
   FileText,
   Upload,
   X,
+  Flag,
+  VideoOff,
 } from 'lucide-react';
+import {
+  NO_RECORDING_RULE_TITLE,
+  NO_RECORDING_RULE_TEXT,
+  FACE_CONSENT_WARNING_TEXT,
+  ALLOWED_EVIDENCE_FORMAT_LABELS,
+  ALLOWED_EVIDENCE_MIME_TYPES,
+  MAX_EVIDENCE_FILE_BYTES,
+} from '../../domain/evidenceRules';
 
 const buildSubmissionSchema = (isUhv: boolean) =>
   z.object({
@@ -81,7 +92,7 @@ export const SubmitAssignmentPage: React.FC = () => {
   const [newEvDesc, setNewEvDesc] = useState('');
   const [newEvLocation, setNewEvLocation] = useState('Navchetna School Crossing, Madhyam Marg, Jaipur');
   const [newEvSource, setNewEvSource] = useState('Direct Student Field Observation');
-  const [newEvVisibility, setNewEvVisibility] = useState<Visibility>('assembly');
+  const [newEvVisibility, setNewEvVisibility] = useState<Visibility>('private');
   const [selectedFile, setSelectedFile] = useState<{
     name: string;
     size: number;
@@ -90,6 +101,18 @@ export const SubmitAssignmentPage: React.FC = () => {
   } | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isCreatingEvidence, setIsCreatingEvidence] = useState(false);
+
+  // Moderation Report Modal State (Review Additions 3 & V2 Evidence Rules)
+  const [reportModalData, setReportModalData] = useState<{
+    targetId: string;
+    targetTitle: string;
+    targetType: 'evidence' | 'submission';
+  } | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportSeverity, setReportSeverity] = useState<'low' | 'medium' | 'high'>('medium');
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reportSuccessMessage, setReportSuccessMessage] = useState<string | null>(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const {
     control,
@@ -315,21 +338,14 @@ export const SubmitAssignmentPage: React.FC = () => {
       return;
     }
 
-    const allowedMime = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'application/pdf',
-      'text/plain',
-      'text/csv',
-    ];
+    const allowedMime = [...ALLOWED_EVIDENCE_MIME_TYPES] as string[];
     if (!allowedMime.includes(file.type)) {
-      setFileError('Unsupported file type. Please select a JPEG, PNG, WebP image, PDF, CSV, or TXT file.');
+      setFileError(`Unsupported file type. Please select a ${ALLOWED_EVIDENCE_FORMAT_LABELS} file.`);
       setSelectedFile(null);
       return;
     }
 
-    const maxBytes = 250 * 1024; // 250 KB conservative limit for durable browser storage
+    const maxBytes = MAX_EVIDENCE_FILE_BYTES; // 250 KB conservative limit for durable browser storage
     if (file.size > maxBytes) {
       setFileError(`File size (${(file.size / 1024).toFixed(1)} KB) exceeds conservative browser storage limit of 250 KB. Please select a smaller file.`);
       setSelectedFile(null);
@@ -402,6 +418,49 @@ export const SubmitAssignmentPage: React.FC = () => {
       setFileError(err?.message || 'Storage error: Failed to save evidence to browser storage.');
     } finally {
       setIsCreatingEvidence(false);
+    }
+  };
+
+  const handleOpenReportModal = (
+    targetId: string,
+    targetTitle: string,
+    targetType: 'evidence' | 'submission'
+  ) => {
+    setReportModalData({ targetId, targetTitle, targetType });
+    setReportReason('');
+    setReportSeverity('medium');
+    setReportError(null);
+  };
+
+  const handleSubmitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportModalData || !currentUser) return;
+    const trimmed = reportReason.trim();
+    if (trimmed.length < 3) {
+      setReportError('Please provide a specific reason for reporting (at least 3 characters).');
+      return;
+    }
+
+    setIsSubmittingReport(true);
+    setReportError(null);
+    try {
+      await demoRepository.reportEvidenceOrSubmission({
+        reporterId: currentUser.id,
+        targetType: reportModalData.targetType,
+        targetId: reportModalData.targetId,
+        reason: trimmed,
+        severity: reportSeverity,
+      });
+      setReportSuccessMessage(
+        `Report submitted to moderation queue for ${reportModalData.targetType}: "${reportModalData.targetTitle}".`
+      );
+      setReportModalData(null);
+      setReportReason('');
+      triggerRefresh();
+    } catch (err: any) {
+      setReportError(err?.message || 'Failed to submit moderation report.');
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -516,9 +575,27 @@ export const SubmitAssignmentPage: React.FC = () => {
           </span>
         </div>
 
+        {/* Success Feedback Alert */}
+        {reportSuccessMessage && (
+          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between gap-2" role="status">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{reportSuccessMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReportSuccessMessage(null)}
+              className="text-emerald-700 hover:text-emerald-900"
+              aria-label="Dismiss message"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Guard warning if already submitted and not in revision mode */}
         {isAlreadySubmitted && !isRevision && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-amber-600" />
               Submission Already Recorded
@@ -526,6 +603,27 @@ export const SubmitAssignmentPage: React.FC = () => {
             <p className="leading-relaxed">
               This assignment is currently <strong>{existingSubmission?.status}</strong> and cannot be overwritten by a draft. View your submission details or wait for teacher feedback.
             </p>
+            {!isUhv && existingSubmission && (
+              <div className="pt-1 border-t border-amber-200/60 flex items-center justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    handleOpenReportModal(
+                      existingSubmission.id,
+                      assignment?.title || 'Assignment Submission',
+                      'submission'
+                    )
+                  }
+                  className="text-xs text-rose-700 border-rose-200 hover:bg-rose-50 hover:text-rose-800"
+                  data-testid="btn-report-submission"
+                >
+                  <Flag className="w-3.5 h-3.5 mr-1 text-rose-600" />
+                  <span>Report Submission</span>
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -631,6 +729,17 @@ export const SubmitAssignmentPage: React.FC = () => {
                 </p>
               )}
 
+              {/* Point-of-use Media & Consent Notice */}
+              <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                  <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span>Field Evidence Rules: {NO_RECORDING_RULE_TITLE}</span>
+                </div>
+                <p className="text-[11px] text-amber-950 leading-relaxed">
+                  Recording is strictly off by default during all sessions and fieldwork. <strong>{FACE_CONSENT_WARNING_TEXT}</strong> All new evidence is private by default.
+                </p>
+              </div>
+
               {availableEvidence.length === 0 ? (
                 <div className="p-6 rounded-xl border border-dashed border-slate-200 text-center space-y-2 bg-slate-50">
                   <p className="text-xs text-slate-500">No field evidence records found in your vault.</p>
@@ -685,14 +794,30 @@ export const SubmitAssignmentPage: React.FC = () => {
                           </div>
                         </label>
 
-                        <input
-                          type="checkbox"
-                          id={`evidence-checkbox-${ev.id}`}
-                          checked={isSelected}
-                          onChange={() => toggleEvidence(ev.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-civic-indigo-600 focus:ring-civic-indigo-500 cursor-pointer"
-                          aria-label={`Attach evidence: ${ev.title}`}
-                        />
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleOpenReportModal(ev.id, ev.title, 'evidence');
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Report this evidence item"
+                            aria-label={`Report evidence ${ev.title}`}
+                            data-testid={`btn-report-evidence-${ev.id}`}
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                          </button>
+                          <input
+                            type="checkbox"
+                            id={`evidence-checkbox-${ev.id}`}
+                            checked={isSelected}
+                            onChange={() => toggleEvidence(ev.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-civic-indigo-600 focus:ring-civic-indigo-500 cursor-pointer"
+                            aria-label={`Attach evidence: ${ev.title}`}
+                          />
+                        </div>
                       </div>
                     );
                   })}
@@ -814,17 +939,19 @@ export const SubmitAssignmentPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label htmlFor="new-evidence-visibility" className="block text-sm font-medium text-slate-700 mb-1">
               Sharing Scope & Privacy
             </label>
             <select
+              id="new-evidence-visibility"
+              aria-label="Sharing Scope & Privacy"
               value={newEvVisibility}
               onChange={(e) => setNewEvVisibility(e.target.value as Visibility)}
               className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 focus:border-civic-indigo-500 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500/20"
             >
+              <option value="private">Private Student Vault (Personal Study - Default)</option>
               <option value="assembly">Shared with Deliberation Chamber (Assembly & Debate)</option>
               <option value="public">Public Civic Evidence Record</option>
-              <option value="private">Private Student Vault (Personal Study)</option>
             </select>
           </div>
 
@@ -833,9 +960,20 @@ export const SubmitAssignmentPage: React.FC = () => {
             <label className="block text-sm font-medium text-slate-700">
               Attach Local File (Image or Document)
             </label>
-            <p className="text-[11px] text-slate-500">
-              DEMO single-browser simulation: File is read and stored locally in browser storage. Maximum file size: 250 KB (conservative limit to guarantee localStorage durability). Supported formats: JPEG, PNG, WebP, PDF, CSV, TXT.
-            </p>
+
+            {/* Concise Consent & Limit Warning Next to Picker */}
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+                <span>Consent & File Limits</span>
+              </div>
+              <p className="text-[11px] text-amber-900 leading-relaxed font-semibold">
+                {FACE_CONSENT_WARNING_TEXT} {NO_RECORDING_RULE_TITLE}.
+              </p>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Allowed formats: <strong>{ALLOWED_EVIDENCE_FORMAT_LABELS}</strong>. Actual file limit: <strong>250 KB</strong> (durable browser storage limit).
+              </p>
+            </div>
 
             <div className="flex items-center gap-3">
               <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors">
@@ -915,6 +1053,92 @@ export const SubmitAssignmentPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Modal: Report Civic Evidence or Submission to Moderation Queue */}
+      {reportModalData && (
+        <Modal
+          isOpen={Boolean(reportModalData)}
+          onClose={() => setReportModalData(null)}
+          title={`Report Civic ${reportModalData.targetType === 'evidence' ? 'Evidence Item' : 'Submission'}`}
+          description="Enter this item into the civic moderation queue for human reviewer audit."
+        >
+          <form onSubmit={handleSubmitReport} className="space-y-4">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 uppercase font-semibold text-[10px]">
+                  Target {reportModalData.targetType}
+                </span>
+                <span className="font-mono text-slate-700 text-[10px] bg-slate-200 px-1.5 py-0.5 rounded">
+                  {reportModalData.targetId}
+                </span>
+              </div>
+              <p className="font-bold text-slate-900">{reportModalData.targetTitle}</p>
+              <p className="text-slate-500 text-[11px]">
+                Reporter: <strong>{currentUser?.name}</strong> (@{currentUser?.username || currentUser?.id})
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Reason for Reporting
+              </label>
+              <textarea
+                rows={3}
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Explain why this content violates consent, privacy rules, or deliberative standards..."
+                required
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
+                data-testid="input-report-reason"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Severity
+              </label>
+              <select
+                value={reportSeverity}
+                onChange={(e) => setReportSeverity(e.target.value as 'low' | 'medium' | 'high')}
+                className="w-full text-xs p-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
+                data-testid="select-report-severity"
+              >
+                <option value="low">Low - Formatting / Minor discrepancy</option>
+                <option value="medium">Medium - Questionable metadata or missing consent</option>
+                <option value="high">High - Severe privacy breach, unconsented faces, or harassment</option>
+              </select>
+            </div>
+
+            {reportError && (
+              <p className="text-xs text-rose-600 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {reportError}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReportModalData(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                isLoading={isSubmittingReport}
+                disabled={!reportReason.trim() || reportReason.trim().length < 3}
+                data-testid="btn-submit-report"
+              >
+                Submit Report to Queue
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

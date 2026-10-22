@@ -31,6 +31,7 @@ import {
   CommunityGroup,
   CommunityPost,
   ModerationCase,
+  ModerationSeverity,
   CivicIssue,
   DemoDatabase,
   AssemblyStage,
@@ -83,6 +84,18 @@ import {
   PassportView,
 } from '../types';
 import { DemoRepository } from './repository';
+
+declare module './repository' {
+  interface DemoRepository {
+    reportEvidenceOrSubmission(params: {
+      reporterId: string;
+      targetType: 'evidence' | 'submission';
+      targetId: string;
+      reason: string;
+      severity?: ModerationSeverity;
+    }): Promise<ModerationCase>;
+  }
+}
 import { PersistenceService } from './persistence';
 import { generateId } from '../utils/id';
 
@@ -1866,25 +1879,29 @@ export class LocalDemoRepository implements DemoRepository {
   }): Promise<Evidence[]> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isTeacher = activeUser?.role === 'teacher';
+    const isReviewerOrAdmin =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'platform_admin' ||
+      activeUser?.role === 'institution_admin';
 
     let evs = db.evidence;
     if (options?.ownerId) evs = evs.filter((e) => e.ownerId === options.ownerId);
     if (options?.visibility) evs = evs.filter((e) => e.visibility === options.visibility);
     if (options?.verificationStatus) evs = evs.filter((e) => e.verificationStatus === options.verificationStatus);
 
-    // Cross-persona privacy guard: private evidence is only visible to its owner or reviewing teacher
+    // Cross-persona privacy guard: private evidence is only visible to its owner, reviewer, or admin
     evs = evs.filter((e) => {
       if (e.visibility === 'private') {
-        return e.ownerId === db.activeUserId || isTeacher;
+        return e.ownerId === db.activeUserId || isReviewerOrAdmin;
       }
       return true;
     });
 
     const cloned: Evidence[] = JSON.parse(JSON.stringify(evs));
-    // DataUrl protection: do not expose raw file dataUrl to other participants
+    // DataUrl protection: do not expose raw file dataUrl to unauthorized personas
     for (const item of cloned) {
-      if (item.ownerId !== db.activeUserId && !isTeacher) {
+      if (item.ownerId !== db.activeUserId && !isReviewerOrAdmin) {
         if (item.fileInfo?.dataUrl) {
           delete item.fileInfo.dataUrl;
         }
@@ -1896,19 +1913,23 @@ export class LocalDemoRepository implements DemoRepository {
   async getEvidence(evidenceId: string): Promise<Evidence | null> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isTeacher = activeUser?.role === 'teacher';
+    const isReviewerOrAdmin =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'platform_admin' ||
+      activeUser?.role === 'institution_admin';
 
     const ev = db.evidence.find((e) => e.id === evidenceId);
     if (!ev) return null;
 
-    // Cross-persona privacy guard: private evidence is not accessible to other participants
-    if (ev.visibility === 'private' && ev.ownerId !== db.activeUserId && !isTeacher) {
+    // Cross-persona privacy guard: private evidence is not accessible to unauthorized participants
+    if (ev.visibility === 'private' && ev.ownerId !== db.activeUserId && !isReviewerOrAdmin) {
       return null;
     }
 
     const cloned: Evidence = JSON.parse(JSON.stringify(ev));
-    // DataUrl protection: do not expose raw file dataUrl to other participants
-    if (cloned.ownerId !== db.activeUserId && !isTeacher) {
+    // DataUrl protection: do not expose raw file dataUrl to unauthorized personas
+    if (cloned.ownerId !== db.activeUserId && !isReviewerOrAdmin) {
       if (cloned.fileInfo?.dataUrl) {
         delete cloned.fileInfo.dataUrl;
       }
@@ -1922,6 +1943,14 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     if (evidenceInput.ownerId !== db.activeUserId) {
       throw new Error('Unauthorized: cannot create evidence for another participant');
+    }
+
+    // Guard: private UHV reflections cannot be attached to evidence or shared records
+    if (evidenceInput.assignmentId) {
+      const asg = db.assignments.find((a) => a.id === evidenceInput.assignmentId);
+      if (asg && this.isUhvAssignment(asg, db)) {
+        throw new Error('Private UHV reflections cannot be attached to evidence or shared records.');
+      }
     }
 
     const maxFileBytes = 250 * 1024;
@@ -1941,6 +1970,7 @@ export class LocalDemoRepository implements DemoRepository {
     const now = new Date().toISOString();
     const newEvidence: Evidence = {
       ...evidenceInput,
+      visibility: evidenceInput.visibility || 'private', // Evidence is private by default
       verificationStatus,
       id: generateId('ev'),
       schemaVersion: 1,
@@ -1950,6 +1980,68 @@ export class LocalDemoRepository implements DemoRepository {
     db.evidence.push(newEvidence);
     this.saveDb(db);
     return JSON.parse(JSON.stringify(newEvidence));
+  }
+
+  // Civic Moderation Reporting (Review Additions 3 & V2 Evidence Rules)
+  async reportEvidenceOrSubmission(params: {
+    reporterId: string;
+    targetType: 'evidence' | 'submission';
+    targetId: string;
+    reason: string;
+    severity?: ModerationSeverity;
+  }): Promise<ModerationCase> {
+    const db = this.getDb();
+    const reporter = db.users.find((u) => u.id === params.reporterId);
+    if (!reporter) {
+      throw new Error(`Reporter user ${params.reporterId} not found`);
+    }
+
+    const trimmedReason = params.reason?.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error('A valid reason is required for moderation reporting (at least 3 characters).');
+    }
+
+    let targetSummary = '';
+    if (params.targetType === 'evidence') {
+      const ev = db.evidence.find((e) => e.id === params.targetId);
+      if (!ev) {
+        throw new Error(`Evidence item ${params.targetId} not found`);
+      }
+      targetSummary = `Evidence: "${ev.title}" (owner: ${ev.ownerName})`;
+    } else if (params.targetType === 'submission') {
+      const sub = db.submissions.find((s) => s.id === params.targetId);
+      if (!sub) {
+        throw new Error(`Submission ${params.targetId} not found`);
+      }
+      if (this.isUhvSubmission(sub, db)) {
+        throw new Error('Private UHV reflections are protected and cannot be reported or shared.');
+      }
+      const asg = db.assignments.find((a) => a.id === sub.assignmentId);
+      targetSummary = `Submission for: "${asg?.title || sub.assignmentId}" (user: ${sub.userId})`;
+    } else {
+      throw new Error(`Unsupported target type: ${params.targetType}`);
+    }
+
+    const now = new Date().toISOString();
+    const newCase: ModerationCase = {
+      id: generateId('mod_civic'),
+      reporterId: params.reporterId,
+      targetType: params.targetType === 'evidence' ? 'evidence' : 'contribution',
+      targetId: params.targetId,
+      reason: trimmedReason,
+      severity: params.severity || 'medium',
+      status: 'open',
+      notes: `Report filed by @${reporter.username || reporter.name} (${reporter.role}). Target: ${targetSummary}.`,
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.moderationCases = db.moderationCases || [];
+    db.moderationCases.push(newCase);
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(newCase));
   }
 
   private ensureAssemblyRoleAllocations(assembly: Assembly, db: DemoDatabase): boolean {
