@@ -19,13 +19,15 @@ const DB_NAME = 'jansahabhag_binary_store';
 const STORE_NAME = 'evidence_attachments';
 const DB_VERSION = 1;
 
-// In-memory fallback map for environments where IndexedDB is unavailable or mock-failed
+// In-memory cache for fast retrieval after durable commit
 const inMemoryStore = new Map<string, StoredBinaryAttachment>();
 let isSimulatedQuotaFailure = false;
+let isSimulatedTransactionFailure = false;
+let isSimulatedOpenFailure = false;
 
 function isIndexedDBAvailable(): boolean {
   try {
-    return typeof window !== 'undefined' && !!window.indexedDB;
+    return typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined' && window.indexedDB !== null;
   } catch {
     return false;
   }
@@ -34,11 +36,18 @@ function isIndexedDBAvailable(): boolean {
 let dbInstancePromise: Promise<IDBDatabase> | null = null;
 
 function getDb(): Promise<IDBDatabase> {
+  if (isSimulatedOpenFailure) {
+    return Promise.reject(
+      new Error('Browser storage failure: Simulated IndexedDB open failure (permission denied or storage disabled).')
+    );
+  }
+
   if (dbInstancePromise) return dbInstancePromise;
 
   dbInstancePromise = new Promise((resolve, reject) => {
     if (!isIndexedDBAvailable()) {
-      reject(new Error('IndexedDB is not supported in this browser environment.'));
+      dbInstancePromise = null;
+      reject(new Error('Browser storage failure: IndexedDB is not supported or storage is disabled in this browser.'));
       return;
     }
 
@@ -57,13 +66,15 @@ function getDb(): Promise<IDBDatabase> {
       };
 
       request.onerror = () => {
-        reject(request.error || new Error('Failed to open IndexedDB binary store.'));
+        dbInstancePromise = null;
+        reject(request.error || new Error('Browser storage failure: Failed to open IndexedDB binary store.'));
       };
 
       request.onblocked = () => {
         console.warn('IndexedDB binary store opening is blocked by another tab.');
       };
     } catch (err) {
+      dbInstancePromise = null;
       reject(err);
     }
   });
@@ -82,7 +93,49 @@ export class EvidenceAttachmentStore {
   }
 
   /**
-   * Store binary blob/file in browser-local IndexedDB
+   * For testing non-quota transaction failure resilience (e.g. abort, I/O error, hardware failure)
+   */
+  public static setSimulateTransactionFailure(fail: boolean): void {
+    isSimulatedTransactionFailure = fail;
+  }
+
+  /**
+   * For testing open failure resilience (e.g. storage disabled, strict privacy mode)
+   */
+  public static setSimulateOpenFailure(fail: boolean): void {
+    isSimulatedOpenFailure = fail;
+    if (fail) {
+      dbInstancePromise = null;
+    }
+  }
+
+  /**
+   * Clears ONLY the in-memory mirror cache without touching IndexedDB.
+   * This is used by tests to simulate a fresh browser session/page reload
+   * and prove genuine persistence in IndexedDB.
+   */
+  public static clearMemoryCacheOnly(): void {
+    inMemoryStore.clear();
+  }
+
+  /**
+   * Returns current count of items in in-memory mirror cache
+   */
+  public static getMemoryCacheSize(): number {
+    return inMemoryStore.size;
+  }
+
+  /**
+   * Resets active DB connection instance promise
+   */
+  public static resetDbConnection(): void {
+    dbInstancePromise = null;
+  }
+
+  /**
+   * Store binary blob/file in browser-local IndexedDB.
+   * Resolves strictly on tx.oncomplete.
+   * Rejects with a visible storage error on any failure; never silently succeeds into temporary memory.
    */
   public static async saveAttachment(
     blobKey: string,
@@ -101,6 +154,12 @@ export class EvidenceAttachmentStore {
       );
     }
 
+    if (isSimulatedTransactionFailure) {
+      throw new Error(
+        'Browser storage failure: IndexedDB transaction aborted. Unable to write attachment to disk.'
+      );
+    }
+
     const size = metadata.fileSize ?? fileOrBlob.size;
     if (size > MAX_BINARY_ATTACHMENT_BYTES) {
       throw new Error(
@@ -114,6 +173,12 @@ export class EvidenceAttachmentStore {
       );
     }
 
+    if (!isIndexedDBAvailable()) {
+      throw new Error(
+        'Browser storage failure: IndexedDB is not supported or storage is disabled in this browser. Evidence cannot be saved durably.'
+      );
+    }
+
     const item: StoredBinaryAttachment = {
       blobKey,
       fileName: metadata.fileName,
@@ -124,61 +189,94 @@ export class EvidenceAttachmentStore {
       createdAt: new Date().toISOString(),
     };
 
-    if (!isIndexedDBAvailable()) {
-      inMemoryStore.set(blobKey, item);
-      return blobKey;
-    }
+    const db = await getDb();
 
-    try {
-      const db = await getDb();
-      await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
+      let isSettled = false;
+      const settleError = (err: Error) => {
+        if (!isSettled) {
+          isSettled = true;
+          reject(err);
+        }
+      };
+
+      try {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
 
         const request = store.put(item);
 
-        request.onsuccess = () => resolve();
-        request.onerror = () => {
-          const err = request.error;
-          if (err?.name === 'QuotaExceededError') {
-            reject(
+        // Crucial invariant: Resolve save ONLY on transaction oncomplete, NOT request.onsuccess,
+        // so late abort or commit quota failure is observed.
+        tx.oncomplete = () => {
+          if (!isSettled) {
+            isSettled = true;
+            resolve();
+          }
+        };
+
+        tx.onerror = () => {
+          const err = tx.error;
+          if (err?.name === 'QuotaExceededError' || err?.message?.toLowerCase().includes('quota')) {
+            settleError(
               new Error(
                 'Browser storage failure: IndexedDB quota exceeded. Please select a smaller file or remove previous attachments.'
               )
             );
           } else {
-            reject(err || new Error('Failed to write binary attachment to IndexedDB.'));
+            settleError(
+              new Error(
+                `Browser storage failure: IndexedDB transaction error (${err?.message || 'Transaction failed'}).`
+              )
+            );
           }
         };
 
         tx.onabort = () => {
           const err = tx.error;
-          if (err?.name === 'QuotaExceededError') {
-            reject(
+          if (err?.name === 'QuotaExceededError' || err?.message?.toLowerCase().includes('quota')) {
+            settleError(
               new Error(
                 'Browser storage failure: IndexedDB quota exceeded. Please select a smaller file or remove previous attachments.'
               )
             );
           } else {
-            reject(err || new Error('IndexedDB transaction aborted.'));
+            settleError(
+              new Error(
+                `Browser storage failure: IndexedDB transaction aborted (${err?.message || 'Transaction aborted'}).`
+              )
+            );
           }
         };
-      });
 
-      // Keep in-memory mirror for fast retrieval
-      inMemoryStore.set(blobKey, item);
-      return blobKey;
-    } catch (err: any) {
-      if (err?.name === 'QuotaExceededError' || err?.message?.includes('quota')) {
-        throw new Error(
-          'Browser storage failure: IndexedDB quota exceeded. Please select a smaller file or remove previous attachments.'
+        request.onerror = () => {
+          const err = request.error;
+          if (err?.name === 'QuotaExceededError' || err?.message?.toLowerCase().includes('quota')) {
+            settleError(
+              new Error(
+                'Browser storage failure: IndexedDB quota exceeded. Please select a smaller file or remove previous attachments.'
+              )
+            );
+          } else {
+            settleError(
+              new Error(
+                `Browser storage failure: IndexedDB put request error (${err?.message || 'Put request failed'}).`
+              )
+            );
+          }
+        };
+      } catch (err: any) {
+        settleError(
+          new Error(
+            `Browser storage failure: Failed to start IndexedDB transaction (${err?.message || err}).`
+          )
         );
       }
-      // If IndexedDB failed (e.g. storage disabled in strict privacy mode), fallback to inMemory
-      console.warn('IndexedDB write failed, falling back to in-memory store:', err);
-      inMemoryStore.set(blobKey, item);
-      return blobKey;
-    }
+    });
+
+    // Populate in-memory mirror cache ONLY after the transaction has successfully completed and committed
+    inMemoryStore.set(blobKey, item);
+    return blobKey;
   }
 
   /**
@@ -196,26 +294,31 @@ export class EvidenceAttachmentStore {
     try {
       const db = await getDb();
       return await new Promise<StoredBinaryAttachment | null>((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        const request = store.get(blobKey);
+        try {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.get(blobKey);
 
-        request.onsuccess = () => {
-          const result = request.result as StoredBinaryAttachment | undefined;
-          if (result) {
-            inMemoryStore.set(blobKey, result);
-            resolve(result);
-          } else {
-            resolve(null);
-          }
-        };
+          request.onsuccess = () => {
+            const result = request.result as StoredBinaryAttachment | undefined;
+            if (result) {
+              inMemoryStore.set(blobKey, result);
+              resolve(result);
+            } else {
+              resolve(null);
+            }
+          };
 
-        request.onerror = () => {
-          reject(request.error || new Error('Failed to read from IndexedDB.'));
-        };
+          request.onerror = () => {
+            reject(request.error || new Error('Failed to read from IndexedDB.'));
+          };
+        } catch (err) {
+          reject(err);
+        }
       });
-    } catch {
-      return inMemoryStore.get(blobKey) || null;
+    } catch (err) {
+      console.warn('Failed to retrieve attachment from IndexedDB', err);
+      return null;
     }
   }
 
@@ -233,7 +336,9 @@ export class EvidenceAttachmentStore {
         const store = tx.objectStore(STORE_NAME);
         const request = store.delete(blobKey);
 
-        request.onsuccess = () => resolve();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || request.error);
+        tx.onabort = () => reject(tx.error);
         request.onerror = () => reject(request.error);
       });
     } catch (err) {
@@ -313,6 +418,8 @@ export class EvidenceAttachmentStore {
   public static async clearAll(): Promise<void> {
     inMemoryStore.clear();
     isSimulatedQuotaFailure = false;
+    isSimulatedTransactionFailure = false;
+    isSimulatedOpenFailure = false;
 
     if (!isIndexedDBAvailable()) return;
 
@@ -323,7 +430,9 @@ export class EvidenceAttachmentStore {
         const store = tx.objectStore(STORE_NAME);
         const request = store.clear();
 
-        request.onsuccess = () => resolve();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || request.error);
+        tx.onabort = () => reject(tx.error);
         request.onerror = () => reject(request.error);
       });
     } catch (err) {

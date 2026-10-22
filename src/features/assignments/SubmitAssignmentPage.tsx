@@ -421,6 +421,7 @@ export const SubmitAssignmentPage: React.FC = () => {
     e.preventDefault();
     if (!currentUser || !newEvTitle.trim() || !newEvDesc.trim()) return;
 
+    setFileError(null);
     setIsCreatingEvidence(true);
     try {
       let blobKey: string | undefined = undefined;
@@ -1163,7 +1164,7 @@ export const SubmitAssignmentPage: React.FC = () => {
               variant="primary"
               size="sm"
               isLoading={isCreatingEvidence}
-              disabled={!newEvTitle.trim() || !newEvDesc.trim() || Boolean(fileError)}
+              disabled={!newEvTitle.trim() || !newEvDesc.trim()}
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               <span>Save & Attach Evidence</span>

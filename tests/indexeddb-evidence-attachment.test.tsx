@@ -23,6 +23,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     PersistenceService.resetDatabase();
     await EvidenceAttachmentStore.clearAll();
     EvidenceAttachmentStore.setSimulateQuotaFailure(false);
+    EvidenceAttachmentStore.setSimulateTransactionFailure(false);
+    EvidenceAttachmentStore.setSimulateOpenFailure(false);
     await demoRepository.switchUser('user_aarav');
     await useAuthStore.getState().initialize();
   });
@@ -192,7 +194,13 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       expect(ev.fileInfo?.dataUrl).toBeUndefined();
       expect(ev.fileInfo?.blobKey).toBe(blobKey);
 
-      // 2. Simulate browser reload by reading afresh from repository and attachment store
+      // 2. Crucial: Clear in-memory mirror cache to simulate a fresh tab/reload.
+      // Verifies data is genuinely read from IndexedDB, NOT in-memory Map!
+      expect(EvidenceAttachmentStore.getMemoryCacheSize()).toBeGreaterThan(0);
+      EvidenceAttachmentStore.clearMemoryCacheOnly();
+      expect(EvidenceAttachmentStore.getMemoryCacheSize()).toBe(0);
+
+      // 3. Simulate browser reload by reading afresh from repository and attachment store
       const reloadedEv = await demoRepository.getEvidence(ev.id);
       expect(reloadedEv).not.toBeNull();
       expect(reloadedEv?.fileInfo?.blobKey).toBe(blobKey);
@@ -204,6 +212,30 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       expect(attachment?.mimeType).toBe('image/png');
       expect(attachment?.blob).toBeDefined();
       expect(attachment?.blob.size).toBe(blob.size);
+    });
+
+    it('retrieves binary attachment directly from IndexedDB when store instance / connection is recreated', async () => {
+      const blobKey = 'blob_recreate_test_01';
+      const fileBytes = new TextEncoder().encode('RECREATE_STORE_TEST_BINARY_DATA');
+      const blob = new Blob([fileBytes], { type: 'application/pdf' });
+
+      await EvidenceAttachmentStore.saveAttachment(blobKey, blob, {
+        fileName: 'study_protocol.pdf',
+        mimeType: 'application/pdf',
+        fileSize: blob.size,
+      });
+
+      // Recreate store connection and wipe in-memory cache
+      EvidenceAttachmentStore.clearMemoryCacheOnly();
+      EvidenceAttachmentStore.resetDbConnection();
+      expect(EvidenceAttachmentStore.getMemoryCacheSize()).toBe(0);
+
+      // Retrieve directly from newly opened IndexedDB connection
+      const retrieved = await EvidenceAttachmentStore.getAttachment(blobKey);
+      expect(retrieved).not.toBeNull();
+      expect(retrieved?.blobKey).toBe(blobKey);
+      expect(retrieved?.fileName).toBe('study_protocol.pdf');
+      expect(retrieved?.blob.size).toBe(blob.size);
     });
   });
 
@@ -337,7 +369,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     });
   });
 
-  describe('4. Quota Failure Resilience', () => {
+  describe('4. Storage & Transaction Failure Resilience (Quota, Abort, Open Failure)', () => {
     it('handles IndexedDB quota error visibly and preserves prior storage state', async () => {
       // 1. Establish prior evidence
       const priorEv = await demoRepository.addEvidence({
@@ -367,6 +399,95 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       const checkPrior = await demoRepository.getEvidence(priorEv.id);
       expect(checkPrior).not.toBeNull();
       expect(checkPrior?.title).toBe('Prior Durable Evidence');
+    });
+
+    it('rejects on non-quota transaction abort/failure, ensures NO metadata is saved in repository, and shows visible error in UI', async () => {
+      await useAuthStore.getState().switchPersona('user_aarav');
+
+      const initialEvs = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
+      const initialCount = initialEvs.length;
+
+      // Enable non-quota transaction abort/failure simulation
+      EvidenceAttachmentStore.setSimulateTransactionFailure(true);
+
+      render(
+        <MemoryRouter initialEntries={['/assignments/asg_obs_03/submit']}>
+          <Routes>
+            <Route path="/assignments/:id/submit" element={<SubmitAssignmentPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Log New Mock Evidence/i })).toBeInTheDocument();
+      });
+
+      // Open Add Evidence modal
+      fireEvent.click(screen.getByRole('button', { name: /Log New Mock Evidence/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('btn-use-offline-cleanup-example')).toBeInTheDocument();
+      });
+
+      // Populate with offline cleanup example and set unique title
+      fireEvent.click(screen.getByTestId('btn-use-offline-cleanup-example'));
+      fireEvent.change(screen.getByLabelText(/Evidence Title/i), {
+        target: { value: 'Unique Unsaved Transaction Abort Photo' },
+      });
+
+      // Click Save & Attach Evidence
+      const saveBtn = screen.getByRole('button', { name: /Save & Attach Evidence/i });
+      fireEvent.click(saveBtn);
+
+      // 1. User sees the visible storage error banner in the modal
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Browser storage failure: IndexedDB transaction aborted/i)
+        ).toBeInTheDocument();
+      });
+
+      // 2. Modal remains open and user's inputs are preserved
+      expect(screen.getByRole('heading', { name: /Log Field Evidence/i })).toBeInTheDocument();
+      expect(
+        screen.getByDisplayValue('Unique Unsaved Transaction Abort Photo')
+      ).toBeInTheDocument();
+
+      // 3. NO evidence metadata is written to repository
+      const currentEvs = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
+      expect(currentEvs.length).toBe(initialCount);
+      expect(
+        currentEvs.some((e) => e.title === 'Unique Unsaved Transaction Abort Photo')
+      ).toBe(false);
+
+      // 4. In-memory cache contains no entry for the aborted item
+      expect(EvidenceAttachmentStore.getMemoryCacheSize()).toBe(0);
+
+      // 5. Clear failure simulation and submit again: succeeds cleanly
+      EvidenceAttachmentStore.setSimulateTransactionFailure(false);
+      fireEvent.click(screen.getByRole('button', { name: /Save & Attach Evidence/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('heading', { name: /Log Field Evidence/i })).not.toBeInTheDocument();
+      });
+
+      const updatedEvs = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
+      expect(updatedEvs.length).toBe(initialCount + 1);
+    });
+
+    it('rejects on IndexedDB open / storage disabled failure and never silently succeeds into in-memory store', async () => {
+      EvidenceAttachmentStore.setSimulateOpenFailure(true);
+
+      const blob = new Blob(['Open Failure Content'], { type: 'application/pdf' });
+      await expect(
+        EvidenceAttachmentStore.saveAttachment('open_fail_blob', blob, {
+          fileName: 'open_fail.pdf',
+          mimeType: 'application/pdf',
+        })
+      ).rejects.toThrow(/Browser storage failure/i);
+
+      // Confirm in-memory cache was NOT secretly written
+      expect(EvidenceAttachmentStore.getMemoryCacheSize()).toBe(0);
+      expect(await EvidenceAttachmentStore.getAttachment('open_fail_blob')).toBeNull();
     });
   });
 
