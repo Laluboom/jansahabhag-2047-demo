@@ -10,6 +10,7 @@ import {
   User,
   Reflection,
   AllocationAuditRecord,
+  Submission,
 } from '../../types/domain';
 import { DebateReservationRulebookBanner } from '../debate/DebateReservationRulebookBanner';
 import { DebateReservationRulebookModal } from '../debate/DebateReservationRulebookModal';
@@ -41,6 +42,13 @@ import {
   Award,
   Layers,
   ChevronRight,
+  Timer,
+  Hand,
+  Play,
+  Square,
+  ThumbsUp,
+  ThumbsDown,
+  ExternalLink,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import {
@@ -105,6 +113,30 @@ export const DebateRoomPreviewPage: React.FC = () => {
   const [isLoadingAudits, setIsLoadingAudits] = useState(false);
   const [isWithdrawingRole, setIsWithdrawingRole] = useState<string | null>(null);
 
+  // Chamber Voting State (Change Plan v2 §13)
+  const [isCastingVote, setIsCastingVote] = useState(false);
+
+  // Speaking Timer & Speech Controls (Change Plan v2 §13)
+  const [speakingTimerSeconds, setSpeakingTimerSeconds] = useState(120);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+
+  // Facilitator Popup Assignment State (Change Plan v2 §13)
+  const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
+  const [popupTitle, setPopupTitle] = useState('');
+  const [popupInstruction, setPopupInstruction] = useState('');
+  const [popupTimeLimit, setPopupTimeLimit] = useState(5);
+  const [isPushingPopup, setIsPushingPopup] = useState(false);
+
+  // Popup Assignment Modal & Submission State
+  const [isPopupModalOpen, setIsPopupModalOpen] = useState(false);
+  const [popupResponseText, setPopupResponseText] = useState('');
+  const [selectedPopupEvidenceId, setSelectedPopupEvidenceId] = useState('');
+  const [isSubmittingPopup, setIsSubmittingPopup] = useState(false);
+  const [userPopupSubmission, setUserPopupSubmission] = useState<Submission | null>(null);
+  const [roomPopupSubmissions, setRoomPopupSubmissions] = useState<Submission[]>([]);
+  const [isPopupExpired, setIsPopupExpired] = useState(false);
+  const [popupTimeRemainingFormatted, setPopupTimeRemainingFormatted] = useState('05:00');
+
   // Load session
   const loadSessionData = async () => {
     try {
@@ -122,12 +154,81 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setEvidenceList(evidence);
       setAllUsers(users);
       setSessionReflections(reflections);
+
+      // Load popup assignment submissions if popup assignment is configured
+      if (sess?.debateData?.popupAssignment?.assignmentId && currentUser) {
+        const subs = await demoRepository.getSubmissions(
+          currentUser.role === 'teacher' || currentUser.id === sess.facilitatorId ? undefined : currentUser.id,
+          sess.debateData.popupAssignment.assignmentId
+        );
+        const mySub = subs.find((s) => s.userId === currentUser.id) || null;
+        setUserPopupSubmission(mySub);
+        setRoomPopupSubmissions(subs);
+      } else {
+        setUserPopupSubmission(null);
+        setRoomPopupSubmissions([]);
+      }
     } catch (err: any) {
       setActionError(err.message || 'Failed to load debate session');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Speaking Timer countdown effect
+  useEffect(() => {
+    let interval: any = null;
+    if (isTimerActive && speakingTimerSeconds > 0) {
+      interval = setInterval(() => {
+        setSpeakingTimerSeconds((prev) => {
+          if (prev <= 1) {
+            setIsTimerActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerActive, speakingTimerSeconds]);
+
+  // Reset timer when active speaker changes
+  useEffect(() => {
+    if (!session?.debateData?.activeSpeakerId) {
+      setIsTimerActive(false);
+      setSpeakingTimerSeconds(120);
+    }
+  }, [session?.debateData?.activeSpeakerId]);
+
+  // Popup assignment expiry check & countdown effect
+  useEffect(() => {
+    const popup = session?.debateData?.popupAssignment;
+    if (!popup || popup.isClosed) {
+      setIsPopupExpired(Boolean(popup?.isClosed));
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const expiresAtMs = new Date(popup.expiresAt).getTime();
+      const diffSec = Math.max(0, Math.floor((expiresAtMs - now) / 1000));
+      if (diffSec <= 0) {
+        setIsPopupExpired(true);
+        setPopupTimeRemainingFormatted('00:00');
+      } else {
+        setIsPopupExpired(false);
+        const mins = Math.floor(diffSec / 60);
+        const secs = diffSec % 60;
+        setPopupTimeRemainingFormatted(`${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [session?.debateData?.popupAssignment]);
 
   // Full session projection reload whenever active persona changes
   // Ensures owner-only fields are never visible to another persona
@@ -620,6 +721,143 @@ export const DebateRoomPreviewPage: React.FC = () => {
     }
   };
 
+  // Chamber Voting (Change Plan v2 §13)
+  const votes = session?.debateData?.votes || {};
+  const forVoteCount = Object.values(votes).filter((v) => v === 'for').length;
+  const againstVoteCount = Object.values(votes).filter((v) => v === 'against').length;
+  const abstainVoteCount = Object.values(votes).filter((v) => v === 'abstain').length;
+  const currentUserVote = currentUser ? votes[currentUser.id] : undefined;
+
+  const handleCastVote = async (stance: 'for' | 'against' | 'abstain') => {
+    if (!currentUser || !session) return;
+    setIsCastingVote(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const updated = await demoRepository.castDebateVote(session.id, currentUser.id, stance);
+      setSession(updated);
+      setActionSuccess(
+        `Recorded your vote on the motion: ${
+          stance === 'for'
+            ? 'For (Proposition)'
+            : stance === 'against'
+            ? 'Against (Opposition)'
+            : 'Abstain'
+        }`
+      );
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to record vote');
+    } finally {
+      setIsCastingVote(false);
+    }
+  };
+
+  // Speaking Timer Handlers (Change Plan v2 §13)
+  const formatSpeakingTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const handleStartSpeech = () => {
+    setIsTimerActive(true);
+    if (speakingTimerSeconds === 0) {
+      setSpeakingTimerSeconds(120);
+    }
+  };
+
+  const handlePauseSpeech = () => {
+    setIsTimerActive(false);
+  };
+
+  const handleEndSpeech = async () => {
+    setIsTimerActive(false);
+    setSpeakingTimerSeconds(120);
+    await handleAdvanceSpeakingTurn();
+  };
+
+  // Popup Assignment Handlers (Change Plan v2 §13)
+  const handlePushPopupAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !session) return;
+    if (!popupTitle.trim() || !popupInstruction.trim()) {
+      setActionError('Title and instruction are required for popup assignment');
+      return;
+    }
+    setIsPushingPopup(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const { session: updated, assignment } = await demoRepository.pushDebatePopupAssignment({
+        sessionId: session.id,
+        actorId: currentUser.id,
+        title: popupTitle.trim(),
+        instruction: popupInstruction.trim(),
+        timeLimitMinutes: Number(popupTimeLimit) || 5,
+      });
+      setSession(updated);
+      setIsCreateAssignmentOpen(false);
+      setPopupTitle('');
+      setPopupInstruction('');
+      setPopupResponseText('');
+      setUserPopupSubmission(null);
+      setRoomPopupSubmissions([]);
+      setIsPopupModalOpen(true);
+      setActionSuccess(
+        `Popup assignment "${assignment.title}" (${popupTimeLimit}m limit) published to the room.`
+      );
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to publish popup assignment');
+    } finally {
+      setIsPushingPopup(false);
+    }
+  };
+
+  const handleFacilitatorClosePopup = async () => {
+    if (!currentUser || !session) return;
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const updated = await demoRepository.closeDebatePopupAssignment(session.id, currentUser.id);
+      setSession(updated);
+      setActionSuccess('Chamber popup assignment has been closed.');
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to close popup assignment');
+    }
+  };
+
+  const handleSubmitPopupAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const popup = session?.debateData?.popupAssignment;
+    if (!currentUser || !session || !popup) return;
+    if (!popupResponseText.trim()) {
+      setActionError('Response text cannot be empty');
+      return;
+    }
+    setIsSubmittingPopup(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const sub = await demoRepository.submitAssignment({
+        assignmentId: popup.assignmentId,
+        userId: currentUser.id,
+        content: popupResponseText.trim(),
+        evidenceIds: selectedPopupEvidenceId ? [selectedPopupEvidenceId] : [],
+      });
+      setUserPopupSubmission(sub);
+      setRoomPopupSubmissions((prev) => [sub, ...prev.filter((s) => s.id !== sub.id)]);
+      setActionSuccess(
+        'Popup assignment response submitted successfully! Held in pending status for facilitator review.'
+      );
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to submit assignment');
+    } finally {
+      setIsSubmittingPopup(false);
+    }
+  };
+
+  const userAvailableEvidence = evidenceList.filter((e) => e.ownerId === currentUser?.id);
+
   // Relevant evidence items for dock
   const debateEvidence = evidenceList.filter((ev) =>
     debateData?.evidenceIds.includes(ev.id)
@@ -777,6 +1015,18 @@ export const DebateRoomPreviewPage: React.FC = () => {
           {isFacilitator && (
             <Button
               size="sm"
+              variant="primary"
+              data-testid="push-popup-assignment-btn"
+              onClick={() => setIsCreateAssignmentOpen(true)}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              <FileText className="w-4 h-4 mr-1.5" />
+              Push Popup Assignment
+            </Button>
+          )}
+          {isFacilitator && (
+            <Button
+              size="sm"
               variant="secondary"
               onClick={() => setIsInterstitialOpen(true)}
               className="bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
@@ -839,7 +1089,90 @@ export const DebateRoomPreviewPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Motion Card */}
+      {/* Persistent Chamber Popup Assignment Banner */}
+      {session.debateData?.popupAssignment && (
+        <Card
+          data-testid="active-chamber-task-banner"
+          className={`p-4 border ${
+            isPopupExpired || session.debateData.popupAssignment.isClosed
+              ? 'border-slate-300 bg-slate-50 text-slate-800'
+              : 'border-amber-300 bg-amber-50/80 text-amber-950'
+          } shadow-xs`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <FileText
+                className={`w-5 h-5 shrink-0 mt-0.5 ${
+                  isPopupExpired || session.debateData.popupAssignment.isClosed
+                    ? 'text-slate-500'
+                    : 'text-amber-700'
+                }`}
+              />
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-sm">
+                    Chamber Task: {session.debateData.popupAssignment.title}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      session.debateData.popupAssignment.isClosed
+                        ? 'bg-slate-200 text-slate-700'
+                        : isPopupExpired
+                        ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                        : userPopupSubmission
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : 'bg-amber-200 text-amber-900 border border-amber-300'
+                    }`}
+                  >
+                    {session.debateData.popupAssignment.isClosed
+                      ? 'Closed by Facilitator'
+                      : isPopupExpired
+                      ? 'Expired'
+                      : userPopupSubmission
+                      ? 'Submitted (Pending Review)'
+                      : `Active (${session.debateData.popupAssignment.timeLimitMinutes}m limit)`}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 line-clamp-1">
+                  <strong>Instruction:</strong> {session.debateData.popupAssignment.instruction}
+                </p>
+                {!session.debateData.popupAssignment.isClosed && !isPopupExpired && (
+                  <p className="text-[11px] font-mono text-amber-800">
+                    Time Remaining: <strong>{popupTimeRemainingFormatted}</strong>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="primary"
+                data-testid="open-chamber-task-btn"
+                onClick={() => setIsPopupModalOpen(true)}
+                className={`text-xs ${
+                  isPopupExpired || session.debateData.popupAssignment.isClosed
+                    ? 'bg-slate-700 hover:bg-slate-800 text-white'
+                    : 'bg-amber-700 hover:bg-amber-800 text-white'
+                }`}
+              >
+                {userPopupSubmission ? 'View Submission Receipt' : 'Open Task Modal'}
+              </Button>
+              {userPopupSubmission && (
+                <Link
+                  to={`/assignments/${session.debateData.popupAssignment.assignmentId}`}
+                  data-testid="banner-nav-to-assignment-link"
+                  className="text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline ml-1"
+                >
+                  View in Civic Records &rarr;
+                </Link>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Motion Card with For / Against Stance Counter & Voting Controls */}
       <Card className="border-civic-indigo-200 bg-white shadow-xs">
         <CardHeader className="pb-3 border-b border-slate-100">
           <div className="flex items-center justify-between">
@@ -859,6 +1192,93 @@ export const DebateRoomPreviewPage: React.FC = () => {
             </p>
           )}
         </CardHeader>
+        <CardContent className="pt-3 pb-3 bg-slate-50/70 border-t border-slate-100">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Stance Tallies */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Vote className="w-4 h-4 text-civic-indigo-600" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Motion Vote Counter:
+                </span>
+              </div>
+              <div className="flex items-center gap-2" data-testid="for-against-counter">
+                <span
+                  data-testid="vote-for-count"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  <span>For: {forVoteCount}</span>
+                </span>
+                <span
+                  data-testid="vote-against-count"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                  <span>Against: {againstVoteCount}</span>
+                </span>
+                <span
+                  data-testid="vote-abstain-count"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-700 border border-slate-300"
+                >
+                  <span>Abstain: {abstainVoteCount}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Voting Controls & Explicit Stance Boundary */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] text-slate-500 hidden sm:inline">
+                Cast explicit stance:
+              </span>
+              <Button
+                size="sm"
+                variant={currentUserVote === 'for' ? 'primary' : 'outline'}
+                onClick={() => handleCastVote('for')}
+                disabled={isSessionClosed || isCastingVote}
+                data-testid="vote-for-btn"
+                className={`text-xs ${
+                  currentUserVote === 'for'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
+                    : 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                }`}
+              >
+                <ThumbsUp className="w-3.5 h-3.5 mr-1" />
+                {currentUserVote === 'for' ? 'Voted For' : 'Vote For'}
+              </Button>
+              <Button
+                size="sm"
+                variant={currentUserVote === 'against' ? 'primary' : 'outline'}
+                onClick={() => handleCastVote('against')}
+                disabled={isSessionClosed || isCastingVote}
+                data-testid="vote-against-btn"
+                className={`text-xs ${
+                  currentUserVote === 'against'
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700'
+                    : 'text-rose-700 border-rose-300 hover:bg-rose-50'
+                }`}
+              >
+                <ThumbsDown className="w-3.5 h-3.5 mr-1" />
+                {currentUserVote === 'against' ? 'Voted Against' : 'Vote Against'}
+              </Button>
+              {currentUserVote && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleCastVote('abstain')}
+                  disabled={isSessionClosed || isCastingVote}
+                  data-testid="vote-abstain-btn"
+                  className="text-xs text-slate-600 hover:bg-slate-100"
+                >
+                  Abstain
+                </Button>
+              )}
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2 italic">
+            No inferred stances: Seating positions (Proposition/Opposition benches) do not predetermine votes; counts reflect explicit participant votes only.
+          </p>
+        </CardContent>
       </Card>
 
       {/* Phase Timeline / Flow */}
@@ -961,7 +1381,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Active Speaker Spotlight */}
+          {/* Active Speaker Spotlight with Speaking Timer */}
           <Card className="p-5 border-slate-200 bg-white">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -975,9 +1395,16 @@ export const DebateRoomPreviewPage: React.FC = () => {
                   <Scale className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                    Recognized Floor Speaker
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      Recognized Floor Speaker
+                    </span>
+                    {activeSpeakerId && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        Speaking Turn Active
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-base sm:text-lg font-bold text-slate-900 font-heading">
                     {activeSpeakerUser ? activeSpeakerUser.name : 'Floor is Open'}
                   </h3>
@@ -991,19 +1418,82 @@ export const DebateRoomPreviewPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Facilitator Turn Control */}
-              {isFacilitator && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleAdvanceSpeakingTurn}
-                    className="text-xs"
+              {/* Speaking Timer & Speech Controls */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                {activeSpeakerId && (
+                  <div
+                    data-testid="speaking-timer-display"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white font-mono text-xs border border-slate-800"
                   >
-                    Advance Speaker Turn
-                  </Button>
+                    <Timer
+                      className={`w-3.5 h-3.5 ${
+                        isTimerActive ? 'text-amber-400 animate-pulse' : 'text-slate-400'
+                      }`}
+                    />
+                    <span>{formatSpeakingTimer(speakingTimerSeconds)}</span>
+                    <span className="text-[9px] uppercase font-sans text-slate-400 ml-1">
+                      {isTimerActive
+                        ? 'Timer Active'
+                        : speakingTimerSeconds < 120
+                        ? 'Paused'
+                        : 'Ready'}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Start Speech & End Speech controls */}
+                  {activeSpeakerId && (isCurrentUserActiveSpeaker || isFacilitator) && (
+                    <>
+                      {!isTimerActive ? (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          data-testid="start-speech-btn"
+                          onClick={handleStartSpeech}
+                          className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                          <Play className="w-3.5 h-3.5 mr-1" />
+                          Start speech
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          data-testid="pause-speech-btn"
+                          onClick={handlePauseSpeech}
+                          className="text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
+                        >
+                          Pause
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-testid="end-speech-btn"
+                        onClick={handleEndSpeech}
+                        className="text-xs text-rose-700 border-rose-200 hover:bg-rose-50"
+                      >
+                        <Square className="w-3.5 h-3.5 mr-1" />
+                        End speech
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Facilitator Turn Control */}
+                  {isFacilitator && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleAdvanceSpeakingTurn}
+                      className="text-xs"
+                      data-testid="advance-speaker-turn-btn"
+                    >
+                      Advance Speaker Turn
+                    </Button>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </Card>
 
@@ -1032,6 +1522,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                       size="sm"
                       variant="outline"
                       onClick={handleCancelTurn}
+                      data-testid="cancel-turn-btn"
                       className="text-xs text-rose-700 border-rose-200 hover:bg-rose-50"
                     >
                       Withdraw Request
@@ -1041,9 +1532,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
                       size="sm"
                       variant="primary"
                       onClick={handleRequestTurn}
+                      data-testid="raise-hand-btn"
                       className="text-xs bg-civic-indigo-600 hover:bg-civic-indigo-700 text-white"
                     >
-                      Request Speaking Turn
+                      <Hand className="w-3.5 h-3.5 mr-1.5" />
+                      Raise Hand (Request Turn)
                     </Button>
                   )}
                 </div>
@@ -1613,6 +2106,364 @@ export const DebateRoomPreviewPage: React.FC = () => {
         }}
         isLoading={isLoadingAudits}
       />
+
+      {/* Facilitator Create Popup Assignment Modal (Change Plan v2 §13) */}
+      <Modal
+        isOpen={isCreateAssignmentOpen}
+        onClose={() => setIsCreateAssignmentOpen(false)}
+        title="Push Short Popup Assignment (Change Plan v2 §13)"
+        description="Push an immediate timed deliberation task to all participants in this Debate Room session."
+        maxWidth="md"
+      >
+        <form onSubmit={handlePushPopupAssignment} className="space-y-4 text-xs text-slate-700">
+          {session.debateData?.popupAssignment && !session.debateData.popupAssignment.isClosed && (
+            <div
+              data-testid="active-replacement-notice"
+              className="p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed"
+            >
+              <strong>Active Task Replacement:</strong> Pushing a new popup task will atomically archive the currently active chamber assignment (&quot;{session.debateData.popupAssignment.title}&quot;) and prevent any further submissions to it.
+            </div>
+          )}
+          <div>
+            <label htmlFor="popup-title" className="block text-xs font-semibold text-slate-700 mb-1">
+              Assignment Title
+            </label>
+            <input
+              id="popup-title"
+              data-testid="popup-title-input"
+              type="text"
+              value={popupTitle}
+              onChange={(e) => setPopupTitle(e.target.value)}
+              placeholder="e.g. Speed Radar Evidence Reflection"
+              className="w-full text-xs rounded-md border border-slate-300 p-2 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="popup-instruction" className="block text-xs font-semibold text-slate-700 mb-1">
+              One Clear Instruction
+            </label>
+            <Textarea
+              id="popup-instruction"
+              data-testid="popup-instruction-input"
+              value={popupInstruction}
+              onChange={(e) => setPopupInstruction(e.target.value)}
+              placeholder="e.g. State one urgent infrastructure modification required at Navchetna School gate based on the speed radar logs presented."
+              rows={3}
+              className="text-xs"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="popup-timelimit" className="block text-xs font-semibold text-slate-700 mb-1">
+              Time Limit (Minutes)
+            </label>
+            <input
+              id="popup-timelimit"
+              data-testid="popup-timelimit-input"
+              type="number"
+              min={1}
+              max={60}
+              value={popupTimeLimit}
+              onChange={(e) => setPopupTimeLimit(Number(e.target.value))}
+              className="w-32 text-xs rounded-md border border-slate-300 p-2 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
+              required
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Creates a standard Civic Assignment linked to this chamber session with 2 pending credits.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setIsCreateAssignmentOpen(false)}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              variant="primary"
+              disabled={isPushingPopup || !popupTitle.trim() || !popupInstruction.trim()}
+              data-testid="confirm-push-popup-btn"
+              className="text-xs bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {isPushingPopup ? 'Pushing...' : 'Push to Room'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Room Popup Assignment Modal (Change Plan v2 §13) */}
+      {session.debateData?.popupAssignment && (
+        <Modal
+          isOpen={isPopupModalOpen}
+          onClose={() => setIsPopupModalOpen(false)}
+          title={session.debateData.popupAssignment.title}
+          description={`Chamber Deliberation Task • Time limit: ${session.debateData.popupAssignment.timeLimitMinutes} minutes`}
+          maxWidth="lg"
+        >
+          <div
+            data-testid="debate-popup-assignment-modal"
+            className="space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto pr-1"
+          >
+            {/* Header / Instruction Card */}
+            <div className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/70 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-200">
+                  Chamber Instruction
+                </span>
+                <span
+                  data-testid="popup-time-remaining"
+                  className={`text-xs font-mono font-semibold ${
+                    session.debateData.popupAssignment.isClosed || isPopupExpired
+                      ? 'text-rose-700'
+                      : 'text-amber-900'
+                  }`}
+                >
+                  {session.debateData.popupAssignment.isClosed
+                    ? 'Task Closed by Facilitator'
+                    : isPopupExpired
+                    ? 'Time Limit Expired'
+                    : `Time Remaining: ${popupTimeRemainingFormatted}`}
+                </span>
+              </div>
+              <p
+                data-testid="popup-instruction-text"
+                className="text-slate-900 font-medium leading-relaxed"
+              >
+                {session.debateData.popupAssignment.instruction}
+              </p>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-amber-200/50">
+                <span>Pushed by Facilitator Rohan Mehta</span>
+                <span>Reward: 2 Civic Passport Credits (Pending Review)</span>
+              </div>
+            </div>
+
+            {/* Submission State: Already Submitted */}
+            {userPopupSubmission ? (
+              <div
+                data-testid="popup-submitted-state"
+                className="p-4 rounded-lg border border-emerald-200 bg-emerald-50/80 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-emerald-950 text-xs">
+                        Assignment Submitted Successfully
+                      </h4>
+                      <p className="text-[11px] text-emerald-800">
+                        Status: <strong className="uppercase">{userPopupSubmission.status}</strong> (Pending Facilitator Review)
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                    Receipt: {userPopupSubmission.receiptId || userPopupSubmission.id}
+                  </span>
+                </div>
+
+                <div className="bg-white p-3 rounded border border-emerald-100 space-y-1.5">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase">
+                    Your Submitted Response:
+                  </span>
+                  <p className="text-slate-800 text-xs leading-relaxed whitespace-pre-wrap">
+                    {userPopupSubmission.content}
+                  </p>
+                  {userPopupSubmission.evidenceIds && userPopupSubmission.evidenceIds.length > 0 && (
+                    <div className="pt-1.5 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-slate-500">Attached Evidence:</span>
+                      {userPopupSubmission.evidenceIds.map((eid) => (
+                        <span
+                          key={eid}
+                          className="px-2 py-0.5 rounded text-[10px] font-medium bg-civic-indigo-50 text-civic-indigo-700 border border-civic-indigo-200"
+                        >
+                          {eid}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-[11px] text-slate-600 space-y-1">
+                  <p>
+                    <strong>Privacy & Review Boundary:</strong> Your submission is stored in the civic assignment repository. Only you and authorized mentors/facilitators can view your submission; it is never broadcast to unreviewed public feeds.
+                  </p>
+                  <p>
+                    <strong>Passport Balance:</strong> +2 Contribution credits are held in Pending state until human mentor review.
+                  </p>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-emerald-200">
+                  <Link
+                    to={`/assignments/${session.debateData.popupAssignment.assignmentId}`}
+                    data-testid="nav-to-submitted-asg-link"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>View Submitted Assignment in Civic Records</span>
+                  </Link>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    data-testid="close-popup-modal-btn"
+                    onClick={() => setIsPopupModalOpen(false)}
+                    className="text-xs bg-white text-slate-700"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : isPopupExpired || session.debateData.popupAssignment.isClosed ? (
+              /* Expired / Closed State */
+              <div
+                data-testid="popup-closed-state"
+                className="p-4 rounded-lg border border-slate-300 bg-slate-50 space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-slate-600 shrink-0" />
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-xs">
+                      {session.debateData.popupAssignment.isClosed
+                        ? 'Task Closed by Room Facilitator'
+                        : 'Task Time Limit Has Expired'}
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Submissions are no longer accepted for this deliberation prompt.
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-slate-600 text-xs">
+                  The allocated time window ({session.debateData.popupAssignment.timeLimitMinutes} minutes) has concluded. You can review the past chamber contributions in the debate log.
+                </p>
+
+                <div className="pt-2 flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    data-testid="close-popup-modal-btn"
+                    onClick={() => setIsPopupModalOpen(false)}
+                    className="text-xs"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Active Submission Form for Participant */
+              <form onSubmit={handleSubmitPopupAssignment} className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="popup-submission-content"
+                    className="block text-xs font-semibold text-slate-700 mb-1"
+                  >
+                    Your Response / Observation Note
+                  </label>
+                  <Textarea
+                    id="popup-submission-content"
+                    data-testid="popup-submission-content"
+                    value={popupResponseText}
+                    onChange={(e) => setPopupResponseText(e.target.value)}
+                    placeholder="Enter your observation, synthesis or recommendations addressing the chamber instruction..."
+                    rows={4}
+                    className="text-xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="popup-evidence-select"
+                    className="block text-[11px] font-medium text-slate-600 mb-1"
+                  >
+                    Attach Existing Evidence (Optional)
+                  </label>
+                  <select
+                    id="popup-evidence-select"
+                    data-testid="popup-submission-evidence-select"
+                    value={selectedPopupEvidenceId}
+                    onChange={(e) => setSelectedPopupEvidenceId(e.target.value)}
+                    className="text-xs rounded-md border border-slate-300 bg-white px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500 w-full"
+                  >
+                    <option value="">No evidence attached (Text-only submission)</option>
+                    {userAvailableEvidence.map((ev) => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.title} [{ev.verificationStatus.replace('_', ' ')}]
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Existing evidence attachment path is available if you have logged field evidence. Text-only submission is permitted for this debate task.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+                  <strong>Privacy & Review:</strong> Submissions require normal pending human review before credits become verified. Drafts and unreviewed notes remain private to you and the room facilitator.
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    data-testid="close-popup-modal-btn"
+                    onClick={() => setIsPopupModalOpen(false)}
+                    className="text-xs"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant="primary"
+                    disabled={isSubmittingPopup || !popupResponseText.trim()}
+                    data-testid="submit-popup-assignment-btn"
+                    className="text-xs bg-civic-indigo-600 hover:bg-civic-indigo-700 text-white"
+                  >
+                    {isSubmittingPopup ? 'Submitting...' : 'Submit'}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* Facilitator Room Oversight Section */}
+            {isFacilitator && (
+              <div className="mt-4 pt-3 border-t border-slate-200 space-y-2 bg-slate-50 p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800 text-xs">
+                    Facilitator Room Oversight
+                  </span>
+                  <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono">
+                    {roomPopupSubmissions.length} submission(s) received
+                  </span>
+                </div>
+                {!session.debateData.popupAssignment.isClosed && !isPopupExpired && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    data-testid="facilitator-close-popup-btn"
+                    onClick={handleFacilitatorClosePopup}
+                    className="text-xs text-rose-700 border-rose-300 hover:bg-rose-50"
+                  >
+                    Close Assignment for Room
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

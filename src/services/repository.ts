@@ -237,6 +237,21 @@ export interface DemoRepository {
   advanceSpeakingTurn(sessionId: string, actorId: string): Promise<Session>;
   advanceDebatePhase(sessionId: string, actorId: string, nextPhase: import('../types/domain').DebatePhase): Promise<Session>;
   postDebateContribution(input: { sessionId: string; userId: string; text: string; evidenceIds?: string[] }): Promise<Session>;
+  castDebateVote(sessionId: string, userId: string, stance: 'for' | 'against' | 'abstain'): Promise<Session>;
+  getDebateVotes(sessionId: string): Promise<Record<string, 'for' | 'against' | 'abstain'>>;
+  updateDebateSpeechTimer(
+    sessionId: string,
+    actorId: string,
+    timer: { speakerId?: string | null; secondsRemaining: number; totalSeconds: number; isRunning: boolean }
+  ): Promise<Session>;
+  pushDebatePopupAssignment(input: {
+    sessionId: string;
+    actorId: string;
+    title: string;
+    instruction: string;
+    timeLimitMinutes: number;
+  }): Promise<{ session: Session; assignment: Assignment }>;
+  closeDebatePopupAssignment(sessionId: string, actorId: string): Promise<Session>;
   switchSessionMode(sessionId: string, actorId: string, targetMode: import('../types/domain').SessionMode, summary?: string): Promise<Session>;
   rsvpEvent(eventId: string, userId: string, status?: 'attending' | 'maybe' | 'declined', actorId?: string): Promise<Event>;
   checkInEvent(eventId: string, userId: string, actorId?: string): Promise<{ event: Event; activity?: Activity }>;

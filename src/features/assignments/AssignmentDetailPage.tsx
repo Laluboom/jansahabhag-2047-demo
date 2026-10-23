@@ -362,12 +362,22 @@ export const AssignmentDetailPage: React.FC = () => {
         {/* Participant Action Buttons if not yet submitted */}
         {!submission && !isTeacher && (
           <div className="pt-3 flex items-center gap-3">
-            <Link to={`/assignments/${assignment.id}/submit`}>
-              <Button variant="primary" size="md">
-                <span>{isUhv ? 'Open Reflection Prompt' : 'Start Submission & Log Evidence'}</span>
-                <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Button>
-            </Link>
+            {assignment.status === 'archived' ? (
+              <div
+                data-testid="assignment-archived-notice"
+                className="p-3 bg-slate-100 text-slate-600 rounded-lg border border-slate-200 text-xs flex items-center gap-2"
+              >
+                <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>This assignment has been archived or closed and is no longer accepting submissions.</span>
+              </div>
+            ) : (
+              <Link to={`/assignments/${assignment.id}/submit`}>
+                <Button variant="primary" size="md">
+                  <span>{isUhv ? 'Open Reflection Prompt' : 'Start Submission & Log Evidence'}</span>
+                  <ArrowRight className="w-4 h-4 ml-1.5" />
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </Card>

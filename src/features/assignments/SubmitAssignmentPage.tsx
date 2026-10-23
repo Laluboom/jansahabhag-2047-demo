@@ -695,6 +695,22 @@ export const SubmitAssignmentPage: React.FC = () => {
           </div>
         )}
 
+        {/* Guard warning if assignment is archived / closed */}
+        {assignment?.status === 'archived' && (
+          <div
+            data-testid="assignment-archived-banner"
+            className="p-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 text-xs space-y-2"
+          >
+            <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-800">
+              <Clock className="w-4 h-4 text-slate-500" />
+              Assignment Inactive / Archived
+            </span>
+            <p className="leading-relaxed">
+              This assignment has been archived or closed and is no longer accepting submissions.
+            </p>
+          </div>
+        )}
+
         {/* UHV Single-browser Simulation Disclosure */}
         {isUhv && (
           <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1.5 text-xs">
@@ -933,7 +949,7 @@ export const SubmitAssignmentPage: React.FC = () => {
                 variant="primary"
                 size="md"
                 isLoading={isSubmitting}
-                disabled={isSavingDraft || (isAlreadySubmitted && !isRevision)}
+                disabled={isSavingDraft || (isAlreadySubmitted && !isRevision) || assignment?.status === 'archived'}
               >
                 <span>
                   {isUhv

@@ -151,6 +151,7 @@ export interface Assignment {
   id: string;
   courseId: string;
   lessonId?: string;
+  sessionId?: string;
   assignmentType?: AssignmentType;
   title: string;
   prompt: string;
@@ -159,6 +160,9 @@ export interface Assignment {
   creditsReward: number;
   status: 'draft' | 'active' | 'archived';
   dueDate?: string;
+  timeLimitMinutes?: number;
+  isPopupAssignment?: boolean;
+  facilitatorId?: string;
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
@@ -441,6 +445,25 @@ export interface DebateRulebook {
   rules: DebateRulebookRule[];
 }
 
+export interface DebateSpeechTimerState {
+  speakerId?: string | null;
+  secondsRemaining: number;
+  totalSeconds: number;
+  isRunning: boolean;
+  lastUpdated?: string;
+}
+
+export interface DebatePopupAssignmentState {
+  assignmentId: string;
+  title: string;
+  instruction: string;
+  timeLimitMinutes: number;
+  pushedBy: string;
+  pushedAt: string;
+  expiresAt: string;
+  isClosed?: boolean;
+}
+
 export interface DebateRoomData {
   motion: string;
   linkedQuestion?: string;
@@ -455,6 +478,10 @@ export interface DebateRoomData {
   reflectionPrompt?: string;
   roleAllocations?: Record<string, AllocationState>;
   rolePlanStage?: 'planned' | 'open_selection' | 'finalized';
+  votes?: Record<string, 'for' | 'against' | 'abstain'>;
+  speechTimer?: DebateSpeechTimerState;
+  activePopupAssignmentId?: string | null;
+  popupAssignment?: DebatePopupAssignmentState;
 }
 
 export type CanonicalDebateRole =
