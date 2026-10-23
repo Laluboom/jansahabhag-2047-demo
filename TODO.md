@@ -25,11 +25,12 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [x] Built the owner-approved scoped moderator-grant simulation with audit, expiry, revoke and active-persona guards; production enforcement requires a backend.
 - [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; kept the approved Jaipur story.
 - [x] Reconciled the Master PRD route/control inventory in `docs/audits/MASTER_PRD_RECONCILIATION.md`.
-- [ ] Review the dependency audit deliberately before publication.
+- [x] Reviewed the dependency audit and upgraded React Router; shipped dependencies now report zero advisories. See `docs/audits/DEPENDENCY_REVIEW_2026-10-23.md`.
 - [ ] Accessibility and performance cleanup: The final lint count remains to be measured after feature integration, and a 693 kB main JS chunk still triggers Vite's warning.
 
 ## After the competition demo
 
+- [ ] Migrate Tailwind, Vite, and Vitest tooling with full regression checks; 13 development-only audit advisories remain.
 - [ ] Before real participants, add authentication, server-enforced permissions, shared storage, real session continuity, media handling, moderation, analytics, privacy/safeguarding policy, and human review operations.
 - [ ] Obtain bilingual review before enabling Hindi; the current working journey is English.
 - [ ] Replace any media placeholders only after receiving the actual materials and permission to publish them.
