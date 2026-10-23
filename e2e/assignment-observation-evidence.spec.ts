@@ -43,16 +43,16 @@ test.describe('Package 03: Jaipur Assignment, Observation & Evidence Lifecycle',
     await page.getByLabel(/Observation Time Window/i).fill('7:45 AM - 8:15 AM');
     await page.getByLabel(/Location /i).fill('Navchetna School Crossing, Madhyam Marg, Jaipur');
 
-    // Attach local file with content within conservative 250 KB limit
+    // Attach a supported image file within the 10 MB browser-local limit
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles({
-      name: 'crossing_audit.csv',
-      mimeType: 'text/csv',
-      buffer: Buffer.from('time,pedestrians,yield_failure_count\n07:50,15,12\n08:05,25,18\n'),
+      name: 'crossing_audit.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==', 'base64'),
     });
 
     // Verify local file name is reflected in the modal
-    await expect(page.getByText('crossing_audit.csv')).toBeVisible();
+    await expect(page.getByText('crossing_audit.png')).toBeVisible();
 
     // Save and attach evidence
     await page.getByRole('button', { name: /Save & Attach Evidence/i }).click();
@@ -74,8 +74,8 @@ test.describe('Package 03: Jaipur Assignment, Observation & Evidence Lifecycle',
     await expect(page.getByRole('heading', { name: /Submission Receipt & Provenance Record/i })).toBeVisible();
     await expect(page.getByText(/Receipt #sub_/i).first()).toBeVisible();
     await expect(page.getByText(/Pending Review/i).first()).toBeVisible();
-    await expect(page.getByText('crossing_audit.csv').first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Download/i }).first()).toBeVisible();
+    await expect(page.getByText('crossing_audit.png').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Download/i }).first()).toBeVisible();
 
     // Reload page to ensure receipt and review status persist deterministically
     await page.reload();

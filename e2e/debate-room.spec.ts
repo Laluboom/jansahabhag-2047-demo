@@ -56,7 +56,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(page.getByText(/Your speaking turn request has been cancelled/i)).toBeVisible();
 
     // Aarav requests turn again
-    await page.getByRole('button', { name: /Request Speaking Turn/i }).click();
+    await page.getByRole('button', { name: /Raise Hand \(Request Turn\)/i }).click();
     await expect(page.getByText(/Speaking turn requested/i)).toBeVisible();
 
     // 2. Switch persona to Rohan Mehta (Facilitator) via persona switcher in header
@@ -117,7 +117,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).toBeVisible();
 
     // Attempting to request speaking turn without acknowledgement opens rulebook and shows error
-    await page.getByRole('button', { name: /Request Speaking Turn/i }).click();
+    await page.getByRole('button', { name: /Raise Hand \(Request Turn\)/i }).click();
     await expect(page.getByText(/Please review and acknowledge the Debate Ground Rules/i)).toBeVisible();
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible();

@@ -204,7 +204,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await expect(page.getByText('Speaking Queue', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: /Withdraw Request/i }).click();
     await expect(page.getByText(/speaking turn request has been cancelled/i)).toBeVisible();
-    await page.getByRole('button', { name: /Request Speaking Turn/i }).click();
+    await page.getByRole('button', { name: /Raise Hand \(Request Turn\)/i }).click();
     await expect(page.getByText(/Speaking turn requested/i)).toBeVisible();
 
     // Assemblies navigation link
