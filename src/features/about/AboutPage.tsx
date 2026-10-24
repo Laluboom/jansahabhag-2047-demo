@@ -44,13 +44,13 @@ export const AboutPage: React.FC = () => (
       </div>
     </section>
 
-    <section aria-labelledby="people-heading" className="space-y-7">
+    <section aria-labelledby="people-heading" className="space-y-8">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-civic-teal-700">People behind the work</p>
         <h2 id="people-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">The team</h2>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
         <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="aspect-square bg-slate-100 p-3 sm:p-4">
             <img
@@ -102,33 +102,35 @@ export const AboutPage: React.FC = () => (
             </div>
           </div>
         </article>
+      </div>
 
-        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="aspect-square bg-slate-100 p-3 sm:p-4">
-            <img
-              src={yashviPortrait}
-              alt="Portrait of Yashvi Dalsaniya"
-              className="h-full w-full rounded-xl object-contain"
-              width="1280"
-              height="720"
-            />
-          </div>
-          <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner</p>
-                <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
-              </div>
-              <p className="text-sm leading-6 text-slate-700">
-                Yashvi Dalsaniya is a microbiology student with a deep interest in youth development, education, governance, scientific thinking, and social responsibility. Her focus spans entrepreneurship, communication, organisational development, and community participation, exploring how ideas turn into practical initiatives.
-              </p>
-              <p className="text-sm leading-6 text-slate-700">
-                She contributes to JanSahabhag 2047&apos;s civic awareness, youth participation, and citizen-democratic-process vision. She believes that India&apos;s developed-country vision depends on people&apos;s awareness, collective responsibility, and expanding young people&apos;s opportunities to participate in decisions shaping their collective future.
-              </p>
+      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-12">
+          <div className="flex items-center justify-center bg-slate-100 p-4 sm:p-6 md:col-span-5 md:p-6 lg:p-8">
+            <div className="aspect-video w-full">
+              <img
+                src={yashviPortrait}
+                alt="Portrait of Yashvi Dalsaniya"
+                className="aspect-video h-full w-full rounded-xl object-contain"
+                width="1280"
+                height="720"
+              />
             </div>
           </div>
-        </article>
-      </div>
+          <div className="flex flex-col justify-center space-y-3 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner</p>
+              <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
+            </div>
+            <p className="text-sm leading-6 text-slate-700">
+              Yashvi Dalsaniya is a microbiology student with a deep interest in youth development, education, governance, scientific thinking, and social responsibility. Her focus spans entrepreneurship, communication, organisational development, and community participation, exploring how ideas turn into practical initiatives.
+            </p>
+            <p className="text-sm leading-6 text-slate-700">
+              She contributes to JanSahabhag 2047&apos;s civic awareness, youth participation, and citizen-democratic-process vision. She believes that India&apos;s developed-country vision depends on people&apos;s awareness, collective responsibility, and expanding young people&apos;s opportunities to participate in decisions shaping their collective future.
+            </p>
+          </div>
+        </div>
+      </article>
     </section>
 
     <section aria-labelledby="gratitude-heading" className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-10">

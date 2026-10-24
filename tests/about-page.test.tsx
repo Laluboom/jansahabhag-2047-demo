@@ -74,6 +74,29 @@ describe('AboutPage', () => {
     expect(secondBio.textContent).not.toMatch(/founded the idea|developed the website|built the platform/i);
   });
 
+  it('renders Nazim and Visesh in a two-column grid and Yashvi in a dedicated wide team card row', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AboutPage />
+      </MemoryRouter>
+    );
+
+    const peopleSection = container.querySelector('section[aria-labelledby="people-heading"]');
+    expect(peopleSection).toBeInTheDocument();
+
+    const articles = peopleSection?.querySelectorAll('article');
+    expect(articles?.length).toBe(3);
+
+    // First two articles (Nazim & Visesh) are in the 2-column grid
+    const topGrid = peopleSection?.querySelector('div.grid.md\\:grid-cols-2');
+    expect(topGrid).toBeInTheDocument();
+    expect(topGrid?.querySelectorAll('article').length).toBe(2);
+
+    // Yashvi article is outside topGrid, directly under section
+    const yashviArticle = articles?.[2];
+    expect(topGrid?.contains(yashviArticle!)).toBe(false);
+  });
+
   it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {
     const { container } = render(
       <MemoryRouter>
