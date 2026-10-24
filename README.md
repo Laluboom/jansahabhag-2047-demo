@@ -49,7 +49,7 @@ The demo shows selected product areas at different depths:
 - Participant dashboard
 - Civic Academy
 - Self-Growth Academy
-- UHV learning content
+- UHV learning content (original platform wording inspired by the Vadodara Savli youth workshop, material by Ganesh Bagadia; public credit line: "Based on the Vadodara Savli youth workshop, material by Ganesh Bagadia.")
 - Courses and lessons
 - Assignments and submissions
 - Teacher review
@@ -521,20 +521,15 @@ Each major feature should include examples of:
 
 Use simple transparent demo rules.
 
-Approved schedule:
+Approved schedule (OD 24 Oct 2026 supersedes earlier 10 initial and 1–2 unbounded model with 0 initial and maximum 5 Civic Credit Points in demo):
 
 ```text
-Starting balance             +10 Contribution
-Complete lesson              +1 Learning
-Submit assignment            +2 Contribution (Pending)
-Verified evidence            +1 Observation
-Join Assembly                +2 Deliberation
-Add substantive contribution +1 Deliberation
-Complete reflection          +1 Reflection
-Workspace action             +1 Collaboration
-Complete project milestone   +2 Civic Action
-Private UHV / dissent        0 (No credits)
+Starting balance             0
+Demo maximum                 5 Civic Credit Points per student
+Private UHV / dissent        0 (No points)
 ```
+
+The 5 demo Civic Credit Points connect honestly to the National Education Policy (NEP) community engagement idea; they are an illustrative demo metric and are not university credits or a universal NEP graduation requirement ([official UGC source](https://www.ugc.gov.in/KeyInitiative?ID=VQnigtvLvoA0UAhQPVdzTA%3D%3D)). Historical 21/22 October schedule awarded +10 starting balance and +1/+2 per task; the 24 October owner decision caps student earning to max 5 demo Civic Credit Points with zero starting balance.
 
 The demo must show a transaction history instead of only a single total.
 

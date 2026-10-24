@@ -13,14 +13,14 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 
 - [x] Landing page with civic loop, session tiles, Jaipur next event, and visible platform 33% inclusion rule.
 - [x] Reusable seating modes for Debate Room, Youth Assembly and Youth Parliament, including accessible list views and privacy-safe allocation counts.
-- [x] Title-first Assignments and Community browsing. The 10-start, 1–2-credit Passport model was completed earlier.
+- [x] Title-first Assignments and Community browsing. (Historical 10-start, 1–2-credit model superseded on 24 October 2026 by 0 starting balance, max 5 demo Civic Credit Points linked to NEP idea).
 - [x] Evidence privacy, consent and recording notices, report workflow, and guarded moderation queue for the browser demo.
 - [x] Added contextual point-of-use Rules controls across Home, Learn, Assignments, Workspace, Projects, Community, Passport and UHV; preserved existing Debate, Assembly, Parliament and Event rules.
 - [x] Added project team seats, milestone boards and joined-project Workspace tiles; preserved the invite-only Jaipur room and labelled single-browser simulation.
 - [x] Added text mode, a low-data setting, sample turns and browser-local seat restoration scoped to each demo persona. Real multi-user reconnect continuity requires a backend.
 - [x] Completed the Debate Room popup assignment journey, including atomic replacement of prior tasks and direct-route guards; reviewed the speaking/queue/vote controls against the plan.
 - [x] Added browser-local IndexedDB evidence attachments for JPEG, PNG, MP3, MP4 and PDF up to 10 MB, with visible storage failures, teacher/mentor cohort uploads, review and Passport linkage. Remote sync still requires a backend.
-- [ ] Wait for the Vadodara–Savli workshop source, attribution, speaker spelling and rights before building the seven-day UHV practice. Keep reflections private and credit-free; use no new media yet.
+- [x] Settle UHV/Jeevan Vidya and youth activities guidance (OD.13 / OD 24 Oct 2026): original platform wording inspired by the Vadodara Savli youth workshop presented by Nazim M. Sandh. Material by Ganesh Bagadia with credit line exactly: "Based on the Vadodara Savli youth workshop, material by Ganesh Bagadia." There is no workshop feature and no seven-day outline to wait for. Keep reflections private and credit-free (0 Civic Credit Points). Separate UHV file, images, and 1–2 workshop-owned YouTube videos/links to arrive later; current demo authorized with placeholders (no re-upload/copy). Ganesh role/org and permission unconfirmed (Nazim must ask before media/full launch).
 - [x] Added deterministic role-aware AI demo suggestions with exact moderator-grant scope, fictional labels and human-decision boundaries. Founder video awaits approved media.
 - [x] Built the owner-approved scoped moderator-grant simulation with audit, expiry, revoke and active-persona guards; production enforcement requires a backend.
 - [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; kept the approved Jaipur story.

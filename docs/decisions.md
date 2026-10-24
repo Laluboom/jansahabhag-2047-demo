@@ -32,7 +32,7 @@
 ## Further owner direction recorded 21 October 2026
 
 - **Participant persona age:** fictional Aarav Sharma updated to 18, still in Jaipur. Fictional seed records, Welcome page text, and tests are updated accordingly. Team eligibility under official Hack for Social Cause (HSC) rules (18–29 years, per https://mybharat.gov.in/pages/hack-for-social-cause) is distinguished from fictional persona character age; HSC age eligibility governs submitting team members, not fictional demo characters.
-- **Civic Passport model:** 10 starting credits, 1–2 credits earned per task. This model is approved in principle by the owner, with full implementation recorded below on 22 October 2026.
+- **Civic Passport model (Superseded 24 October 2026):** 10 starting credits, 1–2 credits earned per task was approved 21/22 October 2026. Superseded on 24 October 2026 by owner decision: 0 initial credits and maximum 5 Civic Credit Points per student in demo.
 - **Project license:** Apache 2.0 license approved for project distribution and code licensing.
 - **Media assets policy:** no new UHV or real-person media for now; maintain existing placeholders and confirmed portraits only to protect privacy.
 - **Founder contact method:** project-only contact email approved (no personal phone or email exposure); exact address string remains pending creation/confirmation.
@@ -74,7 +74,7 @@ The PRD supplies requirements or safe defaults for some topics. The table tracks
 | OD.10 | AI provider and approved data/cost policy | Provider abstraction, data-tier restrictions and a kill switch are required; no provider is approved. |
 | OD.11 | Available external educational/municipal integrations | Provider-neutral integration design is specified; availability and permissions are unknown. |
 | OD.12 | Real stakeholder recipients and routing approval | The routing lifecycle is specified; live recipients and operating ownership are not. A labelled prototype is allowed in the demo. |
-| OD.13 | Curriculum, UHV source, uploader and rights | UHV is a separate stream; its source, licence and approved content manager remain unconfirmed. |
+| OD.13 | **Resolved / Updated 24 October 2026:** Original platform wording inspired by the Vadodara Savli youth workshop where Nazim M. Sandh presented. Material creator is Ganesh Bagadia (role/organisation unconfirmed; permission unconfirmed and must be asked by Nazim before media/full launch). Current demo authorized with placeholders. There is no workshop feature and no seven-day outline to wait for. Official credit line: `"Based on the Vadodara Savli youth workshop, material by Ganesh Bagadia."` Separate UHV file, images, and 1–2 workshop-owned YouTube links will arrive later; no re-upload/copy. Private UHV reflections earn zero Civic Credit Points. | Replaces earlier pause for workshop source/attribution. Future real media additions depend on Ganesh permission. |
 | OD.14 | **Single-browser simulation chosen for the immediate demo;** full-system backend, budget, hosting and team capacity remain open. | The Master PRD requires server-side authorization and shared persistence for the connected product. |
 
 Additional release inputs remain open: initial moderators and their scopes; minimum participant age, consent and safeguarding policy after qualified review; approved privacy/terms/grievance materials; and confirmation of whether the supplied archive should carry an internal `v3.1` label. These are not inferred from archived source copies.
@@ -96,6 +96,15 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
 ## Further owner direction recorded 22 October 2026
 
 - **Demo participant ages:** every fictional demo participant must be at least 18. This extends the earlier Aarav-only age correction and applies to seed personas and visible demo signup copy. It does not set the real-participant age, consent or safeguarding policy for a future release.
-- **UHV seven-day practice:** wait for the Vadodara–Savli workshop source and confirmed attribution before building workshop-based activities. No new media is approved; retain placeholders.
+- **UHV seven-day practice (Superseded 24 October 2026):** Wait for workshop source superseded on 24 October 2026. Original platform wording inspired by Vadodara Savli youth workshop is used; material creator is Ganesh Bagadia. There is no workshop feature and no seven-day outline to wait for.
 - **Scoped moderator grants:** include a clearly labelled browser simulation of founder-controlled, scope-limited, expiring and auditable moderator grants in the competition demo. Real authority enforcement remains a server-side task.
 - **Publication:** after remaining owner-dependent items and the combined demo review are complete, the owner has approved pushing and deploying the accepted build. Do not publish intermediate unreviewed branches.
+
+## Further owner direction recorded 24 October 2026
+
+- **UHV / Jeevan Vidya and youth activities:** UHV/Jeevan Vidya assignments and youth activities are original platform wording inspired by the Vadodara Savli youth workshop. Nazim M. Sandh presented there. The material creator's name is Ganesh Bagadia, with role and organisation unknown until Nazim confirms (all erroneous historical contributor references are removed). There is no workshop feature and no seven-day outline to wait for.
+- **Attribution & credit line:** The exact public credit line is: `"Based on the Vadodara Savli youth workshop, material by Ganesh Bagadia."`
+- **Media assets & permission:** A separate UHV file, images, and 1–2 workshop-owned YouTube videos/links will arrive later. The current demo is authorized for publication now with placeholders; no re-uploading or copying of media. Ganesh Bagadia's permission is unconfirmed; Nazim must ask before launching the media or full content.
+- **Civic Credit Points (Supersedes 21/22 October model):** Supersedes the earlier 10 initial credits and 1–2 unbounded earning model. The new rule establishes zero initial credits (0 starting balance) and a maximum of five Civic Credit Points per student in the demo. Private UHV reflections strictly earn zero Civic Credit Points.
+- **Honest NEP alignment:** Link the National Education Policy (NEP) community engagement idea honestly. The five demo Civic Credit Points are an illustrative demo metric and are not university credits or a universal NEP graduation requirement. Official UGC source: https://www.ugc.gov.in/KeyInitiative?ID=VQnigtvLvoA0UAhQPVdzTA%3D%3D .
+- **Pending inputs update:** Updated pending inputs to track Ganesh role/organisation, Ganesh permission, and future UHV file/images/YouTube links. Do not ask for workshop source or seven-day curriculum.
