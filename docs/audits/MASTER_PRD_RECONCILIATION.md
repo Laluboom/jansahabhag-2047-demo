@@ -72,7 +72,7 @@ This reconciliation is a document and code comparison. HTTP HEAD checks on 12 Oc
 
 - **Audit Date:** 23 October 2026
 - **Governing Baseline:** [Master PRD Archive v3.1](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3, Part A §§A1–A21, Part B §§1–15, Part C §§1–15; [Supplementary PRD v2.0 on 33% Women's Reservation](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx).
-- **Repository Checkout:** Audit branch `agy/j-20261022-232747-tao3` was merged into `autobuild`. The combined checkout builds and passes 532 unit/UI tests across 39 suites (`npm run test:run`). The complete 38-check browser suite was run on 23 October: 35 passed first run, and the three checks with stale labels or an unsupported CSV fixture passed after test-only repairs. Repeat the full suite after final quality integration.
+- **Repository Checkout:** Audit branch `agy/j-20261022-232747-tao3` was merged into `autobuild`. The final combined checkout builds and passes 533 unit/UI tests across 39 suites (`npm run test:run`). All 38 browser checks passed together on 24 October after the interface-quality and React Router merges. Repository lint has zero errors and 23 warnings confined to test files; the main JS chunk is 449.58 kB.
 - **Owner Overrides Recorded from [Product Decisions](../decisions.md):**
   1. *Delivery & Competition Target (OD.1, OD.3):* The target is the connected single-browser competition demo for Hack for Social Cause (HSC portal submission completed; team preparing for next stage). Youth Parliament and Stakeholder Routing are explicitly approved as labelled clickable prototypes.
   2. *Story & Data (OD.2, OD.9):* Fictional Jaipur pedestrian-safety story (Aarav Sharma, Navchetna Public School); fictional seed data only. Real participant or pilot data collection is not approved.
@@ -235,7 +235,7 @@ The following placeholders are deliberately maintained in accordance with owner 
 
 ### 6. Competition-Demo Handoff Summary and Remaining Uncertainties
 
-- **Competition-Demo Scope Completeness:** The connected single-browser demonstration path for the Jaipur pedestrian-safety story (Aarav Sharma: Learn → Observe Field Evidence → Deliberate in Youth Assembly with Dissent → Join Supervised Workspace → Civic Passport & Ledger) is fully implemented, internally consistent, and backed by 532 passing unit/UI tests across 39 suites. The 38 browser checks have been exercised on the combined checkout; three stale browser checks were repaired and passed individually, and the full suite will be repeated after final quality integration.
+- **Competition-Demo Scope Completeness:** The connected single-browser demonstration path for the Jaipur pedestrian-safety story (Aarav Sharma: Learn → Observe Field Evidence → Deliberate in Youth Assembly with Dissent → Join Supervised Workspace → Civic Passport & Ledger) is fully implemented, internally consistent, and backed by 533 passing unit/UI tests across 39 suites and 38 passing browser checks on the final combined checkout.
 - **Demo vs. Production Boundary:** The codebase is strictly a client-rendered React/Vite demonstration using browser `localStorage` and `IndexedDB`. It does not possess server authority, multi-user concurrency, real-time synchronization, or external API connectivity.
 - **Remaining Gaps and Uncertainties:**
   1. *Presentation Flow & Script:* The live five-minute judging demo script and stage navigation timing for HSC evaluation remain open.

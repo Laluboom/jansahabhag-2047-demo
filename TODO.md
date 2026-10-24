@@ -1,10 +1,10 @@
 # Remaining work and handback
 
-## Combined demo verification (23 Oct 2026)
+## Combined demo verification (24 Oct 2026)
 
 - [x] Merge the four reviewed sub-agy branches for the landing page, session seating, evidence privacy, and title-first browsing into `autobuild`.
-- [x] Production build and 532 unit/UI tests pass after the Debate Room popup, text-mode, role-aware AI and offline-evidence merges.
-- [x] Browser acceptance: 35 of 38 checks passed on the first combined run. Three checks used old UI labels or an unsupported CSV upload; each repaired check passed on rerun. Repeat all 38 after the final quality branch is integrated.
+- [x] Production build and 533 unit/UI tests pass after the Debate Room popup, text-mode, role-aware AI, offline-evidence, React Router, and interface-quality merges.
+- [x] Browser acceptance: all 38 checks pass on the final combined checkout, including the repaired evidence and Debate Room journeys.
 - [ ] Inspect the combined build in the browser with the owner before publishing. The branch is local and ahead of `origin/autobuild`; these merges have not been pushed or deployed.
 
 ## Change Plan v2 and Review Additions
@@ -26,7 +26,7 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; kept the approved Jaipur story.
 - [x] Reconciled the Master PRD route/control inventory in `docs/audits/MASTER_PRD_RECONCILIATION.md`.
 - [x] Reviewed the dependency audit and upgraded React Router; shipped dependencies now report zero advisories. See `docs/audits/DEPENDENCY_REVIEW_2026-10-23.md`.
-- [ ] Accessibility and performance cleanup: The final lint count remains to be measured after feature integration, and a 693 kB main JS chunk still triggers Vite's warning.
+- [x] Accessibility and performance cleanup: moderator overlays gained dialog labels and keyboard focus handling; source lint has zero warnings and the main JS chunk is 449.58 kB. Repository lint still reports 23 test-file warnings (zero errors).
 
 ## After the competition demo
 
