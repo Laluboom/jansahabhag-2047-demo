@@ -1,6 +1,6 @@
 # JanSahabhag 2047 — Frontend Demo
 
-A browser-based interactive demo of **JanSahabhag 2047** with a linked single-browser participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification. The owner selected the Jaipur pedestrian-safety story for the immediate demo.
+A browser-based interactive demo of **JanSahabhag 2047** with a linked single-browser participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification. The owner selected the Jaipur pedestrian-safety story for the initial 17 October demo; on 24 October 2026, the owner designated the Rajkot college demo (Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot) with Ankita Kapri as main student to supersede Jaipur as the target demo (implementation in progress in another branch; not yet deployed).
 
 **Live demo:** [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app)
 
@@ -10,7 +10,12 @@ This is **not** a production implementation. It intentionally simulates backend,
 
 **Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner. This fictional single-browser demo applies `ceil(0.33 × planned places)` separately to every named role and limited place, leaves unmet reserved places vacant by default, and demonstrates owner-approved exceptions with a local audit record. This does not provide real owner authority or server-side enforcement. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records historical differences; [product decisions](docs/decisions.md) and the [current handoff](docs/HANDOFF_2026-10-16.md) record the accepted demo boundary and remaining decisions.
 
-**Published demo, 17 October 2026:** the connected fictional Jaipur demo and [About page](src/features/about/AboutPage.tsx) are on GitHub and Vercel. The live About page was checked after deployment: it shows Nazim M. Sandh as founder and Visesh Akbari as developer, with their supplied portraits and no biographical paragraphs. Sections headed “Suggested” retain some original planning language and should be read as proposals rather than live feature claims.
+**Published demo status & updates:**
+- **17 October 2026 baseline:** the connected fictional Jaipur demo (Aarav Sharma, Navchetna Public School) was published to GitHub and Vercel.
+- **24 October 2026 updates:**
+  - The external [About page](src/features/about/AboutPage.tsx) adds Yashvi Dalsaniya as Managing Partner with her supplied portrait and team description, alongside Nazim M. Sandh (Founder and Initiator) and Visesh Akbari (Developer, with explicit spelling confirmed over the gratitude document's Vishesh). A dedicated "With gratitude" section credits 9 contributors headed by late guide Shri Dadubhai Sandhar, closing lines for the CVMS Cell at Atmiya University and all unnamed contributors, and the draft gratitude message in Nazim's voice.
+  - Civic Credit Points capped at five demo points (0 starting balance, honest NEP community engagement alignment; not university credits or a graduation requirement; private UHV reflections earn 0 points).
+  - Target demo transition: the Rajkot college demo roster with Ankita Kapri as the main student supersedes Jaipur as the target demo (`docs/reference/24-10-2026/`). The implementation of the Rajkot demo is actively being built in another branch and is not yet deployed or claimed live. Sections headed “Suggested” retain some original planning language and should be read as proposals rather than live feature claims.
 
 ---
 
@@ -184,9 +189,28 @@ The learner sidebar follows the Master PRD's eleven-item order: **Home, Learn, A
 
 ## 6. Primary demo scenario
 
-Use one coherent story across the platform instead of disconnected placeholder records.
+### Target demo: Rajkot college scenario (supersedes Jaipur target demo)
 
-### Main participant
+*Note: The Rajkot scenario is actively being implemented in a separate branch and is not yet deployed or claimed live. The historical 17 October Jaipur demo remains documented below as the initial published baseline.*
+
+- **Target Institution:** **Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot**
+- **Main student demo persona:** **Ankita Kapri** (Demo ID: `VSC-S-001`)
+- **Demo roster size:** 22 named demo people:
+  - **15 students** (all aged at least 18; exactly 5 named women meeting the 33% reservation requirement: Ankita Kapri, Niyati Chawda, Harshita Kapri, Jahanvi Sandh, Asmi Soni; Ankita and Harshita must stay in this group; reserve names: Jinal Bhagya, Prensha Jaisalya, Nisha Bhimani)
+  - **2 teachers:** Shri Mayur Parmar (reviews submissions, no access to private UHV), Shri Ankit Kalaria (UHV / Jeevan Vidya stream; sees only shared UHV work, never private reflections)
+  - **1 principal:** Shri Dr. K. D. Ladwa (institution_admin)
+  - **1 special guest:** Shri Param Pujya Tyagvallabh Swamiji (President, Atmiya University; Chairperson of the College; view-only `special_guest` role, holds no seat, outside the 15 student count and 33% calculation)
+  - **1 founder:** Nazim M. Sandh (platform_admin)
+  - **2 scoped moderators:** Yashvi Dalsaniya (`JS-M-001`, Managing Partner & Moderator) and Dilip Sanghar (`JS-M-002`, Moderator)
+- **Data boundaries:** Real names are used for named demo roles; student IDs are fictional (`VSC-S-xxx`, `VSC-T-xxx`, etc.); no invented personal details (roll numbers, private emails, phone numbers) are attributed to named people. Real-person photos are used only where supplied (Ankita Kapri, Dr. K. D. Ladwa, Swamiji, Nazim M. Sandh, Yashvi Dalsaniya); all others show initials.
+
+---
+
+### Historical demo scenario: Jaipur (17 October 2026 baseline, superseded)
+
+*Historical reference for the initial published demo:*
+
+### Main participant (Historical)
 
 - **Aarav Sharma**
 - Age: 18
@@ -195,11 +219,11 @@ Use one coherent story across the platform instead of disconnected placeholder r
 
 Aarav and all demo records are fictional. This browser demo does not provide the age, consent or safeguarding controls needed to enrol real minors.
 
-### Civic theme
+### Civic theme (Historical)
 
 **Improving pedestrian safety near schools**
 
-### Primary journey
+### Primary journey (Historical)
 
 1. Aarav opens the participant dashboard.
 2. He continues a Civic Academy lesson on observation and evidence.
@@ -226,7 +250,27 @@ The user should be able to complete this journey entirely in the browser.
 
 ## 7. Demo personas
 
-Seed the app with the following accounts:
+### Target demo personas: Rajkot (24 October 2026 decision, under construction)
+
+The 24 October 2026 owner decision transitions demo personas to 22 named people for Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot (see `docs/reference/24-10-2026/JanSahabhag 2047 — Demo Personas.docx`). *Being built in another branch; not yet deployed.*
+
+- **Main demo participant:** Ankita Kapri (`VSC-S-001`, main demo student, photo supplied)
+- **15 students (all 18+, exactly 5 named women meeting 33% rule):**
+  - Reserved-seat group (women): Ankita Kapri (`VSC-S-001`), Niyati Chawda (`VSC-S-002`), Harshita Kapri (`VSC-S-003`), Jahanvi Sandh (`VSC-S-004`), Asmi Soni (`VSC-S-015`)
+  - Other students: Yash Rathod (`VSC-S-005`), Kanha Kapri (`VSC-S-006`), Hriday Trivedi (`VSC-S-007`), Maharshi Bhardwaj (`VSC-S-008`), Aroh Mehta (`VSC-S-009`), Ajit Sanghar (`VSC-S-010`), Aslan Sandh (`VSC-S-011`), Piyush Kanjaria (`VSC-S-012`), Jigar Sanghar (`VSC-S-013`), Dhruv Patel (`VSC-S-014`)
+  - Reserve student names: Jinal Bhagya, Prensha Jaisalya, Nisha Bhimani (kept aside to preserve exact 33% women ratio)
+- **Staff & guests (outside student 15 count and 33% calculation):**
+  - Shri Mayur Parmar (`VSC-T-001`, Teacher and Professor)
+  - Shri Ankit Kalaria (`VSC-T-002`, Teacher and Professor, UHV Jeevan Vidya)
+  - Shri Dr. K. D. Ladwa (`VSC-P-001`, Principal, photo supplied)
+  - Shri Param Pujya Tyagvallabh Swamiji (`VSC-G-001`, Special Guest, view-only `special_guest` role, photo supplied)
+  - Nazim M. Sandh (`JS-F-001`, Founder and Organiser, platform_admin, photo supplied)
+  - Yashvi Dalsaniya (`JS-M-001`, Moderator, photo supplied)
+  - Dilip Sanghar (`JS-M-002`, Moderator)
+
+### Historical demo personas: Jaipur (17 October 2026 baseline, superseded)
+
+The initial demo was seeded with the following fictional accounts:
 
 | Persona | Demo user | Purpose |
 |---|---|---|

@@ -9,11 +9,13 @@
 
 ## Change Plan v2 and Review Additions
 
-Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.docx` and `JanSahabhag 2047 — Review Additions.docx`. Owner decisions in `docs/decisions.md` and `docs/plans/PENDING_OWNER_INPUTS_2026-10-21.md` override proposals in these source documents.
+Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.docx`, `JanSahabhag 2047 — Review Additions.docx`, and `docs/reference/24-10-2026/` (`JanSahabhag 2047 — Demo Personas.docx`, `JanSahabhag 2047 — Gratitude and Credits.docx`). Owner decisions in `docs/decisions.md` and `docs/plans/PENDING_OWNER_INPUTS_2026-10-21.md` override proposals in these source documents.
 
 - [x] Landing page with civic loop, session tiles, Jaipur next event, and visible platform 33% inclusion rule.
 - [x] Reusable seating modes for Debate Room, Youth Assembly and Youth Parliament, including accessible list views and privacy-safe allocation counts.
 - [x] Title-first Assignments and Community browsing. (Historical 10-start, 1–2-credit model superseded on 24 October 2026 by 0 starting balance, max 5 demo Civic Credit Points linked to NEP idea).
+- [x] External About page updates (24 Oct 2026): added Yashvi Dalsaniya as Managing Partner with supplied portrait and description; added "With gratitude" section honoring 9 individuals led by late guide Shri Dadubhai Sandhar, closing lines, and Nazim's gratitude message; confirmed Visesh Akbari spelling.
+- [x] Target demo transition recorded (24 Oct 2026): Rajkot college demo (Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot) with Ankita Kapri as main student supersedes Jaipur as target demo (22 named demo people, 15 students aged 18+ with exactly 5 named women meeting 33% rule, 2 teachers, 1 principal, 1 special guest, 1 founder, 2 scoped moderators). Active implementation is underway in another branch and not yet deployed.
 - [x] Evidence privacy, consent and recording notices, report workflow, and guarded moderation queue for the browser demo.
 - [x] Added contextual point-of-use Rules controls across Home, Learn, Assignments, Workspace, Projects, Community, Passport and UHV; preserved existing Debate, Assembly, Parliament and Event rules.
 - [x] Added project team seats, milestone boards and joined-project Workspace tiles; preserved the invite-only Jaipur room and labelled single-browser simulation.
@@ -23,7 +25,7 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [x] Settle UHV/Jeevan Vidya and youth activities guidance (OD.13 / OD 24 Oct 2026): original platform wording inspired by the Vadodara Savli youth workshop presented by Nazim M. Sandh. Material by Ganesh Bagadia with credit line exactly: "Based on the Vadodara Savli youth workshop, material by Ganesh Bagadia." There is no workshop feature and no seven-day outline to wait for. Keep reflections private and credit-free (0 Civic Credit Points). Separate UHV file, images, and 1–2 workshop-owned YouTube videos/links to arrive later; current demo authorized with placeholders (no re-upload/copy). Ganesh role/org and permission unconfirmed (Nazim must ask before media/full launch).
 - [x] Added deterministic role-aware AI demo suggestions with exact moderator-grant scope, fictional labels and human-decision boundaries. Founder video awaits approved media.
 - [x] Built the owner-approved scoped moderator-grant simulation with audit, expiry, revoke and active-persona guards; production enforcement requires a backend.
-- [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; kept the approved Jaipur story.
+- [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; kept the approved Jaipur story as initial baseline pending Rajkot branch completion.
 - [x] Reconciled the Master PRD route/control inventory in `docs/audits/MASTER_PRD_RECONCILIATION.md`.
 - [x] Reviewed the dependency audit and upgraded React Router; shipped dependencies now report zero advisories. See `docs/audits/DEPENDENCY_REVIEW_2026-10-23.md`.
 - [x] Accessibility and performance cleanup: moderator overlays gained dialog labels and keyboard focus handling; source lint has zero warnings and the main JS chunk is 449.58 kB. Repository lint still reports 23 test-file warnings (zero errors).
