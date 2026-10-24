@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { DemoPreviewBadge } from '../ui/DemoPreviewBadge';
-import { Card, CardTitle } from '../ui/Card';
+import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { PointOfUseRulesButton } from '../ui/PointOfUseRulesButton';
 import {

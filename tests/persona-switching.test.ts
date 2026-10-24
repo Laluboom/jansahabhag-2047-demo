@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { demoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
-import { useAuthStore } from '../src/stores/authStore';
 
 describe('Persona Switching & Shared State Isolation', () => {
   beforeEach(() => {

@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Notification } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Bell, CheckCircle2, ArrowRight, Award, Vote, FileCheck2, ShieldCheck } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';

@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Assignment, Submission, Evidence, User } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
@@ -15,12 +15,10 @@ import {
   ArrowRight,
   FileCheck2,
   Award,
-  Calendar,
   CheckCircle2,
   AlertCircle,
   Clock,
   ShieldCheck,
-  UserCheck,
   Edit3,
   Receipt,
   ExternalLink,
@@ -132,9 +130,10 @@ export const AssignmentDetailPage: React.FC = () => {
         score: isNaN(parsedScore as number) ? undefined : parsedScore,
       });
       triggerRefresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to review submission', err);
-      setFeedbackError(err?.message || 'Failed to review submission');
+      const message = err instanceof Error ? err.message : 'Failed to review submission';
+      setFeedbackError(message);
     } finally {
       setIsReviewing(false);
     }
@@ -183,8 +182,8 @@ export const AssignmentDetailPage: React.FC = () => {
         a.click();
         document.body.removeChild(a);
       }
-    } catch (err: any) {
-      alert(err?.message || 'Failed to download attachment');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to download attachment');
     }
   };
 
@@ -234,7 +233,6 @@ export const AssignmentDetailPage: React.FC = () => {
   const isDraft = submission?.status === 'draft';
   const isRevision = submission?.status === 'revision_requested';
   const isVerified = submission?.status === 'verified';
-  const isPendingReview = submission?.status === 'submitted' || submission?.status === 'under_review';
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">

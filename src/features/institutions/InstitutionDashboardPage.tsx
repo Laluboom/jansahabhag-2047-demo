@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Institution, User, Programme, Enrolment, Evidence } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Institution, User, Programme, Evidence } from '../../types/domain';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -12,15 +12,8 @@ import {
   Building2,
   Users,
   Layers,
-  Award,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
-  BookOpen,
-  FileCheck2,
-  Sparkles,
-  ExternalLink,
-  Search,
 } from 'lucide-react';
 
 export const InstitutionDashboardPage: React.FC = () => {

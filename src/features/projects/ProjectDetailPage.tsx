@@ -4,31 +4,23 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Project, Evidence, User } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
-import { Textarea, Input } from '../../components/ui/Input';
+import { Textarea } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
-import { Avatar } from '../../components/ui/Avatar';
 import { ProjectTeamSeats } from './ProjectTeamSeats';
 import { ProjectBoard } from './ProjectBoard';
 import {
   ArrowLeft,
   Target,
-  Users,
-  CheckCircle2,
-  Award,
-  FileCheck2,
   Sparkles,
   Plus,
   MessageSquare,
   Paperclip,
-  Calendar,
-  AlertCircle,
-  ExternalLink,
 } from 'lucide-react';
-import { formatDate, formatRelativeTime } from '../../utils/formatters';
+import { formatRelativeTime } from '../../utils/formatters';
 
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

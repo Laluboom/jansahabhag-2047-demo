@@ -518,6 +518,55 @@ describe('Change Plan v2 §12: Scoped Moderator Grants & Founder-Held Delegation
         expect(screen.getAllByText(/Grant Created/i).length).toBeGreaterThanOrEqual(1);
       });
     });
+
+    it('manages accessible dialog semantics, programmatic labels, and Escape dismiss for create and revoke overlays', async () => {
+      await demoRepository.switchUser('user_admin');
+      await useAuthStore.getState().switchPersona('user_admin');
+
+      render(
+        <MemoryRouter initialEntries={['/admin/moderator-grants']}>
+          <Routes>
+            <Route path="/admin/moderator-grants" element={<AdminModeratorGrantsPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Issue New Grant/i })).toBeInTheDocument();
+      });
+
+      // 1. Open Issue New Grant dialog
+      const openCreateBtn = screen.getByRole('button', { name: /Issue New Grant/i });
+      fireEvent.click(openCreateBtn);
+
+      const createDialog = await screen.findByRole('dialog', { name: /Issue Scoped Moderator Grant/i });
+      expect(createDialog).toBeInTheDocument();
+      expect(createDialog).toHaveAttribute('aria-modal', 'true');
+      expect(screen.getByLabelText(/Designated Grantee/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Founder Justification & Reason/i)).toBeInTheDocument();
+
+      // Press Escape to dismiss create dialog
+      fireEvent.keyDown(window, { key: 'Escape' });
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: /Issue Scoped Moderator Grant/i })).not.toBeInTheDocument();
+      });
+
+      // 2. Open Revoke Grant dialog
+      const revokeButtons = screen.getAllByRole('button', { name: /Revoke Grant/i });
+      expect(revokeButtons.length).toBeGreaterThanOrEqual(1);
+      fireEvent.click(revokeButtons[0]);
+
+      const revokeDialog = await screen.findByRole('dialog', { name: /Revoke Scoped Grant/i });
+      expect(revokeDialog).toBeInTheDocument();
+      expect(revokeDialog).toHaveAttribute('aria-modal', 'true');
+      expect(screen.getByLabelText(/Revocation Reason/i)).toBeInTheDocument();
+
+      // Press Escape to dismiss revoke dialog
+      fireEvent.keyDown(window, { key: 'Escape' });
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: /Revoke Scoped Grant/i })).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('9. Persona Spoofing Rejection & Zero State Mutation', () => {

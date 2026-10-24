@@ -16,7 +16,7 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
   seats,
   selectedSeatId,
   onSelectSeat,
-  activeSpeakerId,
+  activeSpeakerId: _activeSpeakerId,
   suppressAnimation = false,
   textMode = false,
 }) => {

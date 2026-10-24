@@ -1,9 +1,7 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { Button } from '../src/components/ui/Button';
-import { Badge } from '../src/components/ui/Badge';
 import { DemoPreviewBadge } from '../src/components/ui/DemoPreviewBadge';
 import { StatusChip } from '../src/components/ui/StatusChip';
 import { ThreadMotif } from '../src/components/layout/ThreadMotif';

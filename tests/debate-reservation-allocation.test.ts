@@ -47,7 +47,7 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
         'Rapporteur',
       ]);
 
-      for (const role of CANONICAL_DEBATE_ROLES) {
+      for (const _role of CANONICAL_DEBATE_ROLES) {
         // One-place singular role rounding: ceil(0.33 * 1) = 1
         expect(calculateReservedMinimum(1)).toBe(1);
       }

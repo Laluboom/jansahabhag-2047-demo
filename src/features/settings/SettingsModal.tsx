@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { SessionPreferencesService } from '../../services/sessionPreferencesService';
-import { Sliders, Zap, LayoutGrid, List, AlertCircle, Info, Check } from 'lucide-react';
+import { Zap, LayoutGrid, List, Info, Check } from 'lucide-react';
 
 export interface SettingsModalProps {
   isOpen: boolean;

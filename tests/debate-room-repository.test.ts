@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { LocalDemoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
 import { normalizeSessionRecords } from '../src/services/migrations';
-import { DEBATE_PHASES, Session } from '../src/types/domain';
+import { Session } from '../src/types/domain';
 
 describe('Debate Room & Shared Live Session Repository Operations', () => {
   let repository: LocalDemoRepository;

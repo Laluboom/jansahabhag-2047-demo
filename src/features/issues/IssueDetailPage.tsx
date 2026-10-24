@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { CivicIssue, Evidence } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -13,12 +13,8 @@ import {
   ArrowLeft,
   MapPin,
   AlertCircle,
-  ShieldCheck,
   ThumbsUp,
   FileCheck2,
-  Users,
-  Compass,
-  Sparkles,
   CheckCircle2,
   ExternalLink,
 } from 'lucide-react';

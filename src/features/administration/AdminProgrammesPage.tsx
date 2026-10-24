@@ -9,7 +9,6 @@ import { StatusChip } from '../../components/ui/StatusChip';
 import {
   ArrowLeft,
   Layers,
-  Calendar,
   BookOpen,
   Plus,
   Power,

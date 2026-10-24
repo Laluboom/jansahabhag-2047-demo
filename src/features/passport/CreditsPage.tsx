@@ -5,12 +5,10 @@ import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { CreditTransaction, CreditDimension } from '../../types/domain';
 import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
 import { CreditAppealModal } from './CreditAppealModal';
 import {
   ArrowLeft,
   Award,
-  CheckCircle2,
   Clock,
   ShieldCheck,
   AlertCircle,

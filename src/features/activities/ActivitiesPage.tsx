@@ -4,25 +4,21 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Activity, ActivityType } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Textarea } from '../../components/ui/Input';
 import {
   Compass,
   CheckCircle2,
-  Filter,
   Plus,
   Target,
   Users,
   BookOpen,
   MessageSquare,
-  AlertTriangle,
   Award,
   Sparkles,
   ArrowRight,
-  MapPin,
-  Calendar,
 } from 'lucide-react';
 import { formatRelativeTime, formatDate } from '../../utils/formatters';
 

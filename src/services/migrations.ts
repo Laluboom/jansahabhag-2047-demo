@@ -15,10 +15,10 @@ import { buildAllocationState, buildAssemblyRoleAllocations, buildSessionRoleAll
 
 export interface Migration {
   version: number;
-  migrate: (prev: any) => DemoDatabase;
+  migrate: (prev: unknown) => DemoDatabase;
 }
 
-export function normalizeUhvRecords(storedData: any): DemoDatabase {
+export function normalizeUhvRecords(storedData: unknown): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
   }
@@ -84,7 +84,7 @@ export function normalizeUhvRecords(storedData: any): DemoDatabase {
         uhvAssignmentIds.add(a.id);
         a.assignmentType = 'uhv_reflection';
         a.rubric = [];
-        delete (a as any).requiredEvidenceType;
+        delete (a as unknown as Record<string, unknown>).requiredEvidenceType;
         a.creditsReward = 0;
         if (a.id === 'asg_uhv_08' && (!a.prompt || a.prompt.includes('400-word'))) {
           a.prompt =
@@ -99,10 +99,10 @@ export function normalizeUhvRecords(storedData: any): DemoDatabase {
   if (Array.isArray(db.submissions)) {
     db.submissions.forEach((s) => {
       if (uhvAssignmentIds.has(s.assignmentId) || s.isUhvReflection) {
-        delete (s as any).score;
-        delete (s as any).teacherFeedback;
-        delete (s as any).reviewerId;
-        delete (s as any).reviewedAt;
+        delete (s as unknown as Record<string, unknown>).score;
+        delete (s as unknown as Record<string, unknown>).teacherFeedback;
+        delete (s as unknown as Record<string, unknown>).reviewerId;
+        delete (s as unknown as Record<string, unknown>).reviewedAt;
         s.evidenceIds = (s.evidenceIds || []).filter((eid) => eid !== 'ev_meera_doc_02');
         s.status = s.status === 'draft' ? 'draft' : 'completed';
         s.isUhvReflection = true;
@@ -193,19 +193,19 @@ export function normalizeUhvRecords(storedData: any): DemoDatabase {
 export const migrations: Migration[] = [
   {
     version: 1,
-    migrate: (_prev: any) => {
+    migrate: (_prev: unknown) => {
       return getFreshSeedDatabase();
     },
   },
   {
     version: 2,
-    migrate: (prev: any) => {
+    migrate: (prev: unknown) => {
       return normalizeUhvRecords(prev);
     },
   },
   {
     version: 3,
-    migrate: (prev: any) => {
+    migrate: (prev: unknown) => {
       const db = normalizeUhvRecords(prev);
       normalizeSessionRecords(db);
       normalizeAssemblyRecords(db);
@@ -907,20 +907,19 @@ export function normalizeModeratorGrantRecords(db: DemoDatabase): DemoDatabase {
   return db;
 }
 
-export function runMigrations(storedData: any): DemoDatabase {
+export function runMigrations(storedData: unknown): DemoDatabase {
   if (!storedData || typeof storedData !== 'object') {
     return getFreshSeedDatabase();
   }
 
+  const data = storedData as Record<string, unknown>;
   if (
-    !Array.isArray(storedData.users) ||
-    !Array.isArray(storedData.courses) ||
-    !Array.isArray(storedData.assemblies)
+    !Array.isArray(data.users) ||
+    !Array.isArray(data.courses) ||
+    !Array.isArray(data.assemblies)
   ) {
     return getFreshSeedDatabase();
   }
-
-  const storedVersion = Number(storedData.schemaVersion) || 0;
 
   // Apply migrations sequentially or normalize
   const migrated = normalizeUhvRecords(storedData);

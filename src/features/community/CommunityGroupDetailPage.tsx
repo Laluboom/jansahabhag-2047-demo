@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { CommunityGroup, CommunityPost } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';

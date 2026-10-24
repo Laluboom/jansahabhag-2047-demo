@@ -17,7 +17,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
   seats,
   selectedSeatId,
   onSelectSeat,
-  activeSpeakerId,
+  activeSpeakerId: _activeSpeakerId,
   isIllustrative = true,
   suppressAnimation = false,
   textMode = false,
@@ -54,7 +54,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
 
   return (
     <div
-      className="space-y-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-950 text-white shadow-xl border border-slate-700"
+      className="space-y-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-950 text-white shadow-xl border border-slate-700 min-w-0 overflow-x-hidden"
       data-testid="parliament-seating-layout"
       role="region"
       aria-label="National Youth Parliament Horseshoe Chamber Layout"
@@ -67,7 +67,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
             <h3 className="font-bold text-sm font-heading tracking-wide text-slate-100">
               National Apex Chamber: Plenary Horseshoe Seating
             </h3>
-            <span className="text-[11px] text-slate-400 block">
+            <span className="text-[11px] text-slate-300 block">
               Speaker &bull; Government / Treasury &bull; Opposition &bull; Cross-benches
             </span>
           </div>
@@ -118,7 +118,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
               </div>
             ))
           ) : (
-            <p className="text-xs text-slate-400 italic">Presiding Speaker Rostrum</p>
+            <p className="text-xs text-slate-300 italic">Presiding Speaker Rostrum</p>
           )}
         </div>
       </div>
@@ -137,7 +137,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 Government & Sponsoring Benches
               </h4>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[10px] text-slate-300 font-mono">
               {governmentSeats.length} Seats
             </span>
           </div>
@@ -155,7 +155,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 />
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic py-3 text-center">
+              <p className="text-xs text-slate-300 italic py-3 text-center">
                 No delegates seated on Government benches.
               </p>
             )}
@@ -174,7 +174,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 Opposition & Scrutiny Benches
               </h4>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[10px] text-slate-300 font-mono">
               {oppositionSeats.length} Seats
             </span>
           </div>
@@ -192,7 +192,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 />
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic py-3 text-center">
+              <p className="text-xs text-slate-300 italic py-3 text-center">
                 No delegates seated on Opposition benches.
               </p>
             )}
@@ -212,7 +212,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
               Cross-benches & State Delegations (Connecting Arc)
             </h4>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">
+          <span className="text-[10px] text-slate-300 font-mono">
             {crossBenchSeats.length} Seats
           </span>
         </div>
@@ -230,7 +230,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
               />
             ))
           ) : (
-            <p className="text-xs text-slate-400 italic py-3 text-center col-span-full">
+            <p className="text-xs text-slate-300 italic py-3 text-center col-span-full">
               No delegates seated on Cross-benches.
             </p>
           )}

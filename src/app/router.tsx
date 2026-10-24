@@ -1,14 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
+import { PageLoadingFallback } from '../components/layout/PageLoadingFallback';
 import { ErrorBoundary } from '../features/errors/ErrorBoundary';
-
-// Route Loading Fallback
-const PageLoadingFallback: React.FC = () => (
-  <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading page content">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-civic-indigo-600" />
-  </div>
-);
 
 // Lazy Loaded Feature Pages
 const DemoLoginPage = lazy(() => import('../features/auth-demo/DemoLoginPage').then((m) => ({ default: m.DemoLoginPage })));
@@ -59,7 +53,6 @@ const ParliamentPage = lazy(() => import('../features/previews/ParliamentPage').
 const StakeholdersPage = lazy(() => import('../features/previews/StakeholdersPage').then((m) => ({ default: m.StakeholdersPage })));
 const StudioPage = lazy(() => import('../features/previews/StudioPage').then((m) => ({ default: m.StudioPage })));
 const DebateRoomPreviewPage = lazy(() => import('../components/layout/DebateRoomPreviewPage').then((m) => ({ default: m.DebateRoomPreviewPage })));
-const WorkspacePreviewPage = lazy(() => import('../components/layout/WorkspacePreviewPage').then((m) => ({ default: m.WorkspacePreviewPage })));
 const WorkspacePage = lazy(() => import('../features/workspaces/WorkspacePage').then((m) => ({ default: m.WorkspacePage })));
 const HelpRulebooksPage = lazy(() => import('../components/layout/HelpRulebooksPage').then((m) => ({ default: m.HelpRulebooksPage })));
 

@@ -9,10 +9,8 @@ import { useAuthStore } from '../src/stores/authStore';
 import {
   MAX_BINARY_ATTACHMENT_BYTES,
   BINARY_ATTACHMENT_SIZE_LABEL,
-  ALLOWED_BINARY_MIME_TYPES,
   ALLOWED_BINARY_FORMAT_LABELS,
   validateEvidenceAttachmentFile,
-  canActorAccessPrivateEvidence,
 } from '../src/domain/evidenceRules';
 import { SubmitAssignmentPage } from '../src/features/assignments/SubmitAssignmentPage';
 import { AssignmentsPage } from '../src/features/assignments/AssignmentsPage';

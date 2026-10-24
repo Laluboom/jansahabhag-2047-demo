@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { demoRepository } from '../../services/demoRepository';
 import { DemoDatabase } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card, CardTitle } from '../../components/ui/Card';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import {
   BarChart3,
-  TrendingUp,
-  Users,
-  Award,
-  ShieldCheck,
   Globe2,
   Sparkles,
   Info,
-  MapPin,
-  Building2,
-  CheckCircle2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,

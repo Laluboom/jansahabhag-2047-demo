@@ -3,16 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { demoRepository } from '../../services/demoRepository';
 import { formatRoleName } from '../../utils/formatters';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { Modal } from '../../components/ui/Modal';
 import {
   User,
   RotateCcw,
-  ShieldCheck,
-  Award,
-  Sparkles,
   MapPin,
   Mail,
   Building2,

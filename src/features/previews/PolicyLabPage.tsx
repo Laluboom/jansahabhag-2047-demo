@@ -5,13 +5,8 @@ import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   Scale,
-  FileText,
-  Landmark,
-  ArrowRight,
   Download,
   X,
-  CheckCircle2,
-  BookOpen,
 } from 'lucide-react';
 
 interface PolicyDoc {

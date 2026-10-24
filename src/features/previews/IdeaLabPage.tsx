@@ -5,14 +5,11 @@ import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   Lightbulb,
-  Sparkles,
-  ArrowRight,
   ThumbsUp,
   X,
   Cpu,
   CheckCircle2,
   Plus,
-  Compass,
 } from 'lucide-react';
 
 interface IdeaItem {

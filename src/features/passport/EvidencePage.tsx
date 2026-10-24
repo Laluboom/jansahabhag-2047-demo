@@ -6,7 +6,7 @@ import { Evidence } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
-import { ArrowLeft, FileCheck2, ShieldCheck, MapPin, EyeOff, Filter, Search, Download } from 'lucide-react';
+import { ArrowLeft, FileCheck2, MapPin, EyeOff, Search, Download } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { canActorAccessPrivateEvidence } from '../../domain/evidenceRules';
 
@@ -63,8 +63,8 @@ export const EvidencePage: React.FC = () => {
         a.click();
         document.body.removeChild(a);
       }
-    } catch (err: any) {
-      alert(err?.message || 'Failed to download attachment');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to download attachment');
     }
   };
 

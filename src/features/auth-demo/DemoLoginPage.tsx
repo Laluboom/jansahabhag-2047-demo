@@ -5,7 +5,6 @@ import { demoRepository } from '../../services/demoRepository';
 import { User } from '../../types/domain';
 import { formatRoleName } from '../../utils/formatters';
 import { Avatar } from '../../components/ui/Avatar';
-import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Sparkles, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 

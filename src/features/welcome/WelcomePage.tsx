@@ -157,6 +157,7 @@ const parseEventStartUtc = (dateStr: string, timeStr?: string): number => {
   return Date.UTC(year, month - 1, day, hours, minutes, 0, 0);
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const getEarliestFutureJaipurEvent = (now: Date = new Date()) => {
   const nowUtc = now.getTime();
   const jaipurEvents = seedEvents.filter(

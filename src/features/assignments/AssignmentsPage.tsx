@@ -138,9 +138,9 @@ export const AssignmentsPage: React.FC = () => {
       setCohortFile(null);
       setIsCohortModalOpen(false);
       triggerRefresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to attach cohort evidence', err);
-      setCohortFileError(err?.message || 'Failed to attach cohort evidence.');
+      setCohortFileError(err instanceof Error ? err.message : 'Failed to attach cohort evidence.');
     } finally {
       setIsAttachingCohort(false);
     }
@@ -164,8 +164,8 @@ export const AssignmentsPage: React.FC = () => {
         comment,
       });
       triggerRefresh();
-    } catch (err: any) {
-      alert(err?.message || 'Failed to review evidence');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to review evidence');
     }
   };
 
@@ -694,7 +694,7 @@ export const AssignmentsPage: React.FC = () => {
               </label>
               <select
                 value={cohortDocType}
-                onChange={(e) => setCohortDocType(e.target.value as any)}
+                onChange={(e) => setCohortDocType(e.target.value as 'attendance_sheet' | 'completion_certificate')}
                 className="w-full text-xs rounded-lg border border-slate-200 p-2 bg-white"
               >
                 <option value="attendance_sheet">Attendance Sheet (In-person workshop / deliberation presence)</option>

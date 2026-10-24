@@ -12,7 +12,7 @@ import {
   User,
   Project,
 } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Input, Textarea } from '../../components/ui/Input';
@@ -25,7 +25,6 @@ import {
   ShieldCheck,
   UserPlus,
   Users,
-  MessageSquare,
   AlertTriangle,
   FileText,
   CheckCircle2,
@@ -33,17 +32,11 @@ import {
   ArrowRight,
   Lock,
   Search,
-  Send,
   Plus,
   Flag,
   HelpCircle,
   X,
-  Building2,
-  UserCheck,
-  RefreshCw,
   Clock,
-  Tag,
-  AlertCircle,
   Ban,
   ExternalLink,
   Target,
@@ -80,7 +73,6 @@ export const WorkspacePage: React.FC = () => {
 
   // Invite state
   const [inviteSearchQuery, setInviteSearchQuery] = useState('');
-  const [selectedInviteUser, setSelectedInviteUser] = useState<User | null>(null);
   const [isSearchingInvite, setIsSearchingInvite] = useState(false);
   const [inviteSearchResults, setInviteSearchResults] = useState<User[]>([]);
   const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
@@ -176,9 +168,9 @@ export const WorkspacePage: React.FC = () => {
             setAuditEvents([]);
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (mounted) {
-          setPageError(err.message || 'Failed to load workspace.');
+          setPageError(err instanceof Error ? err.message : 'Failed to load workspace.');
         }
       } finally {
         if (mounted) setIsLoading(false);
@@ -226,8 +218,8 @@ export const WorkspacePage: React.FC = () => {
       setActionError(null);
       setInviteError(null);
       setInviteSuccess(null);
-    } catch (err: any) {
-      setPageError(err.message);
+    } catch (err: unknown) {
+      setPageError(err instanceof Error ? err.message : 'Failed to switch user.');
     }
   };
 
@@ -245,8 +237,8 @@ export const WorkspacePage: React.FC = () => {
       setIsRulebookModalOpen(false);
       setActionSuccessMessage(`Successfully acknowledged Rulebook ${workspace.rulebook?.version || 'v1.0'}. You may now post and participate.`);
       triggerRefresh();
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to acknowledge rulebook.');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to acknowledge rulebook.');
     } finally {
       setIsAcknowledgingRules(false);
     }
@@ -270,8 +262,8 @@ export const WorkspacePage: React.FC = () => {
       } else {
         setActionSuccessMessage('Invitation declined.');
       }
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to update invitation status.');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to update invitation status.');
     }
   };
 
@@ -280,7 +272,6 @@ export const WorkspacePage: React.FC = () => {
     if (!workspace || !currentUser || !inviteSearchQuery.trim()) return;
     setIsSearchingInvite(true);
     setInviteError(null);
-    setSelectedInviteUser(null);
     try {
       const results = await demoRepository.searchUsersForInvite(
         inviteSearchQuery.trim(),
@@ -291,8 +282,8 @@ export const WorkspacePage: React.FC = () => {
       if (results.length === 0) {
         setInviteError(`No matching platform persona found for "${inviteSearchQuery}".`);
       }
-    } catch (err: any) {
-      setInviteError(err.message || 'Search failed.');
+    } catch (err: unknown) {
+      setInviteError(err instanceof Error ? err.message : 'Search failed.');
     } finally {
       setIsSearchingInvite(false);
     }
@@ -312,12 +303,11 @@ export const WorkspacePage: React.FC = () => {
         usernameOrId: username,
       });
       setInviteSuccess(`Invitation successfully sent to @${username} (${targetUser.name}) for ${workspace.title}.`);
-      setSelectedInviteUser(null);
       setInviteSearchQuery('');
       setInviteSearchResults([]);
       triggerRefresh();
-    } catch (err: any) {
-      setInviteError(err.message || 'Failed to send invite.');
+    } catch (err: unknown) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to send invite.');
     } finally {
       setIsSubmittingInvite(false);
     }
@@ -372,8 +362,8 @@ export const WorkspacePage: React.FC = () => {
       setNewActionContent('');
       setActionSuccessMessage('Substantive workspace action published with persistent provenance.');
       triggerRefresh();
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to create workspace action.');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to create workspace action.');
     } finally {
       setIsSubmittingAction(false);
     }
@@ -419,8 +409,8 @@ export const WorkspacePage: React.FC = () => {
       setModerationModalAction(null);
       setModerationReason('');
       triggerRefresh();
-    } catch (err: any) {
-      setModerationError(err.message || 'Moderation action rejected.');
+    } catch (err: unknown) {
+      setModerationError(err instanceof Error ? err.message : 'Moderation action rejected.');
     } finally {
       setIsSubmittingModeration(false);
     }
@@ -953,7 +943,7 @@ export const WorkspacePage: React.FC = () => {
                     </label>
                     <select
                       value={newActionSourceType}
-                      onChange={(e) => setNewActionSourceType(e.target.value as any)}
+                      onChange={(e) => setNewActionSourceType(e.target.value as 'proposition' | 'evidence' | 'none')}
                       className="w-full text-xs rounded-lg border-slate-300 border p-2 bg-white"
                       data-testid="select-source-link"
                     >

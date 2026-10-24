@@ -59,7 +59,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
 
   return (
     <div
-      className="space-y-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg border border-slate-700/80"
+      className="space-y-6 p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white shadow-lg border border-slate-700/80 min-w-0 overflow-x-hidden"
       data-testid="debate-seating-layout"
       role="region"
       aria-label="Debate Room Chamber Facing Benches Layout"
@@ -72,7 +72,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
             Debate Chamber: Facing Benches & Speaking Podium
           </h3>
         </div>
-        <span className="text-[11px] font-mono text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 self-start sm:self-auto">
+        <span className="text-[11px] font-mono text-slate-300 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 self-start sm:self-auto">
           Structured Deliberation Layout
         </span>
       </div>
@@ -101,7 +101,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
               </div>
             ))
           ) : (
-            <div className="text-xs text-slate-400 italic py-2">
+            <div className="text-xs text-slate-300 italic py-2">
               Facilitator / Moderator seated at procedural rostrum.
             </div>
           )}
@@ -132,7 +132,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
             </p>
           </div>
         ) : (
-          <p className="text-xs text-slate-400 italic py-1">
+          <p className="text-xs text-slate-300 italic py-1">
             Podium open. Awaiting recognized turn from the speaking queue.
           </p>
         )}
@@ -152,7 +152,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                 Proposition Bench (For)
               </h4>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[10px] text-slate-300 font-mono">
               {forSeats.length} Delegates
             </span>
           </div>
@@ -170,7 +170,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                 />
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic py-4 text-center">
+              <p className="text-xs text-slate-300 italic py-4 text-center">
                 Visual placeholder bench awaiting explicit participant stance.
               </p>
             )}
@@ -189,7 +189,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                 Opposition Bench (Against)
               </h4>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[10px] text-slate-300 font-mono">
               {againstSeats.length} Delegates
             </span>
           </div>
@@ -207,7 +207,7 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
                 />
               ))
             ) : (
-              <p className="text-xs text-slate-400 italic py-4 text-center">
+              <p className="text-xs text-slate-300 italic py-4 text-center">
                 Visual placeholder bench awaiting explicit participant stance.
               </p>
             )}
@@ -223,16 +223,16 @@ export const DebateSeatingLayout: React.FC<DebateSeatingLayoutProps> = ({
         >
           <div className="flex items-center justify-between border-b border-slate-700/80 pb-2">
             <div className="flex items-center gap-2">
-              <HelpCircle className="w-4 h-4 text-slate-400" />
+              <HelpCircle className="w-4 h-4 text-slate-300" />
               <h4 className="font-bold text-xs uppercase tracking-wider text-slate-300 font-heading">
                 Unassigned / Neutral Delegates (Awaiting Stance)
               </h4>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-[10px] text-slate-300 font-mono">
               {neutralSeats.length} Delegates
             </span>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-300">
             Participants are deliberating with unassigned stance. Functional roles do not infer a For or Against position.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">

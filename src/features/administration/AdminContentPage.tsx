@@ -9,12 +9,10 @@ import {
   ArrowLeft,
   BookOpen,
   Clock,
-  Layers,
   Plus,
   X,
   CheckCircle2,
   ListTree,
-  FileText,
 } from 'lucide-react';
 
 export const AdminContentPage: React.FC = () => {
@@ -34,7 +32,7 @@ export const AdminContentPage: React.FC = () => {
   const [track, setTrack] = useState<CourseTrack>('civic_academy');
   const [description, setDescription] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState(45);
-  const [moduleCount, setModuleCount] = useState(3);
+  const [moduleCount] = useState(3);
 
   useEffect(() => {
     async function load() {

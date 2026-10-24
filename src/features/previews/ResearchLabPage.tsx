@@ -5,15 +5,9 @@ import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   FlaskConical,
-  BookOpen,
-  Users,
-  FileText,
   Download,
   X,
-  Sparkles,
   Database,
-  CheckCircle2,
-  Table,
 } from 'lucide-react';
 
 interface StudyItem {

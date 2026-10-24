@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,17 +26,13 @@ import {
   Upload,
   X,
   Flag,
-  VideoOff,
   ExternalLink,
 } from 'lucide-react';
 import {
   NO_RECORDING_RULE_TITLE,
-  NO_RECORDING_RULE_TEXT,
   FACE_CONSENT_WARNING_TEXT,
   ALLOWED_EVIDENCE_FORMAT_LABELS,
-  ALLOWED_EVIDENCE_MIME_TYPES,
   MAX_EVIDENCE_FILE_BYTES,
-  MAX_BINARY_ATTACHMENT_BYTES,
   BINARY_ATTACHMENT_SIZE_LABEL,
   ALLOWED_BINARY_FORMAT_LABELS,
   validateEvidenceAttachmentFile,
@@ -139,7 +135,8 @@ export const SubmitAssignmentPage: React.FC = () => {
     },
   });
 
-  const selectedEvidenceIds = watch('evidenceIds') || [];
+  const watchedEvidenceIds = watch('evidenceIds');
+  const selectedEvidenceIds = useMemo(() => watchedEvidenceIds || [], [watchedEvidenceIds]);
   const currentContent = watch('content') || '';
 
   // Load assignment and submissions
@@ -254,10 +251,11 @@ export const SubmitAssignmentPage: React.FC = () => {
           new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
         );
         setDraftError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Autosave failed', err);
         setAutosaveStatus('error');
-        setDraftError(err.message || 'Failed to autosave draft');
+        const message = err instanceof Error ? err.message : 'Failed to autosave draft';
+        setDraftError(message);
       }
     }, 1200);
 
@@ -309,9 +307,10 @@ export const SubmitAssignmentPage: React.FC = () => {
       );
       triggerRefresh();
       navigate(`/assignments/${id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save draft', err);
-      setDraftError(err.message || 'Failed to save draft');
+      const message = err instanceof Error ? err.message : 'Failed to save draft';
+      setDraftError(message);
     } finally {
       setIsSavingDraft(false);
     }
@@ -322,7 +321,7 @@ export const SubmitAssignmentPage: React.FC = () => {
     setIsSubmitting(true);
     setDraftError(null);
     try {
-      const submitted = await demoRepository.submitAssignment({
+      await demoRepository.submitAssignment({
         assignmentId: id,
         userId: currentUser.id,
         content: data.content.trim(),
@@ -331,9 +330,10 @@ export const SubmitAssignmentPage: React.FC = () => {
       });
       triggerRefresh();
       navigate(`/assignments/${id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to submit assignment', err);
-      setDraftError(err.message || 'Failed to submit assignment');
+      const message = err instanceof Error ? err.message : 'Failed to submit assignment';
+      setDraftError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -481,9 +481,10 @@ export const SubmitAssignmentPage: React.FC = () => {
       }
       setFileError(null);
       setIsAddEvidenceModalOpen(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to add evidence', err);
-      setFileError(err?.message || 'Storage error: Failed to save evidence to browser storage.');
+      const message = err instanceof Error ? err.message : 'Storage error: Failed to save evidence to browser storage.';
+      setFileError(message);
     } finally {
       setIsCreatingEvidence(false);
     }
@@ -525,8 +526,9 @@ export const SubmitAssignmentPage: React.FC = () => {
       setReportModalData(null);
       setReportReason('');
       triggerRefresh();
-    } catch (err: any) {
-      setReportError(err?.message || 'Failed to submit moderation report.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit moderation report.';
+      setReportError(message);
     } finally {
       setIsSubmittingReport(false);
     }

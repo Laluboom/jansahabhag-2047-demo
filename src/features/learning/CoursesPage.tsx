@@ -15,9 +15,7 @@ import {
   ArrowRight,
   Sparkles,
   HeartHandshake,
-  ShieldAlert,
   ArrowLeft,
-  Compass,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 

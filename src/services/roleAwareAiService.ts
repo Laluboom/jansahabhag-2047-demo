@@ -1,4 +1,4 @@
-import { RoleAwareSuggestion, AssistantEvaluationContext } from '../types/assistant';
+import { RoleAwareSuggestion } from '../types/assistant';
 import { DemoDatabase, ScopedModeratorGrant, User } from '../types/domain';
 
 // Local storage key for persistent edits / dismissals across demo sessions

@@ -35,7 +35,6 @@ import {
   AssemblyRole,
   Session,
   SessionRosterEntry,
-  CANONICAL_DEBATE_ROLES,
 } from '../types/domain';
 import {
   POLICY_VERSION,

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { demoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
 import { POLICY_VERSION, canUserRsvpAllocation } from '../src/services/reservationAllocationService';
+import { Session } from '../src/types/domain';
 
 describe('Event Reservation & Allocation Repository Controls (Package 08A)', () => {
   beforeEach(async () => {
@@ -70,7 +71,7 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(participantView!.attendeeUserIds).not.toContain('user_vikram');
       expect(participantView!.attendeeUserIds).not.toContain('user_rohan');
       expect(participantView!.attendeeUserIds).toEqual([]);
-      expect((participantView as any).registeredCount).toBe(2);
+      expect((participantView as unknown as Record<string, unknown>).registeredCount).toBe(2);
       expect(participantView!.allocation?.isPrivacySuppressed).toBe(true);
       expect(participantView!.allocation?.vacanciesCount).toBeUndefined();
 
@@ -247,7 +248,7 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
     it('denies privileged owner and staff actions when active persona is missing', async () => {
       // Simulate missing active persona (logged out / unauthenticated)
       const db = PersistenceService.loadDatabase();
-      (db as any).activeUserId = undefined;
+      (db as { activeUserId?: string }).activeUserId = undefined;
       PersistenceService.saveDatabase(db);
 
       await expect(
@@ -638,7 +639,7 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
       expect(pViewBefore!.attendeeUserIds).not.toContain('user_vikram');
       expect(pViewBefore!.attendeeUserIds).not.toContain('user_rohan');
       expect(pViewBefore!.attendeeUserIds).toEqual([]);
-      expect((pViewBefore as any).registeredCount).toBe(2);
+      expect((pViewBefore as unknown as Record<string, unknown>).registeredCount).toBe(2);
 
       // Session projection also redacts named roster for non-owner
       const pSessionBefore = await demoRepository.getSessionByEvent('evt_jaipur_limited_05');
@@ -864,7 +865,7 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
     it('protects session roster in mutator return paths for allocated events while preserving internal DB state', async () => {
       // Setup a session linked to allocated event evt_jaipur_limited_05 in DB
       const db = PersistenceService.loadDatabase();
-      const mockAllocSession: any = {
+      const mockAllocSession: Session = {
         id: 'sess_allocated_limited_05',
         eventId: 'evt_jaipur_limited_05',
         title: 'Limited Deliberation Workshop Session',
@@ -893,8 +894,9 @@ describe('Event Reservation & Allocation Repository Controls (Package 08A)', () 
           activeSpeakerId: null,
           speakingQueue: [],
           contributions: [],
+          evidenceIds: [],
           acknowledgedUserIds: [],
-          rulebook: { version: 'v1.0', rules: [] },
+          rulebook: { title: 'Debate Ground Rules', version: 'v1.0', rules: [] },
         },
         schemaVersion: 1,
         createdAt: '2026-10-01T00:00:00Z',
