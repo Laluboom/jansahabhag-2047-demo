@@ -239,7 +239,7 @@ export const ProjectTeamSeats: React.FC<ProjectTeamSeatsProps> = ({
             </span>
             <span className="text-emerald-700 font-semibold flex items-center gap-1">
               <Award className="w-3.5 h-3.5" />
-              <span>Earns +2 Civic Action Credits on milestone completions</span>
+              <span>Earns +2 Civic Action Credit Points on milestone completions</span>
             </span>
           </div>
         </div>

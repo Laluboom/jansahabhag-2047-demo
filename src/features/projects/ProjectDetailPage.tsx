@@ -182,15 +182,15 @@ export const ProjectDetailPage: React.FC = () => {
               moduleName="Project"
               triggerText="Rules"
               modalTitle={`${project.title} — Rules & Milestone Standards`}
-              description="Standards governing field evidence milestones and civic credits."
+              description="Standards governing field evidence milestones and civic credit points."
               rules={[
                 {
                   title: 'Verifiable Milestone Completion',
                   description: 'Each project milestone requires verifiable field evidence before mentor review and credit award.',
                 },
                 {
-                  title: 'Milestone Credit Award (+2 Credits)',
-                  description: 'Verified milestones record +2 Civic Action Credits in the project lead and contributor Passports.',
+                  title: 'Milestone Credit Point Award (+2 Points)',
+                  description: 'Verified milestones record +2 Civic Action Credit Points in the project lead and contributor Passports.',
                 },
                 {
                   title: 'Team Accountability',

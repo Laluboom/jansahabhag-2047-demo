@@ -229,7 +229,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({
                         data-testid={`btn-complete-${ms.id}`}
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                        <span>Mark Complete (+2 Credits)</span>
+                        <span>Mark Complete (+2 Civic Credit Points)</span>
                       </Button>
                     </div>
                   </div>
@@ -366,7 +366,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({
                       data-testid={`btn-list-complete-${ms.id}`}
                     >
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                      <span>Mark Complete (+2 Credits)</span>
+                      <span>Mark Complete (+2 Civic Credit Points)</span>
                     </Button>
                   ) : (
                     <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-100 px-2.5 py-1 rounded-lg">

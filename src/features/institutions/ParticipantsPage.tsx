@@ -132,7 +132,7 @@ export const ParticipantsPage: React.FC = () => {
 
               <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
                 <span className="font-bold text-civic-saffron-700">
-                  {u.totalCredits} Credits
+                  {u.totalCredits} Civic Credit Points
                 </span>
                 <span className="text-[11px] text-slate-400">
                   {u.badgeCount} Badges

@@ -122,7 +122,7 @@ export const InstitutionDashboardPage: React.FC = () => {
         </Card>
 
         <Card className="p-5 border-slate-200 bg-white shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 uppercase block">Cohort Civic Credits</span>
+          <span className="text-xs font-semibold text-slate-500 uppercase block">Cohort Civic Credit Points</span>
           <span className="text-3xl font-extrabold text-civic-saffron-700 font-heading mt-1 block">
             {totalCohortCredits}
           </span>
@@ -187,7 +187,7 @@ export const InstitutionDashboardPage: React.FC = () => {
 
               <div className="text-right shrink-0">
                 <span className="text-xs font-bold text-civic-saffron-700 block">
-                  {u.totalCredits} Credits
+                  {u.totalCredits} Civic Credit Points
                 </span>
                 <span className="text-[10px] text-slate-400">
                   {u.badgeCount} Badges

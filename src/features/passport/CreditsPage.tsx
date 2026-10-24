@@ -93,7 +93,7 @@ export const CreditsPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold font-heading text-slate-900 flex items-center gap-2 mt-1">
             <Award className="w-6 h-6 text-civic-saffron-600" />
-            <span>Civic Credit Ledger</span>
+            <span>Civic Credit Points Ledger</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Audited, review-aware activity ledger across all 7 civic dimensions.
@@ -104,18 +104,18 @@ export const CreditsPage: React.FC = () => {
           {reversedTotal > 0 && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-left sm:text-right shrink-0">
               <span className="text-[11px] font-semibold text-rose-800 uppercase block">Reconciled / Reversed</span>
-              <span className="text-lg font-bold text-rose-700 font-heading">-{reversedTotal} Credits</span>
+              <span className="text-lg font-bold text-rose-700 font-heading">-{reversedTotal} Points</span>
             </div>
           )}
           {pendingTotal > 0 && (
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left sm:text-right shrink-0">
               <span className="text-[11px] font-semibold text-amber-900 uppercase block">Pending Mentor Review</span>
-              <span className="text-lg font-bold text-amber-700 font-heading">+{pendingTotal} Credits</span>
+              <span className="text-lg font-bold text-amber-700 font-heading">+{pendingTotal} Pending Points</span>
             </div>
           )}
           <div className="p-3.5 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200 text-left sm:text-right shrink-0">
             <span className="text-[11px] font-semibold text-civic-saffron-900 uppercase block">Total Verified</span>
-            <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading">{verifiedTotal} Credits</span>
+            <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading">{Math.min(5, verifiedTotal)} Civic Credit Points</span>
           </div>
         </div>
       </div>
@@ -127,11 +127,28 @@ export const CreditsPage: React.FC = () => {
           <span>Transparent Activity Award Rules & Explainable Formula (7 PRD Dimensions)</span>
         </div>
         <p className="leading-relaxed">
-          &bull; <strong>Starting Balance</strong>: +10 (Onboarding allocation) &bull; <strong>Learning</strong>: +1 (Module completion) &bull; <strong>Observation</strong>: +1 (Verified field evidence) &bull; <strong>Deliberation</strong>: +2 (Assembly role), +1 (Substantive contribution) &bull; <strong>Contribution</strong>: +2 (Assignment submission; held in Pending status until mentor review) &bull; <strong>Collaboration</strong>: +1 (Workspace action contribution) &bull; <strong>Civic Action</strong>: +2 (Community initiative milestone) &bull; <strong>Reflection</strong>: +1 (Civic reflection); private UHV reflections, retained dissent, and private Debate journals award 0 civic credits.
+          &bull; <strong>Starting Balance</strong>: 0 (No starting bonus points; hard ceiling of 5 verified Civic Credit Points per persona) &bull; <strong>Learning</strong>: +1 (Module completion) &bull; <strong>Observation</strong>: +1 (Verified field evidence) &bull; <strong>Deliberation</strong>: +2 (Assembly role), +1 (Substantive contribution) &bull; <strong>Contribution</strong>: +2 (Assignment submission; held in Pending status until mentor review) &bull; <strong>Collaboration</strong>: +1 (Workspace action contribution) &bull; <strong>Civic Action</strong>: +2 (Community initiative milestone) &bull; <strong>Reflection</strong>: +1 (Civic reflection); private UHV reflections, retained dissent, and private Debate journals award 0 Civic Credit Points.
         </p>
         <p className="text-[11px] text-slate-500 italic">
           Scoring notice: This demo uses fixed amounts per confirmed action. PRD conceptual multiplication equations are exploratory research formulas, not automated production algorithms.
         </p>
+        <div className="p-3 rounded-lg bg-indigo-50/80 border border-indigo-200 text-[11px] text-indigo-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <span className="font-semibold block text-indigo-900">National Education Policy & UGC Context:</span>
+            <p className="text-indigo-800">
+              UGC recognizes community engagement in learning, but these five demo points are not academic credits and do not count toward graduation.
+            </p>
+          </div>
+          <a
+            href="https://www.ugc.gov.in/KeyInitiative?ID=VQnigtvLvoA0UAhQPVdzTA%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline shrink-0"
+          >
+            <span>Official UGC Source</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
         <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/80 space-y-1 text-[11px] text-amber-950">
           <span className="font-semibold block">Simulation & Language Notice:</span>
           <p>

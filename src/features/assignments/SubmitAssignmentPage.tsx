@@ -595,11 +595,11 @@ export const SubmitAssignmentPage: React.FC = () => {
             </span>
             {isUhv ? (
               <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                Personal Study Stream &bull; No Civic Credits
+                Personal Study Stream &bull; 0 Civic Credit Points
               </span>
             ) : (
               <span className="text-xs font-semibold text-civic-saffron-700 bg-civic-saffron-50 px-2.5 py-0.5 rounded border border-civic-saffron-200">
-                +{assignment.creditsReward} Civic Credits on Verification
+                +{assignment.creditsReward} Civic Credit Points on Verification
               </span>
             )}
           </div>
@@ -721,7 +721,7 @@ export const SubmitAssignmentPage: React.FC = () => {
               Private Reflection Boundary (Single-Browser Simulation)
             </span>
             <p className="text-blue-800 leading-relaxed">
-              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credits, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
+              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credit Points, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
             </p>
           </div>
         )}

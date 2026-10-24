@@ -223,15 +223,21 @@ export class LocalDemoRepository implements DemoRepository {
     }
   }
 
+  public getRemainingCreditHeadroom(db: DemoDatabase, userId: string): number {
+    const current = this.calculateUserCredits(db, userId);
+    return Math.max(0, 5 - current);
+  }
+
   private calculateUserCredits(db: DemoDatabase, userId: string): number {
-    return db.credits
+    const rawTotal = db.credits
       .filter((c) => {
         if (c.userId !== userId) return false;
         if (this.isUhvCredit(c, db)) return false;
         if (c.status === 'Pending' || c.status === 'Reversed') return false; // Do not count pending or reversed credits
         return c.status === 'Verified' || c.status === 'Audited';
       })
-      .reduce((sum, c) => sum + c.amount, 0);
+      .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+    return Math.min(5, Math.max(0, rawTotal));
   }
 
   public getPassportSourceRoute(entry: { sourceReferenceType?: string; sourceReferenceId?: string; sourceRoute?: string }): string {
@@ -546,60 +552,13 @@ export class LocalDemoRepository implements DemoRepository {
       location: input.location || 'Jaipur, Rajasthan',
       avatar: input.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       badgeCount: 0,
-      totalCredits: 10,
+      totalCredits: 0,
       schemaVersion: 1,
       createdAt: now,
       updatedAt: now,
     };
 
-    // Ensure idempotent starting balance transaction: exactly 1 transaction of 10 credits
-    const existingTx = db.credits.find(
-      (c) => c.userId === userId && (c.sourceType === 'starting_balance' || c.reason === 'Starting balance: 10')
-    );
-    if (!existingTx) {
-      db.credits.push({
-        id: `tx_${userId}_init`,
-        userId,
-        dimension: 'Contribution',
-        amount: 10,
-        sourceType: 'starting_balance',
-        sourceId: `starting_balance_${userId}`,
-        sourceRoute: '/passport/credits',
-        status: 'Verified',
-        reason: 'Starting balance: 10',
-        calculationExplanation: 'Initial Civic Passport demo credit allocation for new participant onboarding (10 credits).',
-        createdAt: now,
-        schemaVersion: 1,
-      });
-    }
-
-    // Ensure matching starting balance passport entry
-    const existingPassport = db.passportEntries.find(
-      (p) => p.userId === userId && (p.sourceReferenceType === 'starting_balance' || p.subtitle === 'Starting balance: 10' || p.title === 'Civic Passport Onboarding Allocation')
-    );
-    if (!existingPassport) {
-      db.passportEntries.push({
-        id: `pass_${userId}_init`,
-        userId,
-        category: 'achievement',
-        title: 'Civic Passport Onboarding Allocation',
-        subtitle: 'Starting balance: 10',
-        date: now.split('T')[0],
-        creditsAwarded: 10,
-        evidenceIds: [],
-        sourceReferenceType: 'starting_balance',
-        sourceReferenceId: `starting_balance_${userId}`,
-        sourceRoute: '/passport/credits',
-        verificationState: 'system_recorded',
-        reviewState: 'accepted',
-        calculationExplanation: 'Initial Civic Passport demo credit allocation for new participant onboarding (10 credits).',
-        isVerified: true,
-        schemaVersion: 1,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
+    // Zero starting points model: participants start with 0 points (no starting_balance transaction)
     newUser.totalCredits = this.calculateUserCredits(db, userId);
     db.users.push(newUser);
     this.saveDb(db);
@@ -993,20 +952,25 @@ export class LocalDemoRepository implements DemoRepository {
       enrolment.updatedAt = now;
 
       if (!isUhv) {
-        // Create credit transaction for lesson (idempotent)
+        // Create credit transaction for lesson (idempotent, capped by 5-point maximum)
         const existingTx = db.credits.find(
           (c) => c.userId === userId && c.sourceType === 'lesson' && c.sourceId === lessonId
         );
+        const headroom = this.getRemainingCreditHeadroom(db, userId);
+        const amountToAward = Math.min(1, headroom);
         if (!existingTx) {
           creditTx = {
             id: generateId('tx'),
             userId,
             dimension: 'Learning',
-            amount: 1,
+            amount: amountToAward,
             sourceType: 'lesson',
             sourceId: lessonId,
             status: 'Verified',
             reason: `Completed lesson: ${lesson.title}`,
+            calculationExplanation: amountToAward > 0
+              ? 'Base rule: 1 Civic Credit Point per completed Civic Academy lesson (System recorded)'
+              : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
             createdAt: now,
             schemaVersion: 1,
           };
@@ -1045,14 +1009,16 @@ export class LocalDemoRepository implements DemoRepository {
             title: `Completed: ${lesson.title}`,
             subtitle: course?.title || 'Civic Academy Lesson',
             date: now.split('T')[0],
-            creditsAwarded: 1,
+            creditsAwarded: amountToAward,
             evidenceIds: [],
             sourceReferenceId: lessonId,
             sourceReferenceType: 'lesson',
             sourceRoute: `/academy/courses/${course?.id || 'course_01'}/lessons/${lessonId}`,
             verificationState: 'system_recorded',
             reviewState: 'accepted',
-            calculationExplanation: 'Base rule: 1 credit per completed Civic Academy lesson (System recorded)',
+            calculationExplanation: amountToAward > 0
+              ? 'Base rule: 1 Civic Credit Point per completed Civic Academy lesson (System recorded)'
+              : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
             isVerified: true,
             schemaVersion: 1,
             createdAt: now,
@@ -1667,15 +1633,27 @@ export class LocalDemoRepository implements DemoRepository {
     const reviewerName = activeUser?.name || 'Reviewer';
 
     if (input.status === 'verified') {
+      let headroom = this.getRemainingCreditHeadroom(db, submission.userId);
+
       // 1. Update submission credit transaction status to Verified
       const subCredit = db.credits.find(
         (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId
       );
+      let subAward = 0;
       if (subCredit) {
-        subCredit.status = 'Verified';
+        if (subCredit.status !== 'Verified') {
+          subAward = Math.min(subCredit.amount || 2, headroom);
+          subCredit.amount = subAward;
+          subCredit.status = 'Verified';
+          headroom = Math.max(0, headroom - subAward);
+        } else {
+          subAward = subCredit.amount;
+        }
         subCredit.reason = `Submitted assignment: ${asg?.title || submission.assignmentId}`;
         subCredit.sourceRoute = `/assignments/${submission.assignmentId}?submissionId=${submission.id}`;
-        subCredit.calculationExplanation = 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review confirmed.';
+        subCredit.calculationExplanation = subCredit.amount > 0
+          ? 'Fixed demo rule: +2 Contribution Civic Credit Points on assignment submission. Facilitator review confirmed.'
+          : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.';
         subCredit.auditTrail = subCredit.auditTrail || [];
         subCredit.auditTrail.push({
           date: now,
@@ -1697,25 +1675,35 @@ export class LocalDemoRepository implements DemoRepository {
             (c) => c.userId === submission.userId && c.sourceType === 'evidence' && c.sourceId === eid
           );
           if (existingEvCredit) {
-            existingEvCredit.status = 'Verified';
-            existingEvCredit.amount = 1;
+            if (existingEvCredit.status !== 'Verified') {
+              const evAward = Math.min(1, headroom);
+              existingEvCredit.amount = evAward;
+              existingEvCredit.status = 'Verified';
+              headroom = Math.max(0, headroom - evAward);
+            }
             existingEvCredit.sourceRoute = `/passport/evidence`;
-            existingEvCredit.calculationExplanation = 'Fixed demo rule: +1 Observation on verified field evidence.';
+            existingEvCredit.calculationExplanation = existingEvCredit.amount > 0
+              ? 'Fixed demo rule: +1 Observation Civic Credit Point on verified field evidence.'
+              : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.';
           } else {
+            const evAward = Math.min(1, headroom);
             db.credits.push({
               id: generateId('tx'),
               userId: submission.userId,
               dimension: 'Observation',
-              amount: 1,
+              amount: evAward,
               sourceType: 'evidence',
               sourceId: eid,
               sourceRoute: `/passport/evidence`,
               status: 'Verified',
               reason: `Verified field evidence: ${ev.title}`,
-              calculationExplanation: 'Fixed demo rule: +1 Observation on verified field evidence.',
+              calculationExplanation: evAward > 0
+                ? 'Fixed demo rule: +1 Observation Civic Credit Point on verified field evidence.'
+                : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
               createdAt: now,
               schemaVersion: 1,
             });
+            headroom = Math.max(0, headroom - evAward);
           }
         }
       });
@@ -1726,22 +1714,31 @@ export class LocalDemoRepository implements DemoRepository {
           (c) => c.userId === submission.userId && c.sourceType === 'assignment' && c.sourceId === submission.assignmentId && c.dimension === 'Observation'
         );
         if (existingObsCredit) {
-          existingObsCredit.status = 'Verified';
+          if (existingObsCredit.status !== 'Verified') {
+            const obsAward = Math.min(1, headroom);
+            existingObsCredit.amount = obsAward;
+            existingObsCredit.status = 'Verified';
+            headroom = Math.max(0, headroom - obsAward);
+          }
         } else {
+          const obsAward = Math.min(1, headroom);
           db.credits.push({
             id: generateId('tx'),
             userId: submission.userId,
             dimension: 'Observation',
-            amount: 1,
+            amount: obsAward,
             sourceType: 'assignment',
             sourceId: submission.assignmentId,
             sourceRoute: `/assignments/${submission.assignmentId}`,
             status: 'Verified',
             reason: `Verified assignment fieldwork: ${asg?.title || submission.assignmentId}`,
-            calculationExplanation: 'Fixed demo rule: +1 Observation on verified assignment fieldwork.',
+            calculationExplanation: obsAward > 0
+              ? 'Fixed demo rule: +1 Observation Civic Credit Point on verified assignment fieldwork.'
+              : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
             createdAt: now,
             schemaVersion: 1,
           });
+          headroom = Math.max(0, headroom - obsAward);
         }
       }
 
@@ -1749,7 +1746,7 @@ export class LocalDemoRepository implements DemoRepository {
       const existingPassport = db.passportEntries.find(
         (p) => p.userId === submission.userId && (p.sourceReferenceId === submission.id || p.sourceReferenceId === submission.assignmentId)
       );
-      const creditsAwarded = 2;
+      const creditsAwarded = subAward;
       if (existingPassport) {
         existingPassport.category = 'contribution';
         existingPassport.title = `Verified: ${asg?.title || 'Field Assignment'}`;
@@ -2254,28 +2251,33 @@ export class LocalDemoRepository implements DemoRepository {
     }
     ev.updatedAt = now;
 
-    // If verified, award +1 Observation credit to participant if not already awarded
+    // If verified, award +1 Observation credit to participant if not already awarded (capped at 5)
     if (params.status === 'verified') {
       const existingCredit = db.credits.find(
         (c) => c.sourceType === 'evidence' && c.sourceId === ev.id && c.status === 'Verified'
       );
       if (!existingCredit) {
+        const headroom = this.getRemainingCreditHeadroom(db, ev.ownerId);
+        const amountToAward = Math.min(1, headroom);
         db.credits.push({
           id: generateId('tx'),
           userId: ev.ownerId,
-          amount: 1,
+          amount: amountToAward,
           dimension: 'Observation',
           reason: `Verified field evidence record (${ev.title.slice(0, 40)}) reviewed by ${reviewer.name}`,
           sourceType: 'evidence',
           sourceId: ev.id,
           status: 'Verified',
+          calculationExplanation: amountToAward > 0
+            ? 'Fixed demo rule: +1 Observation Civic Credit Point on verified field evidence.'
+            : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
           createdAt: now,
           schemaVersion: 1,
         });
 
         const owner = db.users.find((u) => u.id === ev.ownerId);
         if (owner) {
-          owner.totalCredits = (owner.totalCredits || 0) + 1;
+          owner.totalCredits = this.calculateUserCredits(db, ev.ownerId);
         }
       }
     }
@@ -2695,20 +2697,25 @@ export class LocalDemoRepository implements DemoRepository {
     assembly.updatedAt = now;
 
     if (!isAlreadyParticipant) {
-      // Award +2 Deliberation credit (idempotent)
+      // Award +2 Deliberation credit (idempotent, capped by 5-point maximum)
       const existingCredit = db.credits.find(
         (c) => c.userId === userId && c.sourceType === 'assembly' && c.sourceId === assemblyId
       );
+      const headroom = this.getRemainingCreditHeadroom(db, userId);
+      const amountToAward = Math.min(2, headroom);
       if (!existingCredit) {
         creditTx = {
           id: generateId('tx'),
           userId,
           dimension: 'Deliberation',
-          amount: 2,
+          amount: amountToAward,
           sourceType: 'assembly',
           sourceId: assemblyId,
           status: 'Verified',
           reason: `Joined Youth Assembly: ${assembly.title}`,
+          calculationExplanation: amountToAward > 0
+            ? 'Base rule: 2 Deliberation Civic Credit Points on joining youth assembly (System recorded)'
+            : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
           createdAt: now,
           schemaVersion: 1,
         };
@@ -2752,14 +2759,16 @@ export class LocalDemoRepository implements DemoRepository {
           title: `Appointed Assembly ${role.roleName}`,
           subtitle: assembly.title,
           date: now.split('T')[0],
-          creditsAwarded: 2,
+          creditsAwarded: amountToAward,
           evidenceIds: assembly.evidenceIds.slice(0, 2),
           sourceReferenceId: assemblyId,
           sourceReferenceType: 'assembly',
           sourceRoute: `/assemblies/${assemblyId}`,
           verificationState: 'system_recorded',
           reviewState: 'accepted',
-          calculationExplanation: 'Base rule: 2 Deliberation credits on joining youth assembly (System recorded)',
+          calculationExplanation: amountToAward > 0
+            ? 'Base rule: 2 Deliberation Civic Credit Points on joining youth assembly (System recorded)'
+            : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
           isVerified: true,
           schemaVersion: 1,
           createdAt: now,
@@ -3398,16 +3407,21 @@ export class LocalDemoRepository implements DemoRepository {
 
     db.contributions.push(newContrib);
 
-    // Credit transaction for substantive contribution (+1 Deliberation once per unique contribution)
+    // Credit transaction for substantive contribution (+1 Deliberation once per unique contribution, capped by 5-point maximum)
+    const headroom = this.getRemainingCreditHeadroom(db, input.userId);
+    const amountToAward = Math.min(1, headroom);
     const creditTx: CreditTransaction = {
       id: generateId('tx'),
       userId: input.userId,
       dimension: 'Deliberation',
-      amount: 1,
+      amount: amountToAward,
       sourceType: 'contribution',
       sourceId: newContrib.id,
       status: 'Verified',
       reason: `Added substantive contribution (${input.type}): ${trimmedText.slice(0, 50)}`,
+      calculationExplanation: amountToAward > 0
+        ? 'Base rule: 1 Deliberation Civic Credit Point for substantive assembly contribution (System recorded)'
+        : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
       createdAt: now,
       schemaVersion: 1,
     };
@@ -3440,14 +3454,16 @@ export class LocalDemoRepository implements DemoRepository {
       title: `Substantive Contribution: ${input.type.replace('_', ' ')}`,
       subtitle: trimmedText.slice(0, 75),
       date: now.split('T')[0],
-      creditsAwarded: 1,
+      creditsAwarded: amountToAward,
       evidenceIds: input.evidenceIds || [],
       sourceReferenceId: newContrib.id,
       sourceReferenceType: 'contribution',
       sourceRoute: `/assemblies/${input.assemblyId}`,
       verificationState: 'system_recorded',
       reviewState: 'accepted',
-      calculationExplanation: 'Base rule: 1 Deliberation credit for substantive assembly contribution (System recorded)',
+      calculationExplanation: amountToAward > 0
+        ? 'Base rule: 1 Deliberation Civic Credit Point for substantive assembly contribution (System recorded)'
+        : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
       isVerified: true,
       schemaVersion: 1,
       createdAt: now,
@@ -4035,20 +4051,25 @@ export class LocalDemoRepository implements DemoRepository {
         project.status = 'completed';
       }
 
-      // 1. Award +2 Civic Action credit (strictly idempotent)
+      // 1. Award +2 Civic Action credit (strictly idempotent, capped by 5-point maximum)
       const existingCredit = db.credits.find(
         (c) => c.userId === userId && c.sourceType === 'project' && c.sourceId === milestoneId
       );
+      const headroom = this.getRemainingCreditHeadroom(db, userId);
+      const amountToAward = Math.min(2, headroom);
       if (!existingCredit) {
         db.credits.push({
           id: generateId('tx'),
           userId,
           dimension: 'Civic Action',
-          amount: 2,
+          amount: amountToAward,
           sourceType: 'project',
           sourceId: milestoneId,
           status: 'Verified',
           reason: `Completed project milestone: ${milestone.title} (${project.title})`,
+          calculationExplanation: amountToAward > 0
+            ? 'Base rule: 2 Civic Action Civic Credit Points on completing project milestone (System recorded)'
+            : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
           createdAt: now,
           schemaVersion: 1,
         });
@@ -4092,14 +4113,16 @@ export class LocalDemoRepository implements DemoRepository {
           title: `Milestone Achieved: ${milestone.title}`,
           subtitle: project.title,
           date: now.split('T')[0],
-          creditsAwarded: 2,
+          creditsAwarded: amountToAward,
           evidenceIds: project.evidenceIds.slice(0, 2),
           sourceReferenceId: milestoneId,
           sourceReferenceType: 'project_milestone',
           sourceRoute: `/workspaces`,
           verificationState: 'system_recorded',
           reviewState: 'accepted',
-          calculationExplanation: 'Base rule: 2 Civic Action credits per completed milestone (System recorded)',
+          calculationExplanation: amountToAward > 0
+            ? 'Base rule: 2 Civic Action Civic Credit Points on completing project milestone (System recorded)'
+            : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
           isVerified: true,
           schemaVersion: 1,
           createdAt: now,
@@ -4112,7 +4135,7 @@ export class LocalDemoRepository implements DemoRepository {
         id: generateId('notif'),
         userId,
         title: 'Project Milestone Completed!',
-        message: `You completed "${milestone.title}" in ${project.title} and earned 2 Civic Action Credits.`,
+        message: `You completed "${milestone.title}" in ${project.title} and earned ${amountToAward} Civic Action Credit Points.`,
         type: 'project',
         isRead: false,
         targetRoute: `/projects/${projectId}`,
@@ -6308,16 +6331,21 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     // Civic Reflection path (Assembly, project, civic courses): preserves existing behavior
-    // Credit transaction (+1 Reflection)
+    // Credit transaction (+1 Reflection, capped by 5-point maximum)
+    const headroom = this.getRemainingCreditHeadroom(db, reflection.userId);
+    const amountToAward = Math.min(1, headroom);
     db.credits.push({
       id: generateId('tx'),
       userId: reflection.userId,
       dimension: 'Reflection',
-      amount: 1,
+      amount: amountToAward,
       sourceType: 'reflection',
       sourceId: newRefl.id,
       status: 'Verified',
       reason: `Civic reflection: ${reflection.prompt.slice(0, 50)}`,
+      calculationExplanation: amountToAward > 0
+        ? 'Base rule: 1 Reflection Civic Credit Point per shared civic reflection (System recorded)'
+        : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
       createdAt: now,
       schemaVersion: 1,
     });
@@ -6354,14 +6382,16 @@ export class LocalDemoRepository implements DemoRepository {
           ? `Values: ${reflection.valuesHighlighted.join(', ')}`
           : 'Deliberation & Civic Ethics Reflection',
       date: now.split('T')[0],
-      creditsAwarded: 1,
+      creditsAwarded: amountToAward,
       evidenceIds: [],
       sourceReferenceId: newRefl.id,
       sourceReferenceType: 'reflection',
       sourceRoute: '/passport',
       verificationState: 'system_recorded',
       reviewState: 'accepted',
-      calculationExplanation: 'Base rule: 1 Reflection credit per shared civic reflection (System recorded)',
+      calculationExplanation: amountToAward > 0
+        ? 'Base rule: 1 Reflection Civic Credit Point per shared civic reflection (System recorded)'
+        : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
       isVerified: true,
       schemaVersion: 1,
       createdAt: now,
@@ -6440,7 +6470,7 @@ export class LocalDemoRepository implements DemoRepository {
     });
     const verifiedCredits = credits.filter((c) => c.status === 'Verified' || c.status === 'Audited');
     const pendingCredits = credits.filter((c) => c.status === 'Pending');
-    const totalCredits = verifiedCredits.reduce((sum, c) => sum + c.amount, 0);
+    const totalCredits = Math.min(5, Math.max(0, verifiedCredits.reduce((sum, c) => sum + c.amount, 0)));
     const pendingCreditsTotal = pendingCredits.reduce((sum, c) => sum + c.amount, 0);
 
     const creditsByDimension: Record<CreditDimension, number> = {
@@ -6677,8 +6707,15 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error('Civic credits cannot be awarded for Universal Human Values reflections or study modules.');
     }
     const now = new Date().toISOString();
+    const headroom = this.getRemainingCreditHeadroom(db, transaction.userId);
+    const cappedAmount = transaction.status === 'Verified' ? Math.min(transaction.amount, headroom) : transaction.amount;
+    const explanation = transaction.status === 'Verified' && cappedAmount < transaction.amount && cappedAmount === 0
+      ? 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.'
+      : transaction.calculationExplanation;
     const newTx: CreditTransaction = {
       ...transaction,
+      amount: cappedAmount,
+      calculationExplanation: explanation,
       id: generateId('tx'),
       createdAt: now,
       schemaVersion: 1,
@@ -7611,22 +7648,26 @@ export class LocalDemoRepository implements DemoRepository {
       schemaVersion: 1,
     });
 
-    // Award +1 Collaboration credit and create Passport entry for workspace action
+    // Award +1 Collaboration credit and create Passport entry for workspace action (capped by 5-point maximum)
     const existingCredit = db.credits.find(
       (c) => c.userId === params.authorId && c.sourceType === 'workspace' && c.sourceId === newAction.id
     );
+    const headroom = this.getRemainingCreditHeadroom(db, params.authorId);
+    const amountToAward = Math.min(1, headroom);
     if (!existingCredit) {
       db.credits.push({
         id: generateId('tx'),
         userId: params.authorId,
         dimension: 'Collaboration',
-        amount: 1,
+        amount: amountToAward,
         sourceType: 'workspace',
         sourceId: newAction.id,
         sourceRoute: `/workspaces/${params.workspaceId}`,
         status: 'Verified',
         reason: `Workspace collaboration action: ${trimmedTitle}`,
-        calculationExplanation: 'Fixed demo rule: +1 Collaboration on verified workspace action contribution.',
+        calculationExplanation: amountToAward > 0
+          ? 'Fixed demo rule: +1 Collaboration Civic Credit Point on verified workspace action contribution.'
+          : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
         createdAt: now,
         schemaVersion: 1,
       });
@@ -7649,7 +7690,7 @@ export class LocalDemoRepository implements DemoRepository {
         title: `Workspace Action: ${trimmedTitle}`,
         subtitle: `Collaborative action in ${ws.title}`,
         date: now.split('T')[0],
-        creditsAwarded: 1,
+        creditsAwarded: amountToAward,
         evidenceIds: [],
         sourceReferenceId: newAction.id,
         sourceReferenceType: 'workspace',
@@ -7658,7 +7699,9 @@ export class LocalDemoRepository implements DemoRepository {
         verificationState: 'system_recorded',
         reviewState: 'accepted',
         visibility: 'public',
-        calculationExplanation: 'Fixed demo rule: +1 Collaboration on verified workspace action contribution.',
+        calculationExplanation: amountToAward > 0
+          ? 'Fixed demo rule: +1 Collaboration Civic Credit Point on verified workspace action contribution.'
+          : 'Demo ceiling reached: Maximum 5 verified Civic Credit Points per participant.',
         schemaVersion: 1,
         createdAt: now,
         updatedAt: now,

@@ -72,7 +72,7 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div className="text-left sm:text-right bg-slate-50 p-4 rounded-xl border border-slate-200 shrink-0">
-            <span className="text-xs font-semibold text-slate-500 uppercase block">Total Credits</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase block">Total Civic Credit Points</span>
             <span className="text-3xl font-extrabold text-civic-saffron-700 font-heading">
               {currentUser.totalCredits}
             </span>

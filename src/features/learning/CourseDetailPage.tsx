@@ -155,7 +155,7 @@ export const CourseDetailPage: React.FC = () => {
               Personal Reflection Boundary (Simulation)
             </span>
             <p className="text-blue-800 leading-relaxed">
-              Universal Human Values is an autonomous personal inquiry stream. Self-paced study modules carry no numeric scores or Civic Credits.
+              Universal Human Values is an autonomous personal inquiry stream. Self-paced study modules carry no numeric scores or Civic Credit Points.
             </p>
           </div>
         )}

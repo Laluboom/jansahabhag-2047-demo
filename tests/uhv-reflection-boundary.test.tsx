@@ -523,7 +523,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/Personal Reflection & Inquiry \(Private\)/i)).toBeInTheDocument();
-        expect(screen.getByText(/Personal Study Stream • No Civic Credits/i)).toBeInTheDocument();
+        expect(screen.getByText(/Personal Study Stream • (?:No|0) Civic Credit/i)).toBeInTheDocument();
         expect(screen.getByText(/Private Reflection Boundary \(Single-Browser Simulation\)/i)).toBeInTheDocument();
         expect(screen.getByText(/Save Private Reflection/i)).toBeInTheDocument();
       });
@@ -546,7 +546,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/Personal Study Stream • Private/i)).toBeInTheDocument();
-        expect(screen.getByText(/No Civic Credits \(Non-Evaluative\)/i)).toBeInTheDocument();
+        expect(screen.getByText(/(?:No|0) Civic Credit(?:s| Points)? \(Non-Evaluative\)/i)).toBeInTheDocument();
         expect(screen.getByText(/Private Reflection Boundary \(Single-Browser Simulation\)/i)).toBeInTheDocument();
       });
 
@@ -991,7 +991,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(screen.getByText(/When we approach community spaces with mutual respect and trust/i)).toBeInTheDocument();
       // Disclosures and simulation copy present
       expect(screen.getByText(/Notice: Private in this single-browser simulation/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/No Civic Credits or verification/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/(?:No|0) Civic Credit(?:s| Points)? or verification/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/no production encryption or server-side privacy is implied/i)).toBeInTheDocument();
       expect(screen.getByText(/personal study journal history rather than duplicate civic assignment submissions/i)).toBeInTheDocument();
       unmount();

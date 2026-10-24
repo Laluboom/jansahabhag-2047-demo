@@ -303,8 +303,8 @@ export const AssignmentsPage: React.FC = () => {
                   description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
                 },
                 {
-                  title: 'Mentor Verification & Credits',
-                  description: 'Verified civic assignments award +2 Contribution Credits upon mentor review. Revision may be requested if criteria are unmet.',
+                  title: 'Mentor Verification & Credit Points',
+                  description: 'Verified civic assignments award +2 Contribution Civic Credit Points upon mentor review. Revision may be requested if criteria are unmet.',
                 },
               ]}
               testId="teacher-assignments-rules-btn"
@@ -379,7 +379,7 @@ export const AssignmentsPage: React.FC = () => {
 
                             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
                               <span className="text-civic-saffron-700 font-semibold">
-                                +{asg.creditsReward} Credits
+                                +{asg.creditsReward} Civic Credit Points
                               </span>
                               <span>&bull;</span>
                               <span>{subCount} student {subCount === 1 ? 'submission' : 'submissions'}</span>
@@ -931,8 +931,8 @@ export const AssignmentsPage: React.FC = () => {
               description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
             },
             {
-              title: 'Mentor Verification & Credits',
-              description: 'Verified civic assignments award +2 Contribution Credits upon mentor review. Revision may be requested if criteria are unmet.',
+              title: 'Mentor Verification & Credit Points',
+              description: 'Verified civic assignments award +2 Contribution Civic Credit Points upon mentor review. Revision may be requested if criteria are unmet.',
             },
           ]}
           testId="assignments-rules-btn"
@@ -1055,7 +1055,7 @@ export const AssignmentsPage: React.FC = () => {
                             </span>
                             <span className="flex items-center gap-1 text-civic-saffron-700 font-semibold">
                               <Award className="w-3.5 h-3.5" />
-                              +{asg.creditsReward} Credits
+                              +{asg.creditsReward} Civic Credit Points
                             </span>
                             {asg.dueDate && (
                               <span className="flex items-center gap-1 text-slate-500">

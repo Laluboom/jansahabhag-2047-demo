@@ -174,12 +174,18 @@ export function normalizeUhvRecords(storedData: unknown): DemoDatabase {
     });
   }
 
-  // 8. Recompute totalCredits for all users
+  // 8. Recompute totalCredits for all users (capped at hard ceiling of 5 verified Civic Credit Points)
   if (Array.isArray(db.users) && Array.isArray(db.credits)) {
     db.users.forEach((u) => {
-      u.totalCredits = db.credits
-        .filter((c) => c.userId === u.id)
-        .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+      u.totalCredits = Math.min(
+        5,
+        Math.max(
+          0,
+          db.credits
+            .filter((c) => c.userId === u.id && (c.status === 'Verified' || c.status === 'Audited'))
+            .reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
+        )
+      );
       if (u.id === 'user_meera' && u.bio && u.bio.includes('Universal Human Values')) {
         u.bio = 'Youth leader active in public transport and pedestrian safety advocacy.';
       }
@@ -577,64 +583,47 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
     db.passportEntries = [];
   }
 
-  // 2. Idempotently ensure every participant persona has exactly one Starting balance: 10 transaction
-  if (Array.isArray(db.users)) {
+  // 2. Remove legacy starting_balance transactions and passport entries (zero starting points model)
+  db.credits = db.credits.filter(
+    (c) => c.sourceType !== 'starting_balance' && !c.reason?.startsWith('Starting balance')
+  );
+  db.passportEntries = db.passportEntries.filter(
+    (p) =>
+      p.sourceReferenceType !== 'starting_balance' &&
+      !p.subtitle?.startsWith('Starting balance') &&
+      p.title !== 'Civic Passport Initial Allocation' &&
+      p.title !== 'Civic Passport Onboarding Allocation'
+  );
+
+  // 3. Reconcile verified credits against the 5-point hard ceiling per persona without corrupting user-created evidence
+  if (Array.isArray(db.users) && Array.isArray(db.credits)) {
     db.users.forEach((u) => {
-      if (u.role === 'participant' || (u.role as string) === 'student') {
-        const hasStartingBalance = db.credits.some(
-          (c) => c.userId === u.id && (c.sourceType === 'starting_balance' || c.reason === 'Starting balance: 10')
-        );
-        if (!hasStartingBalance) {
-          const startingTx = {
-            id: `tx_${u.id}_init`,
-            userId: u.id,
-            dimension: 'Contribution' as const,
-            amount: 10,
-            sourceType: 'starting_balance' as const,
-            sourceId: `init_${u.id}`,
-            sourceRoute: '/passport/credits',
-            status: 'Verified' as const,
-            reason: 'Starting balance: 10',
-            calculationExplanation: 'Approved owner model: 10 initial starting credits for newly created demo participant.',
-            createdAt: u.createdAt || '2026-09-01T08:30:00Z',
-            schemaVersion: 1,
-          };
-          db.credits.unshift(startingTx);
+      const userVerified = db.credits.filter(
+        (c) => c.userId === u.id && (c.status === 'Verified' || c.status === 'Audited')
+      );
+      let runningTotal = 0;
+      userVerified.forEach((c) => {
+        const amount = Number(c.amount) || 0;
+        if (runningTotal + amount > 5) {
+          const allowed = Math.max(0, 5 - runningTotal);
+          c.amount = allowed;
+          runningTotal = 5;
+          if (allowed === 0) {
+            c.calculationExplanation = 'Reconciled: Exceeds 5-point maximum Civic Credit Points ceiling.';
+          }
+        } else {
+          runningTotal += amount;
         }
 
-        const hasStartingPassport = db.passportEntries.some(
-          (p) => p.userId === u.id && (p.sourceReferenceType === 'starting_balance' || p.subtitle === 'Starting balance: 10')
+        // Keep matching verified passport entry in sync
+        const pass = db.passportEntries?.find(
+          (p) => p.userId === u.id && (p.sourceReferenceId === c.sourceId || p.id === c.sourceId)
         );
-        if (!hasStartingPassport) {
-          db.passportEntries.unshift({
-            id: `pass_${u.id}_init`,
-            userId: u.id,
-            category: 'achievement',
-            title: 'Civic Passport Initial Allocation',
-            subtitle: 'Starting balance: 10',
-            date: (u.createdAt || '2026-09-01T08:30:00Z').split('T')[0],
-            creditsAwarded: 10,
-            evidenceIds: [],
-            sourceReferenceId: `init_${u.id}`,
-            sourceReferenceType: 'starting_balance',
-            sourceRoute: '/passport/credits',
-            verificationState: 'system_recorded',
-            reviewState: 'accepted',
-            isVerified: true,
-            calculationExplanation: 'Approved owner model: 10 initial starting credits for newly created demo participant.',
-            revisionHistory: [
-              {
-                date: u.createdAt || '2026-09-01T08:30:00Z',
-                action: 'STARTING_BALANCE_ISSUED',
-                actorId: 'system',
-                actorName: 'JanSahabhag Registry',
-                note: 'Starting balance: 10 issued upon participant creation.',
-              },
-            ],
-            schemaVersion: 1,
-          });
+        if (pass && pass.isVerified) {
+          pass.creditsAwarded = c.amount;
         }
-      }
+      });
+      u.totalCredits = Math.min(5, Math.max(0, runningTotal));
     });
   }
 
@@ -761,12 +750,13 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
     });
   }
 
-  // 5. Recompute totalCredits for all users strictly from verified and audited credits
+  // 5. Recompute totalCredits for all users strictly from verified and audited credits (capped at hard ceiling of 5)
   if (Array.isArray(db.users) && Array.isArray(db.credits)) {
     db.users.forEach((u) => {
-      u.totalCredits = db.credits
+      const verifiedSum = db.credits
         .filter((c) => c.userId === u.id && (c.status === 'Verified' || c.status === 'Audited'))
         .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+      u.totalCredits = Math.min(5, Math.max(0, verifiedSum));
     });
   }
 

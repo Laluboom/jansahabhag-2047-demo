@@ -217,8 +217,8 @@ export const LessonPage: React.FC = () => {
                     ? 'Your module reading progress has been recorded in your private study stream.'
                     : 'Mark as complete to update your self-paced study progress (no civic credits).')
                 : (isCompleted
-                    ? 'Your progress has been recorded and 5 Civic Credits added.'
-                    : 'Mark as complete to update your course progress and earn Civic Credits.')}
+                    ? 'Your progress has been recorded and Civic Credit Points updated (up to 5 max).'
+                    : 'Mark as complete to update your course progress and earn Civic Credit Points.')}
             </p>
           </div>
 
@@ -230,7 +230,7 @@ export const LessonPage: React.FC = () => {
               onClick={handleCompleteLesson}
             >
               <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              <span>{isUhv ? 'Mark Module Complete' : 'Mark Lesson Complete (+1 Credit)'}</span>
+              <span>{isUhv ? 'Mark Module Complete' : 'Mark Lesson Complete (+1 Civic Credit Point)'}</span>
             </Button>
           ) : (
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg">
@@ -256,7 +256,7 @@ export const LessonPage: React.FC = () => {
                 <span>
                   {isUhv
                     ? 'Open Reflection Prompt'
-                    : `Go to Assignment (+${assignment.creditsReward} Credits)`}
+                    : `Go to Assignment (+${assignment.creditsReward} Civic Credit Points)`}
                 </span>
               </Button>
             </Link>

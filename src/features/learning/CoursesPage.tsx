@@ -100,8 +100,8 @@ export const CoursesPage: React.FC = () => {
                   description: 'Exploratory self-study modules invite personal observation and open inquiry. Ideological agreement is never graded or evaluated.',
                 },
                 {
-                  title: 'Zero Civic Credit Policy',
-                  description: 'Personal values reflections earn 0 Civic Credits to protect self-inquiry from external gamification or competitive scoring.',
+                  title: 'Zero Civic Credit Points Policy',
+                  description: 'Personal values reflections earn 0 Civic Credit Points to protect self-inquiry from external gamification or competitive scoring.',
                 },
                 {
                   title: 'Private Journal Isolation',
@@ -229,7 +229,7 @@ export const CoursesPage: React.FC = () => {
               </h2>
             </div>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-              No Civic Credits or verification
+              No Civic Credit Points or verification
             </span>
           </div>
 
@@ -238,7 +238,7 @@ export const CoursesPage: React.FC = () => {
               Notice: Private in this single-browser simulation
             </p>
             <p>
-              These self-inquiry reflections are stored locally and visible only to your active persona ({currentUser?.name}). In this single-browser simulation, no production encryption or server-side privacy is implied. Reflections in the UHV stream remain strictly separate from your Civic Passport, earn no Civic Credits or verification, and are not submitted for teacher grading.
+              These self-inquiry reflections are stored locally and visible only to your active persona ({currentUser?.name}). In this single-browser simulation, no production encryption or server-side privacy is implied. Reflections in the UHV stream remain strictly separate from your Civic Passport, earn no Civic Credit Points or verification, and are not submitted for teacher grading.
             </p>
             <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200">
               Note on study records: If you see both a course reflection entry and an assignment journal entry for UHV study modules, they reflect your personal study journal history rather than duplicate civic assignment submissions.

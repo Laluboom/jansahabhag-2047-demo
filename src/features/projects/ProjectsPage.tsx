@@ -145,8 +145,8 @@ export const ProjectsPage: React.FC = () => {
                 description: 'Projects address observable neighbourhood civic needs (e.g. pedestrian speed calming, crossing visibility) in non-partisan collaboration.',
               },
               {
-                title: 'Milestone Verification & Credit Awards (+2 Credits)',
-                description: 'Completing each verified milestone awards +2 Civic Action Credits in your Civic Passport upon mentor review.',
+                title: 'Milestone Verification & Credit Point Awards (+2 Points)',
+                description: 'Completing each verified milestone awards +2 Civic Action Credit Points in your Civic Passport upon mentor review.',
               },
               {
                 title: 'Open Team Membership',
@@ -239,7 +239,7 @@ export const ProjectsPage: React.FC = () => {
             {completedMilestones}/{totalMilestones}
           </span>
           <span className="text-[10px] text-emerald-700 font-medium mt-0.5 block">
-            +2 Credits per milestone
+            +2 Civic Credit Points per milestone
           </span>
         </Card>
 
@@ -421,7 +421,7 @@ export const ProjectsPage: React.FC = () => {
 
           <div className="p-3 rounded-xl bg-civic-saffron-50 border border-civic-saffron-200 text-civic-saffron-900 text-[11px] space-y-1">
             <span className="font-bold block">Automatic Starter Roadmap:</span>
-            <p>Will initialize with 2 predefined field milestones. Completing each milestone awards +2 Civic Action Credits to all participants.</p>
+            <p>Will initialize with 2 predefined field milestones. Completing each milestone awards +2 Civic Action Credit Points to all participants.</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">

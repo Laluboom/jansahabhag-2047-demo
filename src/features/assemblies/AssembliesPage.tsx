@@ -135,7 +135,7 @@ export const AssembliesPage: React.FC = () => {
           />
           <div className="flex items-center gap-2 bg-civic-teal-50 px-3.5 py-2 rounded-xl border border-civic-teal-200 text-xs text-civic-teal-900">
             <Sparkles className="w-4 h-4 text-civic-teal-600" />
-            <span>Earn <strong>+2 Credits</strong> on Joining & <strong>+1</strong> per Contribution</span>
+            <span>Earn <strong>+2 Civic Credit Points</strong> on Joining & <strong>+1</strong> per Contribution</span>
           </div>
         </div>
       </div>
@@ -218,7 +218,7 @@ export const AssembliesPage: React.FC = () => {
                       Open for Participation &bull; Role assigned upon joining
                     </span>
                     <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                      +2 Credits
+                      +2 Civic Credit Points
                     </span>
                   </div>
                 )}

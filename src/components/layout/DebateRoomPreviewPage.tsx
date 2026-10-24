@@ -1782,7 +1782,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                     'How did the debate discussion and evidence presented shape your perspective on safe school corridors?'}
                 </p>
                 <p className="text-[11px] text-slate-500 italic">
-                  Local Simulation: This private journal stays in this browser&apos;s Debate Room and does not become verified Civic Passport evidence. In this demo, session self-reflections do not earn automated Civic Credits, verified status, or badges.
+                  Local Simulation: This private journal stays in this browser&apos;s Debate Room and does not become verified Civic Passport evidence. In this demo, session self-reflections do not earn automated Civic Credit Points, verified status, or badges.
                 </p>
               </div>
             </div>
@@ -2241,7 +2241,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
               </p>
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-amber-200/50">
                 <span>Pushed by Facilitator Rohan Mehta</span>
-                <span>Reward: 2 Civic Passport Credits (Pending Review)</span>
+                <span>Reward: 2 Civic Credit Points (Pending Review)</span>
               </div>
             </div>
 
