@@ -219,7 +219,7 @@ export const LessonPage: React.FC = () => {
               {isUhv
                 ? (isCompleted
                     ? 'Your module reading progress has been recorded in your private study stream.'
-                    : 'Mark as complete to update your self-paced study progress (no civic credits).')
+                    : 'Mark as complete to update your self-paced study progress (no Civic Credit Points).')
                 : (isCompleted
                     ? 'Your progress has been recorded and Civic Credit Points updated (up to 5 max).'
                     : 'Mark as complete to update your course progress and earn Civic Credit Points.')}

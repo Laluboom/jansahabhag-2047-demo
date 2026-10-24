@@ -221,7 +221,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
       expect(asgCoop?.assignmentType).toBe('uhv_reflection');
     });
 
-    it('displays the small usable set of ordinary self-inquiry assignments on the UHV stream page', async () => {
+    it('displays the small usable set of ordinary self-inquiry assignments on the UHV stream page with Civic Credit Points labels and no old visible labels', async () => {
       await useAuthStore.getState().switchPersona('user_aarav');
 
       render(
@@ -238,6 +238,14 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
         expect(screen.getByText(/Civic Ethics & Community Harmony Reflection: Trust and Respect in Relationships/i)).toBeInTheDocument();
         expect(screen.getByText(/Cooperation in a Small Youth Group Activity/i)).toBeInTheDocument();
       });
+
+      // Verify owner-approved public label "Civic Credit Points" is consistently displayed
+      expect(screen.getByText('Private Journal • 0 Civic Credit Points')).toBeInTheDocument();
+      expect(screen.getAllByText('0 Civic Credit Points').length).toBeGreaterThanOrEqual(3);
+
+      // Verify no old visible labels ("Civic Credits" or "civic credits") exist on the UHV page
+      expect(screen.queryByText(/0 Civic Credits\b/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/no civic credits/i)).not.toBeInTheDocument();
     });
   });
 
