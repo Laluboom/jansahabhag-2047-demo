@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
@@ -13,7 +13,6 @@ import {
   CANONICAL_ASSEMBLY_ROLES,
   AssemblyRoleType,
   AssemblyRolePower,
-  AssemblyRoleAction,
   ContributionType,
   Proposition,
   PropositionOutcome,
@@ -23,7 +22,7 @@ import {
   User,
   Session,
 } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
@@ -40,39 +39,27 @@ import {
   ArrowLeft,
   ArrowRight,
   Vote,
-  Users,
-  HelpCircle,
-  MessageSquare,
   Sparkles,
   CheckCircle2,
   FileCheck2,
   Layers,
   ShieldCheck,
   AlertTriangle,
-  History,
   Award,
   ChevronLeft,
   ChevronRight,
   Send,
-  ThumbsUp,
   Scale,
-  Compass,
-  FileText,
   Lock,
   ExternalLink,
   BookOpen,
   UserCheck,
   Mic,
-  MicOff,
   Volume2,
-  Flag,
-  Check,
-  Info,
   AlertCircle,
   X,
-  Plus,
 } from 'lucide-react';
-import { formatDate, formatDateTime } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 
 const ROLE_POWER_MAP: Record<AssemblyRoleType, { power: AssemblyRolePower; obligation: string; prompt: string }> = {
   Thinker: {
@@ -110,7 +97,6 @@ export const AssemblySessionPage: React.FC = () => {
   );
   const { currentUser } = useAuthStore();
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
-  const navigate = useNavigate();
 
   const [assembly, setAssembly] = useState<Assembly | null>(null);
   const [userRole, setUserRole] = useState<AssemblyRole | null>(null);
@@ -204,6 +190,7 @@ export const AssemblySessionPage: React.FC = () => {
     if (stageFromUrl && stageFromUrl !== activeStage) {
       setActiveStage(stageFromUrl);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stageFromUrl]);
 
   useEffect(() => {
@@ -269,6 +256,7 @@ export const AssemblySessionPage: React.FC = () => {
       }
     }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentUser, refreshKey]);
 
   const effectiveStage = activeStage;
@@ -293,8 +281,9 @@ export const AssemblySessionPage: React.FC = () => {
         await demoRepository.updateAssemblyStage(id, nextStage, currentUser.id);
         handleSetStage(nextStage);
         triggerRefresh();
-      } catch (err: any) {
-        setStageChangeError(err?.message || 'Failed to advance stage');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to advance stage';
+        setStageChangeError(message);
       }
     }
   };
@@ -308,8 +297,9 @@ export const AssemblySessionPage: React.FC = () => {
         await demoRepository.updateAssemblyStage(id, prevStage, currentUser.id);
         handleSetStage(prevStage);
         triggerRefresh();
-      } catch (err: any) {
-        setStageChangeError(err?.message || 'Failed to return stage');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to return stage';
+        setStageChangeError(message);
       }
     }
   };
@@ -396,7 +386,7 @@ export const AssemblySessionPage: React.FC = () => {
       setPowerSuccessMsg(`Exercised ${userRole.power}! Response obligation sent to chamber.`);
       triggerRefresh();
       setTimeout(() => setPowerSuccessMsg(null), 4000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to execute role power', err);
     } finally {
       setIsSubmittingPower(false);
@@ -525,8 +515,9 @@ export const AssemblySessionPage: React.FC = () => {
       });
       setProposition(finalised);
       triggerRefresh();
-    } catch (err: any) {
-      setFinalisationError(err?.message || 'Failed to finalise proposition');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to finalise proposition';
+      setFinalisationError(message);
     } finally {
       setIsFinalisingOutcome(false);
     }
@@ -550,8 +541,9 @@ export const AssemblySessionPage: React.FC = () => {
       setShowOverrideModal(false);
       setOverrideReason('');
       triggerRefresh();
-    } catch (err: any) {
-      setOverrideError(err?.message || 'Failed to override role');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to override role';
+      setOverrideError(message);
     } finally {
       setIsSubmittingOverride(false);
     }
@@ -1555,13 +1547,7 @@ export const AssemblySessionPage: React.FC = () => {
                           <button
                             key={val}
                             type="button"
-                            onClick={() => {
-                              setSelectedValues(
-                                isSelected
-                                  ? selectedValues.filter((v) => v !== val)
-                                  : [...selectedValues, val]
-                              );
-                            }}
+                            onClick={() => toggleValue(val)}
                             className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${
                               isSelected
                                 ? 'bg-civic-indigo-100 text-civic-indigo-800 border-civic-indigo-300'

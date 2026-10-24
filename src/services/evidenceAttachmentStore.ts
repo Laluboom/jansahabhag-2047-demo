@@ -265,10 +265,10 @@ export class EvidenceAttachmentStore {
             );
           }
         };
-      } catch (err: any) {
+      } catch (err: unknown) {
         settleError(
           new Error(
-            `Browser storage failure: Failed to start IndexedDB transaction (${err?.message || err}).`
+            `Browser storage failure: Failed to start IndexedDB transaction (${err instanceof Error ? err.message : String(err)}).`
           )
         );
       }

@@ -15,11 +15,8 @@ import {
   Calendar,
   ArrowRight,
   HelpCircle,
-  MapPin,
   Sparkles,
   CheckCircle2,
-  Layers,
-  FileCheck2,
   Scale,
 } from 'lucide-react';
 

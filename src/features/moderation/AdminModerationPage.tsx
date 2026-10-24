@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { ModerationCase, ModerationStatus } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { ModerationCase } from '../../types/domain';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import {
   ArrowLeft,
   ShieldCheck,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Eye,
@@ -18,7 +17,6 @@ import {
   X,
   FileCheck,
 } from 'lucide-react';
-import { formatDateTime } from '../../utils/formatters';
 
 export const AdminModerationPage: React.FC = () => {
   const { currentUser } = useAuthStore();

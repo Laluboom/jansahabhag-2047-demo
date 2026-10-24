@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { PassportView, Reflection, PassportEntry } from '../../types';
+import { PassportView, Reflection } from '../../types';
 import { CreditDimension } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { VerificationBadge } from './VerificationBadge';
@@ -18,13 +18,10 @@ import {
   FileCheck2,
   Sparkles,
   ShieldCheck,
-  Calendar,
   ExternalLink,
   Info,
   Clock,
   History,
-  AlertCircle,
-  HelpCircle,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 

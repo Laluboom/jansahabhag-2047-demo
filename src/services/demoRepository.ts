@@ -17,7 +17,6 @@ import {
   DEBATE_PHASES,
   SpeakingQueueEntry,
   DebateContribution,
-  DebateRoomData,
   Assembly,
   AssemblyRole,
   Contribution,
@@ -40,10 +39,6 @@ import {
   AssemblyRoleAction,
   AssemblyRoleOverrideAudit,
   ParticipantResponseState,
-  ParticipantPropositionResponse,
-  PropositionRoutingEntry,
-  CANONICAL_ASSEMBLY_ROLES,
-  CANONICAL_ASSEMBLY_STAGES,
   CreditDimension,
   VerificationStatus,
   Workspace,
@@ -54,7 +49,6 @@ import {
   CreditAppeal,
   AllocationState,
   AllocationAuditRecord,
-  AllocationStatus,
   ScopedModeratorGrant,
   ScopedModeratorAuditRecord,
   ModeratorScope,
@@ -69,7 +63,6 @@ import {
   finalizeAllocationState,
   approveAllocationExceptionState,
   sanitizeAllocationForPublic,
-  isSmallCohortAllocation,
   isAllocatedLimitedEvent,
   POLICY_VERSION,
   canUserClaimRoleAllocation,
@@ -1647,7 +1640,6 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const now = new Date().toISOString();
-    const previousStatus = submission.status;
     submission.status = input.status;
     submission.teacherFeedback = input.teacherFeedback;
     submission.reviewerId = input.reviewerId;
@@ -2451,7 +2443,7 @@ export class LocalDemoRepository implements DemoRepository {
     return assemblies.map((a) => projectAssemblyForCaller(a, activeViewer));
   }
 
-  async getAssembly(assemblyId: string, actorId?: string): Promise<Assembly | null> {
+  async getAssembly(assemblyId: string, _actorId?: string): Promise<Assembly | null> {
     const db = this.getDb();
     const activeViewer = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
     const asm = db.assemblies.find((a) => a.id === assemblyId);
@@ -3107,7 +3099,7 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getAssemblyRoleAllocations(
     assemblyId: string,
-    actorId?: string
+    _actorId?: string
   ): Promise<Record<string, AllocationState>> {
     const db = this.getDb();
     const activeViewer = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
@@ -8479,7 +8471,7 @@ export class LocalDemoRepository implements DemoRepository {
     );
 
     if (!scopeCheck.authorized) {
-      const audit = this.recordModeratorAuditSync(
+      this.recordModeratorAuditSync(
         {
           grantId: scopeCheck.grant?.id,
           action: 'grant_denied',

@@ -12,10 +12,8 @@ import {
   Proposition,
   User,
   AssemblyStage,
-  AllocationState,
-  AllocationAuditRecord,
 } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -24,13 +22,10 @@ import {
   ArrowRight,
   Vote,
   Users,
-  Calendar,
   HelpCircle,
   FileCheck2,
   Sparkles,
   Layers,
-  MessageSquare,
-  ShieldCheck,
   CheckCircle2,
   MapPin,
   Clock,
@@ -129,9 +124,10 @@ export const AssemblyDetailPage: React.FC = () => {
       await demoRepository.joinAssembly(id, currentUser.id, preferredRole);
       triggerRefresh();
       navigate(`/assemblies/${id}/session`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to join assembly', err);
-      setRoleActionError(err?.message || 'Failed to join assembly');
+      const message = err instanceof Error ? err.message : 'Failed to join assembly';
+      setRoleActionError(message);
     } finally {
       setIsJoining(false);
     }
@@ -147,8 +143,9 @@ export const AssemblyDetailPage: React.FC = () => {
       setAssembly(updated);
       setRoleActionSuccess(`Role allocation "${roleName}" successfully finalized.`);
       triggerRefresh();
-    } catch (err: any) {
-      setRoleActionError(err?.message || 'Failed to finalize role allocation');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to finalize role allocation';
+      setRoleActionError(message);
     } finally {
       setIsFinalizingRole(null);
     }
@@ -175,8 +172,9 @@ export const AssemblyDetailPage: React.FC = () => {
       setExceptionReason('');
       setRoleActionSuccess(`Platform Owner exception approved for "${selectedRoleForException}".`);
       triggerRefresh();
-    } catch (err: any) {
-      setExceptionError(err?.message || 'Failed to approve exception');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to approve exception';
+      setExceptionError(message);
     } finally {
       setIsSubmittingException(false);
     }

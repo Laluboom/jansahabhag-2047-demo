@@ -37,8 +37,6 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
-  HelpCircle,
-  Sparkles,
   Award,
   Layers,
   ChevronRight,
@@ -168,8 +166,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
         setUserPopupSubmission(null);
         setRoomPopupSubmissions([]);
       }
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to load debate session');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to load debate session');
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +175,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
 
   // Speaking Timer countdown effect
   useEffect(() => {
-    let interval: any = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (isTimerActive && speakingTimerSeconds > 0) {
       interval = setInterval(() => {
         setSpeakingTimerSeconds((prev) => {
@@ -238,6 +236,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
     setSelectedRoleForCapacity(null);
     setSelectedRoleForAudits(null);
     loadSessionData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, targetSessionId]);
 
   // Typed Seating View Models for SessionSeating (Facing Benches Layout)
@@ -362,8 +361,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       );
       setSession(updated);
       setActionSuccess(`Role allocation for "${roleName}" has been successfully finalized!`);
-    } catch (err: any) {
-      setActionError(err.message || `Failed to finalize role "${roleName}"`);
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : `Failed to finalize role "${roleName}"`);
     } finally {
       setIsFinalizingRole(null);
     }
@@ -385,8 +384,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setSession(updated);
       setActionSuccess(`Platform Owner exception approved for "${selectedRoleForException}".`);
       setSelectedRoleForException(null);
-    } catch (err: any) {
-      setExceptionError(err.message || 'Failed to approve exception');
+    } catch (err: unknown) {
+      setExceptionError(err instanceof Error ? err.message : 'Failed to approve exception');
     } finally {
       setIsSubmittingException(false);
     }
@@ -426,8 +425,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       }
       setSession(updated);
       setSelectedRoleForAssign(null);
-    } catch (err: any) {
-      const msg = err.message || `Failed to assign user to "${selectedRoleForAssign}"`;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : `Failed to assign user to "${selectedRoleForAssign}"`;
       setAssignError(msg);
       setActionError(msg);
     } finally {
@@ -457,8 +456,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setActionSuccess(
         `Occupant withdrawn from role "${roleName}". The reserved place remains vacant by default.`
       );
-    } catch (err: any) {
-      setActionError(err.message || `Failed to withdraw occupant from "${roleName}"`);
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : `Failed to withdraw occupant from "${roleName}"`);
     } finally {
       setIsWithdrawingRole(null);
     }
@@ -482,8 +481,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
         `Capacity for "${selectedRoleForCapacity}" updated to ${newCapacity} place(s). Prior exception invalidated if existed.`
       );
       setSelectedRoleForCapacity(null);
-    } catch (err: any) {
-      setCapacityError(err.message || `Failed to update capacity for "${selectedRoleForCapacity}"`);
+    } catch (err: unknown) {
+      setCapacityError(err instanceof Error ? err.message : `Failed to update capacity for "${selectedRoleForCapacity}"`);
     } finally {
       setIsSubmittingCapacity(false);
     }
@@ -498,8 +497,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       const alloc = session.roleAllocations?.[roleName];
       const audits = await demoRepository.getAllocationAudits(alloc?.allocationId, currentUser.id);
       setCurrentRoleAudits(audits);
-    } catch (err: any) {
-      setActionError(err.message || `Failed to load audits for "${roleName}"`);
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : `Failed to load audits for "${roleName}"`);
     } finally {
       setIsLoadingAudits(false);
     }
@@ -582,8 +581,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       const updated = await demoRepository.requestSpeakingTurn(session.id, currentUser.id);
       setSession(updated);
       setActionSuccess('Speaking turn requested! You are now in the queue.');
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to request speaking turn');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to request speaking turn');
     }
   };
 
@@ -610,8 +609,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setReflectionSuccess(
         'Private reflection saved locally to this Debate Room journal. It stays in this browser session and does not become verified Civic Passport evidence or claim automated credits.'
       );
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to save reflection');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to save reflection');
     } finally {
       setIsSavingReflection(false);
     }
@@ -624,8 +623,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       const updated = await demoRepository.cancelSpeakingTurn(session.id, currentUser.id);
       setSession(updated);
       setActionSuccess('Your speaking turn request has been cancelled.');
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to cancel speaking turn');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to cancel speaking turn');
     }
   };
 
@@ -640,8 +639,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       );
       setSession(updated);
       setActionSuccess(`Recognized participant turn.`);
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to recognize speaking turn');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to recognize speaking turn');
     }
   };
 
@@ -652,8 +651,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       const updated = await demoRepository.advanceSpeakingTurn(session.id, currentUser.id);
       setSession(updated);
       setActionSuccess('Speaking turn advanced.');
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to advance speaking turn');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to advance speaking turn');
     }
   };
 
@@ -668,8 +667,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       );
       setSession(updated);
       setActionSuccess(`Debate phase advanced to ${nextPhase}.`);
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to advance debate phase');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to advance debate phase');
     }
   };
 
@@ -698,8 +697,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setContribText('');
       setSelectedEvidenceId('');
       setActionSuccess('Intervention posted successfully to debate log!');
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to post contribution');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to post contribution');
     } finally {
       setIsSubmitting(false);
     }
@@ -716,8 +715,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       );
       setIsInterstitialOpen(false);
       navigate(`/assemblies/${session.assemblyId || 'assembly_jaipur_pedestrian_2026'}/session`);
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to switch session mode');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to switch session mode');
     }
   };
 
@@ -745,8 +744,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
             : 'Abstain'
         }`
       );
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to record vote');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to record vote');
     } finally {
       setIsCastingVote(false);
     }
@@ -806,8 +805,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setActionSuccess(
         `Popup assignment "${assignment.title}" (${popupTimeLimit}m limit) published to the room.`
       );
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to publish popup assignment');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to publish popup assignment');
     } finally {
       setIsPushingPopup(false);
     }
@@ -821,8 +820,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       const updated = await demoRepository.closeDebatePopupAssignment(session.id, currentUser.id);
       setSession(updated);
       setActionSuccess('Chamber popup assignment has been closed.');
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to close popup assignment');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to close popup assignment');
     }
   };
 
@@ -849,8 +848,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
       setActionSuccess(
         'Popup assignment response submitted successfully! Held in pending status for facilitator review.'
       );
-    } catch (err: any) {
-      setActionError(err.message || 'Failed to submit assignment');
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Failed to submit assignment');
     } finally {
       setIsSubmittingPopup(false);
     }
@@ -961,8 +960,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
                     const updated = await demoRepository.switchSessionMode(session.id, currentUser.id, 'debate_room', 'Switched back to Debate Room mode');
                     setSession(updated);
                     setActionSuccess('Session returned to Debate Room mode.');
-                  } catch (e: any) {
-                    setActionError(e.message || 'Failed to switch mode');
+                  } catch (e: unknown) {
+                    setActionError(e instanceof Error ? e.message : 'Failed to switch mode');
                   }
                 }}
                 className="text-xs bg-white text-slate-800 border-amber-300 hover:bg-amber-100"

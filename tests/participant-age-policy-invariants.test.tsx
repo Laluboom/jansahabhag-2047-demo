@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { getFreshSeedDatabase } from '../src/data/seed';
 import { DemoLoginPage } from '../src/features/auth-demo/DemoLoginPage';
 import { OnboardingPage } from '../src/features/onboarding/OnboardingPage';

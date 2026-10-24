@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Event, EventType } from '../../types/domain';
+import { Event } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -11,13 +11,10 @@ import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton
 import {
   Calendar,
   MapPin,
-  Users,
   Video,
   ArrowRight,
   Filter,
   CheckCircle2,
-  Clock,
-  Sparkles,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 

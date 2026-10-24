@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { demoRepository } from '../../services/demoRepository';
 import { Proposition } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
-import { ArrowLeft, History, CheckCircle2 } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { ArrowLeft, History } from 'lucide-react';
 import { formatDateTime } from '../../utils/formatters';
 
 export const PropositionRevisionsPage: React.FC = () => {

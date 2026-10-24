@@ -11,17 +11,12 @@ import { Modal } from '../../components/ui/Modal';
 import { Input, Textarea } from '../../components/ui/Input';
 import {
   MapPin,
-  AlertCircle,
   ArrowRight,
-  ShieldCheck,
   ThumbsUp,
   Plus,
   Filter,
   Layers,
-  Sparkles,
-  Search,
 } from 'lucide-react';
-import { formatRelativeTime } from '../../utils/formatters';
 
 export const CivicIssuesPage: React.FC = () => {
   const { currentUser } = useAuthStore();

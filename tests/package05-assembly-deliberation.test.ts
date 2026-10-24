@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LocalDemoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
-import { CANONICAL_ASSEMBLY_ROLES, CANONICAL_ASSEMBLY_STAGES, ParticipantResponseState } from '../src/types/domain';
 import { migrateDatabase } from '../src/services/migrations';
 
 describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Boundaries', () => {
@@ -270,7 +269,7 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
 
   describe('5. Schema Migration of Legacy Roles and Stages', () => {
     it('normalizes legacy stages and roles into canonical four roles and six stages during migration', () => {
-      const legacyDb: any = {
+      const legacyDb: Record<string, unknown> = {
         schemaVersion: 2,
         users: [],
         courses: [],

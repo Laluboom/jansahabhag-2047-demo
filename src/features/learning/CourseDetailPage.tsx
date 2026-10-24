@@ -15,7 +15,6 @@ import {
   ArrowRight,
   CheckCircle2,
   FileCheck2,
-  Lock,
 } from 'lucide-react';
 
 export const CourseDetailPage: React.FC = () => {

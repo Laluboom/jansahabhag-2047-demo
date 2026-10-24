@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { DemoDatabase } from '../../types/domain';
-import { Card, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import {
@@ -14,13 +14,11 @@ import {
   AlertTriangle,
   FileCheck2,
   BarChart3,
-  ArrowRight,
   MapPin,
   Flame,
   CheckCircle2,
   Info,
 } from 'lucide-react';
-import { formatDateTime } from '../../utils/formatters';
 
 export const AdminDashboardPage: React.FC = () => {
   const { currentUser } = useAuthStore();

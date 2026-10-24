@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Proposition, Evidence, PropositionOutcome, DissentRecord, Reflection } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/Input';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -17,7 +17,6 @@ import {
   Sparkles,
   ShieldCheck,
   CheckCircle2,
-  ThumbsUp,
   History,
   Edit3,
   Save,
@@ -29,7 +28,7 @@ import {
   Users,
   Compass,
 } from 'lucide-react';
-import { formatDateTime, formatDate } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 
 export const PropositionDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -126,9 +125,10 @@ export const PropositionDetailPage: React.FC = () => {
         changesSummary: `Final outcome resolved to ${outcome} by ${currentUser.name}`,
       });
       triggerRefresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to finalise proposition', err);
-      setFinaliseError(err?.message || 'Proposition already finalised or failed to update.');
+      const message = err instanceof Error ? err.message : 'Proposition already finalised or failed to update.';
+      setFinaliseError(message);
     } finally {
       setIsFinalising(false);
     }

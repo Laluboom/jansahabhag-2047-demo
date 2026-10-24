@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
@@ -10,9 +10,8 @@ import {
   Session,
   ModeratorScopeType,
 } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { StatusChip } from '../../components/ui/StatusChip';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -26,12 +25,10 @@ import {
   Users2,
   Layers,
   Info,
-  Calendar,
   Lock,
   PlusCircle,
   History,
   X,
-  ExternalLink,
 } from 'lucide-react';
 import { formatDateTime, formatRoleName } from '../../utils/formatters';
 
@@ -66,6 +63,12 @@ export const AdminModeratorGrantsPage: React.FC = () => {
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  // Accessible Dialog Focus References
+  const revokeTriggerRef = useRef<HTMLElement | null>(null);
+  const createTriggerRef = useRef<HTMLElement | null>(null);
+  const revokeModalRef = useRef<HTMLDivElement>(null);
+  const createModalRef = useRef<HTMLDivElement>(null);
+
   const isPlatformOwner = currentUser?.role === 'platform_admin';
 
   useEffect(() => {
@@ -82,12 +85,11 @@ export const AdminModeratorGrantsPage: React.FC = () => {
         setAudits(auditsList);
         setUsers(usersList);
         setSessions(snapshot.sessions || []);
-        if (usersList.length > 0 && !granteeId) {
-          const defaultMod = usersList.find((u) => u.role === 'moderator') || usersList[0];
-          setGranteeId(defaultMod.id);
+        if (usersList.length > 0) {
+          setGranteeId((prev) => prev || (usersList.find((u) => u.role === 'moderator') || usersList[0]).id);
         }
-        if (snapshot.sessions && snapshot.sessions.length > 0 && !namedSessionId) {
-          setNamedSessionId(snapshot.sessions[0].id);
+        if (snapshot.sessions && snapshot.sessions.length > 0) {
+          setNamedSessionId((prev) => prev || snapshot.sessions[0].id);
         }
       } catch (err) {
         console.error('Failed to load moderator grant data:', err);
@@ -98,10 +100,131 @@ export const AdminModeratorGrantsPage: React.FC = () => {
     loadData();
   }, [refreshKey]);
 
+  // Focus trap and Escape listener for Revoke Modal
+  useEffect(() => {
+    if (!revokingGrant) return;
+    const modalEl = revokeModalRef.current;
+    if (!modalEl) return;
+
+    const timer = setTimeout(() => {
+      const textarea = modalEl.querySelector<HTMLElement>('textarea');
+      if (textarea) {
+        textarea.focus();
+      } else {
+        const firstFocusable = modalEl.querySelector<HTMLElement>(
+          'button:not([disabled]), [href]:not([disabled]), textarea:not([disabled])'
+        );
+        firstFocusable?.focus();
+      }
+    }, 20);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCloseRevokeModal();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = Array.from(
+          modalEl.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first || !modalEl.contains(document.activeElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last || !modalEl.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [revokingGrant]);
+
+  // Focus trap and Escape listener for Create Modal
+  useEffect(() => {
+    if (!isCreateModalOpen) return;
+    const modalEl = createModalRef.current;
+    if (!modalEl) return;
+
+    const timer = setTimeout(() => {
+      const firstControl = modalEl.querySelector<HTMLElement>('select, button:not([disabled]), textarea');
+      firstControl?.focus();
+    }, 20);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCloseCreateModal();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = Array.from(
+          modalEl.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href]:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first || !modalEl.contains(document.activeElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last || !modalEl.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCreateModalOpen]);
+
   const handleOpenRevokeModal = (grant: ScopedModeratorGrant) => {
+    revokeTriggerRef.current = (document.activeElement as HTMLElement) || null;
     setRevokingGrant(grant);
     setRevokeReason('');
     setRevokeError(null);
+  };
+
+  const handleCloseRevokeModal = () => {
+    setRevokingGrant(null);
+    setRevokeReason('');
+    setRevokeError(null);
+    revokeTriggerRef.current?.focus();
+  };
+
+  const handleOpenCreateModal = () => {
+    createTriggerRef.current = (document.activeElement as HTMLElement) || null;
+    setIsCreateModalOpen(true);
+    setCreateError(null);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setCreateError(null);
+    createTriggerRef.current?.focus();
   };
 
   const handleConfirmRevoke = async (e: React.FormEvent) => {
@@ -123,8 +246,9 @@ export const AdminModeratorGrantsPage: React.FC = () => {
       setRevokingGrant(null);
       setRevokeReason('');
       triggerRefresh();
-    } catch (err: any) {
-      setRevokeError(err.message || 'Failed to revoke grant');
+      revokeTriggerRef.current?.focus();
+    } catch (err: unknown) {
+      setRevokeError(err instanceof Error ? err.message : 'Failed to revoke grant');
     } finally {
       setIsRevoking(false);
     }
@@ -164,8 +288,9 @@ export const AdminModeratorGrantsPage: React.FC = () => {
       setIsCreateModalOpen(false);
       setGrantReason('');
       triggerRefresh();
-    } catch (err: any) {
-      setCreateError(err.message || 'Failed to create grant');
+      createTriggerRef.current?.focus();
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create grant');
     } finally {
       setIsCreating(false);
     }
@@ -235,7 +360,7 @@ export const AdminModeratorGrantsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           {isPlatformOwner ? (
             <Button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleOpenCreateModal}
               variant="saffron"
               size="sm"
               className="shadow-sm"
@@ -626,23 +751,34 @@ export const AdminModeratorGrantsPage: React.FC = () => {
 
       {/* Revocation Modal */}
       {revokingGrant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div
+          ref={revokeModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="revoke-grant-title"
+          aria-describedby="revoke-grant-desc"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        >
           <Card className="w-full max-w-md p-6 bg-white shadow-2xl border-slate-300 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2 text-rose-700 font-bold font-heading text-lg">
                 <Ban className="w-5 h-5 text-rose-600" />
-                <span>Revoke Scoped Grant</span>
+                <h2 id="revoke-grant-title" className="text-lg font-bold font-heading text-rose-700">
+                  Revoke Scoped Grant
+                </h2>
               </div>
               <button
-                onClick={() => setRevokingGrant(null)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                type="button"
+                onClick={handleCloseRevokeModal}
+                aria-label="Close revoke dialog"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmRevoke} className="mt-4 space-y-4">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
+              <div id="revoke-grant-desc" className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
                 <div>
                   <span className="text-slate-500">Grantee:</span>{' '}
                   <span className="font-semibold text-slate-800">{revokingGrant.granteeName}</span>
@@ -660,17 +796,18 @@ export const AdminModeratorGrantsPage: React.FC = () => {
               </div>
 
               {revokeError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-start gap-2">
+                <div role="alert" className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{revokeError}</span>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="revoke-reason-input" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Revocation Reason (Required &bull; Written to Permanent Audit)
                 </label>
                 <textarea
+                  id="revoke-reason-input"
                   required
                   rows={3}
                   value={revokeReason}
@@ -685,7 +822,7 @@ export const AdminModeratorGrantsPage: React.FC = () => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setRevokingGrant(null)}
+                  onClick={handleCloseRevokeModal}
                 >
                   Cancel
                 </Button>
@@ -705,24 +842,39 @@ export const AdminModeratorGrantsPage: React.FC = () => {
 
       {/* Grant Creation Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div
+          ref={createModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-grant-title"
+          aria-describedby="create-grant-desc"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        >
           <Card className="w-full max-w-lg p-6 bg-white shadow-2xl border-slate-300 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2 text-slate-900 font-bold font-heading text-lg">
                 <ShieldCheck className="w-5 h-5 text-civic-indigo-600" />
-                <span>Issue Scoped Moderator Grant</span>
+                <h2 id="create-grant-title" className="text-lg font-bold font-heading text-slate-900">
+                  Issue Scoped Moderator Grant
+                </h2>
               </div>
               <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                type="button"
+                onClick={handleCloseCreateModal}
+                aria-label="Close issue grant dialog"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateGrant} className="mt-4 space-y-4">
+              <p id="create-grant-desc" className="sr-only">
+                Issue a time-bounded, audited moderator grant scoped to assignments, memberships, or a named session.
+              </p>
+
               {createError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-start gap-2">
+                <div role="alert" className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{createError}</span>
                 </div>
@@ -730,10 +882,11 @@ export const AdminModeratorGrantsPage: React.FC = () => {
 
               {/* Grantee Selector */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="create-grantee-select" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Designated Grantee (User)
                 </label>
                 <select
+                  id="create-grantee-select"
                   value={granteeId}
                   onChange={(e) => setGranteeId(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
@@ -747,49 +900,61 @@ export const AdminModeratorGrantsPage: React.FC = () => {
               </div>
 
               {/* Scope Selector */}
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setScopeType('assignments')}
-                  className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
-                    scopeType === 'assignments'
-                      ? 'border-civic-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-500'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Assignments
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScopeType('memberships')}
-                  className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
-                    scopeType === 'memberships'
-                      ? 'border-civic-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-500'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Memberships
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScopeType('named_session')}
-                  className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
-                    scopeType === 'named_session'
-                      ? 'border-civic-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-500'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  Named Session
-                </button>
-              </div>
+              <fieldset className="space-y-1">
+                <legend className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Scope Type
+                </legend>
+                <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Scope Type">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={scopeType === 'assignments'}
+                    onClick={() => setScopeType('assignments')}
+                    className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
+                      scopeType === 'assignments'
+                        ? 'border-civic-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-500'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Assignments
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={scopeType === 'memberships'}
+                    onClick={() => setScopeType('memberships')}
+                    className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
+                      scopeType === 'memberships'
+                        ? 'border-civic-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-500'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Memberships
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={scopeType === 'named_session'}
+                    onClick={() => setScopeType('named_session')}
+                    className={`p-2.5 rounded-lg border text-xs font-semibold text-center transition-all ${
+                      scopeType === 'named_session'
+                        ? 'border-civic-indigo-600 bg-indigo-50 text-indigo-900 ring-2 ring-indigo-500'
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Named Session
+                  </button>
+                </div>
+              </fieldset>
 
               {/* Named Session Picker */}
               {scopeType === 'named_session' && (
                 <div className="p-3 bg-purple-50/50 border border-purple-200 rounded-lg space-y-1">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-purple-900 mb-1">
+                  <label htmlFor="create-named-session-select" className="block text-xs font-bold uppercase tracking-wider text-purple-900 mb-1">
                     Select Target Deliberation Session
                   </label>
                   <select
+                    id="create-named-session-select"
                     value={namedSessionId}
                     onChange={(e) => setNamedSessionId(e.target.value)}
                     className="w-full text-xs p-2 rounded border border-purple-300 bg-white text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -808,10 +973,11 @@ export const AdminModeratorGrantsPage: React.FC = () => {
 
               {/* Duration Selector */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="create-duration-select" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Grant Duration
                 </label>
                 <select
+                  id="create-duration-select"
                   value={durationDays}
                   onChange={(e) => setDurationDays(Number(e.target.value))}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
@@ -826,10 +992,11 @@ export const AdminModeratorGrantsPage: React.FC = () => {
 
               {/* Justification Reason */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="create-reason-textarea" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                   Founder Justification & Reason (Audited)
                 </label>
                 <textarea
+                  id="create-reason-textarea"
                   required
                   rows={2}
                   value={grantReason}
@@ -844,7 +1011,7 @@ export const AdminModeratorGrantsPage: React.FC = () => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={handleCloseCreateModal}
                 >
                   Cancel
                 </Button>

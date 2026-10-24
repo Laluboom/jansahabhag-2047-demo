@@ -15,7 +15,6 @@ import {
   X,
   RotateCcw,
   Check,
-  Info,
   Clock,
   Layers,
   HelpCircle,

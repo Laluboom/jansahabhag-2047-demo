@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import {
-  Building2,
   Users2,
-  ShieldCheck,
-  ArrowRight,
-  Send,
   X,
   Clock,
-  CheckCircle2,
   FileCheck,
 } from 'lucide-react';
 

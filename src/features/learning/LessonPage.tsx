@@ -4,18 +4,16 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Lesson, Course, Enrolment, Assignment } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
   ArrowLeft,
-  ArrowRight,
   CheckCircle2,
   FileCheck2,
   Sparkles,
   BookOpen,
-  Award,
 } from 'lucide-react';
 
 export const LessonPage: React.FC = () => {

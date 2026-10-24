@@ -52,8 +52,8 @@ export const CommunityPage: React.FC = () => {
       try {
         const groupList = await demoRepository.getCommunityGroups();
         setGroups(groupList);
-        if (groupList.length > 0 && !selectedGroupId) {
-          setSelectedGroupId(groupList[0].id);
+        if (groupList.length > 0) {
+          setSelectedGroupId((prev) => prev || groupList[0].id);
         }
 
         const postsEntries = await Promise.all(

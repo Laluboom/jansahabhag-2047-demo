@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { LocalDemoRepository, demoRepository } from '../src/services/demoRepository';
@@ -93,7 +93,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
       // 2. Participant Aarav submits response with one of his evidence items
       await useAuthStore.getState().switchPersona('user_aarav');
-      const initialCredits = (await demoRepository.getCredits('user_aarav')).filter((c) => c.status === 'Pending').length;
+      const _initialCredits = (await demoRepository.getCredits('user_aarav')).filter((c) => c.status === 'Pending').length;
 
       const submission = await demoRepository.submitAssignment({
         assignmentId: assignment.id,
@@ -572,7 +572,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
     it('renders expired/closed state when time limit has expired and allows clean modal close without focus trap', async () => {
       // Facilitator pushes task with expired date in the past
       await useAuthStore.getState().switchPersona('user_rohan');
-      const { session } = await demoRepository.pushDebatePopupAssignment({
+      await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
         actorId: 'user_rohan',
         title: 'Past Time Limit Task',
@@ -626,7 +626,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       // Step A: Facilitator pushes first popup assignment
       await useAuthStore.getState().switchPersona('user_rohan');
 
-      const { rerender } = render(
+      render(
         <MemoryRouter initialEntries={['/debate-room']}>
           <Routes>
             <Route path="/debate-room" element={<DebateRoomPreviewPage />} />

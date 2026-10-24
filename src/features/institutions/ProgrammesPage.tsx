@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Programme, ProgrammeStatus } from '../../types/domain';
@@ -10,16 +9,11 @@ import { StatusChip } from '../../components/ui/StatusChip';
 import {
   ArrowLeft,
   Layers,
-  Calendar,
   BookOpen,
-  CheckCircle2,
-  Sparkles,
-  Users,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 
 export const InstitutionProgrammesPage: React.FC = () => {
-  const { currentUser } = useAuthStore();
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
 
   const [programmes, setProgrammes] = useState<Programme[]>([]);

@@ -1240,7 +1240,7 @@ export interface WorkspaceAuditEvent {
   targetUserName?: string;
   targetActionId?: string;
   reason?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   timestamp: string;
   schemaVersion: number;
 }

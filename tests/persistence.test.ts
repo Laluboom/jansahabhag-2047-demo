@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PersistenceService, STORAGE_KEY } from '../src/services/persistence';
-import { CURRENT_SCHEMA_VERSION, getFreshSeedDatabase } from '../src/data/seed';
+import { CURRENT_SCHEMA_VERSION } from '../src/data/seed';
 
 describe('Persistence Adapter & Schema Migrations', () => {
   beforeEach(() => {

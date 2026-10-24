@@ -7,7 +7,6 @@ import { ProjectsPage } from '../src/features/projects/ProjectsPage';
 import { WorkspacePage } from '../src/features/workspaces/WorkspacePage';
 import { ProjectTeamSeats } from '../src/features/projects/ProjectTeamSeats';
 import { ProjectBoard } from '../src/features/projects/ProjectBoard';
-import { demoRepository } from '../src/services/demoRepository';
 import { useAuthStore } from '../src/stores/authStore';
 import { PersistenceService } from '../src/services/persistence';
 import { User, ProjectMilestone } from '../src/types/domain';

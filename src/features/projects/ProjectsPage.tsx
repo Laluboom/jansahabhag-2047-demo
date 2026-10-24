@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Project, ProjectStatus, User } from '../../types/domain';
+import { Project, User } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
@@ -14,15 +14,9 @@ import { Avatar } from '../../components/ui/Avatar';
 import { getInitials } from '../../components/session/types';
 import {
   Target,
-  Users,
-  CheckCircle2,
   ArrowRight,
   Plus,
-  Sparkles,
   Filter,
-  CheckCircle,
-  Clock,
-  Layers,
 } from 'lucide-react';
 
 export const ProjectsPage: React.FC = () => {

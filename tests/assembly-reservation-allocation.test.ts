@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { demoRepository } from '../src/services/demoRepository';
 import {
   calculateReservedMinimum,
   canUserClaimRoleAllocation,
   buildAssemblyRoleAllocations,
-  projectAssemblyForCaller,
   POLICY_VERSION,
 } from '../src/services/reservationAllocationService';
 import { DemoRepository } from '../src/services/repository';
@@ -174,7 +172,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         repository.joinAssembly(
           'assembly_jaipur_pedestrian_2026',
           'user_aarav',
-          'Chair' as any
+          'Chair' as never
         )
       ).rejects.toThrow();
     });
@@ -376,7 +374,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
       expect(asm?.roleAllocations).toBeDefined();
 
-      for (const [roleName, alloc] of Object.entries(asm!.roleAllocations!)) {
+      for (const [, alloc] of Object.entries(asm!.roleAllocations!)) {
         // Never labeled compliant without validation
         expect(alloc.status).not.toBe('finalized_compliant');
       }
@@ -902,7 +900,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
       // Simulate logged out / unauthenticated state (activeUserId undefined)
       const db = PersistenceService.loadDatabase();
-      (db as any).activeUserId = undefined;
+      (db as { activeUserId?: string }).activeUserId = undefined;
       PersistenceService.saveDatabase(db);
 
       // 1. getAssemblies('user_admin')
@@ -947,7 +945,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       const db = PersistenceService.loadDatabase();
       const jaipur = db.assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       if (jaipur) {
-        delete (jaipur as any).roleAllocations;
+        delete (jaipur as { roleAllocations?: unknown }).roleAllocations;
       }
       PersistenceService.saveDatabase(db);
 

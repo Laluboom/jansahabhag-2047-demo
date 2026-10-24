@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { demoRepository } from '../../services/demoRepository';
-import { User, UserRole } from '../../types/domain';
-import { Card, CardTitle } from '../../components/ui/Card';
+import { User } from '../../types/domain';
+import { Card } from '../../components/ui/Card';
 import { Avatar } from '../../components/ui/Avatar';
-import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import {
   ArrowLeft,
   Users,
-  Award,
-  ShieldCheck,
   Search,
   Filter,
-  Sparkles,
-  BookOpen,
 } from 'lucide-react';
 
 export const ParticipantsPage: React.FC = () => {

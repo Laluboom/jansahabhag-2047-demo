@@ -5,9 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import {
   Landmark,
-  Users,
   Vote,
-  Sparkles,
   FileText,
   X,
   CheckCircle2,
@@ -22,7 +20,7 @@ import {
   POLICY_VERSION,
   buildParliamentDelegationIllustration,
 } from '../../services/reservationAllocationService';
-import { SessionSeating, SeatModel, SeatingQuotaSummary, SessionTextTurn } from '../../components/session';
+import { SessionSeating, SeatModel, SeatingQuotaSummary } from '../../components/session';
 
 export const ParliamentPage: React.FC = () => {
   const [selectedMotionModal, setSelectedMotionModal] = useState<boolean>(false);

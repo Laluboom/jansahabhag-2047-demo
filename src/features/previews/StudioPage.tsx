@@ -3,17 +3,12 @@ import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import {
-  Sparkles,
   Palette,
   Video,
   Wand2,
-  ArrowRight,
   Download,
   X,
-  FileImage,
-  Layers,
   Info,
-  CheckCircle2,
 } from 'lucide-react';
 
 interface StudioTool {

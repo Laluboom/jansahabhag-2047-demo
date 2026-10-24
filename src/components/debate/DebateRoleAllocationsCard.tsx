@@ -35,7 +35,7 @@ interface DebateRoleAllocationsCardProps {
 export const DebateRoleAllocationsCard: React.FC<DebateRoleAllocationsCardProps> = ({
   session,
   currentUser,
-  allUsers,
+  allUsers: _allUsers,
   onOpenRulebook,
   onOpenExceptionModal,
   onFinalizeRole,

@@ -6,14 +6,11 @@ import { formatDate } from '../../utils/formatters';
 import {
   Target,
   CheckCircle2,
-  Clock,
   Calendar,
   Award,
   AlertCircle,
   LayoutGrid,
   List,
-  ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 
 interface ProjectBoardProps {
@@ -27,7 +24,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({
   milestones,
   isUpdating,
   onCompleteMilestone,
-  projectStatus,
+  projectStatus: _projectStatus,
 }) => {
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
 
@@ -130,7 +127,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({
                   No upcoming milestones queued.
                 </div>
               ) : (
-                todoMilestones.map((ms, idx) => (
+                todoMilestones.map((ms) => (
                   <div
                     key={ms.id}
                     data-testid={`milestone-card-${ms.id}`}

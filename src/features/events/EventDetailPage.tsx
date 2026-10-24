@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
 import { Event, Session, User } from '../../types/domain';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Modal } from '../../components/ui/Modal';
@@ -19,10 +19,8 @@ import {
   FileText,
   Download,
   BookOpen,
-  Sparkles,
   ExternalLink,
   UserCheck,
-  Share2,
   Shield,
   ShieldAlert,
   ShieldCheck,
@@ -99,9 +97,10 @@ export const EventDetailPage: React.FC = () => {
       setSelectedRsvp(status);
       triggerRefresh();
       setActionSuccess(`RSVP successfully updated to ${status}.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update RSVP', err);
-      setRsvpError(err?.message || 'Failed to update RSVP');
+      const message = err instanceof Error ? err.message : 'Failed to update RSVP';
+      setRsvpError(message);
     } finally {
       setIsRsvping(false);
     }
@@ -118,9 +117,10 @@ export const EventDetailPage: React.FC = () => {
       setIsCheckedIn(true);
       triggerRefresh();
       setActionSuccess('Attendance verified and check-in recorded.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to check in', err);
-      setCheckInError(err?.message || 'Failed to check in');
+      const message = err instanceof Error ? err.message : 'Failed to check in';
+      setCheckInError(message);
     } finally {
       setIsCheckingIn(false);
     }
@@ -135,9 +135,10 @@ export const EventDetailPage: React.FC = () => {
       await demoRepository.finalizeEventAllocation(id, currentUser.id);
       triggerRefresh();
       setActionSuccess('Allocation finalized successfully under compliant 33% reservation.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to finalize allocation', err);
-      setRsvpError(err?.message || 'Finalization failed');
+      const message = err instanceof Error ? err.message : 'Finalization failed';
+      setRsvpError(message);
     } finally {
       setIsFinalizing(false);
     }
@@ -154,9 +155,10 @@ export const EventDetailPage: React.FC = () => {
       setExceptionReason('');
       triggerRefresh();
       setActionSuccess('Platform Owner exception approved and allocation finalized under exception.');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to approve exception', err);
-      setRsvpError(err?.message || 'Exception approval failed');
+      const message = err instanceof Error ? err.message : 'Exception approval failed';
+      setRsvpError(message);
     } finally {
       setIsFinalizing(false);
     }

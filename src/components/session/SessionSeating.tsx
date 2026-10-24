@@ -11,7 +11,7 @@ import { SettingsModal } from '../../features/settings/SettingsModal';
 import { SessionPreferencesService } from '../../services/sessionPreferencesService';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../ui/Button';
-import { List, LayoutGrid, Radio, Users, Landmark, Settings, Zap } from 'lucide-react';
+import { List, LayoutGrid, Radio, Users, Landmark, Settings, Zap, LucideIcon } from 'lucide-react';
 
 export const SessionSeating: React.FC<SessionSeatingProps> = ({
   layout,
@@ -23,7 +23,7 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
   selectedSeatId: controlledSelectedSeatId,
   onSelectSeat: controlledOnSelectSeat,
   isIllustrative = false,
-  illustrativeDisclaimer,
+  illustrativeDisclaimer: _illustrativeDisclaimer,
   currentRoute,
   className = '',
   sessionId,
@@ -36,6 +36,12 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
   const { currentUser } = useAuthStore();
   const effectiveUserId = currentUserId || currentUser?.id;
   const sessionKey = sessionId || currentRoute || layout;
+
+  // OS prefers-reduced-motion media query check
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
 
   // View Mode: 'chamber' | 'text'
   const [internalViewMode, setInternalViewMode] = useState<'chamber' | 'text'>(() => {
@@ -208,7 +214,7 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
 
   const selectedSeat = seats.find((s) => s.id === selectedSeatId);
 
-  const layoutTitles: Record<string, { title: string; subtitle: string; icon: any }> = {
+  const layoutTitles: Record<string, { title: string; subtitle: string; icon: LucideIcon }> = {
     debate: {
       title: title || 'Debate Room Chamber Seating',
       subtitle: subtitle || 'Facing Proposition (For) & Opposition (Against) benches with Facilitator podium',
@@ -319,7 +325,7 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
           <SeatDetailCard
             seat={selectedSeat}
             textMode={isTextMode}
-            suppressAnimation={isTextMode || isLowData}
+            suppressAnimation={isTextMode || isLowData || prefersReducedMotion}
             onClose={() => handleSelectSeat(null)}
           />
         )}
@@ -342,6 +348,7 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
             selectedSeatId={selectedSeatId}
             onSelectSeat={(seat) => handleSelectSeat(seat)}
             activeSpeakerId={activeSpeakerId}
+            suppressAnimation={isLowData || prefersReducedMotion}
           />
         ) : layout === 'assembly' ? (
           <AssemblySeatingLayout
@@ -349,6 +356,7 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
             selectedSeatId={selectedSeatId}
             onSelectSeat={(seat) => handleSelectSeat(seat)}
             activeSpeakerId={activeSpeakerId}
+            suppressAnimation={isLowData || prefersReducedMotion}
           />
         ) : (
           <ParliamentSeatingLayout
@@ -357,6 +365,7 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
             onSelectSeat={(seat) => handleSelectSeat(seat)}
             activeSpeakerId={activeSpeakerId}
             isIllustrative={isIllustrative}
+            suppressAnimation={isLowData || prefersReducedMotion}
           />
         )}
       </div>

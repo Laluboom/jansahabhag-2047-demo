@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Compass, Home, ArrowLeft } from 'lucide-react';
+import { Compass, Home } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
   return (

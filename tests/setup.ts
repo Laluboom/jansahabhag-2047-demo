@@ -25,7 +25,7 @@ global.ResizeObserver = class ResizeObserver {
 // Polyfill window.URL.createObjectURL and revokeObjectURL if not present
 if (typeof window !== 'undefined') {
   if (typeof window.URL.createObjectURL !== 'function') {
-    window.URL.createObjectURL = (blob: any) =>
+    window.URL.createObjectURL = (_blob: unknown) =>
       `blob:mock-url-${Math.random().toString(36).substring(2, 9)}`;
   }
   if (typeof window.URL.revokeObjectURL !== 'function') {
@@ -36,30 +36,30 @@ if (typeof window !== 'undefined') {
 // Lightweight, compliant browser-local IndexedDB mock with transaction lifecycle
 interface MockDatabaseState {
   version: number;
-  stores: Map<string, { keyPath?: string; data: Map<any, any> }>;
+  stores: Map<string, { keyPath?: string; data: Map<unknown, unknown> }>;
 }
 
 const mockDatabases = new Map<string, MockDatabaseState>();
 
 class MockIDBRequest {
-  public result: any = undefined;
+  public result: unknown = undefined;
   public error: DOMException | Error | null = null;
-  public onsuccess: ((event: any) => void) | null = null;
-  public onerror: ((event: any) => void) | null = null;
+  public onsuccess: ((event: unknown) => void) | null = null;
+  public onerror: ((event: unknown) => void) | null = null;
 }
 
 class MockIDBOpenDBRequest extends MockIDBRequest {
-  public onupgradeneeded: ((event: any) => void) | null = null;
-  public onblocked: ((event: any) => void) | null = null;
+  public onupgradeneeded: ((event: unknown) => void) | null = null;
+  public onblocked: ((event: unknown) => void) | null = null;
 }
 
 class MockIDBTransaction {
   public db: MockIDBDatabase;
   public mode: IDBTransactionMode;
   public error: DOMException | Error | null = null;
-  public oncomplete: ((event: any) => void) | null = null;
-  public onerror: ((event: any) => void) | null = null;
-  public onabort: ((event: any) => void) | null = null;
+  public oncomplete: ((event: unknown) => void) | null = null;
+  public onerror: ((event: unknown) => void) | null = null;
+  public onabort: ((event: unknown) => void) | null = null;
 
   private aborted = false;
   private pendingOperations: (() => void)[] = [];
@@ -96,7 +96,7 @@ class MockIDBTransaction {
     }
   }
 
-  public _registerRequest(req: MockIDBRequest, executor: () => { result?: any; error?: any }): void {
+  public _registerRequest(req: MockIDBRequest, executor: () => { result?: unknown; error?: Error | DOMException | unknown }): void {
     if (this.aborted) return;
     this.activeRequests++;
 
@@ -105,21 +105,22 @@ class MockIDBTransaction {
       try {
         const { result, error } = executor();
         if (error) {
-          req.error = error;
+          req.error = error instanceof Error || error instanceof DOMException ? error : new Error(String(error));
           if (req.onerror) req.onerror({ target: req, type: 'error' });
           if (!this.aborted) {
-            this.error = error;
+            this.error = req.error;
             if (this.onerror) this.onerror({ target: this, type: 'error' });
           }
         } else {
           req.result = result;
           if (req.onsuccess) req.onsuccess({ target: req, type: 'success' });
         }
-      } catch (err: any) {
-        req.error = err;
+      } catch (err: unknown) {
+        const domErr = err instanceof Error || err instanceof DOMException ? err : new Error(String(err));
+        req.error = domErr;
         if (req.onerror) req.onerror({ target: req, type: 'error' });
         if (!this.aborted) {
-          this.error = err;
+          this.error = domErr;
           if (this.onerror) this.onerror({ target: this, type: 'error' });
         }
       } finally {
@@ -144,15 +145,15 @@ class MockIDBTransaction {
 class MockIDBObjectStore {
   private tx: MockIDBTransaction;
   public name: string;
-  private state: { keyPath?: string; data: Map<any, any> };
+  private state: { keyPath?: string; data: Map<unknown, unknown> };
 
-  constructor(tx: MockIDBTransaction, name: string, state: { keyPath?: string; data: Map<any, any> }) {
+  constructor(tx: MockIDBTransaction, name: string, state: { keyPath?: string; data: Map<unknown, unknown> }) {
     this.tx = tx;
     this.name = name;
     this.state = state;
   }
 
-  public put(value: any, key?: any): MockIDBRequest {
+  public put(value: Record<string, unknown>, key?: unknown): MockIDBRequest {
     const req = new MockIDBRequest();
     const effectiveKey = key ?? (this.state.keyPath ? value[this.state.keyPath] : undefined);
     if (effectiveKey === undefined) {
@@ -174,17 +175,17 @@ class MockIDBObjectStore {
     return req;
   }
 
-  public get(key: any): MockIDBRequest {
+  public get(key: unknown): MockIDBRequest {
     const req = new MockIDBRequest();
     this.tx._registerRequest(req, () => {
-      const val = this.state.data.get(key);
+      const val = this.state.data.get(key) as Record<string, unknown> | undefined;
       const cloned = val ? { ...val, blob: val.blob } : undefined;
       return { result: cloned };
     });
     return req;
   }
 
-  public delete(key: any): MockIDBRequest {
+  public delete(key: unknown): MockIDBRequest {
     const req = new MockIDBRequest();
     this.tx._registerRequest(req, () => {
       this.tx._enqueueCommit(() => {
@@ -220,7 +221,7 @@ class MockIDBDatabase {
 
   public get objectStoreNames(): { contains: (name: string) => boolean; length: number; [index: number]: string } {
     const names = Array.from(this._state.stores.keys());
-    const result: any = {
+    const result: { contains: (name: string) => boolean; length: number; [index: number]: string } = {
       contains: (n: string) => this._state.stores.has(n),
       length: names.length,
     };
@@ -234,7 +235,7 @@ class MockIDBDatabase {
     if (this._state.stores.has(storeName)) {
       throw new DOMException(`ConstraintError: Object store ${storeName} already exists`);
     }
-    const storeState = { keyPath: options?.keyPath, data: new Map<any, any>() };
+    const storeState = { keyPath: options?.keyPath, data: new Map<unknown, unknown>() };
     this._state.stores.set(storeName, storeState);
     const dummyTx = new MockIDBTransaction(this, 'readwrite');
     return new MockIDBObjectStore(dummyTx, storeName, storeState);
@@ -313,6 +314,6 @@ Object.defineProperty(window, 'indexedDB', {
   value: mockIndexedDB,
 });
 
-(global as any).indexedDB = mockIndexedDB;
-(global as any).__resetMockIndexedDB = () => mockDatabases.clear();
+(globalThis as unknown as { indexedDB: unknown }).indexedDB = mockIndexedDB;
+(globalThis as unknown as { __resetMockIndexedDB: () => void }).__resetMockIndexedDB = () => mockDatabases.clear();
 
