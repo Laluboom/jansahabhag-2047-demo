@@ -1,0 +1,8 @@
+.subagy/
+node_modules/
+dist/
+docs/
+*.docx
+playwright-report/
+test-results/
+coverage/
