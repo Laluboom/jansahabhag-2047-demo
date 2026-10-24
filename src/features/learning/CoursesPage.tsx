@@ -3,12 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
-import { Course, Enrolment, CourseTrack, Reflection } from '../../types/domain';
+import { Course, Enrolment, CourseTrack, Reflection, Assignment } from '../../types/domain';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { UhvCreditBanner } from './UhvCreditBanner';
+import { UhvWorkshopMediaPlaceholders } from './UhvWorkshopMediaPlaceholders';
 import {
   BookOpen,
   Clock,
@@ -16,6 +18,7 @@ import {
   Sparkles,
   HeartHandshake,
   ArrowLeft,
+  CheckCircle2,
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 
@@ -29,6 +32,7 @@ export const CoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrolments, setEnrolments] = useState<Enrolment[]>([]);
   const [uhvReflections, setUhvReflections] = useState<Reflection[]>([]);
+  const [uhvAssignments, setUhvAssignments] = useState<Assignment[]>([]);
   const [selectedTrack, setSelectedTrack] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,14 +41,24 @@ export const CoursesPage: React.FC = () => {
       if (!currentUser) return;
       setIsLoading(true);
       try {
-        const [cList, eList, uRefls] = await Promise.all([
+        const [cList, eList, uRefls, asgList] = await Promise.all([
           demoRepository.getCourses(),
           demoRepository.getEnrolments(currentUser.id),
           demoRepository.getUhvReflections(currentUser.id),
+          demoRepository.getAssignments(),
         ]);
         setCourses(cList);
         setEnrolments(eList);
         setUhvReflections(uRefls);
+        const uhvCourseIds = new Set(cList.filter((c) => c.track === 'uhv').map((c) => c.id));
+        setUhvAssignments(
+          asgList.filter(
+            (a) =>
+              uhvCourseIds.has(a.courseId) ||
+              a.assignmentType === 'uhv_reflection' ||
+              a.id.startsWith('asg_uhv_')
+          )
+        );
       } catch (err) {
         console.error('Failed to load courses', err);
       } finally {
@@ -119,24 +133,104 @@ export const CoursesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Fictional Demo Material Disclosure Banner */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-2 shadow-xs">
-          <div className="flex items-center gap-2 font-bold text-xs sm:text-sm uppercase tracking-wider text-amber-900">
-            <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>Fictional Demo Material &bull; Curriculum Rights Awaiting Owner Review</span>
+        {/* Attribution & Demo Direction Banner */}
+        <UhvCreditBanner />
+
+        {/* Small Usable Set of Ordinary Self-Inquiry Assignments & Youth Activities */}
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                Ordinary Self-Inquiry Flow
+              </span>
+              <h2 className="text-lg font-bold font-heading text-slate-900 mt-1">
+                Self-Inquiry Assignments & Youth Activities
+              </h2>
+            </div>
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+              Private Journal &bull; 0 Civic Credits
+            </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-            This dedicated stream presents Universal Human Values (UHV) and Jeevan Vidya exploratory modules as fictional demo material under Master PRD Scope F. Source, licensing, and formal curriculum adoption remain subject to platform owner review.
-          </p>
-          <div className="pt-1 border-t border-amber-200/80 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600">
-            <span>&bull; No approved curriculum implied</span>
-            <span>&bull; Ideological agreement is not graded</span>
-            <span>&bull; Participant reflection is voluntary and unfabricated</span>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+            These ordinary self-inquiry assignments and youth activities are written in the platform's own words, inspired by the Vadodara Savli youth workshop. They use the existing private UHV study flow: reflections are non-evaluative, never routed to teacher review queues, carry 0 Civic Credit Points, and remain completely private to your active browser session.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {uhvAssignments.map((asg) => {
+              const hasReflection = uhvReflections.some(
+                (r) => r.contextId === asg.id || (r.prompt && r.prompt.includes(asg.title))
+              );
+
+              return (
+                <Card
+                  key={asg.id}
+                  hoverable
+                  className="flex flex-col justify-between border-slate-200 p-5 space-y-3 bg-white"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        Self-Inquiry Activity
+                      </span>
+                      {hasReflection ? (
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Reflected</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-slate-400">
+                          Private Study
+                        </span>
+                      )}
+                    </div>
+
+                    <CardTitle className="text-sm font-bold text-slate-900 font-heading line-clamp-2">
+                      {asg.title}
+                    </CardTitle>
+
+                    <p className="text-xs text-slate-600 line-clamp-4 leading-relaxed">
+                      {asg.prompt}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-medium text-slate-400">
+                      0 Civic Credits
+                    </span>
+                    <Link to={`/assignments/${asg.id}/submit`}>
+                      <Button size="sm" variant={hasReflection ? 'outline' : 'primary'}>
+                        <span>{hasReflection ? 'View / Update' : 'Open Prompt'}</span>
+                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
+        {/* Future Media & YouTube Placeholders */}
+        <UhvWorkshopMediaPlaceholders />
+
         {/* Course Grid for UHV Stream */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                Self-Paced Track
+              </span>
+              <h2 className="text-lg font-bold font-heading text-slate-900 mt-1">
+                Curriculum Modules
+              </h2>
+            </div>
+            <span className="text-xs text-slate-500">
+              Non-credit study modules
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {uhvCourses.map((course) => {
             const enrolment = enrolments.find((e) => e.courseId === course.id);
             const isEnrolled = !!enrolment;
@@ -212,6 +306,7 @@ export const CoursesPage: React.FC = () => {
               </Card>
             );
           })}
+          </div>
         </div>
 
         {/* Private UHV Reflections View (Owner Only) */}

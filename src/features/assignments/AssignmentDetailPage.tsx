@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { formatRelativeTime, formatDateTime } from '../../utils/formatters';
 import { canActorAccessPrivateEvidence } from '../../domain/evidenceRules';
+import { UhvCreditBanner } from '../learning/UhvCreditBanner';
 
 export const AssignmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -326,15 +327,18 @@ export const AssignmentDetailPage: React.FC = () => {
 
         {/* UHV Simulation & Privacy Disclosure */}
         {isUhv && (
-          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1.5 text-xs">
-            <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-blue-900">
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
-              Private Reflection Boundary (Single-Browser Simulation)
-            </span>
-            <p className="text-blue-800 leading-relaxed">
-              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credit Points, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
-            </p>
-          </div>
+          <>
+            <UhvCreditBanner compact />
+            <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1.5 text-xs">
+              <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-blue-900">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                Private Reflection Boundary (Single-Browser Simulation)
+              </span>
+              <p className="text-blue-800 leading-relaxed">
+                This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credit Points, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
+              </p>
+            </div>
+          </>
         )}
 
         {/* Rubric Breakdown (Civic Assignments Only) */}

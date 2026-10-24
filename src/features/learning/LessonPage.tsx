@@ -8,6 +8,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { UhvCreditBanner } from './UhvCreditBanner';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -187,6 +188,9 @@ export const LessonPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Attribution Banner */}
+      {isUhv && <UhvCreditBanner compact />}
 
       {/* Lesson Reading Sections */}
       <div className="space-y-6">
