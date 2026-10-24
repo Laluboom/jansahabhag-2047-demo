@@ -148,7 +148,7 @@ export const CoursesPage: React.FC = () => {
               </h2>
             </div>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-              Private Journal &bull; 0 Civic Credits
+              Private Journal &bull; 0 Civic Credit Points
             </span>
           </div>
 
@@ -196,7 +196,7 @@ export const CoursesPage: React.FC = () => {
 
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <span className="text-[11px] font-medium text-slate-400">
-                      0 Civic Credits
+                      0 Civic Credit Points
                     </span>
                     <Link to={`/assignments/${asg.id}/submit`}>
                       <Button size="sm" variant={hasReflection ? 'outline' : 'primary'}>
