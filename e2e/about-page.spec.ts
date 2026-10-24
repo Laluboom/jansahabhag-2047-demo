@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('About page credits founder and technical builder accurately', async ({ page }) => {
+test('About page credits founder, technical builder, and managing partner accurately', async ({ page }) => {
   await page.goto('/about');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Connecting education with citizenship.' })).toBeVisible();
@@ -14,15 +14,34 @@ test('About page credits founder and technical builder accurately', async ({ pag
   await expect(page.getByText('Developer', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
   await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
+
+  await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toBeVisible();
+  await expect(page.getByText('Managing Partner', { exact: true })).toBeVisible();
+  await expect(page.getByText(/microbiology student/i)).toBeVisible();
+  await expect(page.getByText(/organisational development/i)).toBeVisible();
+  await expect(page.getByText(/developed-country vision/i)).toBeVisible();
+
   await expect(page.getByText('Single-browser simulation')).toBeVisible();
 
-  for (const name of ['Nazim M. Sandh', 'Visesh Akbari']) {
+  for (const name of ['Nazim M. Sandh', 'Visesh Akbari', 'Yashvi Dalsaniya']) {
     const portrait = page.getByRole('img', { name: `Portrait of ${name}` });
     await expect(portrait).toBeVisible();
     await expect.poll(() => portrait.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   }
 
-  await expect(page.getByText(/Visesh.*founder|Visesh.*initiated|Visesh.*idea/i)).toHaveCount(0);
+  const viseshCard = page.locator('article').filter({ hasText: 'Visesh Akbari' });
+  await expect(viseshCard.getByText(/founder|initiated|idea/i)).toHaveCount(0);
+
+  const yashviCard = page.locator('article').filter({ hasText: 'Yashvi Dalsaniya' });
+  await expect(yashviCard.getByText(/founder|developed the site|founded the idea/i)).toHaveCount(0);
+
+  // With gratitude section
+  await expect(page.getByRole('heading', { name: 'With gratitude' })).toBeVisible();
+  await expect(page.getByText('Shri Dadubhai Sandhar')).toBeVisible();
+  await expect(
+    page.locator('section[aria-labelledby="gratitude-heading"]').getByText('Visesh Akbari')
+  ).toBeVisible();
+  await expect(page.getByText('Demo institution, not an official partnership')).toBeVisible();
 });
 
 test('About page is reachable from welcome and the utilities navigation', async ({ page }) => {
@@ -36,6 +55,8 @@ test('About page portraits and content fit a narrow screen', async ({ page }) =>
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/about');
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'With gratitude' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 });

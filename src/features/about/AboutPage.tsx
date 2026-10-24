@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import nazimPortrait from '../../assets/about/nazim-sandh.jpeg';
 import viseshPortrait from '../../assets/about/visesh-akbari.jpg';
+import yashviPortrait from '../../assets/about/yashvi-dalsaniya.jpeg';
+import {
+  GRATITUDE_MESSAGE,
+  GRATITUDE_ENTRIES,
+  GRATITUDE_CLOSING_LINES,
+  GRATITUDE_DISCLOSURE,
+} from '../../data/gratitude';
 
 export const AboutPage: React.FC = () => (
   <div className="mx-auto max-w-5xl space-y-12 pb-12 sm:space-y-16">
@@ -40,11 +47,11 @@ export const AboutPage: React.FC = () => (
     <section aria-labelledby="people-heading" className="space-y-7">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-civic-teal-700">People behind the work</p>
-        <h2 id="people-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">The founder and the technical builder</h2>
+        <h2 id="people-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">The team</h2>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-        <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="aspect-square bg-slate-100 p-3 sm:p-4">
             <img
               src={nazimPortrait}
@@ -54,9 +61,11 @@ export const AboutPage: React.FC = () => (
               height="1254"
             />
           </div>
-          <div className="space-y-2 p-6 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Founder and Initiator</p>
-            <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
+          <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Founder and Initiator</p>
+              <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
+            </div>
             <div className="pt-2 text-sm font-semibold">
               <a
                 href="mailto:nazimsandhbehappy@gmail.com"
@@ -68,7 +77,7 @@ export const AboutPage: React.FC = () => (
           </div>
         </article>
 
-        <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="aspect-square bg-slate-100 p-3 sm:p-4">
             <img
               src={viseshPortrait}
@@ -78,9 +87,11 @@ export const AboutPage: React.FC = () => (
               height="1402"
             />
           </div>
-          <div className="space-y-2 p-6 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Developer</p>
-            <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
+          <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Developer</p>
+              <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
+            </div>
             <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-semibold">
               <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
                 GitHub
@@ -91,6 +102,74 @@ export const AboutPage: React.FC = () => (
             </div>
           </div>
         </article>
+
+        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="aspect-square bg-slate-100 p-3 sm:p-4">
+            <img
+              src={yashviPortrait}
+              alt="Portrait of Yashvi Dalsaniya"
+              className="h-full w-full rounded-xl object-contain"
+              width="1280"
+              height="720"
+            />
+          </div>
+          <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner</p>
+                <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
+              </div>
+              <p className="text-sm leading-6 text-slate-700">
+                Yashvi Dalsaniya is a microbiology student with a deep interest in youth development, education, governance, scientific thinking, and social responsibility. Her focus spans entrepreneurship, communication, organisational development, and community participation, exploring how ideas turn into practical initiatives.
+              </p>
+              <p className="text-sm leading-6 text-slate-700">
+                She contributes to JanSahabhag 2047&apos;s civic awareness, youth participation, and citizen-democratic-process vision. She believes that India&apos;s developed-country vision depends on people&apos;s awareness, collective responsibility, and expanding young people&apos;s opportunities to participate in decisions shaping their collective future.
+              </p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="gratitude-heading" className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-10">
+      <div className="max-w-2xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-civic-teal-700">Recognition &amp; Credits</p>
+        <h2 id="gratitude-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">With gratitude</h2>
+      </div>
+
+      <div className="max-w-3xl space-y-4 text-sm leading-relaxed text-slate-700 sm:text-base">
+        {GRATITUDE_MESSAGE.paragraphs.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
+        <p className="pt-2 font-semibold text-slate-900">— {GRATITUDE_MESSAGE.attribution}</p>
+      </div>
+
+      <div className="border-t border-slate-200 pt-8">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {GRATITUDE_ENTRIES.map((entry) => (
+            <li
+              key={entry.name}
+              className="flex flex-col justify-start rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors"
+            >
+              <span className="font-bold text-slate-900">{entry.name}</span>
+              {entry.role && (
+                <span className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                  {entry.role}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 space-y-1.5 text-sm italic text-slate-600">
+          {GRATITUDE_CLOSING_LINES.map((line, index) => (
+            <p key={index}>{line}</p>
+          ))}
+        </div>
+
+        <p className="mt-8 border-t border-slate-100 pt-4 text-xs text-slate-500">
+          {GRATITUDE_DISCLOSURE}
+        </p>
       </div>
     </section>
 
