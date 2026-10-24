@@ -1,0 +1,133 @@
+import React from 'react';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { AboutPage } from '../src/features/about/AboutPage';
+import {
+  GRATITUDE_ENTRIES,
+  GRATITUDE_CLOSING_LINES,
+  GRATITUDE_DISCLOSURE,
+  GRATITUDE_MESSAGE,
+} from '../src/data/gratitude';
+
+describe('AboutPage', () => {
+  it('renders all three core team member cards with accurate details and portraits', () => {
+    render(
+      <MemoryRouter>
+        <AboutPage />
+      </MemoryRouter>
+    );
+
+    // Existing team member: Nazim M. Sandh
+    expect(screen.getByRole('heading', { level: 3, name: 'Nazim M. Sandh' })).toBeInTheDocument();
+    expect(screen.getByText('Founder and Initiator')).toBeInTheDocument();
+    const nazimImg = screen.getByRole('img', { name: 'Portrait of Nazim M. Sandh' });
+    expect(nazimImg).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:nazimsandhbehappy@gmail.com'
+    );
+
+    // Existing team member: Visesh Akbari (spelling preserved on card)
+    expect(screen.getByRole('heading', { level: 3, name: 'Visesh Akbari' })).toBeInTheDocument();
+    expect(screen.getByText('Developer')).toBeInTheDocument();
+    const viseshImg = screen.getByRole('img', { name: 'Portrait of Visesh Akbari' });
+    expect(viseshImg).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
+    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
+
+    // Third team member: Yashvi Dalsaniya
+    expect(screen.getByRole('heading', { level: 3, name: 'Yashvi Dalsaniya' })).toBeInTheDocument();
+    expect(screen.getByText('Managing Partner')).toBeInTheDocument();
+    const yashviImg = screen.getByRole('img', { name: 'Portrait of Yashvi Dalsaniya' });
+    expect(yashviImg).toBeInTheDocument();
+    expect(yashviImg).toHaveAttribute('src');
+
+    // Yashvi bio details
+    const bio = screen.getByText(/microbiology student/i);
+    expect(bio).toBeInTheDocument();
+    expect(bio.textContent).toContain('youth development');
+    expect(bio.textContent).toContain('education');
+    expect(bio.textContent).toContain('governance');
+    expect(bio.textContent).toContain('scientific thinking');
+    expect(bio.textContent).toContain('social responsibility');
+    expect(bio.textContent).toContain('entrepreneurship');
+    expect(bio.textContent).toContain('communication');
+    expect(bio.textContent).toContain('community participation');
+    expect(bio.textContent).toContain('civic awareness');
+    expect(bio.textContent).toContain('youth participation');
+    expect(bio.textContent).toContain('citizen-democratic-process');
+    expect(bio.textContent).toContain('informed participation');
+    expect(bio.textContent).toContain('responsible citizenship');
+
+    // Verify no invented claims for Yashvi
+    expect(bio.textContent).not.toMatch(/founded the idea|developed the website|built the platform/i);
+  });
+
+  it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AboutPage />
+      </MemoryRouter>
+    );
+
+    // Section heading
+    expect(screen.getByRole('heading', { level: 2, name: 'With gratitude' })).toBeInTheDocument();
+
+    // Draft message in Nazim's voice
+    for (const paragraph of GRATITUDE_MESSAGE.paragraphs) {
+      expect(screen.getByText(paragraph)).toBeInTheDocument();
+    }
+    expect(screen.getByText(`— ${GRATITUDE_MESSAGE.attribution}`)).toBeInTheDocument();
+
+    // 9 entries in separate data module rendered in exact order
+    const listItems = container.querySelectorAll('section[aria-labelledby="gratitude-heading"] li');
+    expect(listItems.length).toBe(9);
+
+    GRATITUDE_ENTRIES.forEach((entry, index) => {
+      const item = listItems[index];
+      expect(item.textContent).toContain(entry.name);
+      if (entry.role) {
+        expect(item.textContent).toContain(entry.role);
+      }
+    });
+
+    // Shri Dadubhai Sandhar is first
+    expect(listItems[0].textContent).toContain('Shri Dadubhai Sandhar');
+    expect(listItems[0].textContent).toContain('स्वर्गीय। मार्गदर्शक एवं प्रेरणास्रोत');
+
+    // Ganesh Bagadia ji and Rasida ben Sandh have no invented roles
+    const ganeshItem = listItems[2];
+    expect(ganeshItem.textContent).toBe('Ganesh Bagadia ji');
+
+    const rasidaItem = listItems[5];
+    expect(rasidaItem.textContent).toBe('Rasida ben Sandh');
+
+    // Closing lines
+    for (const line of GRATITUDE_CLOSING_LINES) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+    }
+
+    // Disclosure
+    expect(screen.getByText(GRATITUDE_DISCLOSURE)).toBeInTheDocument();
+  });
+
+  it('preserves section order: team before gratitude, and gratitude before approach', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <AboutPage />
+      </MemoryRouter>
+    );
+
+    const sections = Array.from(container.querySelectorAll('section'));
+    const sectionIds = sections.map((s) => s.getAttribute('aria-labelledby'));
+
+    const peopleIndex = sectionIds.indexOf('people-heading');
+    const gratitudeIndex = sectionIds.indexOf('gratitude-heading');
+    const approachIndex = sectionIds.indexOf('approach-heading');
+
+    expect(peopleIndex).toBeGreaterThan(-1);
+    expect(gratitudeIndex).toBeGreaterThan(peopleIndex);
+    expect(approachIndex).toBeGreaterThan(gratitudeIndex);
+  });
+});
