@@ -114,11 +114,16 @@ export const AboutPage: React.FC = () => (
             />
           </div>
           <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner</p>
-              <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner</p>
+                <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
+              </div>
               <p className="text-sm leading-6 text-slate-700">
-                Yashvi Dalsaniya is a microbiology student with interests in youth development, education, governance, scientific thinking, social responsibility, entrepreneurship, communication and community participation. She contributes to JanSahabhag 2047&apos;s civic awareness, youth participation and citizen-democratic-process vision, with a focus on informed participation and responsible citizenship.
+                Yashvi Dalsaniya is a microbiology student with a deep interest in youth development, education, governance, scientific thinking, and social responsibility. Her focus spans entrepreneurship, communication, organisational development, and community participation, exploring how ideas turn into practical initiatives.
+              </p>
+              <p className="text-sm leading-6 text-slate-700">
+                She contributes to JanSahabhag 2047&apos;s civic awareness, youth participation, and citizen-democratic-process vision. She believes that India&apos;s developed-country vision depends on people&apos;s awareness, collective responsibility, and expanding young people&apos;s opportunities to participate in decisions shaping their collective future.
               </p>
             </div>
           </div>

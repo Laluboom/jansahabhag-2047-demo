@@ -18,6 +18,8 @@ test('About page credits founder, technical builder, and managing partner accura
   await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toBeVisible();
   await expect(page.getByText('Managing Partner', { exact: true })).toBeVisible();
   await expect(page.getByText(/microbiology student/i)).toBeVisible();
+  await expect(page.getByText(/organisational development/i)).toBeVisible();
+  await expect(page.getByText(/developed-country vision/i)).toBeVisible();
 
   await expect(page.getByText('Single-browser simulation')).toBeVisible();
 
@@ -36,6 +38,9 @@ test('About page credits founder, technical builder, and managing partner accura
   // With gratitude section
   await expect(page.getByRole('heading', { name: 'With gratitude' })).toBeVisible();
   await expect(page.getByText('Shri Dadubhai Sandhar')).toBeVisible();
+  await expect(
+    page.locator('section[aria-labelledby="gratitude-heading"]').getByText('Visesh Akbari')
+  ).toBeVisible();
   await expect(page.getByText('Demo institution, not an official partnership')).toBeVisible();
 });
 

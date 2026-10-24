@@ -44,7 +44,7 @@ export const GRATITUDE_ENTRIES: GratitudeEntry[] = [
     role: 'CVMS Cell, Atmiya University',
   },
   {
-    name: 'Vishesh Akbari',
+    name: 'Visesh Akbari',
     role: 'Developer of this site. Currently pursuing studies at the University of London.',
   },
 ];

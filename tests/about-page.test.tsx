@@ -43,7 +43,7 @@ describe('AboutPage', () => {
     expect(yashviImg).toBeInTheDocument();
     expect(yashviImg).toHaveAttribute('src');
 
-    // Yashvi bio details
+    // Yashvi bio details across readable paragraphs
     const bio = screen.getByText(/microbiology student/i);
     expect(bio).toBeInTheDocument();
     expect(bio.textContent).toContain('youth development');
@@ -53,15 +53,25 @@ describe('AboutPage', () => {
     expect(bio.textContent).toContain('social responsibility');
     expect(bio.textContent).toContain('entrepreneurship');
     expect(bio.textContent).toContain('communication');
+    expect(bio.textContent).toContain('organisational development');
     expect(bio.textContent).toContain('community participation');
-    expect(bio.textContent).toContain('civic awareness');
-    expect(bio.textContent).toContain('youth participation');
-    expect(bio.textContent).toContain('citizen-democratic-process');
-    expect(bio.textContent).toContain('informed participation');
-    expect(bio.textContent).toContain('responsible citizenship');
+    expect(bio.textContent).toContain('how ideas turn into practical initiatives');
+
+    const secondBio = screen.getByText(/developed-country vision/i);
+    expect(secondBio).toBeInTheDocument();
+    expect(secondBio.textContent).toContain('civic awareness');
+    expect(secondBio.textContent).toContain('youth participation');
+    expect(secondBio.textContent).toContain('citizen-democratic-process');
+    expect(secondBio.textContent).toContain("India's developed-country vision");
+    expect(secondBio.textContent).toContain("people's awareness");
+    expect(secondBio.textContent).toContain('collective responsibility');
+    expect(secondBio.textContent).toContain(
+      "young people's opportunities to participate in decisions shaping their collective future"
+    );
 
     // Verify no invented claims for Yashvi
     expect(bio.textContent).not.toMatch(/founded the idea|developed the website|built the platform/i);
+    expect(secondBio.textContent).not.toMatch(/founded the idea|developed the website|built the platform/i);
   });
 
   it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {
@@ -102,6 +112,11 @@ describe('AboutPage', () => {
 
     const rasidaItem = listItems[5];
     expect(rasidaItem.textContent).toBe('Rasida ben Sandh');
+
+    // Developer public spelling confirmed as Visesh Akbari
+    const viseshGratitudeItem = listItems[8];
+    expect(viseshGratitudeItem.textContent).toContain('Visesh Akbari');
+    expect(viseshGratitudeItem.textContent).not.toContain('Vishesh');
 
     // Closing lines
     for (const line of GRATITUDE_CLOSING_LINES) {
