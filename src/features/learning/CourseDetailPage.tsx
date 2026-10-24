@@ -8,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { UhvCreditBanner } from './UhvCreditBanner';
+import { UhvWorkshopMediaPlaceholders } from './UhvWorkshopMediaPlaceholders';
 import {
   BookOpen,
   Clock,
@@ -185,6 +187,9 @@ export const CourseDetailPage: React.FC = () => {
         )}
       </Card>
 
+      {/* Workshop Attribution Banner */}
+      {isUhv && <UhvCreditBanner />}
+
       {/* Modules & Lessons Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold font-heading text-slate-900">
@@ -256,6 +261,9 @@ export const CourseDetailPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Visual Documentation & Video Placeholders */}
+      {isUhv && <UhvWorkshopMediaPlaceholders />}
     </div>
   );
 };

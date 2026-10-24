@@ -37,6 +37,7 @@ import {
   ALLOWED_BINARY_FORMAT_LABELS,
   validateEvidenceAttachmentFile,
 } from '../../domain/evidenceRules';
+import { UhvCreditBanner } from '../learning/UhvCreditBanner';
 import { EvidenceAttachmentStore } from '../../services/evidenceAttachmentStore';
 import { generateId } from '../../utils/id';
 
@@ -715,15 +716,18 @@ export const SubmitAssignmentPage: React.FC = () => {
 
         {/* UHV Single-browser Simulation Disclosure */}
         {isUhv && (
-          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1.5 text-xs">
-            <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-blue-900">
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
-              Private Reflection Boundary (Single-Browser Simulation)
-            </span>
-            <p className="text-blue-800 leading-relaxed">
-              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credits, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
-            </p>
-          </div>
+          <>
+            <UhvCreditBanner compact />
+            <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-950 space-y-1.5 text-xs">
+              <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-blue-900">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
+                Private Reflection Boundary (Single-Browser Simulation)
+              </span>
+              <p className="text-blue-800 leading-relaxed">
+                This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credits, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
+              </p>
+            </div>
+          </>
         )}
 
         {/* Teacher Revision Alert if revising */}
