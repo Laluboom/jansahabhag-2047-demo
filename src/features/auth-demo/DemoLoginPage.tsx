@@ -113,7 +113,7 @@ export const DemoLoginPage: React.FC = () => {
 
                 <div className="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between">
                   <span className="text-xs text-slate-400 flex items-center gap-1">
-                    {user.role === 'participant' && `${user.totalCredits} Credits`}
+                    {user.role === 'participant' && `${user.totalCredits} Civic Credit Points`}
                     {user.role === 'teacher' && 'Review Queue'}
                     {user.role === 'facilitator' && 'Assembly Lead'}
                     {user.role === 'institution_admin' && 'School Admin'}

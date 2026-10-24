@@ -254,7 +254,7 @@ export const AssignmentDetailPage: React.FC = () => {
                   Personal Study Stream &bull; Private
                 </span>
                 <span className="text-xs font-semibold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                  No Civic Credits (Non-Evaluative)
+                  No Civic Credit Points (Non-Evaluative)
                 </span>
               </>
             ) : (
@@ -263,7 +263,7 @@ export const AssignmentDetailPage: React.FC = () => {
                   Evidence Type: {assignment.requiredEvidenceType}
                 </span>
                 <span className="text-xs font-semibold text-civic-saffron-700 bg-civic-saffron-50 px-2 py-0.5 rounded border border-civic-saffron-200">
-                  +{assignment.creditsReward} Civic Credits
+                  +{assignment.creditsReward} Civic Credit Points
                 </span>
               </>
             )}
@@ -281,7 +281,7 @@ export const AssignmentDetailPage: React.FC = () => {
                 },
                 {
                   title: 'No Credit Award',
-                  description: 'UHV assignments carry 0 credits to keep reflection unpressured.',
+                  description: 'UHV assignments carry 0 Civic Credit Points to keep reflection unpressured.',
                 },
                 {
                   title: 'Private Journal Isolation',
@@ -297,8 +297,8 @@ export const AssignmentDetailPage: React.FC = () => {
                   description: 'Do not upload unconsented faces or private vehicle license plates.',
                 },
                 {
-                  title: 'Mentor Review & Credits',
-                  description: `Earn +${assignment.creditsReward} Contribution Credits upon teacher mentor verification.`,
+                  title: 'Mentor Review & Credit Points',
+                  description: `Earn +${assignment.creditsReward} Contribution Civic Credit Points upon teacher mentor verification.`,
                 },
               ]}
               testId="assignment-detail-rules-btn"
@@ -332,7 +332,7 @@ export const AssignmentDetailPage: React.FC = () => {
               Private Reflection Boundary (Single-Browser Simulation)
             </span>
             <p className="text-blue-800 leading-relaxed">
-              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credits, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
+              This reflection invites personal understanding, perspectives, and questions. It is private to your browser simulation session, carries no ideological criteria, numeric scoring, or Civic Credit Points, and is not submitted to teacher grading queues. Mentor feedback is unavailable in this simulation.
             </p>
           </div>
         )}
@@ -721,7 +721,7 @@ export const AssignmentDetailPage: React.FC = () => {
                 <p className="text-xs text-amber-800">
                   {isUhv
                     ? 'You have a saved draft for this reflection. Continue editing to record your notes.'
-                    : 'You have a saved draft for this assignment. Continue editing to submit for review and earn +2 Credits.'}
+                    : 'You have a saved draft for this assignment. Continue editing to submit for review and earn +2 Civic Credit Points.'}
                 </p>
               </div>
               <Link to={`/assignments/${assignment.id}/submit`}>

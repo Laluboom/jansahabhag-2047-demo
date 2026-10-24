@@ -179,7 +179,7 @@ describe('Point-of-Use Rules Controls Across Platform Modules', () => {
       fireEvent.click(uhvRulesBtn);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('UHV / Jeevan Vidya Study Charter')).toBeInTheDocument();
-      expect(screen.getByText(/Zero Civic Credit Policy/i)).toBeInTheDocument();
+      expect(screen.getByText(/Zero Civic Credit (?:Points )?Policy/i)).toBeInTheDocument();
       expect(screen.getByText(/Voluntary Inquiry & Non-Graded Reflection/i)).toBeInTheDocument();
       // Must NOT include seat quota rule
       expect(screen.queryByTestId('rules-seat-quota-section')).not.toBeInTheDocument();
@@ -251,7 +251,7 @@ describe('Point-of-Use Rules Controls Across Platform Modules', () => {
       fireEvent.click(projRulesBtn);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Civic Action Projects & Milestones Rules')).toBeInTheDocument();
-      expect(screen.getByText(/Milestone Verification & Credit Awards \(\+2 Credits\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/Milestone Verification & Credit (?:Point )?Awards/i)).toBeInTheDocument();
       expect(screen.queryByTestId('rules-seat-quota-section')).not.toBeInTheDocument();
       expect(screen.getByTestId('link-to-full-rulebook')).toHaveAttribute('href', '/help');
     });
@@ -291,7 +291,7 @@ describe('Point-of-Use Rules Controls Across Platform Modules', () => {
 
       fireEvent.click(passRulesBtn);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('Civic Passport Portfolio & Credit Rules')).toBeInTheDocument();
+      expect(screen.getByText(/Civic Passport Portfolio & (?:Civic )?Credit (?:Point )?Rules/i)).toBeInTheDocument();
       expect(screen.getByText(/Evidence-Based Portfolio \(Not a Moral Score\)/i)).toBeInTheDocument();
       expect(screen.getByTestId('link-to-full-rulebook')).toHaveAttribute('href', '/help');
 

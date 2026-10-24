@@ -172,7 +172,7 @@ describe('Participant Age Policy Invariant & Visible Requirement (Owner Decision
           age: 18,
           location: 'Mansarovar, Jaipur, Rajasthan',
           badgeCount: 5,
-          totalCredits: 16,
+          totalCredits: 2,
           schemaVersion: 1,
           createdAt: '2026-09-01T08:30:00Z',
           updatedAt: '2026-10-08T15:45:00Z',

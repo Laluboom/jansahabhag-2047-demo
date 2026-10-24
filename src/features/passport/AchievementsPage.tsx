@@ -53,7 +53,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b1',
       title: 'Civic Field Auditor',
-      desc: 'Completed verified traffic & pedestrian field count in school zone (+1 Observation).',
+      desc: 'Completed verified traffic & pedestrian field count in school zone (+1 Observation Civic Credit Point).',
       earned: hasObservation,
       category: 'Observation',
       icon: FileCheck2,
@@ -61,7 +61,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b2',
       title: 'Deliberation Delegate',
-      desc: 'Admitted as delegate and contributed to Youth Deliberative Assembly (+2 Deliberation).',
+      desc: 'Admitted as delegate and contributed to Youth Deliberative Assembly (+2 Deliberation Civic Credit Points).',
       earned: hasDeliberation,
       category: 'Deliberation',
       icon: Vote,
@@ -69,7 +69,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b3',
       title: 'Civic Deliberative Reflector',
-      desc: 'Recorded civic and ethical reflections in Civic Passport (+1 Reflection).',
+      desc: 'Recorded civic and ethical reflections in Civic Passport (+1 Reflection Civic Credit Point).',
       earned: hasReflection,
       category: 'Reflection',
       icon: Sparkles,
@@ -77,7 +77,7 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b4',
       title: 'Civic Knowledge Explorer',
-      desc: 'Completed civic foundations and ethics learning modules (+2 Learning).',
+      desc: 'Completed civic foundations and ethics learning modules (+2 Learning Civic Credit Points).',
       earned: hasLearning,
       category: 'Learning',
       icon: BookOpen,
@@ -85,17 +85,17 @@ export const AchievementsPage: React.FC = () => {
     {
       id: 'b5',
       title: 'Action Project Champion',
-      desc: 'Co-authored a municipal resolution submitted to Nagar Nigam (+2 Civic Action).',
+      desc: 'Co-authored a municipal resolution submitted to Nagar Nigam (+2 Civic Action Credit Points).',
       earned: hasCivicAction,
       category: 'Civic Action',
       icon: ShieldCheck,
     },
     {
       id: 'b6',
-      title: 'Master Civic Practitioner',
-      desc: 'Accumulated 20+ verified Civic Credits across civic dimensions.',
-      earned: (passport?.totalCredits || 0) >= 20,
-      category: 'Mastery',
+      title: 'Civic Credit Milestone Champion',
+      desc: 'Reached the maximum 5 verified Civic Credit Points ceiling across civic dimensions.',
+      earned: (passport?.totalCredits || 0) >= 5,
+      category: 'Milestone',
       icon: Award,
     },
   ];

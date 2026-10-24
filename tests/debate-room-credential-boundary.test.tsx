@@ -24,8 +24,8 @@ describe('Debate Room Verified Credential Boundary', () => {
     const passportBefore = await repository.getPassport('user_vikram');
     const civicReflsBefore = await repository.getCivicReflections('user_vikram');
 
-    expect(userBefore?.totalCredits).toBe(13);
-    expect(passportBefore.totalCredits).toBe(13);
+    expect(userBefore?.totalCredits).toBe(3);
+    expect(passportBefore.totalCredits).toBe(3);
     expect(passportBefore.creditsByDimension.Reflection).toBe(0);
     expect(civicReflsBefore).toHaveLength(0);
 

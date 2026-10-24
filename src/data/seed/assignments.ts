@@ -153,7 +153,7 @@ export const seedSubmissions: Submission[] = [
     content: 'Completed 30-minute peak hour traffic audit on Madhyam Marg outside Navchetna Public School on Oct 2, 2026 (7:45 AM - 8:15 AM). Counted 342 two-wheelers, 118 four-wheelers, 48 auto-rickshaws/e-rickshaws, and 215 student pedestrians. Average vehicle speed was 42 km/h despite 25 km/h school zone sign.',
     evidenceIds: ['ev_aarav_traffic_count_01'],
     status: 'verified',
-    teacherFeedback: 'Outstanding field audit Aarav! Very rigorous 5-minute interval breakdown. Verified for 10 Civic Credits.',
+    teacherFeedback: 'Outstanding field audit Aarav! Very rigorous 5-minute interval breakdown. Verified for 2 Civic Credit Points.',
     reviewerId: 'user_kavita',
     reviewedAt: '2026-10-04T11:00:00Z',
     score: 25,

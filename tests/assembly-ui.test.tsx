@@ -120,7 +120,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Civic Passport Portfolio/i)).toBeInTheDocument();
-      expect(screen.getByText(/Civic Credit Dimensions/i)).toBeInTheDocument();
+      expect(screen.getByText(/Civic Credit (?:Point )?Dimensions/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Learning/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Observation/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Deliberation/i).length).toBeGreaterThanOrEqual(1);
@@ -139,7 +139,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Civic Credit Ledger/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Civic Credit (?:Points )?Ledger/i })).toBeInTheDocument();
       expect(screen.getByText(/Transparent Activity Award Rules/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /All Dimensions/i })).toBeInTheDocument();
     });

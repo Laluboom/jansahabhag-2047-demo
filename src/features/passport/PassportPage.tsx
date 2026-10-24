@@ -111,7 +111,7 @@ export const PassportPage: React.FC = () => {
 
           <div className="text-left sm:text-right bg-white/10 p-3.5 rounded-xl border border-white/10 shrink-0">
             <span className="text-xs font-semibold text-slate-300 uppercase block">
-              Total Verified Credits
+              Total Verified Civic Credit Points
             </span>
             <span className="text-3xl font-extrabold font-heading text-civic-saffron-400">
               {passport.totalCredits}
@@ -133,8 +133,8 @@ export const PassportPage: React.FC = () => {
           <PointOfUseRulesButton
             moduleName="Civic Passport"
             triggerText="Passport Rules"
-            modalTitle="Civic Passport Portfolio & Credit Rules"
-            description="Operating rules governing civic credentials, activity ledgers, and credit awards."
+            modalTitle="Civic Passport Portfolio & Civic Credit Point Rules"
+            description="Operating rules governing civic credentials, activity ledgers, and credit point awards."
             rules={[
               {
                 title: 'Evidence-Based Portfolio (Not a Moral Score)',
@@ -142,11 +142,11 @@ export const PassportPage: React.FC = () => {
               },
               {
                 title: 'Deterministic Credit Invariants',
-                description: 'Participants start with 10 Credits. Eligible verified activities award fixed amounts (+1 or +2 credits). Unverified submissions remain pending and uncounted.',
+                description: 'Participants start with 0 Civic Credit Points with a hard ceiling of 5 verified points. Eligible verified activities award fixed amounts (+1 or +2 points) until the cap. Unverified submissions remain pending and uncounted.',
               },
               {
-                title: 'Zero Credit for Personal Reflection',
-                description: 'UHV values reflections and personal debate notes award 0 credits by design to ensure unpressured, genuine reflection.',
+                title: 'Zero Points for Personal Reflection',
+                description: 'UHV values reflections and personal debate notes award 0 Civic Credit Points by design to ensure unpressured, genuine reflection.',
               },
               {
                 title: 'Non-Transferable Credential',
@@ -159,7 +159,7 @@ export const PassportPage: React.FC = () => {
           <Link to="/passport/credits">
             <Button size="sm" variant="outline" className="bg-slate-800/80 text-white border-slate-700 hover:bg-slate-700">
               <Award className="w-3.5 h-3.5 mr-1 text-civic-saffron-400" />
-              <span>Credit Ledger</span>
+              <span>Credit Points Ledger</span>
             </Button>
           </Link>
           <Link to="/passport/evidence">
@@ -189,11 +189,28 @@ export const PassportPage: React.FC = () => {
         <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-1 text-[11px] text-slate-600">
           <span className="font-semibold text-slate-800 block">Applied Demo Formula & Rules:</span>
           <p>
-            &bull; Fixed rule awards: Newly created participants start with <strong>10 Credits</strong> (starting balance transaction). Subsequent eligible activities award <strong>1 or 2 Credits</strong>: <strong>+1 Learning</strong> (module completion), <strong>+1 Observation</strong> (verified field evidence), <strong>+2 Deliberation</strong> (assembly role admission), <strong>+1 Deliberation</strong> (substantive contribution), <strong>+1 Collaboration</strong> (workspace action), <strong>+2 Civic Action</strong> (field project milestone), <strong>+1 Reflection</strong> (civic reflection), <strong>+2 Contribution</strong> (assignment submission, pending until facilitator review). No-credit activities (private UHV reflections, retained dissent, private Debate journals) award <strong>0 Credits</strong>.
+            &bull; Fixed rule awards: Newly created participants start with <strong>0 Civic Credit Points</strong> with a hard maximum of <strong>5 verified Civic Credit Points</strong>. Subsequent eligible activities award <strong>1 or 2 Civic Credit Points</strong> until the 5-point cap: <strong>+1 Learning</strong> (module completion), <strong>+1 Observation</strong> (verified field evidence), <strong>+2 Deliberation</strong> (assembly role admission), <strong>+1 Deliberation</strong> (substantive contribution), <strong>+1 Collaboration</strong> (workspace action), <strong>+2 Civic Action</strong> (field project milestone), <strong>+1 Reflection</strong> (civic reflection), <strong>+2 Contribution</strong> (assignment submission, pending until facilitator review). No-credit activities (private UHV reflections, retained dissent, private Debate journals) award <strong>0 Civic Credit Points</strong>.
           </p>
           <p className="text-slate-500 italic">
             Notice: Multiplicative weighting formulas from the conceptual PRD are exploratory research specifications; this local demo operates solely on transparent, fixed amounts without automated algorithmic scoring.
           </p>
+        </div>
+        <div className="p-3 rounded-lg bg-indigo-50/80 border border-indigo-200 text-[11px] text-indigo-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="space-y-0.5">
+            <span className="font-semibold block text-indigo-900">National Education Policy & UGC Context:</span>
+            <p className="text-indigo-800">
+              UGC recognizes community engagement in learning, but these five demo points are not academic credits and do not count toward graduation.
+            </p>
+          </div>
+          <a
+            href="https://www.ugc.gov.in/KeyInitiative?ID=VQnigtvLvoA0UAhQPVdzTA%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline shrink-0"
+          >
+            <span>Official UGC Source</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
         <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/80 space-y-1 text-[11px] text-amber-950">
           <span className="font-semibold block">Simulation & Language Notice:</span>
@@ -218,7 +235,7 @@ export const PassportPage: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold font-heading text-slate-900">
-            Civic Credit Dimensions (7 PRD Dimensions)
+            Civic Credit Point Dimensions (7 PRD Dimensions)
           </h2>
           <span className="text-xs text-slate-500">Verified totals only</span>
         </div>
@@ -290,7 +307,7 @@ export const PassportPage: React.FC = () => {
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-amber-200">
                   <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-md border border-amber-200 block">
-                    +{entry.creditsAwarded} Pending Credits
+                    +{entry.creditsAwarded} Pending Points
                   </span>
                   <div className="flex items-center gap-2">
                     {entry.sourceRoute && (
@@ -378,7 +395,7 @@ export const PassportPage: React.FC = () => {
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <span className="text-xs font-bold text-civic-saffron-700 bg-civic-saffron-50 px-2.5 py-1 rounded-md border border-civic-saffron-200 block">
-                    {entry.creditsAwarded > 0 ? `+${entry.creditsAwarded} Credits` : '0 Credits (Unjudged)'}
+                    {entry.creditsAwarded > 0 ? `+${entry.creditsAwarded} Civic Credit Points` : '0 Civic Credit Points (Unjudged)'}
                   </span>
 
                   <div className="flex items-center gap-2">
@@ -413,7 +430,7 @@ export const PassportPage: React.FC = () => {
             <h2 className="text-base font-bold font-heading text-slate-900">
               Civic & Ethical Reflections
             </h2>
-            <span className="text-xs text-slate-500">Autonomous inquiries &bull; No civic credits</span>
+            <span className="text-xs text-slate-500">Autonomous inquiries &bull; 0 Civic Credit Points</span>
           </div>
 
           <div className="space-y-3">

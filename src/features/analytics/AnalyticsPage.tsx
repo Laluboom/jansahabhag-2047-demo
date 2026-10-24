@@ -149,11 +149,11 @@ export const AnalyticsPage: React.FC = () => {
             </Card>
 
             <Card className="p-4 border-slate-200">
-              <span className="text-xs font-semibold text-slate-500 uppercase block">Total Credits Awarded</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase block">Total Civic Credit Points Awarded</span>
               <span className="text-2xl font-bold text-civic-saffron-700 font-heading mt-1 block">
                 {snapshot.credits.reduce((s, c) => s + c.amount, 0)}
               </span>
-              <span className="text-[11px] text-slate-500">Across 6 dimensions</span>
+              <span className="text-[11px] text-slate-500">Across dimensions</span>
             </Card>
 
             <Card className="p-4 border-slate-200">
@@ -180,7 +180,7 @@ export const AnalyticsPage: React.FC = () => {
             {/* Credits by Dimension Bar Chart */}
             <Card className="border-slate-200 p-6 space-y-4">
               <CardTitle className="text-base font-bold text-slate-900 font-heading">
-                Credits Earned by Civic Dimension
+                Civic Credit Points Earned by Civic Dimension
               </CardTitle>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">

@@ -97,7 +97,7 @@ export const ParticipantDashboardPage: React.FC = () => {
               },
               {
                 title: 'Verified Civic Action Credit Ledger',
-                description: 'Starting balance is 10 Credits. Eligible verified civic activities award 1 or 2 Credits; personal reflections carry 0 credits to maintain voluntary reflection.',
+                description: 'Starting balance is 0 Civic Credit Points with a hard maximum of 5 verified points. Eligible verified civic activities award 1 or 2 points until the cap; personal reflections carry 0 points to maintain voluntary reflection.',
               },
               {
                 title: 'Persistent & Non-Anonymous Participation',
@@ -126,7 +126,7 @@ export const ParticipantDashboardPage: React.FC = () => {
         {/* Total Credits */}
         <Card className="p-4 sm:p-5 border-civic-saffron-200/80 bg-gradient-to-br from-white to-civic-saffron-50/40">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase">Civic Credits</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase">Civic Credit Points</span>
             <div className="w-8 h-8 rounded-lg bg-civic-saffron-100 text-civic-saffron-800 flex items-center justify-center">
               <Award className="w-4 h-4" />
             </div>
@@ -339,7 +339,7 @@ export const ParticipantDashboardPage: React.FC = () => {
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="min-w-0 space-y-1.5 break-words">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
-                    Next Action Item (+{nextAssignment.creditsReward} Credits)
+                    Next Action Item (+{nextAssignment.creditsReward} Civic Credit Points)
                   </span>
                   <h3 className="text-sm font-bold text-slate-900 font-heading">
                     {nextAssignment.title}
