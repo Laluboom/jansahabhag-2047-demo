@@ -85,7 +85,7 @@ export const AdminDashboardPage: React.FC = () => {
             JanSahabhag 2047 State Command
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            State Mission Cell &bull; Rajasthan Urban Mobility Initiative &bull; Schema v{snapshot.schemaVersion}
+            State Mission Cell &bull; Gujarat Urban Mobility Initiative &bull; Schema v{snapshot.schemaVersion}
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Acceptance', () => {
+test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Acceptance', () => {
   test.beforeEach(async ({ page }) => {
     // Reset local database via demo-login
     await page.goto('/demo-login');
@@ -9,7 +9,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     await page.waitForLoadState('networkidle');
   });
 
-  test('traces complete connected Jaipur journey: learning to evidence, workspace, debate room, 33% reservation, youth assembly, passport & persona privacy', async ({ page }) => {
+  test('traces complete connected Rajkot journey: learning to evidence, workspace, debate room, 33% reservation, youth assembly, passport & persona privacy', async ({ page }) => {
     // -------------------------------------------------------------
     // Step 1: Login as Ankita Kapri (Youth Participant)
     // -------------------------------------------------------------
@@ -48,7 +48,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     await expect(page.getByRole('heading', { name: /Pedestrian Flow Interview with 5 Peers/i })).toBeVisible();
 
     const notesInput = page.getByLabel(/Field Observation Notes & Data Log/i);
-    const observationDraft = 'Package 09 Acceptance: Field audit of morning crossing safety at Navchetna School corridor on Madhyam Marg.';
+    const observationDraft = 'Package 09 Acceptance: Field audit of morning crossing safety at Virani Science College corridor on Kalawad Road.';
     await notesInput.fill(observationDraft);
     await expect(page.getByText(/Draft autosaved locally/i)).toBeVisible({ timeout: 5000 });
 
@@ -150,7 +150,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // -------------------------------------------------------------
     // Navigate to debate room
     await page.goto('/events/sess_jaipur_01/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
 
     // Verify video-preview badge per PRD OD.4
     const debateVideoBadge = page.getByTestId('video-preview-badge');
@@ -176,7 +176,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
 
     // Direct route reload check
     await page.reload();
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(debateVideoBadge).toBeVisible();
 
     // Non-existent session route check: verify fallback card without infinite spinner
@@ -193,7 +193,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     await page.waitForURL('**/dashboard');
 
     await page.goto('/events/sess_jaipur_01/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
 
     // Verify Owner controls are visible (Audit trail button)
     const auditBtn = page.getByTestId('view-role-audits-btn-facilitator');
@@ -250,7 +250,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // -------------------------------------------------------------
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/events/sess_jaipur_01/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(debateVideoBadge).toBeVisible();
 
     // Verify no horizontal overflow on mobile body

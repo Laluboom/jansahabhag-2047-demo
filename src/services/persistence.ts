@@ -56,29 +56,59 @@ export class PersistenceService {
 
       if (isLegacyJaipur) {
         // Safe, idempotent Rajkot transition:
-        // 1. Preserve old data in a local-only backup
+        // 1. Durably store and verify exact raw backup before modifying STORAGE_KEY.
+        let backupVerified = false;
         try {
           window.localStorage.setItem(JAIPUR_BACKUP_STORAGE_KEY, raw);
+          const readBack = window.localStorage.getItem(JAIPUR_BACKUP_STORAGE_KEY);
+          if (readBack === raw) {
+            backupVerified = true;
+          }
         } catch (e) {
           console.warn('PersistenceService: Failed to store Jaipur backup in localStorage', e);
+          backupVerified = false;
         }
 
+        if (!backupVerified) {
+          // FAIL CLOSED: Never overwrite legacy database if backup was not durably stored and verified.
+          // Give user an honest visible notice and preserve all data and private UHV content.
+          const errorNotice: TransitionNotice = {
+            id: 'rajkot_demo_transition_blocked',
+            message:
+              'Storage quota prevented automatic backup of existing Jaipur demo data. Migration to Rajkot demo paused to protect your work and private UHV reflections. Free local storage to proceed.',
+            backupKey: null,
+            createdAt: new Date().toISOString(),
+            isError: true,
+          };
+
+          try {
+            window.localStorage.setItem(TRANSITION_NOTICE_STORAGE_KEY, JSON.stringify(errorNotice));
+          } catch {
+            // Ignore if notice cannot be written to localStorage
+          }
+
+          // Return legacy database with error notice attached so user can see it; DO NOT overwrite STORAGE_KEY!
+          parsed.transitionNotice = errorNotice;
+          return parsed;
+        }
+
+        // Backup is verified! Safe to proceed with Rajkot transition.
         const transitionNotice: TransitionNotice = {
           id: 'rajkot_demo_transition',
           message:
             'Demo updated to Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot. Previous Jaipur demo work is safely preserved in local backup.',
           backupKey: JAIPUR_BACKUP_STORAGE_KEY,
           createdAt: new Date().toISOString(),
+          isError: false,
         };
 
-        // 2. Set transition notice for the UI
         try {
           window.localStorage.setItem(TRANSITION_NOTICE_STORAGE_KEY, JSON.stringify(transitionNotice));
         } catch (e) {
           console.warn('PersistenceService: Failed to store transition notice in localStorage', e);
         }
 
-        // 3. Initialize fresh Rajkot seed database with transition notice (do NOT reattribute old work)
+        // Initialize fresh Rajkot seed database with transition notice (do NOT reattribute old work)
         const fresh = getFreshSeedDatabase();
         fresh.transitionNotice = transitionNotice;
         this.saveDatabase(fresh);
@@ -95,6 +125,14 @@ export class PersistenceService {
       return migrated;
     } catch (err) {
       console.warn('PersistenceService: Failed to parse localStorage data. Resetting to fresh seed.', err);
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          window.localStorage.setItem('jansahabhag_malformed_backup_v1', raw);
+        }
+      } catch (backupErr) {
+        console.warn('PersistenceService: Failed to preserve malformed raw data', backupErr);
+      }
       const fresh = getFreshSeedDatabase();
       this.saveDatabase(fresh);
       return fresh;

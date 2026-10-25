@@ -93,7 +93,7 @@ export const WorkspacePage: React.FC = () => {
   const [isRulebookModalOpen, setIsRulebookModalOpen] = useState(false);
   const [isAcknowledgingRules, setIsAcknowledgingRules] = useState(false);
 
-  // Active workspace ID (defaults to Jaipur School-Zone Workspace)
+  // Active workspace ID (defaults to Rajkot School-Zone Workspace)
   const currentWorkspaceId = paramWorkspaceId || 'ws_jaipur_school_safety';
 
   // Load all workspace data

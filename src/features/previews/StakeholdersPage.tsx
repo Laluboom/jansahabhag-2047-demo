@@ -26,29 +26,29 @@ export const StakeholdersPage: React.FC = () => {
   const stakeholders: StakeholderItem[] = [
     {
       id: 'STK-01',
-      name: 'Jaipur Municipal Corporation (Greater)',
+      name: 'Rajkot Municipal Corporation (RMC)',
       role: 'Urban Local Body / Roads & Public Works Cell',
       status: 'Proposition Formally Tabled',
       contact: 'Er. R. S. Meena, Executive Engineer (Zone 8)',
       lastAction: 'Official delegation presented by student rapporteurs on 24 Sep 2026',
       responseNote:
         'Site inspection scheduled with Assistant Engineer. Speed table estimate queued for Zone 8 Standing Committee budget allocation.',
-      receiptNumber: 'JMC-CIV-2026-8821',
+      receiptNumber: 'RMC-CIV-2026-8821',
     },
     {
       id: 'STK-02',
-      name: 'Jaipur Development Authority (JDA)',
+      name: 'Rajkot Urban Development Authority (RUDA)',
       role: 'Arterial Traffic Infrastructure & Signals Division',
       status: 'Signal Sync Under Review',
       contact: 'Director (Traffic Engineering & ITS)',
       lastAction: 'Crosswalk pedestrian phase timing request submitted',
       responseNote:
-        'JDA ITS Cell is evaluating a 20-second dedicated pedestrian walking interval at the Mansarovar crossing.',
-      receiptNumber: 'JDA-TE-2026-0419',
+        'RUDA ITS Cell is evaluating a 20-second dedicated pedestrian walking interval at the Kalawad Road crossing.',
+      receiptNumber: 'RUDA-TE-2026-0419',
     },
     {
       id: 'STK-03',
-      name: 'Navchetna School Parent-Teacher Association',
+      name: 'Virani Science College Parent-Teacher Association',
       role: 'Community Co-Sponsor & Parent Marshals',
       status: 'Endorsement Signed (500 Petitions)',
       contact: 'President & Secretary, PTA Civic Sub-Committee',
@@ -59,14 +59,14 @@ export const StakeholdersPage: React.FC = () => {
     },
     {
       id: 'STK-04',
-      name: 'Jaipur Traffic Police (South Zone)',
+      name: 'Rajkot Traffic Police (West Zone)',
       role: 'Law Enforcement & Speed Deflection',
       status: 'Speed Radar Deployment Approved',
       contact: 'Deputy Commissioner of Police (Traffic)',
       lastAction: 'Speed violation audit data shared with ACP Traffic',
       responseNote:
         'Mobile speed interceptor van assigned to school perimeter during 07:45-08:30 morning peak.',
-      receiptNumber: 'JTP-ENF-2026-993',
+      receiptNumber: 'RTP-ENF-2026-993',
     },
   ];
 

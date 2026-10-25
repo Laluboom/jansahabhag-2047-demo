@@ -68,7 +68,7 @@ export const CivicIssuesPage: React.FC = () => {
     try {
       await demoRepository.reportCivicIssue({
         title: reportTitle.trim(),
-        location: reportLocation.trim() || 'Mansarovar, Jaipur',
+        location: reportLocation.trim() || 'Kalawad Road, Rajkot',
         ward: reportWard,
         category: reportCategory,
         severity: reportSeverity,
@@ -108,7 +108,7 @@ export const CivicIssuesPage: React.FC = () => {
       <DemoPreviewBadge
         size="banner"
         label="Civic Issues Map Preview"
-        description="Geospatial crowd-sourced hazard tagging sandbox. Active data links directly to Aarav's Jaipur school zone audit and Rajasthan student fieldwork."
+        description="Geospatial crowd-sourced hazard tagging sandbox. Active data links directly to Ankita's Rajkot school zone audit and Gujarat student fieldwork."
       />
 
       {/* Header */}
@@ -137,7 +137,7 @@ export const CivicIssuesPage: React.FC = () => {
             <span>Interactive GIS Cluster Layer (Simulated)</span>
           </div>
           <h2 className="text-xl font-bold font-heading text-white">
-            Jaipur & Rajasthan School Zone Heatmap
+            Rajkot & Gujarat School Zone Heatmap
           </h2>
           <p className="text-xs text-slate-300 leading-relaxed">
             {issues.length} verified danger clusters identified by student audits. 14 critical pedestrian crossing conflicts queued for municipal intervention.
@@ -310,9 +310,9 @@ export const CivicIssuesPage: React.FC = () => {
                 onChange={(e) => setReportWard(e.target.value)}
                 className="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white"
               >
-                <option value="Ward 24">Ward 24 (Jaipur)</option>
-                <option value="Ward 12">Ward 12 (Ajmer)</option>
-                <option value="Ward 8">Ward 8 (Kota)</option>
+                <option value="Ward 8">Ward 8 (Rajkot)</option>
+                <option value="Ward 2">Ward 2 (Rajkot)</option>
+                <option value="Ward 14">Ward 14 (Rajkot)</option>
               </select>
             </div>
           </div>

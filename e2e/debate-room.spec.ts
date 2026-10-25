@@ -13,7 +13,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await page.waitForURL('**/debate-room');
 
     // 2. Header and motion verification
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(page.getByText('Immediate installation of tabletop pedestrian crosswalks')).toBeVisible();
 
     // 3. Single-browser local simulation notices (no live multi-user network or server authorization)
@@ -179,7 +179,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
 
     // Returned to Debate Room with state preserved
     await page.waitForURL('**/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(page.getByText(/Session ID: sess_jaipur_01/i)).toBeVisible();
     await expect(page.getByText('Speaking Queue', { exact: true })).toBeVisible();
   });

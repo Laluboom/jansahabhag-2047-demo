@@ -56,7 +56,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
       expect(screen.getByText(/Practice Prompt: Drafting a Measurable Proposition Clause/i)).toBeInTheDocument();
 
       // Facilitator and moderator content MUST NOT appear
-      expect(screen.queryByText(/Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Draft Candidate Agenda: Ward (8|24) (Rajkot|Jaipur) Youth Assembly/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Draft Report Summary: Public Field Submissions/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Draft Report Summary: Workspace Conduct & Channels/i)).not.toBeInTheDocument();
     });
@@ -83,7 +83,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
       expect(screen.getAllByText(/Facilitator/i).length).toBeGreaterThanOrEqual(1);
 
       // Draft agenda items are present
-      expect(screen.getByText(/Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly/i)).toBeInTheDocument();
+      expect(screen.getByText(/Draft Candidate Agenda: Ward (8|24) (Rajkot|Jaipur) Youth Assembly/i)).toBeInTheDocument();
       expect(screen.getByText(/Draft Candidate Agenda: Rapid Parliamentary Debate Practice/i)).toBeInTheDocument();
       expect(screen.getByText(/Proposed 6-Stage Deliberation Schedule/i)).toBeInTheDocument();
 
@@ -126,7 +126,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
 
       // Participant prompts and facilitator agendas MUST NOT appear
       expect(screen.queryByText(/Practice Prompt: Opening Deliberation Statement/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Draft Candidate Agenda: Ward (8|24) (Rajkot|Jaipur) Youth Assembly/i)).not.toBeInTheDocument();
     });
 
     it('filters draft report summaries when moderator has only a single active scope', async () => {

@@ -378,7 +378,7 @@ export const AssemblyDetailPage: React.FC = () => {
           Every named Assembly role (Thinker, Enabler, Troubleshooter, Shaper, Chair, Co-Chair, and Facilitator) operates under a separate 33% mandatory women's reservation quota calculated as <code className="font-mono bg-slate-100 px-1 py-0.5 rounded font-semibold text-slate-800">ceil(0.33 &times; allocatedPlaces)</code>. Cross-role pooling is prohibited; unmet reserved role places stay vacant by default. The only exception path is an explicit, simulated Platform Owner approval (<code className="font-mono bg-purple-50 text-purple-800 px-1 py-0.5 rounded">platform_admin</code>) with substantive reason and permanent audit trail.
         </p>
         <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 border-t border-civic-indigo-100">
-          <span>&bull; Fictional Jaipur Prototype: one-browser simulation only.</span>
+          <span>&bull; Fictional Rajkot Prototype: one-browser simulation only.</span>
           <span>&bull; No real gender collection or server authority is claimed.</span>
           <span>&bull; Small cohorts (&le; 3 places): individual status is privacy-suppressed from public view.</span>
         </div>

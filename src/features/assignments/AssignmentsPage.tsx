@@ -54,11 +54,11 @@ export const AssignmentsPage: React.FC = () => {
   // Cohort Attachment Modal State
   const [isCohortModalOpen, setIsCohortModalOpen] = useState(false);
   const [cohortDocType, setCohortDocType] = useState<'attendance_sheet' | 'completion_certificate'>('attendance_sheet');
-  const [cohortId, setCohortId] = useState('cohort_navchetna_grade12');
-  const [cohortTitle, setCohortTitle] = useState('Navchetna Civic Deliberation Workshop Attendance Sheet');
-  const [cohortDescription, setCohortDescription] = useState('Signed attendance sheet verifying in-person presence at Ward 24 fieldwork workshop.');
-  const [cohortAuditNotes, setCohortAuditNotes] = useState('Collected and countersigned by Teacher Kavita Rao on site.');
-  const [selectedCohortParticipantIds, setSelectedCohortParticipantIds] = useState<string[]>(['user_aarav', 'user_priya']);
+  const [cohortId, setCohortId] = useState('cohort_vsc_grade12');
+  const [cohortTitle, setCohortTitle] = useState('Virani Science College Civic Deliberation Workshop Attendance Sheet');
+  const [cohortDescription, setCohortDescription] = useState('Signed attendance sheet verifying in-person presence at Ward 8 fieldwork workshop.');
+  const [cohortAuditNotes, setCohortAuditNotes] = useState('Collected and countersigned by Teacher Shri Mayur Parmar on site.');
+  const [selectedCohortParticipantIds, setSelectedCohortParticipantIds] = useState<string[]>(['VSC-S-001', 'VSC-S-002']);
   const [cohortFile, setCohortFile] = useState<File | null>(null);
   const [cohortFileError, setCohortFileError] = useState<string | null>(null);
   const [isAttachingCohort, setIsAttachingCohort] = useState(false);

@@ -1400,8 +1400,9 @@ export interface DemoDatabase {
 export interface TransitionNotice {
   id: string;
   message: string;
-  backupKey: string;
+  backupKey?: string | null;
   createdAt: string;
+  isError?: boolean;
 }
 
 declare module './index' {

@@ -28,7 +28,7 @@ export const IdeaLabPage: React.FC = () => {
     {
       id: 'IDEA-01',
       title: 'Solar-Powered Smart Crossing Flasher',
-      author: 'Aarav Sharma & Team (Navchetna School)',
+      author: 'Ankita Kapri & Team (Virani Science College)',
       desc: 'Synchronized amber flashers activated by thermal pedestrian movement at school crosswalks.',
       votes: 38,
       status: 'Incubation',
@@ -38,7 +38,7 @@ export const IdeaLabPage: React.FC = () => {
     {
       id: 'IDEA-02',
       title: 'Cool Mist Walking Canopy for Summer Rush',
-      author: 'Aryan Sen (RTU Kota Civic Wing)',
+      author: 'Yash Rathod (Rajkot Civic Wing)',
       desc: 'Low-energy misting pergolas along unshaded pedestrian corridors near campus gates.',
       votes: 45,
       status: 'Prototyping',
@@ -48,7 +48,7 @@ export const IdeaLabPage: React.FC = () => {
     {
       id: 'IDEA-03',
       title: 'Tactile Warning Paving Blocks from Recycled Aggregates',
-      author: 'Kavita Verma (Jaipur Youth Delegate)',
+      author: 'Niyati Chawda (Rajkot Youth Delegate)',
       desc: 'Durable yellow blister tiles molded from fly ash and recycled plastic to guide visually impaired students.',
       votes: 29,
       status: 'Design Testing',
@@ -216,7 +216,7 @@ export const IdeaLabPage: React.FC = () => {
               </div>
 
               <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg text-[11px] text-indigo-900">
-                <strong>Simulated Trial Phase:</strong> Municipal pilot deployment pending review by Jaipur Smart City Mission Cell.
+                <strong>Simulated Trial Phase:</strong> Municipal pilot deployment pending review by Rajkot Smart City Mission Cell.
               </div>
             </div>
 

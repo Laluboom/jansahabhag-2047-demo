@@ -298,7 +298,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
         status,
         isSpeaking,
         isReserved,
-        institution: userDetail?.institutionName || 'Jaipur Youth Deliberation Network',
+        institution: userDetail?.institutionName || 'Rajkot Youth Deliberation Network',
         currentActivity,
         bio: userDetail?.bio,
       };
@@ -325,21 +325,21 @@ export const DebateRoomPreviewPage: React.FC = () => {
     return [
       {
         id: 'turn_deb_1',
-        authorName: 'Priya Sharma',
+        authorName: 'Niyati Chawda',
         authorRole: 'Evidence Analyst',
         timestamp: '10:14 AM',
         text: 'Field speed radar log indicates 420 vehicles/hour exceeding 40 km/h in school zone.',
       },
       {
         id: 'turn_deb_2',
-        authorName: 'Aarav Sharma',
+        authorName: 'Ankita Kapri',
         authorRole: 'Questioner',
         timestamp: '10:18 AM',
         text: 'How will raised crosswalk tables accommodate heavy emergency fire tender access?',
       },
       {
         id: 'turn_deb_3',
-        authorName: 'Rohan Mehta',
+        authorName: 'Aroh Mehta',
         authorRole: 'Facilitator',
         timestamp: '10:22 AM',
         text: 'Recognized floor questioner. Response window opened for evidence presentation.',
@@ -509,7 +509,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading debate chamber">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-civic-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-slate-500">Loading Jaipur Pedestrian Safety Debate Room...</p>
+          <p className="text-sm text-slate-500">Loading Rajkot Pedestrian Safety Debate Room...</p>
         </div>
       </div>
     );
@@ -1003,7 +1003,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-            Jaipur Youth Pedestrian Safety Debate Room
+            Rajkot Youth Pedestrian Safety Debate Room
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Structured motion-centered deliberation with speaker queues, time limits, and evidence dock.
@@ -2148,7 +2148,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
               data-testid="popup-instruction-input"
               value={popupInstruction}
               onChange={(e) => setPopupInstruction(e.target.value)}
-              placeholder="e.g. State one urgent infrastructure modification required at Navchetna School gate based on the speed radar logs presented."
+              placeholder="e.g. State one urgent infrastructure modification required at Virani Science College gate based on the speed radar logs presented."
               rows={3}
               className="text-xs"
               required

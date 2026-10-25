@@ -90,7 +90,7 @@ export const AnalyticsPage: React.FC = () => {
   ];
 
   const nationalStateRankings = [
-    { state: 'Rajasthan', audits: 42100, youthCount: 98400, enactedBylaws: 74 },
+    { state: 'Gujarat', audits: 42100, youthCount: 98400, enactedBylaws: 74 },
     { state: 'Maharashtra', audits: 38900, youthCount: 89200, enactedBylaws: 68 },
     { state: 'Kerala', audits: 31400, youthCount: 76500, enactedBylaws: 82 },
     { state: 'Delhi NCT', audits: 29800, youthCount: 71300, enactedBylaws: 59 },
@@ -325,7 +325,7 @@ export const AnalyticsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div className="p-3.5 rounded-xl bg-white border border-indigo-100 shadow-sm space-y-1.5">
             <span className="font-bold text-indigo-900 block">
-              1. Consensus Velocity on Pedestrian Calming (Jaipur & RTU Kota)
+              1. Consensus Velocity on Pedestrian Calming (Rajkot & Saurashtra)
             </span>
             <p className="text-slate-600 leading-relaxed">
               Synthesizing 42 assembly contributions reveals <strong>88% consensus</strong> favoring raised speed tables over traditional rumble strips due to ambulance transit comfort.

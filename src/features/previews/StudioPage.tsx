@@ -30,9 +30,9 @@ export const StudioPage: React.FC = () => {
       id: 'tool-infographic',
       title: 'Automated Evidence Infographic Generator',
       icon: Wand2,
-      desc: 'Generate printable high-resolution PDF posters showing 30-minute vehicle traffic breakdowns outside Navchetna School.',
+      desc: 'Generate printable high-resolution PDF posters showing 30-minute vehicle traffic breakdowns outside Virani Science College.',
       badge: 'Simulated Layout Engine',
-      previewTitle: 'Jaipur School Corridor Pedestrian Safety Snapshot',
+      previewTitle: 'Rajkot School Corridor Pedestrian Safety Snapshot',
       previewContent:
         'Visual summary infographic compiling 38 student traffic counts: 85% vehicle approach speed > 40 km/h, 320 morning pedestrian crossings, 0 signalized pedestrian phases.',
       sampleStats: [
@@ -47,9 +47,9 @@ export const StudioPage: React.FC = () => {
       icon: Video,
       desc: 'Compile 15-second peer audio quotes into a municipal presentation deck with animated captions in Hindi & English.',
       badge: 'Simulated Audio Weaver',
-      previewTitle: 'Ward 24 Youth Voice Compilation',
+      previewTitle: 'Ward 8 Youth Voice Compilation',
       previewContent:
-        'Audio clip transcripts: "We have to wait 5 minutes just to cross to our morning assembly" (Aarav, Class 11) & "Vehicles do not brake until the last second" (Kavita, Class 10).',
+        'Audio clip transcripts: "We have to wait 5 minutes just to cross to our morning assembly" (Ankita, Year 1) & "Vehicles do not brake until the last second" (Niyati, Year 2).',
       sampleStats: [
         { label: 'Voice Testimonials', value: '8 Clips' },
         { label: 'Audio Duration', value: '2m 15s' },
@@ -60,7 +60,7 @@ export const StudioPage: React.FC = () => {
       id: 'tool-flyer',
       title: 'Multilingual Community Action Flyer',
       icon: Palette,
-      desc: 'Format localized pamphlets in Hindi (हिन्दी), Rajasthani, and English for merchant association outreach.',
+      desc: 'Format localized pamphlets in English, Hindi (हिन्दी), and Gujarati for merchant association outreach.',
       badge: 'Multilingual Canvas Preview',
       previewTitle: 'Safe Crossings for Our Children - Community Notice',
       previewContent:
@@ -145,7 +145,7 @@ export const StudioPage: React.FC = () => {
               <div className="p-4 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white space-y-3 shadow-md">
                 <div className="flex items-center justify-between border-b border-slate-700 pb-2 text-[10px] text-civic-teal-400 font-bold uppercase">
                   <span>JanSahabhag 2047 Public Campaign Card</span>
-                  <span>Jaipur Ward 24</span>
+                  <span>Rajkot Ward 8</span>
                 </div>
                 <p className="text-xs leading-relaxed text-slate-200">
                   {activeTool.previewContent}

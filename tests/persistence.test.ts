@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { PersistenceService, STORAGE_KEY } from '../src/services/persistence';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { PersistenceService, STORAGE_KEY, JAIPUR_BACKUP_STORAGE_KEY } from '../src/services/persistence';
 import { CURRENT_SCHEMA_VERSION } from '../src/data/seed';
 
 describe('Persistence Adapter & Schema Migrations', () => {
@@ -163,6 +163,66 @@ describe('Persistence Adapter & Schema Migrations', () => {
       // Dismiss transition notice
       PersistenceService.dismissTransitionNotice();
       expect(PersistenceService.getTransitionNotice()).toBeNull();
+    });
+
+    it('fails closed when storage quota prevents backup: does not overwrite legacy database, preserves original raw data, and does not claim false backup success', () => {
+      const legacyRaw = JSON.stringify({
+        schemaVersion: 1,
+        activeUserId: 'user_aarav',
+        institution: { id: 'inst_jaipur_demo', name: 'Navchetna Public School, Jaipur' },
+        users: [{ id: 'user_aarav', name: 'Aarav Sharma', role: 'participant' }],
+        submissions: [
+          {
+            id: 'sub_jaipur_uhv_private_99',
+            userId: 'user_aarav',
+            content: 'Sensitive UHV reflection that must never be erased without backup',
+            status: 'private',
+          },
+        ],
+      });
+
+      window.localStorage.setItem(STORAGE_KEY, legacyRaw);
+
+      // Spy on Storage.prototype.setItem to simulate quota error ONLY when saving the backup key
+      const originalSetItem = Storage.prototype.setItem;
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key: string, val: string) {
+        if (key === JAIPUR_BACKUP_STORAGE_KEY) {
+          throw new DOMException('QuotaExceededError: LocalStorage quota exceeded', 'QuotaExceededError');
+        }
+        return originalSetItem.call(this, key, val);
+      });
+
+      // Load database when backup fails
+      const result = PersistenceService.loadDatabase();
+
+      // Verified: raw data in STORAGE_KEY is completely untouched (never overwritten with fresh seed)
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBe(legacyRaw);
+
+      // Verified: No backup exists in localStorage
+      expect(window.localStorage.getItem(JAIPUR_BACKUP_STORAGE_KEY)).toBeNull();
+      expect(PersistenceService.hasJaipurBackup()).toBe(false);
+
+      // Verified: No false success notice appears
+      const notice = result.transitionNotice;
+      expect(notice).toBeDefined();
+      expect(notice?.isError).toBe(true);
+      expect(notice?.backupKey).toBeNull();
+      expect(notice?.message).toContain('Storage quota prevented');
+      expect(notice?.message).not.toContain('safely preserved in local backup');
+
+      // Verified: Private UHV reflections remain safe in the preserved record
+      expect(result.submissions.some((s: any) => s.id === 'sub_jaipur_uhv_private_99')).toBe(true);
+
+      setItemSpy.mockRestore();
+    });
+
+    it('preserves malformed legacy raw data to jansahabhag_malformed_backup_v1 before resetting corrupted storage', () => {
+      const corruptRaw = '{corrupted_json_cannot_parse: true';
+      window.localStorage.setItem(STORAGE_KEY, corruptRaw);
+
+      const result = PersistenceService.loadDatabase();
+      expect(result.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+      expect(window.localStorage.getItem('jansahabhag_malformed_backup_v1')).toBe(corruptRaw);
     });
   });
 });

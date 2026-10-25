@@ -26,10 +26,10 @@ export const ResearchLabPage: React.FC = () => {
   const studies: StudyItem[] = [
     {
       id: 'RES-2026-04',
-      title: 'Impact of Raised Speed Tables on Driver Deceleration in Jaipur School Zones',
-      lead: 'Dr. M. K. Sen (Urban Planning Faculty, MNIT Jaipur) & Student Deliberators',
+      title: 'Impact of Raised Speed Tables on Driver Deceleration in Rajkot School Zones',
+      lead: 'Dr. M. K. Sen (Urban Planning Faculty) & Student Deliberators',
       synopsis:
-        'Multi-institutional empirical study measuring 48-hour sensor telemetry outside Navchetna School before and after trial physical calming.',
+        'Multi-institutional empirical study measuring 48-hour sensor telemetry outside Virani Science College before and after trial physical calming.',
       findings: [
         '85th percentile vehicular approach speed dropped from 44.8 km/h to 21.2 km/h',
         'Pedestrian crossing wait time decreased by 62%',
@@ -40,7 +40,7 @@ export const ResearchLabPage: React.FC = () => {
     },
     {
       id: 'DAT-2026-11',
-      title: 'Rajasthan Urban School Zone Walking Audit Aggregated Open Dataset',
+      title: 'Gujarat Urban School Zone Walking Audit Aggregated Open Dataset',
       lead: 'State Mission Cell & 500+ Youth Deliberators',
       synopsis:
         'Standardized open geospatial dataset compiling walking comfort metrics, curb height obstacles, and ambient street lux measurements.',
@@ -49,7 +49,7 @@ export const ResearchLabPage: React.FC = () => {
         'Ambient evening illumination averaged < 8.5 lux across secondary access roads',
         'Direct correlation observed between hawker encroachment and pedestrian roadway spillover',
       ],
-      sampleSize: '520 verified student walking audit records across Jaipur, Kota, and Ajmer',
+      sampleSize: '520 verified student walking audit records across Rajkot and Saurashtra regions',
       datasetFormat: 'Open Data CSV & Shapefiles',
     },
   ];

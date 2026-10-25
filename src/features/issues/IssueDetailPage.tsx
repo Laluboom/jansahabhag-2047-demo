@@ -127,7 +127,7 @@ export const IssueDetailPage: React.FC = () => {
       <DemoPreviewBadge
         size="banner"
         label="Issue Detail Preview"
-        description="Geospatial danger spot breakdown. Linked directly to Aarav's Jaipur Madhyam Marg pedestrian safety audit and Youth Assembly deliberations."
+        description="Geospatial danger spot breakdown. Linked directly to Ankita's Rajkot Kalawad Road pedestrian safety audit and Youth Assembly deliberations."
       />
 
       {/* Main Issue Card */}
@@ -274,7 +274,7 @@ export const IssueDetailPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs">
           <p className="text-slate-600 leading-relaxed">
-            Join Aarav and the student audit team for the next 30-minute vehicle velocity and desire-line count at <strong>{issue.location}</strong>.
+            Join Ankita and the student audit team for the next 30-minute vehicle velocity and desire-line count at <strong>{issue.location}</strong>.
           </p>
           <div className="p-3 rounded-xl bg-civic-indigo-50 border border-civic-indigo-200 text-civic-indigo-900 space-y-1">
             <span className="font-bold block">Audit Equipment Provided:</span>

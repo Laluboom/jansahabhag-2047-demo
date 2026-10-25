@@ -100,21 +100,21 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
       debate: [
         {
           id: 'turn_deb_1',
-          authorName: 'Priya Sharma',
+          authorName: 'Niyati Chawda',
           authorRole: 'Evidence Analyst',
           timestamp: '10:14 AM',
           text: 'Field speed radar log indicates 420 vehicles/hour exceeding 40 km/h in school zone.',
         },
         {
           id: 'turn_deb_2',
-          authorName: 'Aarav Sharma',
+          authorName: 'Ankita Kapri',
           authorRole: 'Questioner',
           timestamp: '10:18 AM',
           text: 'How will raised crosswalk tables accommodate heavy emergency fire tender access?',
         },
         {
           id: 'turn_deb_3',
-          authorName: 'Rohan Mehta',
+          authorName: 'Aroh Mehta',
           authorRole: 'Facilitator',
           timestamp: '10:22 AM',
           text: 'Recognized floor questioner. Response window opened for evidence presentation.',
@@ -123,21 +123,21 @@ export const SessionSeating: React.FC<SessionSeatingProps> = ({
       assembly: [
         {
           id: 'turn_asm_1',
-          authorName: 'Priya Sharma',
+          authorName: 'Niyati Chawda',
           authorRole: 'Thinker',
           timestamp: '10:05 AM',
           text: 'Defined problem frame: peak morning drop-off pedestrian bottleneck outside Gate 2.',
         },
         {
           id: 'turn_asm_2',
-          authorName: 'Vikram Joshi',
+          authorName: 'Yash Rathod',
           authorRole: 'Enabler',
           timestamp: '10:15 AM',
           text: 'Verified IRC-99 bulb-out engineering geometry feasibility along northern pedestrian path.',
         },
         {
           id: 'turn_asm_3',
-          authorName: 'Karan Deshmukh',
+          authorName: 'Kanha Kapri',
           authorRole: 'Troubleshooter',
           timestamp: '10:25 AM',
           text: 'Logged formal reservation on monsoon drainage runoff and side road deflection.',

@@ -97,7 +97,7 @@ export const ProjectTeamSeats: React.FC<ProjectTeamSeatsProps> = ({
         <div className="flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-civic-teal-600 shrink-0" />
           <span>
-            <strong>Platform 33% Inclusion Standard:</strong> Seeded Jaipur student cohort conforms to platform inclusion standards without disclosing individual privacy declarations.
+            <strong>Platform 33% Inclusion Standard:</strong> Seeded Rajkot student cohort conforms to platform inclusion standards without disclosing individual privacy declarations.
           </span>
         </div>
       </div>
@@ -203,7 +203,7 @@ export const ProjectTeamSeats: React.FC<ProjectTeamSeatsProps> = ({
                 </div>
                 <p className="text-slate-700 text-xs mt-1 flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="truncate">{selectedMember.institutionName || 'Navchetna Public School, Jaipur'}</span>
+                  <span className="truncate">{selectedMember.institutionName || 'Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot'}</span>
                 </p>
                 {selectedMember.location && (
                   <p className="text-slate-600 text-[11px] mt-0.5 flex items-center gap-1.5">

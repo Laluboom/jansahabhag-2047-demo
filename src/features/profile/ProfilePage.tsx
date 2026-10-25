@@ -27,7 +27,7 @@ export const ProfilePage: React.FC = () => {
     setIsResetting(true);
     try {
       await demoRepository.resetDemo();
-      await switchPersona('user_aarav');
+      await switchPersona('VSC-S-001');
       setIsResetModalOpen(false);
       navigate('/dashboard');
       window.location.reload();
@@ -125,7 +125,7 @@ export const ProfilePage: React.FC = () => {
               Reset Demo Data to Initial Canonical Seed
             </h3>
             <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
-              Resetting restores all courses, completed lessons, submitted assignments, Assembly stages, propositions, and credit ledgers back to the original seed state under Aarav Sharma (including 10 starting credits and verified demo activity history).
+              Resetting restores all courses, completed lessons, submitted assignments, Assembly stages, propositions, and credit ledgers back to the original seed state under Ankita Kapri (including starting credits and verified demo activity history).
             </p>
           </div>
 
@@ -170,7 +170,7 @@ export const ProfilePage: React.FC = () => {
             Deterministic Reset Execution
           </p>
           <p>
-            This action will safely purge local storage and reload the primary participant scenario for Aarav Sharma in Jaipur.
+            This action will safely purge local storage and reload the primary participant scenario for Ankita Kapri in Rajkot.
           </p>
         </div>
       </Modal>

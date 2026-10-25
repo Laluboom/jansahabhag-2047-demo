@@ -73,10 +73,16 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
       {transitionNotice && (
         <div
           data-testid="transition-notice-banner"
-          className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900 flex items-center justify-between gap-4 z-40 sticky top-0"
+          role={transitionNotice.isError ? 'alert' : 'status'}
+          className={cn(
+            'border-b px-4 py-2 text-xs flex items-center justify-between gap-4 z-40 sticky top-0',
+            transitionNotice.isError
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+          )}
         >
           <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+            <Info className={cn('w-4 h-4 shrink-0', transitionNotice.isError ? 'text-rose-600' : 'text-amber-600')} />
             <span>{transitionNotice.message}</span>
           </div>
           <button
@@ -85,7 +91,10 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
               setTransitionNotice(null);
             }}
             data-testid="dismiss-transition-notice"
-            className="text-amber-800 hover:text-amber-950 font-semibold underline text-[11px] shrink-0"
+            className={cn(
+              'font-semibold underline text-[11px] shrink-0',
+              transitionNotice.isError ? 'text-rose-800 hover:text-rose-950' : 'text-amber-800 hover:text-amber-950'
+            )}
           >
             Dismiss
           </button>
@@ -199,7 +208,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                     <span>{lang.label}</span>
                     {lang.isDemo && (
                       <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 font-normal">
-                        {lang.code === 'hi' ? 'Pending Review' : 'Simulated'}
+                        {lang.code === 'hi' ? 'Pending Review' : 'Unreviewed Prototype'}
                       </span>
                     )}
                   </button>

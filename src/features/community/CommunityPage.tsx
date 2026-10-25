@@ -270,7 +270,7 @@ export const CommunityPage: React.FC = () => {
               <div className="flex items-center gap-2 flex-1">
                 <Tag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <Input
-                  placeholder="Tags (comma separated, e.g. Speed Calming, Jaipur)"
+                  placeholder="Tags (comma separated, e.g. Speed Calming, Rajkot)"
                   value={newTags}
                   onChange={(e) => setNewTags(e.target.value)}
                   className="text-xs"
