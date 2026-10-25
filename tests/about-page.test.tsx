@@ -20,13 +20,34 @@ describe('AboutPage', () => {
 
     // Existing team member: Nazim M. Sandh
     expect(screen.getByRole('heading', { level: 3, name: 'Nazim M. Sandh' })).toBeInTheDocument();
-    expect(screen.getByText('Founder and Initiator')).toBeInTheDocument();
+    expect(screen.getByText('The Founder')).toBeInTheDocument();
+    expect(screen.getByText('Founder and Initiator | Independent Learner')).toBeInTheDocument();
     const nazimImg = screen.getByRole('img', { name: 'Portrait of Nazim M. Sandh' });
     expect(nazimImg).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toHaveAttribute(
       'href',
       'mailto:nazimsandhbehappy@gmail.com'
     );
+
+    // Nazim full bio details across paragraphs
+    const nazimBio1 = screen.getByText(/Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology/i);
+    expect(nazimBio1).toBeInTheDocument();
+    expect(nazimBio1.textContent).toContain('education, governance, youth development, science and social responsibility');
+
+    const nazimBio2 = screen.getByText(/His experiences span research-based awareness work with students/i);
+    expect(nazimBio2).toBeInTheDocument();
+    expect(nazimBio2.textContent).toContain('sustainable cultivation initiatives, community fitness, cultural engagement and youth development programmes');
+    expect(nazimBio2.textContent).toContain('understanding how knowledge can inform decisions, influence behaviour and contribute to collective well-being');
+
+    const nazimBio3 = screen.getByText(/His engagement with civic participation developed through LOK MANCH-2047/i);
+    expect(nazimBio3).toBeInTheDocument();
+    expect(nazimBio3.textContent).toContain('Viksit Bharat Young Leaders Dialogue 2026');
+    expect(nazimBio3.textContent).toContain('Ideas from the presentation were incorporated into the master presentation placed before the Hon’ble Prime Minister of India');
+    expect(nazimBio3.textContent).toContain('role young citizens can play in democratic processes and India’s development');
+
+    const nazimBio4 = screen.getByText(/JanSahabhag 2047 reflects an ongoing effort to examine these questions/i);
+    expect(nazimBio4).toBeInTheDocument();
+    expect(nazimBio4.textContent).toContain('explore practical ways of connecting young people with civic life');
 
     // Existing team member: Visesh Akbari (spelling preserved on card)
     expect(screen.getByRole('heading', { level: 3, name: 'Visesh Akbari' })).toBeInTheDocument();
@@ -85,7 +106,7 @@ describe('AboutPage', () => {
     expect(allBioText).not.toMatch(/founded the idea|developed the website|built the platform/i);
   });
 
-  it('renders Nazim and Visesh in a two-column grid and Yashvi in a dedicated wide team card row', () => {
+  it('renders Nazim and Yashvi in dedicated wide team card rows and Visesh in a centered compact card', () => {
     const { container } = render(
       <MemoryRouter>
         <AboutPage />
@@ -98,14 +119,24 @@ describe('AboutPage', () => {
     const articles = peopleSection?.querySelectorAll('article');
     expect(articles?.length).toBe(3);
 
-    // First two articles (Nazim & Visesh) are in the 2-column grid
-    const topGrid = peopleSection?.querySelector('div.grid.md\\:grid-cols-2');
-    expect(topGrid).toBeInTheDocument();
-    expect(topGrid?.querySelectorAll('article').length).toBe(2);
+    // Nazim is the first article, rendered as a dedicated wide team card row
+    const nazimArticle = articles?.[0];
+    expect(nazimArticle?.textContent).toContain('The Founder');
+    expect(nazimArticle?.textContent).toContain('Nazim M. Sandh');
 
-    // Yashvi article is outside topGrid, directly under section
+    // Visesh is the second article, rendered inside a centered flex wrapper
+    const viseshArticle = articles?.[1];
+    expect(viseshArticle?.textContent).toContain('Developer');
+    expect(viseshArticle?.textContent).toContain('Visesh Akbari');
+    expect(viseshArticle?.classList.contains('max-w-md')).toBe(true);
+    const viseshWrapper = viseshArticle?.parentElement;
+    expect(viseshWrapper?.className).toContain('flex');
+    expect(viseshWrapper?.className).toContain('justify-center');
+
+    // Yashvi is the third article, rendered as a dedicated wide team card row
     const yashviArticle = articles?.[2];
-    expect(topGrid?.contains(yashviArticle!)).toBe(false);
+    expect(yashviArticle?.textContent).toContain('Managing Partner');
+    expect(yashviArticle?.textContent).toContain('Yashvi Dalsaniya');
   });
 
   it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {

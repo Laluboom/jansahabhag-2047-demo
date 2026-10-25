@@ -50,21 +50,38 @@ export const AboutPage: React.FC = () => (
         <h2 id="people-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">The team</h2>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="aspect-square bg-slate-100 p-3 sm:p-4">
-            <img
-              src={nazimPortrait}
-              alt="Portrait of Nazim M. Sandh"
-              className="h-full w-full rounded-xl object-contain"
-              width="1254"
-              height="1254"
-            />
+      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-12">
+          <div className="flex items-center justify-center bg-slate-100 p-4 sm:p-6 md:col-span-5 md:p-6 lg:p-8">
+            <div className="aspect-square w-full max-w-sm">
+              <img
+                src={nazimPortrait}
+                alt="Portrait of Nazim M. Sandh"
+                className="h-full w-full rounded-xl object-contain"
+                width="1254"
+                height="1254"
+              />
+            </div>
           </div>
-          <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Founder and Initiator</p>
+          <div className="flex flex-col justify-center space-y-4 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">The Founder</p>
               <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
+              <p className="mt-1 text-sm font-medium text-slate-600">Founder and Initiator | Independent Learner</p>
+            </div>
+            <div className="space-y-3 text-sm leading-6 text-slate-700">
+              <p>
+                Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology and a broader interest in education, governance, youth development, science and social responsibility.
+              </p>
+              <p>
+                His experiences span research-based awareness work with students, sustainable cultivation initiatives, community fitness, cultural engagement and youth development programmes. Across these different fields, a recurring interest has shaped his work: understanding how knowledge can inform decisions, influence behaviour and contribute to collective well-being.
+              </p>
+              <p>
+                His engagement with civic participation developed through LOK MANCH-2047, which he presented in the context of the Viksit Bharat Young Leaders Dialogue 2026. Ideas from the presentation were incorporated into the master presentation placed before the Hon’ble Prime Minister of India. This experience further informed his interest in the role young citizens can play in democratic processes and India’s development.
+              </p>
+              <p>
+                JanSahabhag 2047 reflects an ongoing effort to examine these questions and explore practical ways of connecting young people with civic life.
+              </p>
             </div>
             <div className="pt-2 text-sm font-semibold">
               <a
@@ -75,9 +92,11 @@ export const AboutPage: React.FC = () => (
               </a>
             </div>
           </div>
-        </article>
+        </div>
+      </article>
 
-        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex justify-center">
+        <article className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="aspect-square bg-slate-100 p-3 sm:p-4">
             <img
               src={viseshPortrait}
