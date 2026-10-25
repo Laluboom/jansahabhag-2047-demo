@@ -95,8 +95,8 @@ export const AboutPage: React.FC = () => (
         </div>
       </article>
 
-      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-        <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex justify-center">
+        <article className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="aspect-square bg-slate-100 p-3 sm:p-4">
             <img
               src={viseshPortrait}

@@ -106,7 +106,7 @@ describe('AboutPage', () => {
     expect(allBioText).not.toMatch(/founded the idea|developed the website|built the platform/i);
   });
 
-  it('renders Nazim and Yashvi in dedicated wide team card rows and Visesh in a grid', () => {
+  it('renders Nazim and Yashvi in dedicated wide team card rows and Visesh in a centered compact card', () => {
     const { container } = render(
       <MemoryRouter>
         <AboutPage />
@@ -124,15 +124,19 @@ describe('AboutPage', () => {
     expect(nazimArticle?.textContent).toContain('The Founder');
     expect(nazimArticle?.textContent).toContain('Nazim M. Sandh');
 
-    // Visesh is inside a grid
-    const viseshGrid = peopleSection?.querySelector('div.grid.md\\:grid-cols-2');
-    expect(viseshGrid).toBeInTheDocument();
-    expect(viseshGrid?.querySelectorAll('article').length).toBe(1);
-    expect(viseshGrid?.contains(nazimArticle!)).toBe(false);
+    // Visesh is the second article, rendered inside a centered flex wrapper
+    const viseshArticle = articles?.[1];
+    expect(viseshArticle?.textContent).toContain('Developer');
+    expect(viseshArticle?.textContent).toContain('Visesh Akbari');
+    expect(viseshArticle?.classList.contains('max-w-md')).toBe(true);
+    const viseshWrapper = viseshArticle?.parentElement;
+    expect(viseshWrapper?.className).toContain('flex');
+    expect(viseshWrapper?.className).toContain('justify-center');
 
-    // Yashvi article is outside viseshGrid, directly under section
+    // Yashvi is the third article, rendered as a dedicated wide team card row
     const yashviArticle = articles?.[2];
-    expect(viseshGrid?.contains(yashviArticle!)).toBe(false);
+    expect(yashviArticle?.textContent).toContain('Managing Partner');
+    expect(yashviArticle?.textContent).toContain('Yashvi Dalsaniya');
   });
 
   it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {
