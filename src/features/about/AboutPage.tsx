@@ -117,17 +117,25 @@ export const AboutPage: React.FC = () => (
               />
             </div>
           </div>
-          <div className="flex flex-col justify-center space-y-3 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
+          <div className="flex flex-col justify-center space-y-4 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner | Student of Microbiology | Youth &amp; Civic Engagement</p>
               <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
             </div>
-            <p className="text-sm leading-6 text-slate-700">
-              Yashvi Dalsaniya is a microbiology student with a deep interest in youth development, education, governance, scientific thinking, and social responsibility. Her focus spans entrepreneurship, communication, organisational development, and community participation, exploring how ideas turn into practical initiatives.
-            </p>
-            <p className="text-sm leading-6 text-slate-700">
-              She contributes to JanSahabhag 2047&apos;s civic awareness, youth participation, and citizen-democratic-process vision. She believes that India&apos;s developed-country vision depends on people&apos;s awareness, collective responsibility, and expanding young people&apos;s opportunities to participate in decisions shaping their collective future.
-            </p>
+            <div className="space-y-3 text-sm leading-6 text-slate-700">
+              <p>
+                Yashvi Dalsaniya is a microbiology student with a growing interest in youth development, education, governance, scientific thinking and social responsibility. Her academic background in microbiology informs her appreciation for evidence-based thinking, while her broader interests extend to entrepreneurship, community participation and the role of young people in shaping society.
+              </p>
+              <p>
+                Her work brings together an interest in science, communication, organisational development and initiatives that encourage young people to think critically about the communities they belong to. She believes that meaningful development begins with informed individuals, responsible leadership and opportunities for young people to participate in decisions that shape their collective future.
+              </p>
+              <p>
+                As Managing Partner of JanSahabhag 2047, Yashvi contributes to the project’s broader vision of strengthening civic awareness, encouraging youth participation and exploring meaningful connections between citizens and democratic processes. Her involvement reflects a commitment to understanding how ideas can translate into practical initiatives and how young people can become active contributors to India’s development journey.
+              </p>
+              <p>
+                Through JanSahabhag 2047, she aims to contribute to a culture of informed participation, collaborative thinking and responsible citizenship, recognising that the vision of a developed India depends not only on institutions and policies, but also on the awareness, initiative and collective responsibility of its people.
+              </p>
+            </div>
           </div>
         </div>
       </article>
