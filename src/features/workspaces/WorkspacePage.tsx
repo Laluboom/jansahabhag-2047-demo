@@ -104,7 +104,7 @@ export const WorkspacePage: React.FC = () => {
       setIsLoading(true);
       setPageError(null);
       try {
-        const currentUserId = currentUser?.id || 'user_aarav';
+        const currentUserId = currentUser?.id || 'VSC-S-001';
         const [users, allProjects] = await Promise.all([
           demoRepository.getUsers(),
           demoRepository.getProjects(),
@@ -255,7 +255,7 @@ export const WorkspacePage: React.FC = () => {
       });
       triggerRefresh();
       if (accept) {
-        setActionSuccessMessage('Invitation accepted! Welcome to the Jaipur School-Zone Safety Workspace.');
+        setActionSuccessMessage('Invitation accepted! Welcome to the Rajkot Ward 8 School-Zone Safety Workspace.');
         if (!hasAcknowledgedRules) {
           setIsRulebookModalOpen(true);
         }
@@ -449,14 +449,14 @@ export const WorkspacePage: React.FC = () => {
                 {pageError || 'Workspace unavailable.'}
               </p>
               <div className="pt-2 flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" data-testid="btn-error-switch-aarav" onClick={() => handleQuickSwitchUser('user_aarav')}>
-                  Switch to Aarav Sharma (Member)
+                <Button size="sm" variant="outline" data-testid="btn-error-switch-aarav" onClick={() => handleQuickSwitchUser('VSC-S-001')}>
+                  Switch to Ankita Kapri (Member)
                 </Button>
-                <Button size="sm" variant="outline" data-testid="btn-error-switch-rohan" onClick={() => handleQuickSwitchUser('user_rohan')}>
-                  Switch to Rohan Mehta (Moderator)
+                <Button size="sm" variant="outline" data-testid="btn-error-switch-rohan" onClick={() => handleQuickSwitchUser('VSC-S-009')}>
+                  Switch to Aroh Mehta (Moderator)
                 </Button>
-                <Button size="sm" variant="outline" data-testid="btn-error-switch-kavita" onClick={() => handleQuickSwitchUser('user_kavita')}>
-                  Switch to Kavita Rao (Owner)
+                <Button size="sm" variant="outline" data-testid="btn-error-switch-kavita" onClick={() => handleQuickSwitchUser('VSC-T-001')}>
+                  Switch to Shri Mayur Parmar (Owner)
                 </Button>
                 <Link to="/propositions/prop_jaipur_pedestrian_01">
                   <Button size="sm" variant="primary">
@@ -558,12 +558,12 @@ export const WorkspacePage: React.FC = () => {
           </span>
           <div className="flex flex-wrap gap-1.5">
             {[
-              { id: 'user_aarav', label: 'Aarav (Member)', role: 'Member' },
-              { id: 'user_kavita', label: 'Kavita Rao (Owner)', role: 'Owner' },
-              { id: 'user_rohan', label: 'Rohan (Room Mod)', role: 'Moderator' },
-              { id: 'user_meera', label: 'Meera (Invitee)', role: 'Invitee' },
-              { id: 'user_dev', label: 'Dev Patel (Unrelated Mod)', role: 'Unrelated' },
-              { id: 'user_priya', label: 'Priya (Member)', role: 'Member' },
+              { id: 'VSC-S-001', label: 'Ankita (Member)', role: 'Member' },
+              { id: 'VSC-T-001', label: 'Mayur Parmar (Owner)', role: 'Owner' },
+              { id: 'VSC-S-009', label: 'Aroh (Room Mod)', role: 'Moderator' },
+              { id: 'VSC-S-003', label: 'Harshita (Invitee)', role: 'Invitee' },
+              { id: 'JS-F-001', label: 'Nazim (Unrelated Mod)', role: 'Unrelated' },
+              { id: 'VSC-S-002', label: 'Niyati (Member)', role: 'Member' },
             ].map((p) => (
               <button
                 key={p.id}
@@ -614,7 +614,7 @@ export const WorkspacePage: React.FC = () => {
                 <strong>{currentMembership.invitedBy ? `@${allUsers.find(u => u.id === currentMembership.invitedBy)?.username || 'team'}` : 'a workspace member'}</strong>.
               </p>
               <div className="text-xs text-slate-600 space-y-1 pt-1">
-                <p>• <strong>Scope:</strong> {workspace.visibility.replace('_', ' ')} ({workspace.institutionName || 'Jaipur'})</p>
+                <p>• <strong>Scope:</strong> {workspace.visibility.replace('_', ' ')} ({workspace.institutionName || 'Rajkot'})</p>
                 <p>• <strong>Conduct Rule:</strong> Zero tolerance for vehicle plates, student face disclosure, or off-topic commercial activity.</p>
                 <p className="text-amber-800 font-medium">Notice: Under Master PRD §A12.4, invited users must confirm admission before contributing substantive actions.</p>
               </div>
@@ -1463,7 +1463,7 @@ export const WorkspacePage: React.FC = () => {
               <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
                 <span className="font-bold text-slate-900 block">Safeguarding Oversight Lead:</span>
                 <p className="text-slate-600">{workspace.moderationContact.safeguardingLead || 'Institutional Safeguarding Board'}</p>
-                <p className="text-slate-500 text-[11px]">Jaipur Municipal Ward 24 Educational Liaison</p>
+                <p className="text-slate-500 text-[11px]">Rajkot Municipal Ward 8 Educational Liaison</p>
               </div>
             </div>
           </Card>
@@ -1516,7 +1516,7 @@ export const WorkspacePage: React.FC = () => {
                         {evt.targetUserName && <span className="text-slate-500 ml-1">Target: {evt.targetUserName}</span>}
                       </td>
                       <td className="py-2.5 text-right text-[11px] text-slate-400 whitespace-nowrap">
-                        Jaipur Ward 24
+                        Rajkot Ward 8
                       </td>
                     </tr>
                   ))}

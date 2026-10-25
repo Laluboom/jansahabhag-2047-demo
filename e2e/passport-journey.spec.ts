@@ -9,11 +9,11 @@ test.describe('Package 07 — Evidence-based Passport and Explainable Credits E2
     await page.reload();
   });
 
-  test('desktop: complete cross-record Jaipur journey from assignment submission to Passport, source linking, and explainable credits', async ({ page }) => {
-    // 1. Login as Aarav Sharma (Jaipur participant)
+  test('desktop: complete cross-record journey from assignment submission to Passport, source linking, and explainable credits', async ({ page }) => {
+    // 1. Login as Ankita Kapri (Rajkot participant)
     await page.goto('/demo-login');
     await expect(page.getByRole('heading', { name: /Enter JanSahabhag/i })).toBeVisible();
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText('Ankita Kapri').first().click();
     await page.waitForURL('**/dashboard');
 
     // 2. Submit an assignment with field observation evidence
@@ -75,20 +75,20 @@ test.describe('Package 07 — Evidence-based Passport and Explainable Credits E2
 
     // 8. Navigate to Credit Ledger and verify explainable formula
     await page.goto('/passport/credits');
-    await expect(page.getByRole('heading', { name: /Civic Credit Ledger/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Civic Credit (Points )?Ledger/i })).toBeVisible();
     await expect(page.getByText(/Transparent Activity Award Rules & Explainable Formula/i)).toBeVisible();
     await expect(page.getByText(/7 PRD Dimensions/i)).toBeVisible();
 
     // Check pending credits callout
     await expect(page.getByText(/Pending Mentor Review/i).first()).toBeVisible();
 
-    // 9. Open Credit Appeal Modal (routed to mentor Kavita Rao, strictly barring AI)
+    // 9. Open Credit Appeal Modal (routed to mentor Shri Mayur Parmar, strictly barring AI)
     const appealBtn = page.getByRole('button', { name: /Appeal Review|Appeal/i }).first();
     await expect(appealBtn).toBeVisible();
     await appealBtn.click();
 
     await expect(page.getByText(/Dispute Review \/ Credit Adjustment/i)).toBeVisible();
-    await expect(page.getByText(/Kavita Rao/i).first()).toBeVisible();
+    await expect(page.getByText(/(Shri Mayur Parmar|Kavita Rao)/i).first()).toBeVisible();
     await expect(page.getByText(/Automated AI algorithms are strictly barred/i)).toBeVisible();
 
     // Close modal
@@ -100,9 +100,9 @@ test.describe('Package 07 — Evidence-based Passport and Explainable Credits E2
     // Set mobile viewport (iPhone standard)
     await page.setViewportSize({ width: 375, height: 667 });
 
-    // Login as Aarav Sharma
+    // Login as Ankita Kapri
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText('Ankita Kapri').first().click();
     await page.waitForURL('**/dashboard');
 
     // Navigate to Passport

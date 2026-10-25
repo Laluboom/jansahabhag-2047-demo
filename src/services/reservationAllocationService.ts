@@ -984,7 +984,7 @@ export function buildParliamentDelegationIllustration(
   const totalPlaces = 3;
 
   if (scenario === 'compliant') {
-    const confirmedOccupants = ['user_priya', 'user_aarav', 'user_vikram'];
+    const confirmedOccupants = ['VSC-S-002', 'VSC-S-005', 'VSC-S-006'];
     const allocation = buildAllocationState({
       allocationId: 'alloc_parliament_jaipur_delegation_demo',
       allocationType: 'cohort_places',
@@ -1025,7 +1025,7 @@ export function buildParliamentDelegationIllustration(
   }
 
   if (scenario === 'noncompliant') {
-    const confirmedOccupants = ['user_aarav', 'user_vikram'];
+    const confirmedOccupants = ['VSC-S-005', 'VSC-S-006'];
     const allocation = buildAllocationState({
       allocationId: 'alloc_parliament_jaipur_delegation_demo',
       allocationType: 'cohort_places',
@@ -1066,7 +1066,7 @@ export function buildParliamentDelegationIllustration(
   }
 
   // overbooked_ordinary: 3 ordinary occupants without an approved owner exception
-  const confirmedOccupants = ['user_aarav', 'user_vikram', 'user_rohan'];
+  const confirmedOccupants = ['VSC-S-005', 'VSC-S-006', 'VSC-S-007'];
   const allocation = buildAllocationState({
     allocationId: 'alloc_parliament_jaipur_delegation_demo',
     allocationType: 'cohort_places',

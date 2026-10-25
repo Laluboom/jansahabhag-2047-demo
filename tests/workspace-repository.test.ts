@@ -12,19 +12,19 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
 
   describe('1. Scoped Visibility & Repository Boundaries', () => {
     it('allows admitted members to view workspace details and directory', async () => {
-      const ws = await demoRepository.getWorkspace(WS_ID, 'user_aarav');
+      const ws = await demoRepository.getWorkspace(WS_ID, 'VSC-S-001');
       expect(ws).not.toBeNull();
-      expect(ws?.title).toBe('Jaipur Ward 24 School-Zone Safety Workspace');
+      expect(ws?.title).toBe('Rajkot Ward 8 School-Zone Safety Workspace');
       expect(ws?.linkedPropositionId).toBe('prop_jaipur_pedestrian_01');
 
-      const members = await demoRepository.getWorkspaceMemberships(WS_ID, 'user_aarav');
+      const members = await demoRepository.getWorkspaceMemberships(WS_ID, 'VSC-S-001');
       expect(members.length).toBeGreaterThanOrEqual(5);
-      expect(members.some((m) => m.userId === 'user_aarav')).toBe(true);
+      expect(members.some((m) => m.userId === 'VSC-S-001')).toBe(true);
     });
 
     it('denies non-members from reading member directory and workspace actions', async () => {
-      // user_admin or an unrelated user not in the workspace
-      const nonMemberId = 'user_aditi';
+      // JS-F-001 or an unrelated user not in the workspace
+      const nonMemberId = 'VSC-S-014';
 
       await expect(
         demoRepository.getWorkspaceMemberships(WS_ID, nonMemberId)
@@ -45,13 +45,13 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       const publicList = await demoRepository.getWorkspaces();
       expect(publicList.some((w) => w.id === WS_ID)).toBe(false);
 
-      const nonMemberList = await demoRepository.getWorkspaces('user_aditi');
+      const nonMemberList = await demoRepository.getWorkspaces('VSC-S-014');
       expect(nonMemberList.some((w) => w.id === WS_ID)).toBe(false);
 
-      const memberList = await demoRepository.getWorkspaces('user_aarav');
+      const memberList = await demoRepository.getWorkspaces('VSC-S-001');
       expect(memberList.some((w) => w.id === WS_ID)).toBe(true);
 
-      const invitedList = await demoRepository.getWorkspaces('user_meera');
+      const invitedList = await demoRepository.getWorkspaces('VSC-S-003');
       expect(invitedList.some((w) => w.id === WS_ID)).toBe(true);
 
       // Active member list retains unredacted workspace details (e.g., room moderators)
@@ -61,7 +61,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       // Invited user list receives reduced invitation summary with redacted moderatorIds
       const invitedWs = invitedList.find((w) => w.id === WS_ID);
       expect(invitedWs?.moderatorIds).toEqual([]);
-      expect(invitedWs?.title).toBe('Jaipur Ward 24 School-Zone Safety Workspace');
+      expect(invitedWs?.title).toBe('Rajkot Ward 8 School-Zone Safety Workspace');
       expect(invitedWs?.rulebook).toBeDefined();
     });
 
@@ -70,79 +70,79 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
         /Caller identity is required to access private workspace/i
       );
 
-      await expect(demoRepository.getWorkspace(WS_ID, 'user_aditi')).rejects.toThrow(
+      await expect(demoRepository.getWorkspace(WS_ID, 'VSC-S-014')).rejects.toThrow(
         /is invite-only private and cannot be accessed without an invitation/i
       );
     });
 
     it('restricts invited user to safe invitation summary and denies actions, directory, and audits', async () => {
       // Safe summary
-      const safeWs = await demoRepository.getWorkspace(WS_ID, 'user_meera');
+      const safeWs = await demoRepository.getWorkspace(WS_ID, 'VSC-S-003');
       expect(safeWs).not.toBeNull();
-      expect(safeWs?.title).toBe('Jaipur Ward 24 School-Zone Safety Workspace');
+      expect(safeWs?.title).toBe('Rajkot Ward 8 School-Zone Safety Workspace');
       expect(safeWs?.rulebook).toBeDefined();
       expect(safeWs?.moderatorIds).toEqual([]); // redacted for privacy
 
       // Denies actions
-      await expect(demoRepository.getWorkspaceActions(WS_ID, 'user_meera')).rejects.toThrow(
+      await expect(demoRepository.getWorkspaceActions(WS_ID, 'VSC-S-003')).rejects.toThrow(
         /Non-members and invited or removed participants cannot read/i
       );
 
       // Denies directory
-      await expect(demoRepository.getWorkspaceMemberships(WS_ID, 'user_meera')).rejects.toThrow(
+      await expect(demoRepository.getWorkspaceMemberships(WS_ID, 'VSC-S-003')).rejects.toThrow(
         /Member directory is only accessible to active workspace members/i
       );
 
       // Denies audit events
-      await expect(demoRepository.getWorkspaceAuditEvents(WS_ID, 'user_meera')).rejects.toThrow(
+      await expect(demoRepository.getWorkspaceAuditEvents(WS_ID, 'VSC-S-003')).rejects.toThrow(
         /Audit trail is only accessible to active members/i
       );
     });
 
     it('enforces caller boundary on getWorkspaceMembership inspection', async () => {
       // Self inspection is allowed
-      const selfMem = await demoRepository.getWorkspaceMembership(WS_ID, 'user_aarav', 'user_aarav');
-      expect(selfMem?.userId).toBe('user_aarav');
+      const selfMem = await demoRepository.getWorkspaceMembership(WS_ID, 'VSC-S-001', 'VSC-S-001');
+      expect(selfMem?.userId).toBe('VSC-S-001');
 
       // Room moderator inspection is allowed
-      const modMem = await demoRepository.getWorkspaceMembership(WS_ID, 'user_aarav', 'user_rohan');
-      expect(modMem?.userId).toBe('user_aarav');
+      const modMem = await demoRepository.getWorkspaceMembership(WS_ID, 'VSC-S-001', 'VSC-S-009');
+      expect(modMem?.userId).toBe('VSC-S-001');
 
       // Unrelated caller inspecting another user's membership is rejected
       await expect(
-        demoRepository.getWorkspaceMembership(WS_ID, 'user_aarav', 'user_dev')
+        demoRepository.getWorkspaceMembership(WS_ID, 'VSC-S-001', 'JS-F-001')
       ).rejects.toThrow(/Caller does not have permission to inspect another user's workspace membership/i);
 
       // Omitted caller on private workspace is rejected
       await expect(
-        demoRepository.getWorkspaceMembership(WS_ID, 'user_aarav')
+        demoRepository.getWorkspaceMembership(WS_ID, 'VSC-S-001')
       ).rejects.toThrow(/Caller identity required to query private workspace membership/i);
     });
 
     it('strictly denies removed member and unrelated moderator from accessing private workspace', async () => {
       // Unrelated moderator (Dev Patel is not room mod) cannot bypass private boundary
-      await expect(demoRepository.getWorkspace(WS_ID, 'user_dev')).rejects.toThrow(
+      await expect(demoRepository.getWorkspace(WS_ID, 'JS-F-001')).rejects.toThrow(
         /is invite-only private and cannot be accessed without an invitation/i
       );
 
       // Remove Kabir Khan
-      await demoRepository.switchUser('user_rohan');
+      await demoRepository.switchUser('VSC-S-009');
       await demoRepository.moderateWorkspaceMember({
         workspaceId: WS_ID,
-        moderatorId: 'user_rohan',
-        targetUserId: 'user_kabir',
+        moderatorId: 'VSC-S-009',
+        targetUserId: 'VSC-S-006',
         newStatus: 'removed',
         reason: 'Violated safety guidelines',
       });
 
       // Removed user cannot view workspace or member content
-      await expect(demoRepository.getWorkspace(WS_ID, 'user_kabir')).rejects.toThrow(
+      await expect(demoRepository.getWorkspace(WS_ID, 'VSC-S-006')).rejects.toThrow(
         /You have been removed from this workspace/i
       );
-      await expect(demoRepository.getWorkspaceActions(WS_ID, 'user_kabir')).rejects.toThrow(
+      await expect(demoRepository.getWorkspaceActions(WS_ID, 'VSC-S-006')).rejects.toThrow(
         /Non-members and invited or removed participants cannot read/i
       );
-      await expect(demoRepository.getWorkspaceMemberships(WS_ID, 'user_kabir')).rejects.toThrow(
+      await expect(demoRepository.getWorkspaceMemberships(WS_ID, 'VSC-S-006')).rejects.toThrow(
         /Member directory is only accessible to active workspace members/i
       );
     });
@@ -150,35 +150,35 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
 
   describe('2. Username Search & Controlled Invitations', () => {
     it('allows active members with invite permission to search users by username', async () => {
-      const results = await demoRepository.searchUsersForInvite('aryan', 'user_aarav', WS_ID);
+      const results = await demoRepository.searchUsersForInvite('aslan', 'VSC-S-001', WS_ID);
       expect(results.length).toBeGreaterThan(0);
-      expect(results[0].username).toBe('aryan.sen');
+      expect(results[0].username).toBe('aslan.sandh');
     });
 
     it('successfully invites an eligible user by exact username and creates invited membership', async () => {
       const newMember = await demoRepository.inviteUserToWorkspace({
         workspaceId: WS_ID,
-        inviterId: 'user_aarav',
-        usernameOrId: 'aryan.sen',
+        inviterId: 'VSC-S-001',
+        usernameOrId: 'aslan.sandh',
       });
 
-      expect(newMember.userId).toBe('user_aryan');
+      expect(newMember.userId).toBe('VSC-S-011');
       expect(newMember.state).toBe('invited');
-      expect(newMember.invitedBy).toBe('user_aarav');
+      expect(newMember.invitedBy).toBe('VSC-S-001');
 
       // Verify audit event
-      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'user_aarav');
-      const inviteAudit = audits.find((a) => a.eventType === 'invite' && a.targetUserId === 'user_aryan');
+      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'VSC-S-001');
+      const inviteAudit = audits.find((a) => a.eventType === 'invite' && a.targetUserId === 'VSC-S-011');
       expect(inviteAudit).toBeDefined();
-      expect(inviteAudit?.actorId).toBe('user_aarav');
+      expect(inviteAudit?.actorId).toBe('VSC-S-001');
     });
 
     it('rejects self-invitation', async () => {
       await expect(
         demoRepository.inviteUserToWorkspace({
           workspaceId: WS_ID,
-          inviterId: 'user_aarav',
-          usernameOrId: 'aarav.sharma',
+          inviterId: 'VSC-S-001',
+          usernameOrId: 'ankita.kapri',
         })
       ).rejects.toThrow(/Self-invitation is not permitted/i);
     });
@@ -187,28 +187,28 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       await expect(
         demoRepository.inviteUserToWorkspace({
           workspaceId: WS_ID,
-          inviterId: 'user_aarav',
+          inviterId: 'VSC-S-001',
           usernameOrId: 'unknown_resident_999',
         })
       ).rejects.toThrow(/User "@unknown_resident_999" not found/i);
     });
 
     it('rejects duplicate invitations for existing members or pending invitees', async () => {
-      // user_priya is already an active member
+      // VSC-S-002 is already an active member
       await expect(
         demoRepository.inviteUserToWorkspace({
           workspaceId: WS_ID,
-          inviterId: 'user_aarav',
-          usernameOrId: 'priya.s',
+          inviterId: 'VSC-S-001',
+          usernameOrId: 'niyati.chawda',
         })
       ).rejects.toThrow(/already an active member/i);
 
-      // user_meera already has a pending invitation in seed
+      // VSC-S-003 already has a pending invitation in seed
       await expect(
         demoRepository.inviteUserToWorkspace({
           workspaceId: WS_ID,
-          inviterId: 'user_aarav',
-          usernameOrId: 'meera.singh',
+          inviterId: 'VSC-S-001',
+          usernameOrId: 'harshita.kapri',
         })
       ).rejects.toThrow(/already has a pending invitation/i);
     });
@@ -218,7 +218,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     it('allows invitee to accept invitation, activating membership with persistent joinedAt', async () => {
       const accepted = await demoRepository.respondToWorkspaceInvite({
         workspaceId: WS_ID,
-        userId: 'user_meera',
+        userId: 'VSC-S-003',
         accept: true,
       });
 
@@ -226,15 +226,15 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       expect(accepted.joinedAt).toBeDefined();
 
       // Verify audit
-      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'user_aarav');
-      const acceptAudit = audits.find((a) => a.eventType === 'acceptance' && a.actorId === 'user_meera');
+      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'VSC-S-001');
+      const acceptAudit = audits.find((a) => a.eventType === 'acceptance' && a.actorId === 'VSC-S-003');
       expect(acceptAudit).toBeDefined();
     });
 
     it('allows invitee to decline invitation, recording left state and decline audit', async () => {
       const declined = await demoRepository.respondToWorkspaceInvite({
         workspaceId: WS_ID,
-        userId: 'user_meera',
+        userId: 'VSC-S-003',
         accept: false,
         reason: 'Unable to commit to Ward 24 schedule this semester',
       });
@@ -242,8 +242,8 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       expect(declined.state).toBe('left');
       expect(declined.statusReason).toContain('Unable to commit');
 
-      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'user_aarav');
-      const declineAudit = audits.find((a) => a.eventType === 'decline' && a.actorId === 'user_meera');
+      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'VSC-S-001');
+      const declineAudit = audits.find((a) => a.eventType === 'decline' && a.actorId === 'VSC-S-003');
       expect(declineAudit).toBeDefined();
     });
   });
@@ -252,20 +252,20 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     it('records rulebook acknowledgement for active member', async () => {
       const ack = await demoRepository.acknowledgeWorkspaceRules({
         workspaceId: WS_ID,
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         version: 'v1.0',
       });
       expect(ack.lastAcknowledgedRuleVersion).toBe('v1.0');
 
-      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'user_aarav');
-      expect(audits.some((a) => a.eventType === 'rule_acknowledgement' && a.actorId === 'user_aarav')).toBe(true);
+      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'VSC-S-001');
+      expect(audits.some((a) => a.eventType === 'rule_acknowledgement' && a.actorId === 'VSC-S-001')).toBe(true);
     });
 
     it('prevents posting if member has not acknowledged current rulebook version', async () => {
       // Simulate invitee accepting invite but not acknowledging rules
       await demoRepository.respondToWorkspaceInvite({
         workspaceId: WS_ID,
-        userId: 'user_meera',
+        userId: 'VSC-S-003',
         accept: true,
       });
 
@@ -273,7 +273,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       await expect(
         demoRepository.createWorkspaceAction({
           workspaceId: WS_ID,
-          authorId: 'user_meera',
+          authorId: 'VSC-S-003',
           actionType: 'team_note',
           title: 'Cross-School Coordination Feedback',
           content: 'Here are observations from Ajmer crosswalk experiences.',
@@ -283,14 +283,14 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       // Now acknowledge rules
       await demoRepository.acknowledgeWorkspaceRules({
         workspaceId: WS_ID,
-        userId: 'user_meera',
+        userId: 'VSC-S-003',
         version: 'v1.0',
       });
 
       // Now posting succeeds
       const action = await demoRepository.createWorkspaceAction({
         workspaceId: WS_ID,
-        authorId: 'user_meera',
+        authorId: 'VSC-S-003',
         actionType: 'team_note',
         title: 'Cross-School Coordination Feedback',
         content: 'Here are observations from Ajmer crosswalk experiences.',
@@ -302,16 +302,16 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       });
 
       expect(action.id).toBeDefined();
-      expect(action.authorId).toBe('user_meera');
+      expect(action.authorId).toBe('VSC-S-003');
       expect(action.sourceLink?.id).toBe('prop_jaipur_pedestrian_01');
     });
 
     it('prevents invited user from posting before accepting invitation', async () => {
-      // user_meera is in invited state
+      // VSC-S-003 is in invited state
       await expect(
         demoRepository.createWorkspaceAction({
           workspaceId: WS_ID,
-          authorId: 'user_meera',
+          authorId: 'VSC-S-003',
           actionType: 'team_note',
           title: 'Premature Action Post',
           content: 'This should be blocked because user is only invited.',
@@ -325,7 +325,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       // Kavita Rao is room owner & moderator
       const frozen = await demoRepository.moderateWorkspaceAction({
         workspaceId: WS_ID,
-        moderatorId: 'user_kavita',
+        moderatorId: 'VSC-T-001',
         actionId: 'act_ws_02',
         action: 'freeze',
         reason: 'Temporary freeze while validating volunteer parent permissions',
@@ -336,7 +336,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       // Rohan Mehta is co-moderator
       const unfreeze = await demoRepository.moderateWorkspaceAction({
         workspaceId: WS_ID,
-        moderatorId: 'user_rohan',
+        moderatorId: 'VSC-S-009',
         actionId: 'act_ws_02',
         action: 'unfreeze',
         reason: 'Parent permissions validated by school office',
@@ -349,20 +349,20 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       await expect(
         demoRepository.moderateWorkspaceAction({
           workspaceId: WS_ID,
-          moderatorId: 'user_dev',
+          moderatorId: 'JS-F-001',
           actionId: 'act_ws_02',
           action: 'freeze',
           reason: 'Global admin attempt to freeze room post',
         })
       ).rejects.toThrow(/Scoped moderation violation/i);
 
-      // Ananya Verma is Institution Admin elsewhere
-      await demoRepository.switchUser('user_ananya');
+      // Institution Admin not scoped to this room and without memberships grant
+      await demoRepository.switchUser('VSC-P-001');
       await expect(
         demoRepository.moderateWorkspaceMember({
           workspaceId: WS_ID,
-          moderatorId: 'user_ananya',
-          targetUserId: 'user_aarav',
+          moderatorId: 'VSC-P-001',
+          targetUserId: 'VSC-S-001',
           newStatus: 'restricted',
           reason: 'Unauthorized restriction attempt',
         })
@@ -370,11 +370,11 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     });
 
     it('allows room moderator to restrict or remove a member with documented reason', async () => {
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const restricted = await demoRepository.moderateWorkspaceMember({
         workspaceId: WS_ID,
-        moderatorId: 'user_kavita',
-        targetUserId: 'user_priya',
+        moderatorId: 'VSC-T-001',
+        targetUserId: 'VSC-S-002',
         newStatus: 'restricted',
         reason: 'Posting off-topic commercial content in civic room',
       });
@@ -386,7 +386,7 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
       await expect(
         demoRepository.createWorkspaceAction({
           workspaceId: WS_ID,
-          authorId: 'user_priya',
+          authorId: 'VSC-S-002',
           actionType: 'team_note',
           title: 'Attempted Post During Restriction',
           content: 'This should be blocked by repository permissions.',
@@ -395,33 +395,33 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     });
 
     it('completely denies removed member from accessing workspace content', async () => {
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       await demoRepository.moderateWorkspaceMember({
         workspaceId: WS_ID,
-        moderatorId: 'user_kavita',
-        targetUserId: 'user_kabir',
+        moderatorId: 'VSC-T-001',
+        targetUserId: 'VSC-S-006',
         newStatus: 'removed',
         reason: 'Repeated violation of vehicle privacy standards',
       });
 
       // Removed user cannot view actions
       await expect(
-        demoRepository.getWorkspaceActions(WS_ID, 'user_kabir')
+        demoRepository.getWorkspaceActions(WS_ID, 'VSC-S-006')
       ).rejects.toThrow(/Unauthorized: Non-members and invited or removed participants cannot read/i);
 
       // Removed user cannot view workspace
       await expect(
-        demoRepository.getWorkspace(WS_ID, 'user_kabir')
+        demoRepository.getWorkspace(WS_ID, 'VSC-S-006')
       ).rejects.toThrow(/Unauthorized: You have been removed from this workspace/i);
     });
 
     it('prevents removing or restricting the workspace owner', async () => {
-      await demoRepository.switchUser('user_rohan');
+      await demoRepository.switchUser('VSC-S-009');
       await expect(
         demoRepository.moderateWorkspaceMember({
           workspaceId: WS_ID,
-          moderatorId: 'user_rohan',
-          targetUserId: 'user_kavita',
+          moderatorId: 'VSC-S-009',
+          targetUserId: 'VSC-T-001',
           newStatus: 'removed',
           reason: 'Unauthorized coup attempt',
         })
@@ -433,36 +433,36 @@ describe('Package 06: Jaipur Workspace Repository & Scoped Moderation Tests', ()
     it('records member content report with reason and creates moderation audit entry', async () => {
       const reportAudit = await demoRepository.reportWorkspaceContent({
         workspaceId: WS_ID,
-        reporterId: 'user_aarav',
+        reporterId: 'VSC-S-001',
         targetActionId: 'act_ws_03',
         reason: 'Clarification required on IRC approach ramp gradient calculation',
       });
 
       expect(reportAudit.eventType).toBe('report');
-      expect(reportAudit.actorId).toBe('user_aarav');
+      expect(reportAudit.actorId).toBe('VSC-S-001');
       expect(reportAudit.reason).toContain('Clarification required');
 
-      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'user_aarav');
+      const audits = await demoRepository.getWorkspaceAuditEvents(WS_ID, 'VSC-S-001');
       expect(audits.some((a) => a.id === reportAudit.id)).toBe(true);
     });
 
     it('persists audit events and state across reload and resets cleanly', async () => {
       await demoRepository.inviteUserToWorkspace({
         workspaceId: WS_ID,
-        inviterId: 'user_aarav',
-        usernameOrId: 'aryan.sen',
+        inviterId: 'VSC-S-001',
+        usernameOrId: 'aslan.sandh',
       });
 
       // Verify persistence reload
       const loadedDb = PersistenceService.loadDatabase();
       const persistedAudits = loadedDb.workspaceAuditEvents?.filter((a) => a.workspaceId === WS_ID);
-      expect(persistedAudits?.some((a) => a.targetUserId === 'user_aryan')).toBe(true);
+      expect(persistedAudits?.some((a) => a.targetUserId === 'VSC-S-011')).toBe(true);
 
       // Reset
       PersistenceService.resetDatabase();
       const resetDb = PersistenceService.loadDatabase();
       const resetAudits = resetDb.workspaceAuditEvents?.filter((a) => a.workspaceId === WS_ID);
-      expect(resetAudits?.some((a) => a.targetUserId === 'user_aryan')).toBe(false);
+      expect(resetAudits?.some((a) => a.targetUserId === 'VSC-S-011')).toBe(false);
     });
   });
 });

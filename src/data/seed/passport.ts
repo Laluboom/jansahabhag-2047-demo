@@ -2,11 +2,11 @@ import { PassportEntry } from '../../types/domain';
 
 export const seedPassportEntries: PassportEntry[] = [
   // -------------------------------------------------------------
-  // Aarav Sharma Activity Entries (Initial: 2 Civic Credit Points)
+  // Ankita Kapri Activity Entries (Initial: 2 Civic Credit Points)
   // -------------------------------------------------------------
   {
     id: 'pass_aarav_01',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     category: 'learning',
     title: 'Civic Field Observation Specialist (Foundations)',
     subtitle: 'Completed Module 1 field observation techniques',
@@ -34,10 +34,10 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_aarav_02',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     category: 'contribution',
     title: 'Verified School Gate Traffic Count Audit',
-    subtitle: 'Navchetna Main Gate morning peak flow analysis',
+    subtitle: 'Virani Science College Main Gate morning peak flow analysis',
     date: '2026-10-04',
     creditsAwarded: 1,
     evidenceIds: ['ev_aarav_traffic_count_01'],
@@ -47,20 +47,20 @@ export const seedPassportEntries: PassportEntry[] = [
     verificationState: 'facilitator_reviewed',
     reviewState: 'accepted',
     verifier: {
-      id: 'user_kavita',
-      name: 'Kavita Rao',
+      id: 'VSC-T-001',
+      name: 'Shri Mayur Parmar',
       role: 'Teacher / Mentor',
-      label: 'Mentor Review (Jaipur Demo Simulation)',
+      label: 'Mentor Review (Rajkot Demo Simulation)',
     },
-    organisation: 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)',
+    organisation: 'Government Senior Secondary School Virani Science College, Rajkot (Demo Simulation)',
     calculationExplanation: 'Fixed demo rule: +1 Observation Civic Credit Point on verified field evidence.',
     isVerified: true,
     revisionHistory: [
       {
         date: '2026-10-04T11:00:00Z',
         action: 'VERIFIED',
-        actorId: 'user_kavita',
-        actorName: 'Kavita Rao',
+        actorId: 'VSC-T-001',
+        actorName: 'Shri Mayur Parmar',
         note: 'Verified field audit and peak flow data collection.',
       },
     ],
@@ -68,11 +68,11 @@ export const seedPassportEntries: PassportEntry[] = [
   },
 
   // -------------------------------------------------------------
-  // Siddharth Nair Activity Entries (4 Civic Credit Points)
+  // Hriday Trivedi Activity Entries (4 Civic Credit Points)
   // -------------------------------------------------------------
   {
     id: 'pass_sid_01',
-    userId: 'user_siddharth',
+    userId: 'VSC-S-007',
     category: 'learning',
     title: 'Foundations of Civic Observation',
     subtitle: 'Introduction to public space pedestrian auditing',
@@ -91,10 +91,10 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_sid_02',
-    userId: 'user_siddharth',
+    userId: 'VSC-S-007',
     category: 'deliberation',
     title: 'Appointed Assembly Shaper (Synthesiser)',
-    subtitle: 'Jaipur Pedestrian Safety Assembly',
+    subtitle: 'Rajkot Pedestrian Safety Assembly',
     date: '2026-10-05',
     creditsAwarded: 2,
     evidenceIds: [],
@@ -110,7 +110,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_sid_03',
-    userId: 'user_siddharth',
+    userId: 'VSC-S-007',
     category: 'deliberation',
     title: 'Substantive Synthesis Contribution',
     subtitle: 'Consolidated safety arguments into proposition specs',
@@ -129,11 +129,11 @@ export const seedPassportEntries: PassportEntry[] = [
   },
 
   // -------------------------------------------------------------
-  // Vikram Joshi Activity Entries (3 Civic Credit Points)
+  // Yash Rathod Activity Entries (3 Civic Credit Points)
   // -------------------------------------------------------------
   {
     id: 'pass_vikram_01',
-    userId: 'user_vikram',
+    userId: 'VSC-S-005',
     category: 'learning',
     title: 'Civic Field Observation Fundamentals',
     subtitle: 'Field study techniques for school crossing zones',
@@ -152,9 +152,9 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_vikram_02',
-    userId: 'user_vikram',
+    userId: 'VSC-S-005',
     category: 'deliberation',
-    title: 'Participant: Jaipur Pedestrian Assembly',
+    title: 'Participant: Rajkot Pedestrian Assembly',
     subtitle: 'Active questioner and deliberation delegate',
     date: '2026-10-05',
     creditsAwarded: 2,
@@ -171,11 +171,11 @@ export const seedPassportEntries: PassportEntry[] = [
   },
 
   // -------------------------------------------------------------
-  // Meera Singh Activity Entries (5 Civic Credit Points — Ceiled)
+  // Niyati Chawda Activity Entries (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'pass_meera_01',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     category: 'learning',
     title: 'Civic Observation & Safe Streets Foundations',
     subtitle: 'Completed foundational lesson on field observation',
@@ -194,9 +194,9 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_meera_02',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     category: 'contribution',
-    title: 'Ajmer Multi-Modal Traffic Survey',
+    title: 'Rajkot Multi-Modal Traffic Survey',
     subtitle: 'Civil Lines comprehensive 60-minute vehicle classification',
     date: '2026-08-25',
     creditsAwarded: 2,
@@ -213,9 +213,9 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_meera_04',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     category: 'deliberation',
-    title: 'Working Group Chair: Rajasthan Green Canopy Council',
+    title: 'Working Group Chair: Gujarat Green Canopy Council',
     subtitle: 'Deliberated on urban shade equity and misting benches',
     date: '2026-09-18',
     creditsAwarded: 2,
@@ -232,10 +232,10 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_meera_07',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     category: 'achievement',
     title: 'Civic Fellow Badge: Advanced Civic Leadership',
-    subtitle: 'Awarded by Directorate of Youth Affairs Rajasthan',
+    subtitle: 'Awarded by Directorate of Youth Affairs Gujarat',
     date: '2026-09-20',
     creditsAwarded: 0,
     evidenceIds: [],
@@ -251,11 +251,11 @@ export const seedPassportEntries: PassportEntry[] = [
   },
 
   // -------------------------------------------------------------
-  // Priya Sharma Activity Entries (5 Civic Credit Points — Ceiled)
+  // Harshita Kapri Activity Entries (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'pass_priya_01',
-    userId: 'user_priya',
+    userId: 'VSC-S-003',
     category: 'learning',
     title: 'Field Audit Fundamentals Graduate',
     subtitle: 'Completed safe vantage point and spatial mapping training',
@@ -274,7 +274,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_priya_02',
-    userId: 'user_priya',
+    userId: 'VSC-S-003',
     category: 'contribution',
     title: 'Secondary Gate Flow & Cycle Velocity Count',
     subtitle: 'Verified submission of 45-minute bicycle count',
@@ -293,7 +293,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_priya_03',
-    userId: 'user_priya',
+    userId: 'VSC-S-003',
     category: 'deliberation',
     title: 'Deliberation Evidence Analyst Lead',
     subtitle: 'Delivered peer data briefing during Stage 2 deliberation',
@@ -312,11 +312,11 @@ export const seedPassportEntries: PassportEntry[] = [
   },
 
   // -------------------------------------------------------------
-  // Aryan Sen Activity Entries (5 Civic Credit Points — Ceiled)
+  // Ajit Sanghar Activity Entries (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'pass_aryan_01',
-    userId: 'user_aryan',
+    userId: 'VSC-S-010',
     category: 'civic_action',
     title: 'IoT Sensor Pod Deployment at RTU Entrance',
     subtitle: 'Acoustic and traffic velocity telemetry monitoring',
@@ -335,7 +335,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_aryan_02',
-    userId: 'user_aryan',
+    userId: 'VSC-S-010',
     category: 'contribution',
     title: 'Verified 48-Hour Telemetry Dataset',
     subtitle: 'University mentor verified sensor observation record',
@@ -354,7 +354,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_aryan_03',
-    userId: 'user_aryan',
+    userId: 'VSC-S-010',
     category: 'deliberation',
     title: 'Green Canopy Council Technical Delegate',
     subtitle: 'Synthesized acoustic decibel data for council',
@@ -377,7 +377,7 @@ export const seedPassportEntries: PassportEntry[] = [
   // -------------------------------------------------------------
   {
     id: 'pass_kabir_01',
-    userId: 'user_kabir',
+    userId: 'VSC-S-006',
     category: 'contribution',
     title: 'Bus Shelter Lighting & Lux Meter Audit',
     subtitle: 'Measured 6 student transit stops at night',
@@ -396,9 +396,9 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_kabir_02',
-    userId: 'user_kabir',
+    userId: 'VSC-S-006',
     category: 'civic_action',
-    title: 'Completed Action: Mansarovar Bus Stop Lighting',
+    title: 'Completed Action: Kalawad Road Bus Stop Lighting',
     subtitle: '6 solar LED lights installed by JCTSL',
     date: '2026-10-01',
     creditsAwarded: 2,
@@ -415,14 +415,14 @@ export const seedPassportEntries: PassportEntry[] = [
   },
 
   // -------------------------------------------------------------
-  // Neha Reddy Activity Entries (5 Civic Credit Points — Ceiled)
+  // Asmi Soni Activity Entries (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'pass_neha_01',
-    userId: 'user_neha',
+    userId: 'VSC-S-015',
     category: 'contribution',
     title: '12-Station Universal Access Curb Ramp Audit',
-    subtitle: 'Survey of wheelchair drop-offs in Jaipur metro zone',
+    subtitle: 'Survey of wheelchair drop-offs in Rajkot metro zone',
     date: '2026-09-24',
     creditsAwarded: 1,
     evidenceIds: ['ev_neha_survey_01'],
@@ -438,7 +438,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_neha_02',
-    userId: 'user_neha',
+    userId: 'VSC-S-015',
     category: 'learning',
     title: 'Sidewalk Obstruction & Accessibility Graduate',
     subtitle: 'Completed spatial mapping track',
@@ -457,7 +457,7 @@ export const seedPassportEntries: PassportEntry[] = [
   },
   {
     id: 'pass_neha_03',
-    userId: 'user_neha',
+    userId: 'VSC-S-015',
     category: 'deliberation',
     title: 'Universal Access Delegate: Green Canopy Council',
     subtitle: 'Advocated for wheelchair clearance along tree verges',

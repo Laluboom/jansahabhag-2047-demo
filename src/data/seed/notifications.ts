@@ -1,12 +1,12 @@
 import { Notification } from '../../types/domain';
 
 export const seedNotifications: Notification[] = [
-  // Aarav's notifications (6)
+  // Ankita's notifications (6)
   {
     id: 'notif_aarav_01',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     title: 'Assignment Verified (+2 Credits)',
-    message: 'Teacher Kavita Rao verified your field traffic count for Navchetna Gate.',
+    message: 'Teacher Shri Mayur Parmar verified your field traffic count for Virani Science College Gate.',
     type: 'review',
     isRead: false,
     targetRoute: '/assignments/asg_obs_01',
@@ -15,9 +15,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_aarav_02',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     title: 'Youth Assembly Role Assigned: Questioner',
-    message: 'You have been appointed as Questioner for the Jaipur Pedestrian Safety Assembly.',
+    message: 'You have been appointed as Questioner for the Rajkot Pedestrian Safety Assembly.',
     type: 'assembly',
     isRead: false,
     targetRoute: '/assemblies/assembly_jaipur_pedestrian_2026',
@@ -26,9 +26,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_aarav_03',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     title: 'New Assembly Contribution Added',
-    message: 'Siddharth Nair synthesized your question on IRC 1:15 slopes into the draft proposition.',
+    message: 'Hriday Trivedi synthesized your question on IRC 1:15 slopes into the draft proposition.',
     type: 'assembly',
     isRead: true,
     targetRoute: '/assemblies/assembly_jaipur_pedestrian_2026',
@@ -37,7 +37,7 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_aarav_04',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     title: 'Civic Passport Updated',
     message: 'Your reflective essay and verified contribution have been synced to your Civic Passport.',
     type: 'credit',
@@ -48,9 +48,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_aarav_05',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     title: 'Upcoming Deliberation Session',
-    message: 'Jaipur Youth Pedestrian Assembly live chamber starts Monday at 10:00 AM.',
+    message: 'Rajkot Youth Pedestrian Assembly live chamber starts Monday at 10:00 AM.',
     type: 'assembly',
     isRead: true,
     targetRoute: '/events/evt_jaipur_assembly_01',
@@ -59,7 +59,7 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_aarav_06',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     title: 'Submission Under Review',
     message: 'Your photo-evidence submission for Assignment 2 is currently being reviewed.',
     type: 'assignment',
@@ -69,12 +69,12 @@ export const seedNotifications: Notification[] = [
     schemaVersion: 1,
   },
 
-  // Kavita's notifications (Teacher) (4)
+  // Shri Mayur Parmar's notifications (Teacher) (4)
   {
     id: 'notif_kavita_01',
-    userId: 'user_kavita',
-    title: 'New Assignment Submission from Aarav Sharma',
-    message: 'Aarav submitted Assignment 2: Dangerous Crossing Photo-Evidence & Incident Log.',
+    userId: 'VSC-T-001',
+    title: 'New Assignment Submission from Ankita Kapri',
+    message: 'Ankita submitted Assignment 2: Dangerous Crossing Photo-Evidence & Incident Log.',
     type: 'assignment',
     isRead: false,
     targetRoute: '/assignments/asg_obs_02',
@@ -83,9 +83,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_kavita_02',
-    userId: 'user_kavita',
-    title: 'New Submission from Vikram Joshi',
-    message: 'Vikram Joshi submitted Assignment 2: Broken Sidewalk photo.',
+    userId: 'VSC-T-001',
+    title: 'New Submission from Yash Rathod',
+    message: 'Yash Rathod submitted Assignment 2: Broken Sidewalk photo.',
     type: 'assignment',
     isRead: true,
     targetRoute: '/assignments/asg_obs_02',
@@ -94,9 +94,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_kavita_03',
-    userId: 'user_kavita',
+    userId: 'VSC-T-001',
     title: 'Field Audit Workshop Confirmed',
-    message: 'Ward 24 School Gate Field Audit workshop scheduled for Oct 18.',
+    message: 'Ward 8 School Gate Field Audit workshop scheduled for Oct 18.',
     type: 'project',
     isRead: true,
     targetRoute: '/events/evt_field_audit_02',
@@ -105,9 +105,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_kavita_04',
-    userId: 'user_kavita',
+    userId: 'VSC-T-001',
     title: 'Batch Progress Report Ready',
-    message: 'Navchetna Grade 12 cohort reached 85% completion on Civic Observation Track.',
+    message: 'Virani Science College Grade 12 cohort reached 85% completion on Civic Observation Track.',
     type: 'system',
     isRead: true,
     targetRoute: '/institution/dashboard',
@@ -115,12 +115,12 @@ export const seedNotifications: Notification[] = [
     schemaVersion: 1,
   },
 
-  // Rohan's notifications (Facilitator) (3)
+  // Aroh's notifications (Facilitator) (3)
   {
     id: 'notif_rohan_01',
-    userId: 'user_rohan',
+    userId: 'VSC-S-009',
     title: 'Assembly Stage Transition Ready',
-    message: 'Jaipur Pedestrian Assembly ready for stage advancement to Proposition Draft.',
+    message: 'Rajkot Pedestrian Assembly ready for stage advancement to Proposition Draft.',
     type: 'assembly',
     isRead: false,
     targetRoute: '/assemblies/assembly_jaipur_pedestrian_2026',
@@ -129,9 +129,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_rohan_02',
-    userId: 'user_rohan',
-    title: 'Dissent Recorded by Karan Deshmukh',
-    message: 'Karan recorded dissent regarding delivery truck honking noise on speed tables.',
+    userId: 'VSC-S-009',
+    title: 'Dissent Recorded by Maharshi Deshmukh',
+    message: 'Maharshi recorded dissent regarding delivery truck honking noise on speed tables.',
     type: 'assembly',
     isRead: false,
     targetRoute: '/propositions/prop_jaipur_pedestrian_01',
@@ -140,7 +140,7 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_rohan_03',
-    userId: 'user_rohan',
+    userId: 'VSC-S-009',
     title: 'Green Canopy Council Concluded',
     message: 'Shade equity proposition reached Qualified Support outcome.',
     type: 'assembly',
@@ -150,12 +150,12 @@ export const seedNotifications: Notification[] = [
     schemaVersion: 1,
   },
 
-  // Ananya's notifications (Institution Admin) (3)
+  // Shri Dr. K. D. Ladwa's notifications (Institution Admin) (3)
   {
     id: 'notif_ananya_01',
-    userId: 'user_ananya',
+    userId: 'VSC-P-001',
     title: 'Institutional Civic Accreditation Update',
-    message: 'Navchetna Public School achieved Level 2 Civic Engagement certification.',
+    message: 'Shri Manibhai Virani and Smt. Navalben Virani Science College achieved Level 2 Civic Engagement certification.',
     type: 'system',
     isRead: false,
     targetRoute: '/institution/dashboard',
@@ -164,7 +164,7 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_ananya_02',
-    userId: 'user_ananya',
+    userId: 'VSC-P-001',
     title: '142 Active Participants Enrolled',
     message: 'Term 1 cohort registration completed across 3 civic programmes.',
     type: 'system',
@@ -175,9 +175,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_ananya_03',
-    userId: 'user_ananya',
+    userId: 'VSC-P-001',
     title: 'Deputation Request from Student Council',
-    message: 'Aarav Sharma requested school endorsement for Nagar Nigam Ward 24 petition.',
+    message: 'Ankita Kapri requested school endorsement for Nagar Nigam Ward 8 petition.',
     type: 'project',
     isRead: true,
     targetRoute: '/projects/proj_navchetna_crosswalk_01',
@@ -185,10 +185,10 @@ export const seedNotifications: Notification[] = [
     schemaVersion: 1,
   },
 
-  // Dev's notifications (Programme Manager) (3)
+  // Shri Ankit Kalaria's notifications (Programme Manager) (3)
   {
     id: 'notif_dev_01',
-    userId: 'user_dev',
+    userId: 'VSC-T-002',
     title: 'New Proposition Ready for State Municipal Review',
     message: 'Proposition #prop_jaipur_pedestrian_01 finalized with 18 votes support.',
     type: 'assembly',
@@ -199,9 +199,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_dev_02',
-    userId: 'user_dev',
+    userId: 'VSC-T-002',
     title: 'Programme Milestone: 500+ Verified Field Audits',
-    message: '"Safe Streets Rajasthan 2047" crossed 500 verified evidence records.',
+    message: '"Safe Streets Gujarat 2047" crossed 500 verified evidence records.',
     type: 'system',
     isRead: true,
     targetRoute: '/admin/programmes',
@@ -210,7 +210,7 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_dev_03',
-    userId: 'user_dev',
+    userId: 'VSC-T-002',
     title: 'Moderation Flag in Discussion Group',
     message: 'Unverified speeding report flagged for review by community moderator.',
     type: 'system',
@@ -223,7 +223,7 @@ export const seedNotifications: Notification[] = [
   // Admin's notifications (Platform Admin) (3)
   {
     id: 'notif_admin_01',
-    userId: 'user_admin',
+    userId: 'JS-F-001',
     title: 'Platform System Health: All Nodes Optimal',
     message: 'Database replication, local encryption, and storage version v1 active.',
     type: 'system',
@@ -234,7 +234,7 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_admin_02',
-    userId: 'user_admin',
+    userId: 'JS-F-001',
     title: 'Moderation Queue: 1 Case Pending Review',
     message: 'Case #mod_001 requires platform moderator determination.',
     type: 'system',
@@ -245,9 +245,9 @@ export const seedNotifications: Notification[] = [
   },
   {
     id: 'notif_admin_03',
-    userId: 'user_admin',
+    userId: 'JS-F-001',
     title: 'Monthly Platform Growth Digest',
-    message: '24 institutions and 1,840 participants active across Rajasthan.',
+    message: '24 institutions and 1,840 participants active across Gujarat.',
     type: 'system',
     isRead: true,
     targetRoute: '/analytics',

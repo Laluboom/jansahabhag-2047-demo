@@ -35,8 +35,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
     it('builds separate allocations for Chair, Facilitator, and 4 functional zones without pooling', () => {
       const allocations = buildAssemblyRoleAllocations({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
-        chairId: 'user_rohan',
-        facilitatorId: 'user_rohan',
+        chairId: 'VSC-S-009',
+        facilitatorId: 'VSC-S-009',
         plannedPlacesOverrides: {
           Chair: 1,
           Facilitator: 1,
@@ -71,8 +71,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
     it('supports Co-Chair allocation when configured', () => {
       const allocations = buildAssemblyRoleAllocations({
         assemblyId: 'test_assembly',
-        chairId: 'user_rohan',
-        coChairId: 'user_ananya',
+        chairId: 'VSC-S-009',
+        coChairId: 'VSC-S-004',
         plannedPlacesOverrides: {
           'Co-Chair': 1,
         },
@@ -81,7 +81,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(allocations['Co-Chair']).toBeDefined();
       expect(allocations['Co-Chair'].totalPlaces).toBe(1);
       expect(allocations['Co-Chair'].reservedMinimum).toBe(1);
-      expect(allocations['Co-Chair'].confirmedOccupants).toContain('user_ananya');
+      expect(allocations['Co-Chair'].confirmedOccupants).toContain('VSC-S-004');
     });
 
     it('allocates separate secondary roles in three-person mini-deliberation mode', () => {
@@ -92,7 +92,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
           {
             id: 'r1',
             assemblyId: 'mini_assembly',
-            userId: 'user_ananya',
+            userId: 'VSC-S-004',
             roleName: 'Thinker',
             secondaryRoleName: 'Enabler',
             power: 'Question Setter',
@@ -112,7 +112,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(allocations['Secondary Enabler']).toBeDefined();
       expect(allocations['Secondary Enabler'].totalPlaces).toBe(1);
       expect(allocations['Secondary Enabler'].reservedMinimum).toBe(1);
-      expect(allocations['Secondary Enabler'].confirmedOccupants).toContain('user_ananya');
+      expect(allocations['Secondary Enabler'].confirmedOccupants).toContain('VSC-S-004');
     });
   });
 
@@ -123,8 +123,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         plannedPlacesOverrides: { Chair: 1 },
       })['Chair'];
 
-      // user_aarav is undeclared/ineligible for women's reservation
-      const claimResult = canUserClaimRoleAllocation(chairAlloc, 'user_aarav', undefined, false);
+      // VSC-S-005 is ineligible for women's reservation
+      const claimResult = canUserClaimRoleAllocation(chairAlloc, 'VSC-S-005', undefined, false);
       expect(claimResult.allowed).toBe(false);
       expect(claimResult.reason).toContain('reservation policy');
     });
@@ -135,8 +135,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         plannedPlacesOverrides: { Chair: 1 },
       })['Chair'];
 
-      // user_ananya is eligible under fictional reservation declarations
-      const claimResult = canUserClaimRoleAllocation(chairAlloc, 'user_ananya', undefined, false);
+      // VSC-S-004 is eligible under fictional reservation declarations
+      const claimResult = canUserClaimRoleAllocation(chairAlloc, 'VSC-S-004', undefined, false);
       expect(claimResult.allowed).toBe(true);
       expect(claimResult.placeType).toBe('reserved');
     });
@@ -147,10 +147,10 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       const thinkerAlloc = buildAssemblyRoleAllocations({
         assemblyId: 'test_asm',
         roles: [
-          { id: '1', assemblyId: 'test_asm', userId: 'user_aarav', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
-          { id: '2', assemblyId: 'test_asm', userId: 'user_vikram', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
-          { id: '3', assemblyId: 'test_asm', userId: 'user_kabir', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
-          { id: '4', assemblyId: 'test_asm', userId: 'user_rohan', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
+          { id: '1', assemblyId: 'test_asm', userId: 'VSC-S-014', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
+          { id: '2', assemblyId: 'test_asm', userId: 'VSC-S-005', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
+          { id: '3', assemblyId: 'test_asm', userId: 'VSC-S-006', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
+          { id: '4', assemblyId: 'test_asm', userId: 'VSC-S-009', roleName: 'Thinker', power: 'Question Setter', lens: '', responsibilities: [], promptSuggestions: [], powerActionDescription: '', responseObligation: '', badgeIcon: '', schemaVersion: 1, createdAt: '', updatedAt: '' },
         ],
         plannedPlacesOverrides: { Thinker: 6 },
       })['Thinker'];
@@ -160,7 +160,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(thinkerAlloc.vacanciesCount).toBe(2);
 
       // Fifth ineligible participant cannot claim vacant reserved place
-      const nextClaim = canUserClaimRoleAllocation(thinkerAlloc, 'user_tutor_meera_id', undefined, false);
+      const nextClaim = canUserClaimRoleAllocation(thinkerAlloc, 'VSC-S-012', undefined, false);
       expect(nextClaim.allowed).toBe(false);
       expect(nextClaim.reason).toContain('reservation policy');
     });
@@ -171,7 +171,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       await expect(
         repository.joinAssembly(
           'assembly_jaipur_pedestrian_2026',
-          'user_aarav',
+          'VSC-S-001',
           'Chair' as never
         )
       ).rejects.toThrow();
@@ -180,64 +180,64 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
   describe('3. Finalization Guard & Platform Owner Audited Exception', () => {
     it('denies finalization of non-compliant role allocation without mutating persistent state', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Rohan (ineligible) is Chair in pedestrian assembly with no approved exception
       await expect(
         repository.finalizeAssemblyRoleAllocation(
           'assembly_jaipur_pedestrian_2026',
           'Chair',
-          'user_admin' // Platform Owner attempting finalization
+          'JS-F-001' // Platform Owner attempting finalization
         )
       ).rejects.toThrow(/33% reservation requirement unmet/i);
 
       // Verify status remains non-compliant and not finalized
-      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       expect(asm?.roleAllocations?.['Chair']?.status).not.toBe('finalized_compliant');
       expect(asm?.roleAllocations?.['Chair']?.status).not.toBe('finalized_exception');
     });
 
     it('rejects participant or facilitator spoof of Platform Owner exception approval', async () => {
-      // Active user is user_aarav. Try to approve exception pretending to be user_admin
+      // Active user is VSC-S-001. Try to approve exception pretending to be JS-F-001
       await expect(
         repository.approveAssemblyRoleException(
           'assembly_jaipur_pedestrian_2026',
           'Chair',
           'Substantive justification reason for pilot',
-          'user_admin' // actorId mismatches active persona user_aarav
+          'JS-F-001' // actorId mismatches active persona VSC-S-001
         )
       ).rejects.toThrow(/Spoof attempt rejected/i);
 
       // Facilitator attempting exception approval is rejected
-      await repository.switchPersona('user_rohan'); // Facilitator persona
+      await repository.switchPersona('VSC-S-009'); // Facilitator persona
       await expect(
         repository.approveAssemblyRoleException(
           'assembly_jaipur_pedestrian_2026',
           'Chair',
           'Facilitator override justification',
-          'user_rohan'
+          'VSC-S-009'
         )
       ).rejects.toThrow(/Only Platform Owner.*can approve reservation exceptions/i);
     });
 
     it('rejects exception approval without substantive reason (minimum 5 characters)', async () => {
-      await repository.switchPersona('user_admin'); // Platform Owner persona
+      await repository.switchPersona('JS-F-001'); // Platform Owner persona
       await expect(
         repository.approveAssemblyRoleException(
           'assembly_jaipur_pedestrian_2026',
           'Chair',
           'test', // 4 characters < 5
-          'user_admin'
+          'JS-F-001'
         )
       ).rejects.toThrow(/substantive reason.*minimum 5 characters/i);
     });
 
     it('allows Platform Owner to approve audited exception and visibly marks status', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       const { assembly, audit } = await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Chair',
         'Fictional pilot demo: Rohan retains Chair role under documented owner exception.',
-        'user_admin'
+        'JS-F-001'
       );
 
       // Status is finalized_exception, visibly distinct from finalized_compliant
@@ -250,23 +250,23 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(audit.action).toBe('exception_approved');
 
       // Audit is stored in allocationAudits
-      const audits = await repository.getAllocationAudits(chairAlloc?.allocationId, 'user_admin');
+      const audits = await repository.getAllocationAudits(chairAlloc?.allocationId, 'JS-F-001');
       expect(audits.some((a) => a.action === 'exception_approved')).toBe(true);
     });
   });
 
   describe('4. Invalidation on Roster or Capacity Changes', () => {
     it('invalidates prior exception when capacity changes', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // First approve exception for Thinker
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Thinker',
         'Initial exception for testing capacity change invalidation',
-        'user_admin'
+        'JS-F-001'
       );
 
-      let asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      let asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       expect(asm?.roleAllocations?.['Thinker']?.status).toBe('finalized_exception');
 
       // Now update Thinker capacity from 6 to 8
@@ -274,7 +274,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         'assembly_jaipur_pedestrian_2026',
         'Thinker',
         8,
-        'user_admin'
+        'JS-F-001'
       );
 
       // Prior exception must be invalidated and reverted to pending
@@ -286,28 +286,28 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(thinkerAlloc?.reservedMinimum).toBe(3); // ceil(0.33 * 8) = 3
 
       // Audit recorded for invalidation
-      const audits = await repository.getAllocationAudits(thinkerAlloc?.allocationId, 'user_admin');
+      const audits = await repository.getAllocationAudits(thinkerAlloc?.allocationId, 'JS-F-001');
       expect(audits.some((a) => a.action === 'exception_invalidated')).toBe(true);
     });
 
     it('invalidates prior exception when a participant withdraws/leaves', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception for Thinker
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Thinker',
         'Temporary exception prior to withdrawal',
-        'user_admin'
+        'JS-F-001'
       );
 
       // Priya (Thinker occupant) leaves the assembly
       await repository.leaveAssembly(
         'assembly_jaipur_pedestrian_2026',
-        'user_priya',
-        'user_admin'
+        'VSC-S-002',
+        'JS-F-001'
       );
 
-      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const thinkerAlloc = asm?.roleAllocations?.['Thinker'];
       expect(thinkerAlloc?.status).toBe('pending');
       expect(thinkerAlloc?.isException).toBe(false);
@@ -316,18 +316,18 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
   describe('5. Privacy Projections for Small Cohorts & Non-Owners', () => {
     it('withholds breakdown counts and exception details for non-owners in small cohorts', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception on Chair (1 place cohort)
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Chair',
         'Confidential domain expertise reason',
-        'user_admin'
+        'JS-F-001'
       );
 
-      // Now query as regular participant (user_aarav)
-      await repository.switchPersona('user_aarav');
-      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      // Now query as regular participant (VSC-S-001)
+      await repository.switchPersona('VSC-S-001');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
       const chairAlloc = asm?.roleAllocations?.['Chair'];
 
       expect(chairAlloc?.isPrivacySuppressed).toBe(true);
@@ -341,8 +341,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
     });
 
     it('provides full allocation and audit details to Platform Owner', async () => {
-      await repository.switchPersona('user_admin');
-      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const chairAlloc = asm?.roleAllocations?.['Chair'];
 
       expect(chairAlloc?.isPrivacySuppressed).toBeFalsy();
@@ -354,12 +354,12 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
   describe('6. Role Power Execution Barrier for Denied/Unconfirmed Occupants', () => {
     it('rejects execution of role powers if occupant is not confirmed in role allocation', async () => {
-      // In Jaipur pedestrian assembly, user_aarav is a Thinker.
-      // Trying to execute power as user_kabir (who is not confirmed in Thinker) must be rejected
+      // In Jaipur pedestrian assembly, VSC-S-001 is a Thinker.
+      // Trying to execute power as VSC-S-006 (who is not confirmed in Thinker) must be rejected
       await expect(
         repository.executeRolePowerAction({
           assemblyId: 'assembly_jaipur_pedestrian_2026',
-          userId: 'user_kabir',
+          userId: 'VSC-S-006',
           power: 'Question Setter',
           title: 'Unauthorized Inquiry',
           description: 'Executing power without confirmed role allocation',
@@ -370,8 +370,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
   describe('7. Legacy Seed Migration & Non-Compliant Initialization', () => {
     it('marks seeded role allocations as unvalidated_legacy or pending rather than compliant', async () => {
-      await repository.switchPersona('user_admin');
-      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       expect(asm?.roleAllocations).toBeDefined();
 
       for (const [, alloc] of Object.entries(asm!.roleAllocations!)) {
@@ -383,12 +383,12 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
   describe('8. Low-Occupancy Privacy Protection for 1–3 Confirmed Occupants (Gap 1)', () => {
     it('suppresses category counts, vacancies, and status for 6-place role with 1 occupant across all repository outputs', async () => {
-      // In Jaipur pedestrian assembly, Shaper is a 6-place role with exactly 1 confirmed occupant: user_siddharth.
+      // In Jaipur pedestrian assembly, Shaper is a 6-place role with exactly 1 confirmed occupant: VSC-S-007.
       // 1 occupant in a 6-place role would leak Siddharth's reservation status if category breakdown or vacancies were visible.
 
-      // 1. getAssembly (non-owner perspective: user_aarav)
-      await repository.switchPersona('user_aarav');
-      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      // 1. getAssembly (non-owner perspective: VSC-S-001)
+      await repository.switchPersona('VSC-S-001');
+      const asm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
       expect(asm).toBeDefined();
       const shaperAlloc = asm?.roleAllocations?.['Shaper'];
       expect(shaperAlloc).toBeDefined();
@@ -423,7 +423,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(shaperFromList?.totalPlaces).toBe(6);
 
       // 3. getDashboard (non-owner perspective)
-      const dashboard = await repository.getDashboard('user_aarav');
+      const dashboard = await repository.getDashboard('VSC-S-001');
       const jaipurFromDash = dashboard.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       const shaperFromDash = jaipurFromDash?.roleAllocations?.['Shaper'];
       expect(shaperFromDash?.isPrivacySuppressed).toBe(true);
@@ -433,7 +433,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(shaperFromDash?.totalPlaces).toBe(6);
 
       // 4. getAssemblyRoleAllocations (non-owner perspective)
-      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
       const shaperFromAllocs = allocations['Shaper'];
       expect(shaperFromAllocs?.isPrivacySuppressed).toBe(true);
       expect(shaperFromAllocs?.reservedOccupiedCount).toBeUndefined();
@@ -442,25 +442,25 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(shaperFromAllocs?.totalPlaces).toBe(6);
 
       // 5. Platform Owner gets full unredacted view
-      await repository.switchPersona('user_admin');
-      const ownerAllocs = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const ownerAllocs = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const ownerShaper = ownerAllocs['Shaper'];
       expect(ownerShaper?.isPrivacySuppressed).toBeFalsy();
       expect(ownerShaper?.reservedOccupiedCount).toBe(0);
       expect(ownerShaper?.ordinaryOccupiedCount).toBe(1);
       expect(ownerShaper?.vacanciesCount).toBe(2);
-      expect(ownerShaper?.confirmedOccupants).toContain('user_siddharth');
+      expect(ownerShaper?.confirmedOccupants).toContain('VSC-S-007');
     });
   });
 
   describe('9. Contribution Admission Barrier & Zero Side Effects (Gap 2)', () => {
     it('denies contribution by unadmitted persona and guarantees zero state mutation', async () => {
-      // user_neha is not joined to assembly_jaipur_pedestrian_2026
-      const unadmittedUserId = 'user_neha';
+      // VSC-S-011 is not joined to assembly_jaipur_pedestrian_2026
+      const unadmittedUserId = 'VSC-S-011';
       const assemblyId = 'assembly_jaipur_pedestrian_2026';
 
-      await repository.switchPersona('user_admin');
-      const initialAsm = await repository.getAssembly(assemblyId, 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const initialAsm = await repository.getAssembly(assemblyId, 'JS-F-001');
       expect(initialAsm?.participantUserIds).not.toContain(unadmittedUserId);
       const initialParticipantCount = initialAsm!.participantUserIds.length;
 
@@ -482,7 +482,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       ).rejects.toThrow(/not an admitted participant/i);
 
       // Verify zero side effects across all data dimensions
-      const postAsm = await repository.getAssembly(assemblyId, 'user_admin');
+      const postAsm = await repository.getAssembly(assemblyId, 'JS-F-001');
       expect(postAsm?.participantUserIds).not.toContain(unadmittedUserId);
       expect(postAsm?.participantUserIds.length).toBe(initialParticipantCount);
 
@@ -506,14 +506,14 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       // Priya is an admitted participant in Jaipur assembly with confirmed Thinker role
       const contrib = await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
-        userId: 'user_priya',
+        userId: 'VSC-S-002',
         stage: 'think',
         type: 'argument',
         text: 'Legitimate substantive contribution by admitted delegate Priya.',
       });
 
       expect(contrib.id).toBeDefined();
-      expect(contrib.userId).toBe('user_priya');
+      expect(contrib.userId).toBe('VSC-S-002');
       expect(contrib.isSubstantive).toBe(true);
     });
   });
@@ -534,9 +534,9 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         scheduledDate: '2026-11-01T10:00:00Z',
         currentStage: 'think',
         status: 'deliberating',
-        participantUserIds: ['user_vikram', 'user_kabir'],
-        facilitatorId: 'user_rohan',
-        chairId: 'user_rohan',
+        participantUserIds: ['VSC-S-005', 'VSC-S-006'],
+        facilitatorId: 'VSC-S-009',
+        chairId: 'VSC-S-009',
         evidenceIds: [],
         rulebook: db.assemblies[0].rulebook,
         speakingQueue: [],
@@ -552,7 +552,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         {
           id: 'role_mini_vikram',
           assemblyId: miniAssemblyId,
-          userId: 'user_vikram',
+          userId: 'VSC-S-005',
           roleName: 'Thinker',
           responsibilities: [],
           power: 'Question Setter',
@@ -564,7 +564,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         {
           id: 'role_mini_kabir',
           assemblyId: miniAssemblyId,
-          userId: 'user_kabir',
+          userId: 'VSC-S-006',
           roleName: 'Enabler',
           responsibilities: [],
           power: 'Feasibility Check',
@@ -577,7 +577,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       PersistenceService.saveDatabase(db);
 
       // Now Karan (ineligible for women's reservation) joins as 3rd participant
-      const joinResult = await repository.joinAssembly(miniAssemblyId, 'user_karan');
+      const joinResult = await repository.joinAssembly(miniAssemblyId, 'VSC-S-010');
       expect(joinResult.assembly.participantUserIds.length).toBe(3);
       expect(joinResult.assembly.isThreePersonMiniMode).toBe(true);
 
@@ -595,8 +595,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       }
 
       // Check allocation state as platform owner: secondary role exists with 0 occupants and 1 vacancy
-      await repository.switchPersona('user_admin');
-      const allocs = await repository.getAssemblyRoleAllocations(miniAssemblyId, 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const allocs = await repository.getAssemblyRoleAllocations(miniAssemblyId, 'JS-F-001');
       const secKeys = Object.keys(allocs).filter((k) => k.startsWith('Secondary '));
       expect(secKeys.length).toBeGreaterThanOrEqual(1);
       const vacantSecAlloc = allocs[secKeys[0]];
@@ -622,9 +622,9 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         scheduledDate: '2026-11-01T10:00:00Z',
         currentStage: 'think',
         status: 'deliberating',
-        participantUserIds: ['user_vikram', 'user_kabir'],
-        facilitatorId: 'user_rohan',
-        chairId: 'user_rohan',
+        participantUserIds: ['VSC-S-005', 'VSC-S-006'],
+        facilitatorId: 'VSC-S-009',
+        chairId: 'VSC-S-009',
         evidenceIds: [],
         rulebook: db.assemblies[0].rulebook,
         speakingQueue: [],
@@ -639,7 +639,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         {
           id: 'role_mini2_vikram',
           assemblyId: miniAssemblyId,
-          userId: 'user_vikram',
+          userId: 'VSC-S-005',
           roleName: 'Thinker',
           responsibilities: [],
           power: 'Question Setter',
@@ -651,7 +651,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         {
           id: 'role_mini2_kabir',
           assemblyId: miniAssemblyId,
-          userId: 'user_kabir',
+          userId: 'VSC-S-006',
           roleName: 'Enabler',
           responsibilities: [],
           power: 'Feasibility Check',
@@ -664,43 +664,43 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       PersistenceService.saveDatabase(db);
 
       // Ananya (eligible for women's reservation) joins as 3rd participant
-      const joinResult = await repository.joinAssembly(miniAssemblyId, 'user_ananya');
+      const joinResult = await repository.joinAssembly(miniAssemblyId, 'VSC-S-004');
       expect(joinResult.assembly.participantUserIds.length).toBe(3);
       expect(joinResult.assembly.isThreePersonMiniMode).toBe(true);
 
       // Ananya is granted the secondary role because she satisfies the 1-place reservation quota!
       expect(joinResult.role.secondaryRoleName).toBeDefined();
 
-      await repository.switchPersona('user_admin');
-      const allocs = await repository.getAssemblyRoleAllocations(miniAssemblyId, 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const allocs = await repository.getAssemblyRoleAllocations(miniAssemblyId, 'JS-F-001');
       const secKey = `Secondary ${joinResult.role.secondaryRoleName}`;
       const secAlloc = allocs[secKey];
       expect(secAlloc).toBeDefined();
       expect(secAlloc.totalPlaces).toBe(1);
       expect(secAlloc.reservedMinimum).toBe(1);
-      expect(secAlloc.confirmedOccupants).toContain('user_ananya');
+      expect(secAlloc.confirmedOccupants).toContain('VSC-S-004');
     });
 
     it('overrideAssemblyRole enforces one-place reservation check on secondary role reassignment', async () => {
       // In assembly_public_transit_2026 (3-person assembly):
-      // Attempt to reassign secondary role to user_karan (ineligible)
-      await repository.switchPersona('user_rohan');
+      // Attempt to reassign secondary role to VSC-S-008 (ineligible)
+      await repository.switchPersona('VSC-S-009');
       await expect(
         repository.overrideAssemblyRole(
           'assembly_public_transit_2026',
-          'user_rohan',
-          'user_karan',
+          'VSC-S-009',
+          'VSC-S-008',
           'Troubleshooter',
           'Testing ineligible secondary override',
           'Shaper'
         )
       ).rejects.toThrow(/reservation policy|cannot assign secondary role/i);
 
-      // Attempt to reassign secondary role to user_meera (eligible)
+      // Attempt to reassign secondary role to VSC-S-003 (eligible)
       const updatedRole = await repository.overrideAssemblyRole(
         'assembly_public_transit_2026',
-        'user_rohan',
-        'user_meera',
+        'VSC-S-009',
+        'VSC-S-003',
         'Thinker',
         'Valid secondary role reassignment to eligible participant',
         'Troubleshooter'
@@ -710,48 +710,48 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(updatedRole.secondaryRoleName).toBe('Troubleshooter');
 
       // Verify Secondary Troubleshooter quota is 1 place without quota pooling
-      await repository.switchPersona('user_admin');
-      const allocs = await repository.getAssemblyRoleAllocations('assembly_public_transit_2026', 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const allocs = await repository.getAssemblyRoleAllocations('assembly_public_transit_2026', 'JS-F-001');
       const secAlloc = allocs['Secondary Troubleshooter'];
       expect(secAlloc).toBeDefined();
       expect(secAlloc.totalPlaces).toBe(1);
       expect(secAlloc.reservedMinimum).toBe(1);
       expect(secAlloc.ordinaryPlaces).toBe(0);
-      expect(secAlloc.confirmedOccupants).toContain('user_meera');
+      expect(secAlloc.confirmedOccupants).toContain('VSC-S-003');
     });
   });
 
   describe('11. Read Projection Privacy, Filter Semantics & Browser Persona Binding Repair', () => {
-    it('active ordinary participant calling getAssemblies("user_admin") sees only a filtered list and never receives private role counts, occupant partitions, or exception audit', async () => {
+    it('active ordinary participant calling getAssemblies("JS-F-001") sees only a filtered list and never receives private role counts, occupant partitions, or exception audit', async () => {
       // 1. As Platform Owner, approve an exception on Chair role to ensure sensitive audit snapshots exist
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Chair',
         'Confidential administrative pilot justification reason',
-        'user_admin'
+        'JS-F-001'
       );
 
       // Verify audit is present for owner
-      const ownerAsm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const ownerAsm = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       expect(ownerAsm?.roleAllocations?.['Chair']?.exceptionAudit).toBeDefined();
 
-      // In initial seed, user_admin is not a participant of any assembly. Calling getAssemblies('user_admin') returns empty list
-      await repository.switchPersona('user_aarav');
-      const emptyList = await repository.getAssemblies('user_admin');
+      // In initial seed, JS-F-001 is not a participant of any assembly. Calling getAssemblies('JS-F-001') returns empty list
+      await repository.switchPersona('VSC-S-001');
+      const emptyList = await repository.getAssemblies('JS-F-001');
       expect(emptyList).toHaveLength(0);
 
-      // Add user_admin as participant in assembly_jaipur_pedestrian_2026 to verify non-empty filtered list
+      // Add JS-F-001 as participant in assembly_jaipur_pedestrian_2026 to verify non-empty filtered list
       const db = PersistenceService.loadDatabase();
       const jaipur = db.assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
-      if (jaipur && !jaipur.participantUserIds.includes('user_admin')) {
-        jaipur.participantUserIds.push('user_admin');
+      if (jaipur && !jaipur.participantUserIds.includes('JS-F-001')) {
+        jaipur.participantUserIds.push('JS-F-001');
       }
       PersistenceService.saveDatabase(db);
 
-      // Active ordinary participant user_aarav calls getAssemblies('user_admin')
-      const filteredList = await repository.getAssemblies('user_admin');
-      // Must return ONLY the filtered assembly containing user_admin, not all assemblies
+      // Active ordinary participant VSC-S-001 calls getAssemblies('JS-F-001')
+      const filteredList = await repository.getAssemblies('JS-F-001');
+      // Must return ONLY the filtered assembly containing JS-F-001, not all assemblies
       expect(filteredList).toHaveLength(1);
       expect(filteredList[0].id).toBe('assembly_jaipur_pedestrian_2026');
 
@@ -776,12 +776,12 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
     });
 
     it('active owner gets full details across getAssemblies, getAssembly, and getAssemblyRoleAllocations', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Chair',
         'Confidential administrative pilot justification reason',
-        'user_admin'
+        'JS-F-001'
       );
 
       // 1. getAssemblies
@@ -796,7 +796,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(chairFromList?.exceptionAudit).toBeDefined();
 
       // 2. getAssembly
-      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const chairFromDetail = detail?.roleAllocations?.['Chair'];
       expect(chairFromDetail?.isPrivacySuppressed).toBeFalsy();
       expect(chairFromDetail?.reservedOccupiedCount).toBeDefined();
@@ -804,7 +804,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(chairFromDetail?.exceptionAudit).toBeDefined();
 
       // 3. getAssemblyRoleAllocations
-      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const chairFromAllocs = allocations['Chair'];
       expect(chairFromAllocs?.isPrivacySuppressed).toBeFalsy();
       expect(chairFromAllocs?.reservedOccupiedCount).toBeDefined();
@@ -812,11 +812,11 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(chairFromAllocs?.exceptionAudit).toBeDefined();
     });
 
-    it('getAssemblies("user_aarav") keeps prior list filtering and does not return unjoined assemblies', async () => {
-      await repository.switchPersona('user_aarav');
+    it('getAssemblies("VSC-S-001") keeps prior list filtering and does not return unjoined assemblies', async () => {
+      await repository.switchPersona('VSC-S-001');
 
-      // Before Aarav joins, getAssemblies('user_aarav') must return empty array
-      const beforeJoin = await repository.getAssemblies('user_aarav');
+      // Before Aarav joins, getAssemblies('VSC-S-001') must return empty array
+      const beforeJoin = await repository.getAssemblies('VSC-S-001');
       expect(beforeJoin).toHaveLength(0);
 
       // Querying all assemblies without filter returns full catalogue
@@ -824,10 +824,10 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(allAssemblies.length).toBeGreaterThanOrEqual(3);
 
       // Aarav joins Jaipur assembly
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
 
-      // After joining, getAssemblies('user_aarav') returns only Jaipur assembly
-      const afterJoin = await repository.getAssemblies('user_aarav');
+      // After joining, getAssemblies('VSC-S-001') returns only Jaipur assembly
+      const afterJoin = await repository.getAssemblies('VSC-S-001');
       expect(afterJoin).toHaveLength(1);
       expect(afterJoin[0].id).toBe('assembly_jaipur_pedestrian_2026');
 
@@ -838,19 +838,19 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
 
     it('dashboard and detail remain projected for the active viewer even if another user ID is supplied as a filter where supported', async () => {
       // Ensure Chair has approved exception
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Chair',
         'Confidential domain expertise reason',
-        'user_admin'
+        'JS-F-001'
       );
 
-      // Active viewer is user_aarav (ordinary participant)
-      await repository.switchPersona('user_aarav');
+      // Active viewer is VSC-S-001 (ordinary participant)
+      await repository.switchPersona('VSC-S-001');
 
-      // 1. Dashboard: Calling getDashboard('user_admin') must project assemblies for active viewer user_aarav
-      const dash = await repository.getDashboard('user_admin');
+      // 1. Dashboard: Calling getDashboard('JS-F-001') must project assemblies for active viewer VSC-S-001
+      const dash = await repository.getDashboard('JS-F-001');
       const jaipurFromDash = dash.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       expect(jaipurFromDash).toBeDefined();
       const chairFromDash = jaipurFromDash?.roleAllocations?.['Chair'];
@@ -860,16 +860,16 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(chairFromDash?.confirmedOccupants).toBeUndefined();
       expect(chairFromDash?.exceptionAudit).toBeUndefined();
 
-      // 2. Detail: Calling getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin') must remain projected for user_aarav
-      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      // 2. Detail: Calling getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001') must remain projected for VSC-S-001
+      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const chairFromDetail = detail?.roleAllocations?.['Chair'];
       expect(chairFromDetail?.isPrivacySuppressed).toBe(true);
       expect(chairFromDetail?.reservedOccupiedCount).toBeUndefined();
       expect(chairFromDetail?.confirmedOccupants).toBeUndefined();
       expect(chairFromDetail?.exceptionAudit).toBeUndefined();
 
-      // 3. Allocations: Calling getAssemblyRoleAllocations with 'user_admin' must remain projected for user_aarav
-      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      // 3. Allocations: Calling getAssemblyRoleAllocations with 'JS-F-001' must remain projected for VSC-S-001
+      const allocations = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       const chairFromAllocs = allocations['Chair'];
       expect(chairFromAllocs?.isPrivacySuppressed).toBe(true);
       expect(chairFromAllocs?.reservedOccupiedCount).toBeUndefined();
@@ -877,25 +877,25 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(chairFromAllocs?.exceptionAudit).toBeUndefined();
 
       // 4. Owner active viewer retains full details even when querying for participant
-      await repository.switchPersona('user_admin');
-      const ownerDash = await repository.getDashboard('user_aarav');
+      await repository.switchPersona('JS-F-001');
+      const ownerDash = await repository.getDashboard('VSC-S-001');
       const jaipurOwnerDash = ownerDash.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       expect(jaipurOwnerDash?.roleAllocations?.['Chair']?.isPrivacySuppressed).toBeFalsy();
       expect(jaipurOwnerDash?.roleAllocations?.['Chair']?.reservedOccupiedCount).toBeDefined();
 
-      const ownerDetail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      const ownerDetail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
       expect(ownerDetail?.roleAllocations?.['Chair']?.isPrivacySuppressed).toBeFalsy();
       expect(ownerDetail?.roleAllocations?.['Chair']?.reservedOccupiedCount).toBeDefined();
     });
 
     it('read-only calls without an active persona do not use a supplied ID to manufacture owner access', async () => {
       // Ensure Chair has approved exception
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       await repository.approveAssemblyRoleException(
         'assembly_jaipur_pedestrian_2026',
         'Chair',
         'Confidential domain expertise reason',
-        'user_admin'
+        'JS-F-001'
       );
 
       // Simulate logged out / unauthenticated state (activeUserId undefined)
@@ -903,8 +903,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       (db as { activeUserId?: string }).activeUserId = undefined;
       PersistenceService.saveDatabase(db);
 
-      // 1. getAssemblies('user_admin')
-      const assemblies = await repository.getAssemblies('user_admin');
+      // 1. getAssemblies('JS-F-001')
+      const assemblies = await repository.getAssemblies('JS-F-001');
       for (const asm of assemblies) {
         if (asm.roleAllocations?.['Chair']) {
           expect(asm.roleAllocations['Chair'].isPrivacySuppressed).toBe(true);
@@ -913,8 +913,8 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
         }
       }
 
-      // 2. getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin')
-      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'user_admin');
+      // 2. getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001')
+      const detail = await repository.getAssembly('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       expect(detail).toBeDefined();
       const chairAlloc = detail?.roleAllocations?.['Chair'];
       expect(chairAlloc?.isPrivacySuppressed).toBe(true);
@@ -922,15 +922,15 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       expect(chairAlloc?.confirmedOccupants).toBeUndefined();
       expect(chairAlloc?.exceptionAudit).toBeUndefined();
 
-      // 3. getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin')
-      const allocs = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'user_admin');
+      // 3. getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'JS-F-001')
+      const allocs = await repository.getAssemblyRoleAllocations('assembly_jaipur_pedestrian_2026', 'JS-F-001');
       expect(allocs['Chair']?.isPrivacySuppressed).toBe(true);
       expect(allocs['Chair']?.reservedOccupiedCount).toBeUndefined();
       expect(allocs['Chair']?.confirmedOccupants).toBeUndefined();
       expect(allocs['Chair']?.exceptionAudit).toBeUndefined();
 
-      // 4. getDashboard('user_admin')
-      const dash = await repository.getDashboard('user_admin');
+      // 4. getDashboard('JS-F-001')
+      const dash = await repository.getDashboard('JS-F-001');
       const jaipurFromDash = dash.activeAssemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       if (jaipurFromDash?.roleAllocations?.['Chair']) {
         expect(jaipurFromDash.roleAllocations['Chair'].isPrivacySuppressed).toBe(true);
@@ -950,7 +950,7 @@ describe('Assembly Named Role Reservation Allocation (Package 08B)', () => {
       PersistenceService.saveDatabase(db);
 
       // Query as non-owner
-      await repository.switchPersona('user_aarav');
+      await repository.switchPersona('VSC-S-001');
       const assemblies = await repository.getAssemblies();
       const jaipurFromList = assemblies.find((a) => a.id === 'assembly_jaipur_pedestrian_2026');
       expect(jaipurFromList?.roleAllocations).toBeDefined();

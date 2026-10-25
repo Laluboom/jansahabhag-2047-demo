@@ -547,9 +547,9 @@ export class LocalDemoRepository implements DemoRepository {
       institutionId: input.institutionId,
       institutionName: input.institutionName,
       programmeIds: input.programmeIds || ['prog_civic_tech_01'],
-      bio: input.bio || 'Civic participant in Jaipur Youth Assembly demo simulation.',
+      bio: input.bio || 'Civic participant in Rajkot Youth Assembly demo simulation.',
       age: input.age ?? 18,
-      location: input.location || 'Jaipur, Rajasthan',
+      location: input.location || 'Rajkot, Gujarat',
       avatar: input.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       badgeCount: 0,
       totalCredits: 0,
@@ -1133,7 +1133,12 @@ export class LocalDemoRepository implements DemoRepository {
   async getSubmissions(userId?: string, assignmentId?: string): Promise<Submission[]> {
     const db = this.getDb();
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isReviewer = activeUser?.role === 'teacher' || activeUser?.role === 'facilitator' || activeUser?.role === 'platform_admin';
+    const isSessionFacilitator = db.sessions.some((s) => s.facilitatorId === db.activeUserId);
+    const isReviewer =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'platform_admin' ||
+      isSessionFacilitator;
 
     // Security & persona boundary: non-reviewers can only query their own submissions
     let targetUserId = userId;
@@ -1188,7 +1193,12 @@ export class LocalDemoRepository implements DemoRepository {
     if (!sub) return null;
 
     const activeUser = db.users.find((u) => u.id === db.activeUserId);
-    const isReviewer = activeUser?.role === 'teacher' || activeUser?.role === 'facilitator' || activeUser?.role === 'platform_admin';
+    const isSessionFacilitator = db.sessions.some((s) => s.facilitatorId === db.activeUserId);
+    const isReviewer =
+      activeUser?.role === 'teacher' ||
+      activeUser?.role === 'facilitator' ||
+      activeUser?.role === 'platform_admin' ||
+      isSessionFacilitator;
 
     // Draft privacy: drafts are only accessible by their author
     if (sub.status === 'draft' && sub.userId !== db.activeUserId) {
@@ -1299,6 +1309,11 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     if (input.userId !== db.activeUserId) {
       throw new Error('Unauthorized: cannot submit assignment for another persona');
+    }
+
+    const user = db.users.find((u) => u.id === input.userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
     }
 
     const asg = db.assignments.find((a) => a.id === input.assignmentId);
@@ -1451,6 +1466,9 @@ export class LocalDemoRepository implements DemoRepository {
       });
 
       const user = db.users.find((u) => u.id === input.userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
       if (user) {
         user.totalCredits = this.calculateUserCredits(db, input.userId);
         user.updatedAt = now;
@@ -1467,7 +1485,7 @@ export class LocalDemoRepository implements DemoRepository {
         userId: input.userId,
         category: 'contribution',
         title: `Pending Review: ${asg?.title || input.assignmentId}`,
-        subtitle: 'Submitted assignment awaiting mentor review (Jaipur Demo Simulation)',
+        subtitle: 'Submitted assignment awaiting mentor review (Rajkot Demo Simulation)',
         date: now.split('T')[0],
         creditsAwarded: 2,
         evidenceIds: submission.evidenceIds || [],
@@ -1485,7 +1503,7 @@ export class LocalDemoRepository implements DemoRepository {
       });
     } else if (existingPassport.reviewState === 'revision_requested' || existingPassport.reviewState === 'pending') {
       existingPassport.title = `Pending Review: ${asg?.title || input.assignmentId}`;
-      existingPassport.subtitle = 'Submitted assignment awaiting mentor review (Jaipur Demo Simulation)';
+      existingPassport.subtitle = 'Submitted assignment awaiting mentor review (Rajkot Demo Simulation)';
       existingPassport.date = now.split('T')[0];
       existingPassport.evidenceIds = submission.evidenceIds || [];
       existingPassport.sourceReferenceId = submission.id;
@@ -1524,7 +1542,6 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     // Notify teacher
-    const user = db.users.find((u) => u.id === input.userId);
     const teachers = db.users.filter((u) => u.role === 'teacher');
     teachers.forEach((t) => {
       db.notifications.push({
@@ -1750,7 +1767,7 @@ export class LocalDemoRepository implements DemoRepository {
       if (existingPassport) {
         existingPassport.category = 'contribution';
         existingPassport.title = `Verified: ${asg?.title || 'Field Assignment'}`;
-        existingPassport.subtitle = `Reviewed and verified by mentor (Jaipur Demo Simulation)`;
+        existingPassport.subtitle = `Reviewed and verified by mentor (Rajkot Demo Simulation)`;
         existingPassport.date = now.split('T')[0];
         existingPassport.creditsAwarded = creditsAwarded;
         existingPassport.evidenceIds = submission.evidenceIds;
@@ -1763,9 +1780,9 @@ export class LocalDemoRepository implements DemoRepository {
           id: input.reviewerId,
           name: reviewerName,
           role: 'Teacher / Mentor',
-          label: 'Mentor Review (Jaipur Demo Simulation)',
+          label: 'Mentor Review (Rajkot Demo Simulation)',
         };
-        existingPassport.organisation = 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)';
+        existingPassport.organisation = 'Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot (Demo Simulation)';
         existingPassport.calculationExplanation = 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+1 Observation per evidence).';
         existingPassport.isVerified = true;
         existingPassport.revisionHistory = existingPassport.revisionHistory || [];
@@ -1782,7 +1799,7 @@ export class LocalDemoRepository implements DemoRepository {
           userId: submission.userId,
           category: 'contribution',
           title: `Verified: ${asg?.title || 'Field Assignment'}`,
-          subtitle: `Reviewed and verified by mentor (Jaipur Demo Simulation)`,
+          subtitle: `Reviewed and verified by mentor (Rajkot Demo Simulation)`,
           date: now.split('T')[0],
           creditsAwarded,
           evidenceIds: submission.evidenceIds,
@@ -1795,9 +1812,9 @@ export class LocalDemoRepository implements DemoRepository {
             id: input.reviewerId,
             name: reviewerName,
             role: 'Teacher / Mentor',
-            label: 'Mentor Review (Jaipur Demo Simulation)',
+            label: 'Mentor Review (Rajkot Demo Simulation)',
           },
-          organisation: 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)',
+          organisation: 'Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot (Demo Simulation)',
           calculationExplanation: 'Fixed demo rule: +2 Contribution on assignment submission. Facilitator review confirmed field observation rigor (+1 Observation per evidence).',
           isVerified: true,
           revisionHistory: [
@@ -1872,7 +1889,7 @@ export class LocalDemoRepository implements DemoRepository {
         passEntry.isVerified = false;
         passEntry.creditsAwarded = 0;
         passEntry.title = `Revision Requested: ${asg?.title || 'Field Assignment'}`;
-        passEntry.subtitle = `Mentor requested revision (Jaipur Demo Simulation)`;
+        passEntry.subtitle = `Mentor requested revision (Rajkot Demo Simulation)`;
         passEntry.revisionHistory = passEntry.revisionHistory || [];
         passEntry.revisionHistory.push({
           date: now,
@@ -2009,6 +2026,10 @@ export class LocalDemoRepository implements DemoRepository {
     evidenceInput: Omit<Evidence, 'id' | 'schemaVersion' | 'createdAt' | 'updatedAt'>
   ): Promise<Evidence> {
     const db = this.getDb();
+    const actor = db.users.find((u) => u.id === evidenceInput.ownerId);
+    if (actor?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     if (evidenceInput.ownerId !== db.activeUserId) {
       throw new Error('Unauthorized: cannot create evidence for another participant');
     }
@@ -2488,6 +2509,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     const user = db.users.find((u) => u.id === userId);
     if (!user) throw new Error(`User ${userId} not found or not eligible`);
+    if (user.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot claim seats');
+    }
     const now = new Date().toISOString();
     const caller = db.activeUserId ? db.users.find((u) => u.id === db.activeUserId) : null;
     const isOwner = caller?.role === 'platform_admin';
@@ -2915,12 +2939,20 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     const caller = db.users.find((u) => u.id === effectiveActorId);
+    if (caller?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
+    const targetUser = db.users.find((u) => u.id === targetUserId);
+    if (targetUser?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot claim seats');
+    }
     const isOwner = caller?.role === 'platform_admin';
     const isAuthorized =
       effectiveActorId === assembly.facilitatorId ||
       effectiveActorId === assembly.chairId ||
       isOwner ||
-      effectiveActorId === 'user_rohan';
+      caller?.role === 'teacher' ||
+      caller?.role === 'institution_admin';
     if (!isAuthorized) {
       throw new Error(
         `Unauthorized: Only the designated Assembly Chair/Facilitator or Platform Owner may override participant roles.`
@@ -3367,6 +3399,9 @@ export class LocalDemoRepository implements DemoRepository {
     const db = this.getDb();
     const user = db.users.find((u) => u.id === input.userId);
     if (!user) throw new Error(`User ${input.userId} not found`);
+    if (user.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
 
     const trimmedText = (input.text || '').trim();
     if (!trimmedText || trimmedText.length < 5) {
@@ -3511,11 +3546,17 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Permission boundary check in repository
     if (input.actorId && assembly) {
+      const actor = db.users.find((u) => u.id === input.actorId);
+      if (actor?.role === 'special_guest') {
+        throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+      }
       const isPermitted =
         assembly.participantUserIds.includes(input.actorId) ||
         input.actorId === assembly.facilitatorId ||
         input.actorId === assembly.chairId ||
-        input.actorId === 'user_rohan';
+        actor?.role === 'teacher' ||
+        actor?.role === 'platform_admin' ||
+        actor?.role === 'institution_admin';
       if (!isPermitted) {
         throw new Error('Unauthorized: User is not an admitted participant or facilitator of this Assembly');
       }
@@ -3572,6 +3613,10 @@ export class LocalDemoRepository implements DemoRepository {
     reasonOrReservations?: string;
   }): Promise<Proposition> {
     const db = this.getDb();
+    const user = db.users.find((u) => u.id === input.userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     const prop = db.propositions.find((p) => p.id === input.propositionId);
     if (!prop) throw new Error(`Proposition ${input.propositionId} not found`);
 
@@ -3585,8 +3630,6 @@ export class LocalDemoRepository implements DemoRepository {
         throw new Error(`Unauthorized: User ${input.userId} is not a member of assembly ${assembly.id}`);
       }
     }
-
-    const user = db.users.find((u) => u.id === input.userId);
     const userRole = db.assemblyRoles.find(
       (r) => r.assemblyId === prop.assemblyId && r.userId === input.userId
     );
@@ -3820,8 +3863,16 @@ export class LocalDemoRepository implements DemoRepository {
 
     // Procedural active persona check: Chair/Facilitator only
     if (actorId) {
+      const actor = db.users.find((u) => u.id === actorId);
+      if (actor?.role === 'special_guest') {
+        throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+      }
       const isAuthorized =
-        actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+        actorId === assembly.facilitatorId ||
+        actorId === assembly.chairId ||
+        actor?.role === 'teacher' ||
+        actor?.role === 'platform_admin' ||
+        actor?.role === 'institution_admin';
       if (!isAuthorized) {
         throw new Error(
           'Unauthorized: Only the designated Assembly Chair/Facilitator may advance or change deliberation stages.'
@@ -3862,6 +3913,9 @@ export class LocalDemoRepository implements DemoRepository {
     if (!assembly) throw new Error(`Assembly ${input.assemblyId} not found`);
 
     const user = db.users.find((u) => u.id === input.userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     const role = db.assemblyRoles.find((r) => r.assemblyId === input.assemblyId && r.userId === input.userId);
     if (!role) throw new Error(`User ${input.userId} has no assigned role in assembly ${input.assemblyId}`);
 
@@ -3975,8 +4029,16 @@ export class LocalDemoRepository implements DemoRepository {
     const assembly = db.assemblies.find((a) => a.id === assemblyId);
     if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
 
+    const actor = db.users.find((u) => u.id === actorId);
+    if (actor?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     const isAuthorized =
-      actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+      actorId === assembly.facilitatorId ||
+      actorId === assembly.chairId ||
+      actor?.role === 'teacher' ||
+      actor?.role === 'platform_admin' ||
+      actor?.role === 'institution_admin';
     if (!isAuthorized) {
       throw new Error('Unauthorized: Only the designated Chair or Facilitator can recognize speakers.');
     }
@@ -4000,8 +4062,16 @@ export class LocalDemoRepository implements DemoRepository {
     const assembly = db.assemblies.find((a) => a.id === assemblyId);
     if (!assembly) throw new Error(`Assembly ${assemblyId} not found`);
 
+    const actor = db.users.find((u) => u.id === actorId);
+    if (actor?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     const isAuthorized =
-      actorId === assembly.facilitatorId || actorId === assembly.chairId || actorId === 'user_rohan';
+      actorId === assembly.facilitatorId ||
+      actorId === assembly.chairId ||
+      actor?.role === 'teacher' ||
+      actor?.role === 'platform_admin' ||
+      actor?.role === 'institution_admin';
     if (!isAuthorized) {
       throw new Error('Unauthorized: Only the designated Chair or Facilitator can release speakers.');
     }
@@ -4381,7 +4451,7 @@ export class LocalDemoRepository implements DemoRepository {
       eventId,
       title: `${evt.title} — Agenda & Resources`,
       currentMode: 'standard_meeting',
-      facilitatorId: evt.organizerId || 'user_rohan',
+      facilitatorId: evt.organizerId || 'VSC-T-001',
       roster: (evt.attendeeUserIds || []).map((uid) => {
         const u = db.users.find((user) => user.id === uid);
         return {
@@ -4397,7 +4467,7 @@ export class LocalDemoRepository implements DemoRepository {
           fromMode: 'standard_meeting',
           toMode: 'standard_meeting',
           timestamp: evt.createdAt,
-          initiatedBy: evt.organizerId || 'user_rohan',
+          initiatedBy: evt.organizerId || 'VSC-T-001',
           summary: 'Session scheduled in standard meeting mode',
         },
       ],
@@ -4468,8 +4538,11 @@ export class LocalDemoRepository implements DemoRepository {
     }
 
     // Validate participant is in roster
-    const isInRoster = session.roster.some((r) => r.userId === userId);
     const user = db.users.find((u) => u.id === userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
+    const isInRoster = session.roster.some((r) => r.userId === userId);
     if (!isInRoster || !user) {
       throw new Error(`Unknown participant: user ${userId} is not in the session roster`);
     }
@@ -4500,6 +4573,10 @@ export class LocalDemoRepository implements DemoRepository {
 
   async cancelSpeakingTurn(sessionId: string, userId: string): Promise<Session> {
     const db = this.getDb();
+    const user = db.users.find((u) => u.id === userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     const session = db.sessions.find((s) => s.id === sessionId);
     if (!session) {
       throw new Error(`Session ${sessionId} not found`);
@@ -4675,6 +4752,10 @@ export class LocalDemoRepository implements DemoRepository {
       throw new Error('Contribution text cannot be empty');
     }
     const db = this.getDb();
+    const user = db.users.find((u) => u.id === input.userId);
+    if (user?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
     const session = db.sessions.find((s) => s.id === input.sessionId);
     if (!session) {
       throw new Error(`Session ${input.sessionId} not found`);
@@ -4722,7 +4803,6 @@ export class LocalDemoRepository implements DemoRepository {
       }
     }
 
-    const user = db.users.find((u) => u.id === input.userId);
     const contrib: DebateContribution = {
       id: `deb_contrib_${Date.now()}_${input.userId}`,
       userId: input.userId,
@@ -5734,6 +5814,13 @@ export class LocalDemoRepository implements DemoRepository {
 
     const callerId = actorId || activeUserId;
     const caller = db.users.find((u) => u.id === callerId);
+    if (caller?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
+    const targetUser = db.users.find((u) => u.id === userId);
+    if (targetUser?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot claim seats');
+    }
 
     // Anti-spoofing guard: A participant cannot RSVP on behalf of another user
     if (activeUserId && userId !== activeUserId) {
@@ -5843,6 +5930,13 @@ export class LocalDemoRepository implements DemoRepository {
 
     const callerId = actorId || activeUserId;
     const caller = db.users.find((u) => u.id === callerId);
+    if (caller?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
+    const targetUser = db.users.find((u) => u.id === userId);
+    if (targetUser?.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot claim seats');
+    }
 
     // Anti-spoofing guard: A caller cannot check in another user unless they are staff/mentor
     if (activeUserId && userId !== activeUserId) {
@@ -6578,6 +6672,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     const user = db.users.find((u) => u.id === params.userId);
     if (!user) throw new Error(`User ${params.userId} not found`);
+    if (user.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
 
     const trimmedReason = params.reason.trim();
     if (trimmedReason.length < 5) {
@@ -6631,7 +6728,7 @@ export class LocalDemoRepository implements DemoRepository {
       targetId: params.targetId,
       reason: trimmedReason,
       status: 'pending_human_review',
-      assignedReviewerName: 'Kavita Rao (Lead Mentor & Civic Reviewer - Simulation)',
+      assignedReviewerName: 'Shri Mayur Parmar (Lead Mentor & Civic Reviewer - Simulation)',
       aiDisclaimer: 'PRD §14 & §27 Safety Invariant: AI is strictly barred from deciding credit appeals or sanctions. A fictional human mentor reviews this inquiry.',
       createdAt: now,
       updatedAt: now,
@@ -7401,6 +7498,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     const user = db.users.find((u) => u.id === params.userId);
     if (!user) throw new Error(`User ${params.userId} not found`);
+    if (user.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
 
     db.workspaceMemberships = db.workspaceMemberships || [];
     const membership = db.workspaceMemberships.find(
@@ -7472,6 +7572,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     const user = db.users.find((u) => u.id === params.userId);
     if (!user) throw new Error(`User ${params.userId} not found`);
+    if (user.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
 
     db.workspaceMemberships = db.workspaceMemberships || [];
     let membership = db.workspaceMemberships.find(
@@ -7572,6 +7675,9 @@ export class LocalDemoRepository implements DemoRepository {
 
     const author = db.users.find((u) => u.id === params.authorId);
     if (!author) throw new Error(`Author ${params.authorId} not found`);
+    if (author.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
 
     const isOwnerOrMod = ws.ownerId === params.authorId || (ws.moderatorIds || []).includes(params.authorId);
     const membership = (db.workspaceMemberships || []).find(

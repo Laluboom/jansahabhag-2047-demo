@@ -106,7 +106,7 @@ export const ProfilePage: React.FC = () => {
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Declared Age</span>
               <span className="font-semibold text-civic-teal-700" data-testid="profile-user-age">
-                {currentUser.age || 18} yrs (18+)
+                18 or older
               </span>
             </div>
           </div>

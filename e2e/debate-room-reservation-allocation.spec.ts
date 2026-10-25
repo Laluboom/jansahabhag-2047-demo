@@ -10,8 +10,8 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
   });
 
   test('desktop: point-of-use rulebook, privacy suppression, claim denial, eligible assignment, owner exception, and persistence', async ({ page }) => {
-    // 1. Log in as regular participant Aarav Sharma
-    await page.getByText('Aarav Sharma').first().click();
+    // 1. Log in as regular participant Ankita Kapri
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
     // 2. Navigate to Jaipur Youth Pedestrian Safety Debate Room
@@ -26,7 +26,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await expect(rulebookBanner.getByText(/1-place role requires 1 reserved place/i)).toBeVisible();
     await expect(rulebookBanner.getByText(/open speaking queue is not a fixed named role/i)).toBeVisible();
     await expect(rulebookBanner.getByText(/Unmet reserved places stay vacant by default/i)).toBeVisible();
-    await expect(rulebookBanner.getByText(/Fictional Jaipur Prototype: one-browser simulation only/i)).toBeVisible();
+    await expect(rulebookBanner.getByText(/Fictional (Rajkot|Jaipur) Prototype: one-browser simulation only/i)).toBeVisible();
 
     // 4. Open Point-of-Use Rulebook Modal
     await page.getByTestId('open-debate-reservation-rulebook-btn').first().click();
@@ -63,12 +63,12 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     // 6. Verify Session Roster dock lists participants without eligibility tags
     const rosterDock = page.getByText(/Session Roster/i);
     await expect(rosterDock).toBeVisible();
-    await expect(page.getByText('Rohan Mehta').first()).toBeVisible();
-    await expect(page.getByText('Priya Sharma').first()).toBeVisible();
+    await expect(page.getByText(/(Aroh Mehta|Rohan Mehta)/i).first()).toBeVisible();
+    await expect(page.getByText(/(Niyati Chawda|Priya Sharma)/i).first()).toBeVisible();
 
-    // 7. Switch to Platform Owner persona (Demo Administrator / user_admin)
+    // 7. Switch to Platform Owner persona
     await page.goto('/demo-login');
-    await page.getByText('Demo Administrator').first().click();
+    await page.getByText(/Nazim M\. Sandh|Demo Administrator/).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/debate-room');
@@ -100,7 +100,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await expect(assignModal).toBeVisible();
 
     const candidateSelect = page.getByTestId('assign-user-select');
-    await candidateSelect.selectOption('user_vikram');
+    await candidateSelect.selectOption('VSC-S-007');
     await page.getByTestId('submit-debate-assign-btn').click();
 
     // Assignment rejected by 33% reservation check
@@ -108,14 +108,14 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await expect(assignError).toBeVisible();
     await expect(assignError.getByText(/reservation policy/i)).toBeVisible();
 
-    // 11. Assign eligible candidate (Ananya Verma, female) -> Succeeded
-    await candidateSelect.selectOption('user_ananya');
+    // 11. Assign eligible candidate -> Succeeded
+    await candidateSelect.selectOption('VSC-S-004');
     await page.getByTestId('submit-debate-assign-btn').click();
     await expect(assignModal).not.toBeVisible();
 
     await expect(page.getByTestId('debate-role-action-success')).toBeVisible();
     await expect(page.getByTestId('debate-role-action-success').getByText(/User assigned successfully/i)).toBeVisible();
-    await expect(ownerCommVoiceCard.getByText('Ananya Verma')).toBeVisible();
+    await expect(ownerCommVoiceCard.getByText(/(Jahanvi Sandh|Ananya Verma)/i)).toBeVisible();
 
     // 12. Finalize compliant role
     const finalizeCommVoiceBtn = page.getByTestId('finalize-role-community-voice');
@@ -150,7 +150,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await expect(page.getByTestId('debate-exception-error').getByText(/at least 5 characters/i)).toBeVisible();
 
     // Submit substantive reasoned exception
-    await reasonInput.fill('Fictional Jaipur pilot: Rohan Mehta retained as Facilitator under documented owner exception.');
+    await reasonInput.fill('Fictional pilot: Aroh Mehta retained as Facilitator under documented owner exception.');
     await page.getByTestId('submit-debate-exception-btn').click();
     await expect(exceptionModal).not.toBeVisible();
 
@@ -164,7 +164,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     const auditBox = ownerFacilitatorCard.getByTestId('role-exception-audit-box');
     await expect(auditBox).toBeVisible();
     await expect(auditBox.getByText(/Platform Owner Exception Audit/i)).toBeVisible();
-    await expect(auditBox.getByText(/Rohan Mehta retained as Facilitator/i)).toBeVisible();
+    await expect(auditBox.getByText(/(Aroh|Rohan) Mehta retained as Facilitator/i)).toBeVisible();
     await expect(auditBox.getByText(/2026\.1-womens-reservation-33/i)).toBeVisible();
 
     // Open Audit Trail Modal
@@ -185,11 +185,11 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await expect(reloadedFacilitatorCard.getByTestId('status-finalized-exception')).toBeVisible();
     const reloadedCommVoiceCard = page.getByTestId('role-allocation-card-community-voice');
     await expect(reloadedCommVoiceCard.getByTestId('status-finalized-compliant')).toBeVisible();
-    await expect(reloadedCommVoiceCard.getByText('Ananya Verma')).toBeVisible();
+    await expect(reloadedCommVoiceCard.getByText(/(Jahanvi Sandh|Ananya Verma)/i)).toBeVisible();
 
     // 15. Verify Persona Switch Hides Owner Data from Participant
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/debate-room');
@@ -219,7 +219,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
 
     // 1. Log in as Platform Owner
     await page.goto('/demo-login');
-    await page.getByText('Demo Administrator').first().click();
+    await page.getByText(/Nazim M\. Sandh|Demo Administrator/).first().click();
     await page.waitForURL('**/dashboard');
 
     // 2. Navigate to Debate Room

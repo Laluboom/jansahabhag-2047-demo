@@ -108,7 +108,7 @@ describe('V2 Section 5 & 14 Title-First Browsing Integration Tests', () => {
     });
 
     it('renders teacher perspective with course groupings in catalog', async () => {
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
 
       render(
         <MemoryRouter initialEntries={['/assignments']}>
@@ -152,10 +152,10 @@ describe('V2 Section 5 & 14 Title-First Browsing Integration Tests', () => {
       expect(
         screen.getByText(/Tips for accurate peak-hour traffic counts on two-lane roads/i)
       ).toBeInTheDocument();
-      expect(screen.getByText(/When counting vehicles outside Navchetna School/i)).toBeInTheDocument();
+      expect(screen.getByText(/When counting vehicles outside Virani Science College/i)).toBeInTheDocument();
 
       // Author avatar/name and time
-      expect(screen.getAllByText(/Aarav Sharma/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Ankita Kapri/i).length).toBeGreaterThanOrEqual(1);
 
       // Navigation button to group forum
       const openForumButtons = screen.getAllByRole('link', { name: /Open Forum/i });
@@ -185,8 +185,8 @@ describe('V2 Section 5 & 14 Title-First Browsing Integration Tests', () => {
       // Full details are visible
       await waitFor(() => {
         expect(screen.getByText(/Replies \(2\)/i)).toBeInTheDocument();
-        expect(screen.getByText(/This was super helpful during our Gate 3 audit today Aarav!/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/When counting vehicles outside Navchetna School/i).length).toBe(2);
+        expect(screen.getByText(/This was super helpful during our Gate 3 audit today Ankita!/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/When counting vehicles outside Virani Science College/i).length).toBe(2);
       });
 
       // Submit a peer reply
@@ -248,7 +248,7 @@ describe('V2 Section 5 & 14 Title-First Browsing Integration Tests', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /Jaipur Youth Safe Streets Circle/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Rajkot Youth Safe Streets Circle/i })).toBeInTheDocument();
       });
 
       // Category headings for threads
@@ -256,17 +256,17 @@ describe('V2 Section 5 & 14 Title-First Browsing Integration Tests', () => {
       expect(screen.getByRole('heading', { name: /Discussion Threads & Field Logs/i })).toBeInTheDocument();
 
       // Scannable thread titles
-      expect(screen.getByText(/Update on Mansarovar Ward 24 sidewalk survey/i)).toBeInTheDocument();
+      expect(screen.getByText(/Update on Kalawad Road Ward 8 sidewalk survey/i)).toBeInTheDocument();
 
       // Click to reveal full thread details
-      const threadButton = screen.getByText(/Update on Mansarovar Ward 24 sidewalk survey/i).closest('button');
+      const threadButton = screen.getByText(/Update on Kalawad Road Ward 8 sidewalk survey/i).closest('button');
       expect(threadButton).not.toBeNull();
       fireEvent.click(threadButton!);
 
       await waitFor(() => {
         expect(screen.getByText(/Replies \(1\)/i)).toBeInTheDocument();
         expect(screen.getByText(/Make sure to link these evidence IDs/i)).toBeInTheDocument();
-        expect(screen.getAllByText(/Mapped 1\.8km of Madhyam Marg today/i).length).toBe(2);
+        expect(screen.getAllByText(/Mapped 1\.8km of Kalawad Road today/i).length).toBe(2);
       });
     });
 
@@ -303,7 +303,7 @@ describe('V2 Section 5 & 14 Title-First Browsing Integration Tests', () => {
       fireEvent.click(leaveButton);
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /Join Jaipur Youth Safe Streets Circle/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Join Rajkot Youth Safe Streets Circle/i })).toBeInTheDocument();
       });
     });
   });

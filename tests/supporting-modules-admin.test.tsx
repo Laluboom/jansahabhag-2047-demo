@@ -153,7 +153,7 @@ describe('Task 04 Supporting Modules & Admin Integration Tests', () => {
     });
 
     it('handles moderation case progression from open to under_review to actioned', async () => {
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const user = await demoRepository.getCurrentUser();
       const cases = await demoRepository.getModerationCases();
       expect(cases.length).toBeGreaterThan(0);

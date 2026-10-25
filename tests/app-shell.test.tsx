@@ -33,6 +33,6 @@ describe('UI & Layout Components', () => {
   it('renders ThreadMotif with evidence-to-action stages', () => {
     render(<ThreadMotif currentStage="evidence" />);
     expect(screen.getByText(/evidence-to-action thread/i)).toBeInTheDocument();
-    expect(screen.getByText(/aarav's jaipur pedestrian safety pathway/i)).toBeInTheDocument();
+    expect(screen.getByText(/ankita's rajkot pedestrian safety pathway/i)).toBeInTheDocument();
   });
 });

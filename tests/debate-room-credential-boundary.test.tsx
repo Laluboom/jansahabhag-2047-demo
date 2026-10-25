@@ -15,14 +15,14 @@ describe('Debate Room Verified Credential Boundary', () => {
     window.localStorage.clear();
     PersistenceService.resetDatabase();
     repository = new LocalDemoRepository();
-    await useAuthStore.getState().switchPersona('user_vikram');
+    await useAuthStore.getState().switchPersona('VSC-S-005');
   });
 
   it('keeps session reflection strictly private: author sees it in debate room, excluded from civic passport, no badge, and assembly reflections still work', async () => {
     // Vikram initially has 0 reflection credits and 0 reflections
-    const userBefore = await repository.getUser('user_vikram');
-    const passportBefore = await repository.getPassport('user_vikram');
-    const civicReflsBefore = await repository.getCivicReflections('user_vikram');
+    const userBefore = await repository.getUser('VSC-S-005');
+    const passportBefore = await repository.getPassport('VSC-S-005');
+    const civicReflsBefore = await repository.getCivicReflections('VSC-S-005');
 
     expect(userBefore?.totalCredits).toBe(3);
     expect(passportBefore.totalCredits).toBe(3);
@@ -48,7 +48,7 @@ describe('Debate Room Verified Credential Boundary', () => {
 
     // 1. Vikram saves a private Debate Room session reflection
     const sessionRefl = await repository.addReflection({
-      userId: 'user_vikram',
+      userId: 'VSC-S-005',
       contextType: 'session',
       contextId: 'sess_jaipur_01',
       prompt: 'How did the debate discussion shape your perspective?',
@@ -62,7 +62,7 @@ describe('Debate Room Verified Credential Boundary', () => {
     expect(sessionRefl.isPublicInPassport).toBe(false);
 
     // 2. Author sees it in the Debate Room journal via getSessionReflections
-    const authorSessionRefls = await repository.getSessionReflections('sess_jaipur_01', 'user_vikram');
+    const authorSessionRefls = await repository.getSessionReflections('sess_jaipur_01', 'VSC-S-005');
     expect(authorSessionRefls.some((r) => r.id === sessionRefl.id)).toBe(true);
 
     // Author direct read works
@@ -71,10 +71,10 @@ describe('Debate Room Verified Credential Boundary', () => {
     expect(directRead?.text).toBe(sessionRefl.text);
 
     // 3. No other persona sees it
-    repository.switchUser('user_priya');
-    await useAuthStore.getState().switchPersona('user_priya');
+    repository.switchUser('VSC-S-002');
+    await useAuthStore.getState().switchPersona('VSC-S-002');
 
-    const priyaSessionRefls = await repository.getSessionReflections('sess_jaipur_01', 'user_vikram');
+    const priyaSessionRefls = await repository.getSessionReflections('sess_jaipur_01', 'VSC-S-005');
     expect(priyaSessionRefls.some((r) => r.id === sessionRefl.id)).toBe(false);
 
     const priyaDirectRead = await repository.getReflection(sessionRefl.id);
@@ -84,18 +84,18 @@ describe('Debate Room Verified Credential Boundary', () => {
     expect(priyaRefls.some((r) => r.id === sessionRefl.id)).toBe(false);
 
     // Switch back to Vikram
-    repository.switchUser('user_vikram');
-    await useAuthStore.getState().switchPersona('user_vikram');
+    repository.switchUser('VSC-S-005');
+    await useAuthStore.getState().switchPersona('VSC-S-005');
 
     // 4. Excluded from credential-facing civic reflections
-    const civicReflsAfter = await repository.getCivicReflections('user_vikram');
+    const civicReflsAfter = await repository.getCivicReflections('VSC-S-005');
     // On cbdbd35, getCivicReflections included session reflections for active persona!
     expect(civicReflsAfter.some((r) => r.id === sessionRefl.id)).toBe(false);
     expect(civicReflsAfter).toHaveLength(0);
 
     // 5. Total credits and passport entries do not grow
-    const userAfter = await repository.getUser('user_vikram');
-    const passportAfter = await repository.getPassport('user_vikram');
+    const userAfter = await repository.getUser('VSC-S-005');
+    const passportAfter = await repository.getPassport('VSC-S-005');
     expect(userAfter?.totalCredits).toBe(userBefore?.totalCredits);
     expect(passportAfter.totalCredits).toBe(passportBefore.totalCredits);
     expect(passportAfter.entries.length).toBe(passportBefore.entries.length);
@@ -137,7 +137,7 @@ describe('Debate Room Verified Credential Boundary', () => {
 
     // 8. Standard Assembly civic reflection still appears in existing civic path
     const assemblyRefl = await repository.addReflection({
-      userId: 'user_vikram',
+      userId: 'VSC-S-005',
       contextType: 'assembly',
       contextId: 'assembly_jaipur_pedestrian_2026',
       prompt: 'What did you observe regarding cross-group consensus in the youth assembly?',
@@ -147,11 +147,11 @@ describe('Debate Room Verified Credential Boundary', () => {
     });
 
     // Appears in getCivicReflections
-    const civicReflsWithAssembly = await repository.getCivicReflections('user_vikram');
+    const civicReflsWithAssembly = await repository.getCivicReflections('VSC-S-005');
     expect(civicReflsWithAssembly.some((r) => r.id === assemblyRefl.id)).toBe(true);
 
     // Earns credits (+1 Reflection)
-    const userWithAssembly = await repository.getUser('user_vikram');
+    const userWithAssembly = await repository.getUser('VSC-S-005');
     expect(userWithAssembly?.totalCredits).toBe((userBefore?.totalCredits || 0) + 1);
 
     // Appears in PassportPage credentials

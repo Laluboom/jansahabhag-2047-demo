@@ -15,7 +15,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
   });
 
   it('renders Point-of-Use Reservation Rulebook Banner and opens 7-rule modal', async () => {
-    await useAuthStore.getState().switchPersona('user_aarav');
+    await useAuthStore.getState().switchPersona('VSC-S-001');
 
     render(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -66,7 +66,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
 
   it('enforces privacy suppression and no eligibility inference for participant view', async () => {
     // Regular participant Aarav
-    await useAuthStore.getState().switchPersona('user_aarav');
+    await useAuthStore.getState().switchPersona('VSC-S-001');
 
     render(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -114,7 +114,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
 
   it('renders unsuppressed status and privileged controls for Platform Owner', async () => {
     // Platform Owner Demo Administrator
-    await useAuthStore.getState().switchPersona('user_admin');
+    await useAuthStore.getState().switchPersona('JS-F-001');
 
     render(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -129,7 +129,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
     });
 
     const activePersonaIndicator = screen.getByTestId('active-persona-role-indicator');
-    expect(activePersonaIndicator.textContent).toContain('Demo Administrator (platform_admin)');
+    expect(activePersonaIndicator.textContent).toContain('platform_admin');
 
     // Facilitator card under Platform Owner
     const facilitatorCard = screen.getByTestId('role-allocation-card-facilitator');
@@ -153,7 +153,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
   });
 
   it('demonstrates non-compliant finalization blockage and owner exception approval flow', async () => {
-    await useAuthStore.getState().switchPersona('user_admin');
+    await useAuthStore.getState().switchPersona('JS-F-001');
 
     render(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -164,11 +164,11 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('finalize-role-questioner')).toBeInTheDocument();
+      expect(screen.getByTestId('finalize-role-civic-advocate')).toBeInTheDocument();
     });
 
-    // 1. Attempt to finalize non-compliant Questioner without exception
-    fireEvent.click(screen.getByTestId('finalize-role-questioner'));
+    // 1. Attempt to finalize non-compliant Civic Advocate without exception
+    fireEvent.click(screen.getByTestId('finalize-role-civic-advocate'));
 
     await waitFor(() => {
       expect(screen.getByTestId('debate-role-action-error')).toBeInTheDocument();
@@ -176,7 +176,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
     expect(screen.getByTestId('debate-role-action-error').textContent).toContain('33% reservation requirement unmet');
 
     // 2. Open Exception Modal
-    fireEvent.click(screen.getByTestId('approve-role-exception-questioner'));
+    fireEvent.click(screen.getByTestId('approve-role-exception-civic-advocate'));
 
     await waitFor(() => {
       expect(screen.getByTestId('debate-exception-modal')).toBeInTheDocument();
@@ -194,7 +194,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
 
     // Provide substantive reason and submit
     fireEvent.change(reasonInput, {
-      target: { value: 'Pilot demo exception: Aarav confirmed as Questioner under documented owner exception.' },
+      target: { value: 'Pilot demo exception: Yash confirmed as Civic Advocate under documented owner exception.' },
     });
     fireEvent.click(screen.getByTestId('submit-debate-exception-btn'));
 
@@ -202,21 +202,21 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
       expect(screen.getByTestId('debate-role-action-success')).toBeInTheDocument();
     });
     expect(screen.getByTestId('debate-role-action-success').textContent).toContain(
-      'Platform Owner exception approved for "Questioner"'
+      'Platform Owner exception approved for "Civic Advocate"'
     );
 
     // Verify role status is now Exception Approved
-    const questionerCard = screen.getByTestId('role-allocation-card-questioner');
-    expect(questionerCard.querySelector('[data-testid="status-finalized-exception"]')).toBeInTheDocument();
-    expect(questionerCard.textContent).toContain('Exception Approved');
+    const card = screen.getByTestId('role-allocation-card-civic-advocate');
+    expect(card.querySelector('[data-testid="status-finalized-exception"]')).toBeInTheDocument();
+    expect(card.textContent).toContain('Exception Approved');
 
     // Verify visible audit box
-    expect(questionerCard.querySelector('[data-testid="role-exception-audit-box"]')).toBeInTheDocument();
-    expect(questionerCard.textContent).toContain('Aarav confirmed as Questioner');
+    expect(card.querySelector('[data-testid="role-exception-audit-box"]')).toBeInTheDocument();
+    expect(card.textContent).toContain('Yash confirmed as Civic Advocate');
   });
 
   it('allows finalization of compliant role allocation (Evidence Analyst with Priya)', async () => {
-    await useAuthStore.getState().switchPersona('user_admin');
+    await useAuthStore.getState().switchPersona('JS-F-001');
 
     render(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -247,12 +247,12 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
 
   it('reloads full session projection on persona switch, hiding owner data from participant', async () => {
     // 1. Start as Platform Owner and approve exception on Facilitator
-    await useAuthStore.getState().switchPersona('user_admin');
+    await useAuthStore.getState().switchPersona('JS-F-001');
     await demoRepository.approveSessionRoleException(
       'sess_jaipur_01',
       'Facilitator',
       'Pilot exception for Rohan',
-      'user_admin'
+      'JS-F-001'
     );
 
     const { rerender } = render(
@@ -270,7 +270,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
     });
 
     // 2. Switch persona to regular participant Aarav
-    await useAuthStore.getState().switchPersona('user_aarav');
+    await useAuthStore.getState().switchPersona('VSC-S-001');
 
     rerender(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -294,7 +294,7 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
   });
 
   it('demonstrates vacancy claim denial for ineligible user and eligible assignment', async () => {
-    await useAuthStore.getState().switchPersona('user_admin');
+    await useAuthStore.getState().switchPersona('JS-F-001');
 
     render(
       <MemoryRouter initialEntries={['/debate-room']}>
@@ -324,8 +324,8 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
     });
 
     const userSelect = screen.getByTestId('assign-user-select');
-    // user_vikram is ineligible
-    fireEvent.change(userSelect, { target: { value: 'user_vikram' } });
+    // VSC-S-005 is ineligible
+    fireEvent.change(userSelect, { target: { value: 'VSC-S-005' } });
     fireEvent.click(screen.getByTestId('submit-debate-assign-btn'));
 
     await waitFor(() => {
@@ -333,9 +333,9 @@ describe('Debate Room Point-of-Use Reservation UI & Owner Controls (Package 08C2
     });
     expect(screen.getByTestId('debate-assign-error').textContent).toContain('reservation policy');
 
-    // 3. Assign eligible candidate (Ananya)
-    // user_ananya is eligible
-    fireEvent.change(userSelect, { target: { value: 'user_ananya' } });
+    // 3. Assign eligible candidate (Harshita)
+    // VSC-S-003 is eligible
+    fireEvent.change(userSelect, { target: { value: 'VSC-S-003' } });
     fireEvent.click(screen.getByTestId('submit-debate-assign-btn'));
 
     await waitFor(() => {

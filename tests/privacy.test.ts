@@ -13,16 +13,16 @@ describe('Evidence Privacy Isolation Tests', () => {
     const privateItems = allEvidence.filter((e) => e.visibility === 'private');
     expect(privateItems.length).toBeGreaterThan(0);
 
-    const aaravPrivate = privateItems.find((e) => e.ownerId === 'user_aarav');
-    expect(aaravPrivate).toBeDefined();
-    expect(aaravPrivate?.title).toContain('Personal Field Diary');
+    const ankitaPrivate = privateItems.find((e) => e.ownerId === 'VSC-S-001');
+    expect(ankitaPrivate).toBeDefined();
+    expect(ankitaPrivate?.title).toContain('Personal Field Diary');
   });
 
   it('retrieving evidence list with ownerId returns only that user items', async () => {
-    const aaravEvidence = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
-    expect(aaravEvidence.every((e) => e.ownerId === 'user_aarav')).toBe(true);
+    const ankitaEvidence = await demoRepository.getEvidenceList({ ownerId: 'VSC-S-001' });
+    expect(ankitaEvidence.every((e) => e.ownerId === 'VSC-S-001')).toBe(true);
 
-    const meeraEvidence = await demoRepository.getEvidenceList({ ownerId: 'user_meera' });
-    expect(meeraEvidence.every((e) => e.ownerId === 'user_meera')).toBe(true);
+    const niyatiEvidence = await demoRepository.getEvidenceList({ ownerId: 'VSC-S-002' });
+    expect(niyatiEvidence.every((e) => e.ownerId === 'VSC-S-002')).toBe(true);
   });
 });

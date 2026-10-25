@@ -183,7 +183,7 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
       </MemoryRouter>
     );
     expect(await screen.findByRole('heading', { name: /^Workspace/i })).toBeInTheDocument();
-    expect(screen.getByText(/Jaipur Ward 24 School-Zone Safety Workspace/i)).toBeInTheDocument();
+    expect(screen.getByText(/(Rajkot|Jaipur) Ward (8|24) School-Zone Safety Workspace/i)).toBeInTheDocument();
     expect(screen.getByText(/Single-Browser Local Simulation/i)).toBeInTheDocument();
     expect(screen.getByText(/Team Notes & Actions/i)).toBeInTheDocument();
 

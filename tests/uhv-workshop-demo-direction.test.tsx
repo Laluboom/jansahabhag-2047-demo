@@ -20,7 +20,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
 
   describe('1. Exact Public Credit Line & Attribution Constraints', () => {
     it('renders exact public credit line and mentions Nazim M. Sandh on dedicated UHV stream', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/uhv']}>
@@ -57,7 +57,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
     });
 
     it('renders exact public credit line on CourseDetailPage for UHV track', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/learn/course_uhv_leadership_05']}>
@@ -81,7 +81,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
     });
 
     it('renders exact public credit line on LessonPage for UHV module', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/learn/course_uhv_leadership_05/lesson/les_uhv_501']}>
@@ -105,7 +105,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
     });
 
     it('renders exact public credit line on AssignmentDetailPage for UHV', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_uhv_09']}>
@@ -127,7 +127,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
     });
 
     it('renders exact public credit line on SubmitAssignmentPage for UHV', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_uhv_09/submit']}>
@@ -151,7 +151,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
 
   describe('2. Visual Media & YouTube Placeholders', () => {
     it('renders visually clear placeholders for future pictures and 1-2 videos explaining workshop-owned YouTube links without dead links or fake media', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/uhv']}>
@@ -222,7 +222,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
     });
 
     it('displays the small usable set of ordinary self-inquiry assignments on the UHV stream page', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/uhv']}>
@@ -243,13 +243,13 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
 
   describe('4. Privacy & Credit Boundary Invariants for Needs & Cooperation Activities', () => {
     it('saves draft and submits Needs inquiry (asg_uhv_09) without evidence, earning 0 Civic Credits, isolated from teacher queue', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
 
       // 1. Submit observation of needs reflection
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_uhv_09',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         content: 'Observations on physical facility: food and clothing are limited and countable, while trust and respect are qualitative and continuously needed.',
         evidenceIds: [],
       });
@@ -264,7 +264,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
       expect(afterCredits).toBe(initialCredits);
 
       // Teacher queue isolation
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
       const teacherQueue = await demoRepository.getSubmissions();
       expect(teacherQueue.filter((s) => s.assignmentId === 'asg_uhv_09')).toHaveLength(0);
 
@@ -272,7 +272,7 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
       await expect(
         demoRepository.reviewSubmission({
           submissionId: submitted.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'VSC-T-001',
           status: 'verified',
           score: 10,
           teacherFeedback: 'Evaluative review',
@@ -281,13 +281,13 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
     });
 
     it('saves draft and submits Cooperation inquiry (asg_uhv_10) without evidence, earning 0 Civic Credits, isolated from teacher queue', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
 
       // Submit small youth group cooperation reflection
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_uhv_10',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Reflections on youth project: when viewing teammates as complementary rather than competitors, mutual trust arose naturally.',
         evidenceIds: [],
       });
@@ -301,13 +301,13 @@ describe('Clarified UHV / Jeevan Vidya Demo Direction, Credit Boundary & Media P
       expect(afterCredits).toBe(initialCredits);
 
       // Civic Passport must NOT receive any entries
-      const passport = await demoRepository.getPassport('user_aarav');
+      const passport = await demoRepository.getPassport('VSC-S-001');
       expect(passport.entries.filter((e) => e.sourceReferenceId === 'asg_uhv_10')).toHaveLength(0);
 
       // Direct addCredit must be blocked
       await expect(
         demoRepository.addCredit({
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           dimension: 'Learning',
           amount: 5,
           sourceType: 'assignment',

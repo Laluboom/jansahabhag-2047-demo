@@ -30,8 +30,8 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
   const mockSeats: SeatModel[] = [
     {
       id: 'seat_rohan',
-      userId: 'user_rohan',
-      name: 'Rohan Mehta',
+      userId: 'VSC-S-009',
+      name: 'Aroh Mehta',
       initials: 'RM',
       role: 'Facilitator',
       sideOrBench: 'Moderator',
@@ -41,8 +41,8 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
     },
     {
       id: 'seat_priya',
-      userId: 'user_priya',
-      name: 'Priya Sharma',
+      userId: 'VSC-S-002',
+      name: 'Niyati Chawda',
       initials: 'PS',
       role: 'Evidence Analyst',
       sideOrBench: 'For',
@@ -53,8 +53,8 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
     },
     {
       id: 'seat_aarav',
-      userId: 'user_aarav',
-      name: 'Aarav Sharma',
+      userId: 'VSC-S-001',
+      name: 'Ankita Kapri',
       initials: 'AS',
       role: 'Questioner',
       sideOrBench: 'Against',
@@ -64,7 +64,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
     },
     {
       id: 'seat_karan',
-      userId: 'user_karan',
+      userId: 'VSC-S-010',
       name: 'Karan Deshmukh',
       initials: 'KD',
       role: 'Troubleshooter',
@@ -95,7 +95,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
             currentRoute="debate"
             seats={mockSeats}
             quotaSummary={mockQuota}
-            activeSpeakerId="user_priya"
+            activeSpeakerId="VSC-S-002"
           />
         </MemoryRouter>
       );
@@ -110,9 +110,9 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       expect(screen.getByTestId('debate-bench-against')).toBeInTheDocument();
 
       // Verify seats are present
-      expect(screen.getByText('Rohan Mehta')).toBeInTheDocument();
-      expect(screen.getAllByText('Priya Sharma').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText('Aarav Sharma')).toBeInTheDocument();
+      expect(screen.getByText('Aroh Mehta')).toBeInTheDocument();
+      expect(screen.getAllByText('Niyati Chawda').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('Ankita Kapri')).toBeInTheDocument();
 
       // Verify central speaker podium has active speaker
       expect(screen.getByText(/Central Speaker's Podium/i)).toBeInTheDocument();
@@ -124,24 +124,24 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       const unassignedSeats: SeatModel[] = [
         {
           id: 'seat_analyst',
-          userId: 'user_priya',
-          name: 'Priya Sharma',
+          userId: 'VSC-S-002',
+          name: 'Niyati Chawda',
           role: 'Evidence Analyst',
           status: 'active',
           institution: 'Navchetna Public School',
         },
         {
           id: 'seat_questioner',
-          userId: 'user_aarav',
-          name: 'Aarav Sharma',
+          userId: 'VSC-S-001',
+          name: 'Ankita Kapri',
           role: 'Questioner',
           status: 'active',
           institution: 'Navchetna Public School',
         },
         {
           id: 'seat_facilitator',
-          userId: 'user_rohan',
-          name: 'Rohan Mehta',
+          userId: 'VSC-S-009',
+          name: 'Aroh Mehta',
           role: 'Facilitator',
           status: 'active',
           institution: 'Rajasthan Youth Deliberation Network',
@@ -159,25 +159,25 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
 
       // Facilitator remains correctly assigned to Moderator bench supported by actual role
       const moderatorBench = screen.getByTestId('debate-bench-moderator');
-      expect(moderatorBench).toHaveTextContent('Rohan Mehta');
+      expect(moderatorBench).toHaveTextContent('Aroh Mehta');
 
       // Proposition bench (For) and Opposition bench (Against) are visual placeholders awaiting stance
       const forBench = screen.getByTestId('debate-bench-for');
       expect(forBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
-      expect(forBench).not.toHaveTextContent('Priya Sharma');
-      expect(forBench).not.toHaveTextContent('Aarav Sharma');
+      expect(forBench).not.toHaveTextContent('Niyati Chawda');
+      expect(forBench).not.toHaveTextContent('Ankita Kapri');
 
       const againstBench = screen.getByTestId('debate-bench-against');
       expect(againstBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
-      expect(againstBench).not.toHaveTextContent('Priya Sharma');
-      expect(againstBench).not.toHaveTextContent('Aarav Sharma');
+      expect(againstBench).not.toHaveTextContent('Niyati Chawda');
+      expect(againstBench).not.toHaveTextContent('Ankita Kapri');
 
       // Evidence Analyst and Questioner appear in the Neutral / Unassigned delegates area
       const neutralBench = screen.getByTestId('debate-bench-neutral');
       expect(neutralBench).toBeInTheDocument();
-      expect(neutralBench).toHaveTextContent('Priya Sharma');
+      expect(neutralBench).toHaveTextContent('Niyati Chawda');
       expect(neutralBench).toHaveTextContent('Evidence Analyst');
-      expect(neutralBench).toHaveTextContent('Aarav Sharma');
+      expect(neutralBench).toHaveTextContent('Ankita Kapri');
       expect(neutralBench).toHaveTextContent('Questioner');
     });
   });
@@ -186,7 +186,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
     const assemblySeats: SeatModel[] = [
       {
         id: 'seat_thinker_1',
-        name: 'Priya Sharma',
+        name: 'Niyati Chawda',
         role: 'Thinker',
         sideOrBench: 'Thinker Zone',
         status: 'active',
@@ -259,7 +259,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       },
       {
         id: 'seat_govt',
-        name: 'Priya Sharma',
+        name: 'Niyati Chawda',
         role: 'Motion Sponsor',
         sideOrBench: 'Government',
         status: 'speaking',
@@ -326,7 +326,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       // Detail card is initially not shown
       expect(screen.queryByTestId('seat-detail-card')).not.toBeInTheDocument();
 
-      // Select Priya Sharma's seat
+      // Select Niyati Chawda's seat
       const priyaSeat = screen.getByTestId('seat-item-seat_priya');
       fireEvent.click(priyaSeat);
 
@@ -585,7 +585,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
   describe('No Individual Eligibility Reveal', () => {
     it('does not display reserved rings/markers on seats for participant callers', async () => {
       // Regular participant Aarav
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -600,12 +600,12 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       });
 
       // No seat in the chamber has individual reserved markers rendered from fictional declarations
-      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_user_priya')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_user_aarav')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_user_rohan')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_VSC-S-002')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_VSC-S-001')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_sess_jaipur_01_VSC-S-009')).not.toBeInTheDocument();
 
       // Selecting Priya's seat reveals generic policy indicator, never personal declaration
-      const priyaSeat = screen.getByTestId('seat-item-seat_sess_jaipur_01_user_priya');
+      const priyaSeat = screen.getByTestId('seat-item-seat_sess_jaipur_01_VSC-S-002');
       fireEvent.click(priyaSeat);
 
       await waitFor(() => {
@@ -616,8 +616,8 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
     });
 
     it('does not expose individual eligibility in AssemblySessionPage participant view', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
-      await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
+      await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/assemblies/assembly_jaipur_pedestrian_2026/session']}>
@@ -632,8 +632,8 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       });
 
       // No individual reservation rings/markers on any assembly participant seat
-      expect(screen.queryByTestId('reserved-seat-marker-seat_assembly_jaipur_pedestrian_2026_user_priya')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('reserved-seat-marker-seat_assembly_jaipur_pedestrian_2026_user_aarav')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_assembly_jaipur_pedestrian_2026_VSC-S-002')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reserved-seat-marker-seat_assembly_jaipur_pedestrian_2026_VSC-S-001')).not.toBeInTheDocument();
 
       // Generic policy indicator is present
       expect(screen.getByTestId('generic-policy-indicator')).toBeInTheDocument();
@@ -671,7 +671,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
 
   describe('Page Integration Verification', () => {
     it('renders SessionSeating inside DebateRoomPreviewPage with active debate roster and unassigned stance handling', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -693,14 +693,14 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       const againstBench = screen.getByTestId('debate-bench-against');
       expect(forBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
       expect(againstBench).toHaveTextContent(/Visual placeholder bench awaiting explicit participant stance/i);
-      expect(forBench).not.toHaveTextContent('Priya Sharma');
-      expect(againstBench).not.toHaveTextContent('Aarav Sharma');
+      expect(forBench).not.toHaveTextContent('Niyati Chawda');
+      expect(againstBench).not.toHaveTextContent('Ankita Kapri');
 
       // Unassigned delegates area presents participants without invented stance claims
       const neutralBench = screen.getByTestId('debate-bench-neutral');
       expect(neutralBench).toBeInTheDocument();
-      expect(neutralBench).toHaveTextContent('Priya Sharma');
-      expect(neutralBench).toHaveTextContent('Aarav Sharma');
+      expect(neutralBench).toHaveTextContent('Niyati Chawda');
+      expect(neutralBench).toHaveTextContent('Ankita Kapri');
 
       // Existing procedure controls remain present and functional
       expect(screen.getByTestId('debate-reservation-rulebook-banner')).toBeInTheDocument();
@@ -708,8 +708,8 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
     });
 
     it('renders SessionSeating inside AssemblySessionPage with functional zones and dissent markers', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
-      await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
+      await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/assemblies/assembly_jaipur_pedestrian_2026/session']}>

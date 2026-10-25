@@ -14,38 +14,62 @@ describe('Participant Age Policy Invariant & Visible Requirement (Owner Decision
   });
 
   describe('1. Seed Data Age Invariants', () => {
-    it('guarantees EVERY seeded user is 18 years of age or older', () => {
+    it('guarantees EVERY seeded user is 18 years of age or older and student roster has 15 adults', () => {
       const db = getFreshSeedDatabase();
-      expect(db.users.length).toBeGreaterThanOrEqual(20);
+      expect(db.users.length).toBe(22);
 
       const under18Users = db.users.filter((u) => u.age === undefined || u.age < 18);
       expect(under18Users).toHaveLength(0);
 
-      // Verify specific previously under-18 personas are updated to plausible 18+ ages
-      const updatedPersonas = ['user_priya', 'user_vikram', 'user_diya', 'user_kabir', 'user_tanya', 'user_isha', 'user_manav', 'user_pooja', 'user_karan'];
-      for (const id of updatedPersonas) {
+      // Verify all 15 student personas are >= 18
+      for (let i = 1; i <= 15; i++) {
+        const id = `VSC-S-${String(i).padStart(3, '0')}`;
         const user = db.users.find((u) => u.id === id);
         expect(user).toBeDefined();
         expect(user!.age).toBeGreaterThanOrEqual(18);
-        expect(user!.location).toContain('Rajasthan');
+        expect(user!.location).toContain('Rajkot');
         expect(user!.role).toBe('participant');
       }
     });
 
-    it('preserves names, roles, institutions, and Jaipur narrative across all updated personas', () => {
+    it('preserves names, roles, institutions, and Rajkot narrative across all updated personas', () => {
       const db = getFreshSeedDatabase();
-      const priya = db.users.find((u) => u.id === 'user_priya')!;
-      expect(priya.name).toBe('Priya Sharma');
-      expect(priya.institutionId).toBe('inst_navchetna_jaipur');
+      const ankita = db.users.find((u) => u.id === 'VSC-S-001')!;
+      expect(ankita.name).toBe('Ankita Kapri');
+      expect(ankita.institutionId).toBe('inst_vsc_rajkot');
+      expect(ankita.age).toBeGreaterThanOrEqual(18);
 
-      const vikram = db.users.find((u) => u.id === 'user_vikram')!;
-      expect(vikram.name).toBe('Vikram Joshi');
-      expect(vikram.bio).toContain('Ward 24');
+      const niyati = db.users.find((u) => u.id === 'VSC-S-002')!;
+      expect(niyati.name).toBe('Niyati Chawda');
+      expect(niyati.institutionId).toBe('inst_vsc_rajkot');
 
-      const tanya = db.users.find((u) => u.id === 'user_tanya')!;
-      expect(tanya.name).toBe('Tanya Gupta');
-      expect(tanya.bio).not.toMatch(/junior debater/i);
-      expect(tanya.age).toBeGreaterThanOrEqual(18);
+      const yash = db.users.find((u) => u.id === 'VSC-S-005')!;
+      expect(yash.name).toBe('Yash Rathod');
+      expect(yash.bio).toContain('Student participant');
+      expect(yash.age).toBe(18);
+    });
+
+    it('ensures named user profiles avoid attributed personal claims, hobbies, exact neighbourhoods, and arbitrary ages', () => {
+      const db = getFreshSeedDatabase();
+      const studentIds = Array.from({ length: 15 }, (_, i) => `VSC-S-${String(i + 1).padStart(3, '0')}`);
+
+      for (const id of studentIds) {
+        const student = db.users.find((u) => u.id === id)!;
+        // Age is strictly minimum policy sentinel 18
+        expect(student.age).toBe(18);
+        // Location is neutral Rajkot, Gujarat (no specific street addresses or neighbourhoods)
+        expect(student.location).toBe('Rajkot, Gujarat');
+        // Bio is strictly a neutral demo-role description
+        expect(student.bio).toMatch(/^(Main student demo persona and participant|Student participant) at Shri Manibhai Virani and Smt\. Navalben Virani Science College/);
+        // No invented passions, hobbies, personal achievements
+        expect(student.bio).not.toMatch(/\b(passionate|passion|hobby|hobbies|resident of|living at|loves|advocate for|leading campus)\b/i);
+      }
+
+      // Non-students also use sentinel 18 and neutral institutional titles
+      for (const user of db.users) {
+        expect(user.age).toBe(18);
+        expect(user.location).toBe('Rajkot, Gujarat');
+      }
     });
 
     it('ensures no persona statements state participants are under 18 or minors', () => {
@@ -159,18 +183,18 @@ describe('Participant Age Policy Invariant & Visible Requirement (Owner Decision
     it('displays declared age with 18+ compliance indicator on ProfilePage', async () => {
       useAuthStore.setState({
         currentUser: {
-          id: 'user_aarav',
-          name: 'Aarav Sharma',
+          id: 'VSC-S-001',
+          name: 'Ankita Kapri',
           role: 'participant',
-          email: 'aarav.sharma@navchetna.edu.in',
-          username: 'aarav.sharma',
+          email: 'vsc-s-001@demo.vsc.internal',
+          username: 'ankita.kapri',
           avatar: '',
-          institutionId: 'inst_navchetna_jaipur',
-          institutionName: 'Navchetna Public School, Jaipur',
-          programmeIds: ['prog_my_community_future'],
-          bio: 'Grade 12 student passionate about road safety.',
+          institutionId: 'inst_vsc_rajkot',
+          institutionName: 'Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot',
+          programmeIds: ['prog_rajkot_civic_data_01'],
+          bio: 'Undergraduate student and civic action lead.',
           age: 18,
-          location: 'Mansarovar, Jaipur, Rajasthan',
+          location: 'Rajkot, Gujarat',
           badgeCount: 5,
           totalCredits: 2,
           schemaVersion: 1,
@@ -187,7 +211,7 @@ describe('Participant Age Policy Invariant & Visible Requirement (Owner Decision
 
       const ageEl = screen.getByTestId('profile-user-age');
       expect(ageEl).toBeInTheDocument();
-      expect(ageEl.textContent).toContain('18 yrs (18+)');
+      expect(ageEl.textContent).toContain('18 or older');
     });
   });
 });

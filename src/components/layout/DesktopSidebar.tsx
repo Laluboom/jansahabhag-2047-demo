@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { DEMO_COLLEGE_FULL_NAME } from '../../data/seed/institutions';
 import { cn } from '../../utils/cn';
 import {
   Home,
@@ -106,7 +107,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 2047
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 font-normal truncate">Learn. Deliberate. Lead.</p>
+            <p className="text-[10px] text-slate-300 font-medium leading-tight line-clamp-2 mt-0.5" title={currentUser?.institutionName || DEMO_COLLEGE_FULL_NAME}>
+              {currentUser?.institutionName || DEMO_COLLEGE_FULL_NAME}
+            </p>
           </div>
         </Link>
 
@@ -240,7 +243,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <span className="font-semibold text-slate-200">Active Scenario</span>
         </div>
         <p className="text-[11px] text-slate-400 leading-tight">
-          Jaipur Pedestrian Safety &bull; Navchetna School
+          Rajkot Pedestrian Safety &bull; Shri Manibhai Virani and Smt. Navalben Virani Science College
         </p>
       </div>
     </aside>

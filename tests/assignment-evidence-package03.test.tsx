@@ -11,7 +11,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
   beforeEach(async () => {
     // Reset database to canonical initial seed state for each test
     PersistenceService.resetDatabase();
-    await demoRepository.switchUser('user_aarav');
+    await demoRepository.switchUser('VSC-S-001');
   });
 
   describe('1. Autosave, Draft Boundaries & Reload Recovery', () => {
@@ -19,7 +19,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       const draftContent = 'Fieldwork notes on school crossing congestion along Madhyam Marg.';
       const draft = await demoRepository.saveAssignmentDraft({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: draftContent,
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -35,7 +35,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       const draftContent = 'Persisted draft notes across reload.';
       const draft = await demoRepository.saveAssignmentDraft({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: draftContent,
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -51,13 +51,13 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('persona switching does not expose another participant draft', async () => {
       const draft = await demoRepository.saveAssignmentDraft({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Aarav private draft.',
       });
 
       // Switch to Priya
-      await demoRepository.switchUser('user_priya');
-      const priyaSubs = await demoRepository.getSubmissions('user_priya', 'asg_obs_03');
+      await demoRepository.switchUser('VSC-S-002');
+      const priyaSubs = await demoRepository.getSubmissions('VSC-S-002', 'asg_obs_03');
       expect(priyaSubs.length).toBe(0);
 
       // Priya cannot query Aarav draft by ID
@@ -69,7 +69,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       // Submit assignment
       await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Original submitted fieldwork content.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -78,27 +78,27 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       await expect(
         demoRepository.saveAssignmentDraft({
           assignmentId: 'asg_obs_03',
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Stale draft attempting to overwrite submitted work.',
         })
       ).rejects.toThrow(/Cannot modify submission with status 'submitted'/i);
 
       // Teacher verifies
-      await demoRepository.switchUser('user_kavita');
-      const sub = (await demoRepository.getSubmissions('user_aarav', 'asg_obs_03'))[0];
+      await demoRepository.switchUser('VSC-T-001');
+      const sub = (await demoRepository.getSubmissions('VSC-S-001', 'asg_obs_03'))[0];
       await demoRepository.reviewSubmission({
         submissionId: sub.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         teacherFeedback: 'Verified fieldwork.',
       });
 
       // Attempt to save draft over verified item should throw
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       await expect(
         demoRepository.saveAssignmentDraft({
           assignmentId: 'asg_obs_03',
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Stale draft attempting to overwrite verified work.',
         })
       ).rejects.toThrow(/Cannot modify submission with status 'verified'/i);
@@ -109,8 +109,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('persists and retrieves user-selected file with dataUrl across reload', async () => {
       const fileData = 'data:text/csv;base64,VGltZSxDb3VudAowODowMCwxNQowODoxNSwyNQo=';
       const createdEvidence = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'observation',
         title: 'Uploaded School Crossing Tally',
         description: 'Field count of student crossing times.',
@@ -148,8 +148,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('protects private evidence and strips dataUrls across participant personas', async () => {
       const fileData = 'data:text/plain;base64,U2VjcmV0IHJhd24gZGF0YQ==';
       const privateEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'document',
         title: 'Private Field Observations',
         description: 'Sensitive field notes.',
@@ -166,8 +166,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       });
 
       const publicEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'observation',
         title: 'Public Field Summary',
         description: 'Public summary notes.',
@@ -184,7 +184,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       });
 
       // Switch to Priya
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
 
       // 1. Private evidence owned by Aarav returns null for Priya
       const priyaReadPrivate = await demoRepository.getEvidence(privateEv.id);
@@ -208,7 +208,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('generates a stable receipt ID, timestamp, and status on submission', async () => {
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Detailed school-zone observation finding.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -229,14 +229,14 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('idempotent retry with same payload preserves existing submission and receipt', async () => {
       const first = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Initial submission content.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
 
       const second = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Initial submission content.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -251,8 +251,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('normalizes forged verificationStatus on participant addEvidence call', async () => {
       // Participant attempts to directly mint verified evidence
       const forged = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'interview',
         title: 'Forged Verification Evidence',
         description: 'Attempting to self-verify evidence.',
@@ -267,10 +267,10 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     });
 
     it('normalizes teacher addEvidence call with verified status to under_review', async () => {
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const teacherEv = await demoRepository.addEvidence({
-        ownerId: 'user_kavita',
-        ownerName: 'Kavita Rao',
+        ownerId: 'VSC-T-001',
+        ownerName: 'Shri Mayur Parmar',
         type: 'observation',
         title: 'Teacher Demonstration Walk',
         description: 'Demonstration observations.',
@@ -286,8 +286,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('rejects addEvidence when file size exceeds conservative 250 KB limit', async () => {
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_aarav',
-          ownerName: 'Aarav Sharma',
+          ownerId: 'VSC-S-001',
+          ownerName: 'Ankita Kapri',
           type: 'document',
           title: 'Oversized Observation Document',
           description: 'Document exceeding browser quota durability.',
@@ -307,8 +307,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('rejects addEvidence direct call for another persona', async () => {
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_priya', // active is user_aarav
-          ownerName: 'Priya Sharma',
+          ownerId: 'VSC-S-002', // active is user_aarav
+          ownerName: 'Niyati Chawda',
           type: 'survey',
           title: 'Cross Persona Evidence',
           description: 'Illegal creation.',
@@ -325,7 +325,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       await expect(
         demoRepository.submitAssignment({
           assignmentId: 'asg_obs_03',
-          userId: 'user_priya', // active is user_aarav
+          userId: 'VSC-S-002', // active is user_aarav
           content: 'Aarav impersonating Priya',
           evidenceIds: ['ev_priya_count_01'],
         })
@@ -335,7 +335,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       await expect(
         demoRepository.submitAssignment({
           assignmentId: 'asg_obs_03',
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Attaching another person evidence',
           evidenceIds: ['ev_priya_count_01'],
         })
@@ -346,7 +346,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       // Submit assignment as Aarav
       const sub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Aarav submission',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -355,7 +355,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       await expect(
         demoRepository.reviewSubmission({
           submissionId: sub.id,
-          reviewerId: 'user_aarav',
+          reviewerId: 'VSC-S-001',
           status: 'verified',
           teacherFeedback: 'Self-approval attempt',
         })
@@ -364,13 +364,13 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
 
     it('rejects teacher self-review direct call', async () => {
       // Switch to teacher Kavita
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
 
       // Create a submission authored by teacher Kavita
       // Note: add teacher evidence first
       const teacherEv = await demoRepository.addEvidence({
-        ownerId: 'user_kavita',
-        ownerName: 'Kavita Iyer',
+        ownerId: 'VSC-T-001',
+        ownerName: 'Shri Mayur Parmar',
         type: 'observation',
         title: 'Teacher Demonstration Walk',
         description: 'Field walk demonstration notes.',
@@ -382,7 +382,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
 
       const teacherSub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_kavita',
+        userId: 'VSC-T-001',
         content: 'Teacher submission content.',
         evidenceIds: [teacherEv.id],
       });
@@ -391,7 +391,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       await expect(
         demoRepository.reviewSubmission({
           submissionId: teacherSub.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'VSC-T-001',
           status: 'verified',
           teacherFeedback: 'Self review attempt',
         })
@@ -401,15 +401,15 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
     it('rejects teacher review of draft submission', async () => {
       const draft = await demoRepository.saveAssignmentDraft({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'In-progress draft.',
       });
 
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       await expect(
         demoRepository.reviewSubmission({
           submissionId: draft.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'VSC-T-001',
           status: 'verified',
           teacherFeedback: 'Reviewing a draft',
         })
@@ -419,13 +419,13 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
 
   describe('5. Truthful Credit Lifecycle (No Early Verified Credit) & Review Flow', () => {
     it('does not mint verified credit on submission; awards verified credits only upon mentor review', async () => {
-      const initialUser = await demoRepository.getUser('user_aarav');
+      const initialUser = await demoRepository.getUser('VSC-S-001');
       const initialTotal = initialUser?.totalCredits || 0;
 
       // Create new evidence
       const newEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'observation',
         title: 'School Gate Crossing Fieldwork',
         description: 'Morning observation of student arrival safety.',
@@ -438,31 +438,31 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       // Submit assignment
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Completed school zone observation.',
         evidenceIds: [newEv.id],
       });
 
       // 1. Transaction exists with status Pending
-      const credits = await demoRepository.getCredits('user_aarav');
+      const credits = await demoRepository.getCredits('VSC-S-001');
       const pendingCredit = credits.find((c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03');
       expect(pendingCredit).toBeDefined();
       expect(pendingCredit?.status).toBe('Pending');
       expect(pendingCredit?.reason).toContain('pending mentor review');
 
       // 2. User totalCredits and Passport totalCredits do NOT prematurely increase
-      const userAfterSubmit = await demoRepository.getUser('user_aarav');
+      const userAfterSubmit = await demoRepository.getUser('VSC-S-001');
       expect(userAfterSubmit?.totalCredits).toBe(initialTotal);
 
-      const passportAfterSubmit = await demoRepository.getPassport('user_aarav');
+      const passportAfterSubmit = await demoRepository.getPassport('VSC-S-001');
       expect(passportAfterSubmit.totalCredits).toBe(initialTotal);
       expect(passportAfterSubmit.pendingCredits).toBe(2);
 
       // 3. Teacher Kavita verifies submission
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const verified = await demoRepository.reviewSubmission({
         submissionId: submitted.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         score: 25,
         teacherFeedback: 'Verified: excellent safety fieldwork methodology.',
@@ -471,7 +471,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       expect(verified.status).toBe('verified');
 
       // 4. Submission credit transitions to Verified, +1 Observation credit awarded
-      const creditsAfterReview = await demoRepository.getCredits('user_aarav');
+      const creditsAfterReview = await demoRepository.getCredits('VSC-S-001');
       const reviewedSubCredit = creditsAfterReview.find(
         (c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03'
       );
@@ -485,24 +485,24 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       expect(obsCredit?.amount).toBe(1);
 
       // 5. User totalCredits and Passport totalCredits now reflect +3 (2 submission + 1 observation)
-      const userAfterReview = await demoRepository.getUser('user_aarav');
+      const userAfterReview = await demoRepository.getUser('VSC-S-001');
       expect(userAfterReview?.totalCredits).toBe(initialTotal + 3);
 
-      const passportAfterReview = await demoRepository.getPassport('user_aarav');
+      const passportAfterReview = await demoRepository.getPassport('VSC-S-001');
       expect(passportAfterReview.totalCredits).toBe(initialTotal + 3);
       expect(passportAfterReview.pendingCredits).toBe(0);
 
       // 6. Idempotent retry: duplicate review does not award extra credits
       const duplicateReview = await demoRepository.reviewSubmission({
         submissionId: submitted.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         score: 25,
         teacherFeedback: 'Duplicate review check.',
       });
       expect(duplicateReview.status).toBe('verified');
 
-      const userAfterDuplicate = await demoRepository.getUser('user_aarav');
+      const userAfterDuplicate = await demoRepository.getUser('VSC-S-001');
       expect(userAfterDuplicate?.totalCredits).toBe(initialTotal + 3);
     });
 
@@ -510,16 +510,16 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       // 1. Submit
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Brief notes with insufficient details.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
 
       // 2. Teacher requests revision
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const revision = await demoRepository.reviewSubmission({
         submissionId: submitted.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'revision_requested',
         teacherFeedback: 'Please add pedestrian delay timings and vehicle classifications.',
       });
@@ -528,10 +528,10 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       expect(revision.teacherFeedback).toContain('pedestrian delay timings');
 
       // 3. Participant edits and resubmits
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const resubmitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Revised notes including 5-minute pedestrian delay timings and 15 heavy commercial trucks classified.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -540,10 +540,10 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       expect(resubmitted.content).toContain('15 heavy commercial trucks');
 
       // 4. Teacher accepts revised submission
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const finalVerified = await demoRepository.reviewSubmission({
         submissionId: submitted.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         score: 25,
         teacherFeedback: 'Revisions accepted. Well documented.',
@@ -558,7 +558,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
       // 1. Establish prior durable draft on asg_obs_03
       const priorDraft = await demoRepository.saveAssignmentDraft({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Original durable draft before quota error.',
       });
 
@@ -574,7 +574,7 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
         await expect(
           demoRepository.saveAssignmentDraft({
             assignmentId: 'asg_obs_03',
-            userId: 'user_aarav',
+            userId: 'VSC-S-001',
             content: 'Draft update that should fail on quota.',
           })
         ).rejects.toThrow(/quota exceeded or storage disabled/i);
@@ -582,8 +582,8 @@ describe('Package 03: Assignment, Observation & Evidence Lifecycle', () => {
         // Attempting to add evidence with file data fails with descriptive error
         await expect(
           demoRepository.addEvidence({
-            ownerId: 'user_aarav',
-            ownerName: 'Aarav Sharma',
+            ownerId: 'VSC-S-001',
+            ownerName: 'Ankita Kapri',
             type: 'observation',
             title: 'Failing Evidence on Quota',
             description: 'Should not persist.',

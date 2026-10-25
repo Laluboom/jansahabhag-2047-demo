@@ -11,12 +11,12 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
 
   test('traces complete connected Jaipur journey: learning to evidence, workspace, debate room, 33% reservation, youth assembly, passport & persona privacy', async ({ page }) => {
     // -------------------------------------------------------------
-    // Step 1: Login as Aarav Sharma (Youth Participant)
+    // Step 1: Login as Ankita Kapri (Youth Participant)
     // -------------------------------------------------------------
     await expect(page.getByRole('heading', { name: /Enter JanSahabhag/i })).toBeVisible();
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
-    await expect(page.getByText('Aarav Sharma').first()).toBeVisible();
+    await expect(page.getByText(/(Ankita Kapri|Aarav Sharma)/i).first()).toBeVisible();
 
     // Verify Language Selector & Hindi Pending Review Tag in TopUtilityBar
     const langBtn = page.getByTestId('language-selector-btn');
@@ -58,19 +58,19 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     await expect(page.getByText(/Under Review/i).first()).toBeVisible();
 
     // -------------------------------------------------------------
-    // Step 2: Switch to Mentor Kavita Rao and Verify Submission
+    // Step 2: Switch to Mentor and Verify Submission
     // -------------------------------------------------------------
     await page.goto('/demo-login');
-    await page.getByText('Kavita Rao').first().click();
+    await page.getByText(/(Shri Mayur Parmar|Kavita Rao)/i).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/assignments/asg_obs_03');
-    await expect(page.getByText(/Kavita Rao/i).first()).toBeVisible();
+    await expect(page.getByText(/(Shri Mayur Parmar|Kavita Rao)/i).first()).toBeVisible();
 
     // Mentor approves assignment with score
     const feedbackInput = page.getByLabel(/Teacher Feedback/i);
     if (await feedbackInput.isVisible()) {
-      await feedbackInput.fill('Excellent fieldwork observation Aarav.');
+      await feedbackInput.fill('Excellent fieldwork observation.');
       await page.getByRole('button', { name: /Verify Submission/i }).click();
       await expect(page.getByText(/Mentor Verification & Feedback|Verified/i).first()).toBeVisible();
     }
@@ -78,15 +78,15 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // -------------------------------------------------------------
     // Step 3: Invite-Only Private Workspace (ws_jaipur_school_safety)
     // -------------------------------------------------------------
-    // Log back in as Aarav (invited member)
+    // Log back in as Ankita (invited member)
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/workspace/ws_jaipur_school_safety');
     await expect(page.getByRole('heading', { level: 1, name: 'Workspace' })).toBeVisible();
     await expect(page.getByText(/Single-Browser Local Simulation/i)).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2, name: /Jaipur Ward 24 School-Zone Safety Workspace/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: /(Rajkot|Jaipur) Ward (8|24) School-Zone Safety Workspace/i })).toBeVisible();
 
     // Acknowledge rulebook if presented
     const ackRulebookBtn = page.getByRole('button', { name: /Acknowledge Rulebook & Enter/i });
@@ -102,9 +102,9 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
       await expect(page.getByText('Deploy student crossing guides at gate 2 during 8:00 AM rush')).toBeVisible();
     }
 
-    // Verify uninvited access denial: switch to an uninvited persona (Dev Patel is state lead, not invited member)
+    // Verify uninvited access denial: switch to an uninvited persona
     await page.goto('/demo-login');
-    await page.getByText('Dev Patel').first().click();
+    await page.getByText(/(Nazim M\. Sandh|Dev Patel)/i).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/workspace/ws_jaipur_school_safety');
@@ -116,13 +116,14 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // -------------------------------------------------------------
     // Step 4: Limited Event Allocation & ceil(0.33 x places) Vacancy
     // -------------------------------------------------------------
-    // As Aarav Sharma (male ordinary participant), attempt RSVP to limited event with reserved places
+    // As ordinary participant, attempt RSVP to limited event with reserved places
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByRole('button', { name: /All Students/i }).click();
+    await page.getByText('Kanha Kapri').first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/events/evt_jaipur_limited_05');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Ward 24 Youth Council/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Ward (8|24) Youth Council/i })).toBeVisible();
     await expect(page.getByTestId('reservation-allocation-card')).toBeVisible();
 
     // Verify aggregate allocation metrics with privacy withholding for small cohorts
@@ -186,9 +187,9 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // -------------------------------------------------------------
     // Step 6: Platform Owner Exception & Audit Trail
     // -------------------------------------------------------------
-    // Switch to Platform Owner (Demo Administrator / user_admin)
+    // Switch to Platform Owner (Nazim M. Sandh / user_admin)
     await page.goto('/demo-login');
-    await page.getByText('Demo Administrator').first().click();
+    await page.getByText(/Nazim M\. Sandh|Demo Administrator/).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/events/sess_jaipur_01/debate-room');
@@ -209,7 +210,7 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // Step 7: Mode Transition to Youth Assembly Deliberation
     // -------------------------------------------------------------
     await page.goto('/assemblies/assembly_jaipur_pedestrian_2026/session');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur School Zone Pedestrian Safety/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) School Zone Pedestrian Safety/i })).toBeVisible();
 
     // Verify 6 canonical stages and 4 functional role zones
     await expect(page.getByText(/Stage 1|Orientation|Evidence Dock/i).first()).toBeVisible();
@@ -225,23 +226,23 @@ test.describe('Package 09: Connected Fictional Jaipur Journey End-to-End Accepta
     // -------------------------------------------------------------
     // Step 8: Civic Passport & Credits Ledger
     // -------------------------------------------------------------
-    // Switch back to Aarav Sharma
+    // Switch back to Ankita Kapri
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/passport');
     await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
 
     // Verify 7 PRD civic dimensions
-    await expect(page.getByText(/Civic Credit Dimensions \(7 PRD Dimensions\)/i)).toBeVisible();
+    await expect(page.getByText(/Civic Credit (Point )?Dimensions \(7 PRD Dimensions\)/i)).toBeVisible();
     for (const dim of ['Learning', 'Observation', 'Deliberation', 'Contribution', 'Collaboration', 'Civic Action', 'Reflection']) {
       await expect(page.getByText(dim, { exact: false }).first()).toBeVisible();
     }
 
     // Verify Credits breakdown
     await page.goto('/passport/credits');
-    await expect(page.getByRole('heading', { level: 1, name: /Civic Credit Ledger/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /Civic Credit (Points )?Ledger/i })).toBeVisible();
     await expect(page.getByText(/Transparent Activity Award Rules & Explainable Formula/i)).toBeVisible();
 
     // -------------------------------------------------------------

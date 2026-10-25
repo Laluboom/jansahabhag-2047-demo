@@ -1,5 +1,6 @@
 import { RoleAwareSuggestion } from '../types/assistant';
 import { DemoDatabase, ScopedModeratorGrant, User } from '../types/domain';
+import { PersistenceService } from './persistence';
 
 // Local storage key for persistent edits / dismissals across demo sessions
 const STORAGE_KEY = 'jansahabhag_ai_assistant_edits_v1';
@@ -252,7 +253,10 @@ export class RoleAwareAiService {
     if (!user) return [];
 
     const state = loadStoredState();
-    const effectiveRole = user.role || 'participant';
+    const db = _db || PersistenceService.loadDatabase();
+    const isSessionFacilitator = Boolean(db?.sessions?.some((s) => s.facilitatorId === user.id));
+    const effectiveRole =
+      user.role === 'participant' && isSessionFacilitator ? 'facilitator' : user.role || 'participant';
 
     let candidates: RoleAwareSuggestion[] = [];
 

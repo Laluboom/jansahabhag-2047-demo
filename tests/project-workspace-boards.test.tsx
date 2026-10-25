@@ -29,7 +29,7 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
       );
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { level: 1, name: /Navchetna Crosswalk & Speed Calming Action/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: /Virani College Crosswalk & Speed Calming Action/i })).toBeInTheDocument();
       });
 
       // Status chip should display "Active"
@@ -46,7 +46,7 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
       );
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { level: 1, name: /Mansarovar Evening Bus Stop Lighting Action/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: /Kalawad Road Evening Bus Stop Lighting Action/i })).toBeInTheDocument();
       });
 
       // Status chip should display "Completed"
@@ -335,7 +335,7 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
   });
 
   describe('WorkspacePage: Glanceable Joined Projects and Pending Invitations', () => {
-    it('renders joined projects as clear tiles for signed-in user Aarav', async () => {
+    it('renders joined projects as clear tiles for signed-in user Ankita', async () => {
       render(
         <MemoryRouter initialEntries={['/workspace']}>
           <Routes>
@@ -348,16 +348,16 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
         expect(screen.getByTestId('section-joined-projects')).toBeInTheDocument();
       });
 
-      // Aarav is lead of proj_navchetna_crosswalk_01 in seed data
+      // Ankita is lead of proj_navchetna_crosswalk_01 in seed data
       const tile = screen.getByTestId('joined-project-tile-proj_navchetna_crosswalk_01');
       expect(tile).toBeInTheDocument();
-      expect(within(tile).getByText('Navchetna Crosswalk & Speed Calming Action')).toBeInTheDocument();
+      expect(within(tile).getByText('Virani College Crosswalk & Speed Calming Action')).toBeInTheDocument();
       expect(within(tile).getByText('Project Lead')).toBeInTheDocument();
       expect(within(tile).getByText('Open Team Board')).toBeInTheDocument();
     });
 
     it('renders pending invitations in one obvious place with accept and decline flow', async () => {
-      // Switch persona to Meera Singh, who has an invited state in seed data
+      // Switch persona to Harshita Kapri, who has an invited state in seed data
       render(
         <MemoryRouter initialEntries={['/workspace']}>
           <Routes>
@@ -367,32 +367,32 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('switch-to-user_meera')).toBeInTheDocument();
+        expect(screen.getByTestId('switch-to-VSC-S-003')).toBeInTheDocument();
       });
 
-      // Switch to Meera
-      fireEvent.click(screen.getByTestId('switch-to-user_meera'));
+      // Switch to Harshita
+      fireEvent.click(screen.getByTestId('switch-to-VSC-S-003'));
 
-      // Meera sees pending invitation banner in one obvious place
+      // Harshita sees pending invitation banner in one obvious place
       await waitFor(() => {
         expect(screen.getByTestId('invitation-banner')).toBeInTheDocument();
       });
 
       const banner = screen.getByTestId('invitation-banner');
       expect(within(banner).getByText(/Workspace Invitation Pending/i)).toBeInTheDocument();
-      expect(within(banner).getByText(/Jaipur Ward 24 School-Zone Safety Workspace/i)).toBeInTheDocument();
+      expect(within(banner).getByText(/Rajkot Ward 8 School-Zone Safety Workspace/i)).toBeInTheDocument();
       expect(within(banner).getByTestId('btn-accept-invite')).toBeInTheDocument();
       expect(within(banner).getByTestId('btn-decline-invite')).toBeInTheDocument();
 
-      // Meera accepts the invitation
+      // Harshita accepts the invitation
       fireEvent.click(within(banner).getByTestId('btn-accept-invite'));
 
       await waitFor(() => {
-        expect(screen.getByText(/Invitation accepted! Welcome to the Jaipur School-Zone Safety Workspace/i)).toBeInTheDocument();
+        expect(screen.getByText(/Invitation accepted! Welcome to the Rajkot Ward 8 School-Zone Safety Workspace/i)).toBeInTheDocument();
       });
     });
 
-    it('preserves invite-by-exact-username search in the private Jaipur workspace', async () => {
+    it('preserves invite-by-exact-username search in the private Rajkot workspace', async () => {
       render(
         <MemoryRouter initialEntries={['/workspace/ws_jaipur_school_safety']}>
           <Routes>
@@ -412,11 +412,11 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
       const usernameInput = screen.getByTestId('input-invite-username');
       expect(usernameInput).toBeInTheDocument();
 
-      fireEvent.change(usernameInput, { target: { value: 'sid.nair' } });
+      fireEvent.change(usernameInput, { target: { value: 'hriday.trivedi' } });
       fireEvent.click(screen.getByTestId('btn-search-username'));
 
       await waitFor(() => {
-        expect(screen.getByTestId('user-search-result-sid.nair')).toBeInTheDocument();
+        expect(screen.getByTestId('user-search-result-hriday.trivedi')).toBeInTheDocument();
       });
     });
   });
@@ -436,7 +436,7 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
       });
 
       // Status chip exists for active project
-      expect(screen.getByText('Navchetna Crosswalk & Speed Calming Action')).toBeInTheDocument();
+      expect(screen.getByText('Virani College Crosswalk & Speed Calming Action')).toBeInTheDocument();
       expect(screen.getAllByText(/active/i).length).toBeGreaterThanOrEqual(1);
 
       // Links to Team Boards exist

@@ -50,7 +50,7 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     fireEvent.click(enterBtn);
 
     expect(await screen.findByTestId('dashboard-screen')).toBeInTheDocument();
-    expect(useAuthStore.getState().currentUser?.id).toBe('user_aarav');
+    expect(useAuthStore.getState().currentUser?.id).toBe('VSC-S-001');
   });
 
   it('renders the accessible five-step civic loop once beneath the hero with links to matching existing routes', () => {

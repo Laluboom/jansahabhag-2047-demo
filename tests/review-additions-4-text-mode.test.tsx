@@ -26,8 +26,8 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
   const mockSeats: SeatModel[] = [
     {
       id: 'seat_rohan',
-      userId: 'user_rohan',
-      name: 'Rohan Mehta',
+      userId: 'VSC-S-009',
+      name: 'Aroh Mehta',
       initials: 'RM',
       avatar: 'https://images.unsplash.com/photo-rohan.jpg',
       role: 'Facilitator',
@@ -38,8 +38,8 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
     },
     {
       id: 'seat_priya',
-      userId: 'user_priya',
-      name: 'Priya Sharma',
+      userId: 'VSC-S-002',
+      name: 'Niyati Chawda',
       initials: 'PS',
       avatar: 'https://images.unsplash.com/photo-priya.jpg',
       role: 'Evidence Analyst',
@@ -51,8 +51,8 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
     },
     {
       id: 'seat_aarav',
-      userId: 'user_aarav',
-      name: 'Aarav Sharma',
+      userId: 'VSC-S-001',
+      name: 'Ankita Kapri',
       initials: 'AS',
       avatar: 'https://images.unsplash.com/photo-aarav.jpg',
       role: 'Questioner',
@@ -77,14 +77,14 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
   const mockSampleTurns: SessionTextTurn[] = [
     {
       id: 'turn_test_1',
-      authorName: 'Priya Sharma',
+      authorName: 'Niyati Chawda',
       authorRole: 'Evidence Analyst',
       timestamp: '10:14 AM',
       text: 'Traffic radar readings establish 420 vehicles/hour exceeding 40 km/h in school zone.',
     },
     {
       id: 'turn_test_2',
-      authorName: 'Aarav Sharma',
+      authorName: 'Ankita Kapri',
       authorRole: 'Questioner',
       timestamp: '10:18 AM',
       text: 'How will raised crosswalk tables accommodate heavy emergency fire tender access?',
@@ -212,19 +212,19 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       );
 
       // Identity & role
-      expect(screen.getByText('Rohan Mehta')).toBeInTheDocument();
+      expect(screen.getByText('Aroh Mehta')).toBeInTheDocument();
       expect(screen.getByText('Facilitator')).toBeInTheDocument();
-      expect(screen.getAllByText('Priya Sharma').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Niyati Chawda').length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Evidence Analyst').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText('Aarav Sharma').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Ankita Kapri').length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText('Questioner').length).toBeGreaterThanOrEqual(1);
 
       // Speaker queue section
       const queueSection = screen.getByTestId('speaker-queue-section');
       expect(queueSection).toBeInTheDocument();
       expect(queueSection).toHaveTextContent(/Chamber Speaker Queue & Floor Status/i);
-      expect(queueSection).toHaveTextContent('Priya Sharma');
-      expect(queueSection).toHaveTextContent('Aarav Sharma');
+      expect(queueSection).toHaveTextContent('Niyati Chawda');
+      expect(queueSection).toHaveTextContent('Ankita Kapri');
       expect(screen.getByTestId('list-speaking-indicator')).toHaveTextContent('Speaking Now');
       expect(screen.getByTestId('list-waiting-indicator')).toHaveTextContent('In Queue');
     });
@@ -245,14 +245,14 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       expect(turnsContainer).toBeInTheDocument();
 
       // Verify turn 1: author, timestamp, text
-      expect(screen.getByTestId('sample-turn-author-turn_test_1')).toHaveTextContent('Priya Sharma');
+      expect(screen.getByTestId('sample-turn-author-turn_test_1')).toHaveTextContent('Niyati Chawda');
       expect(screen.getByTestId('sample-turn-time-turn_test_1')).toHaveTextContent('10:14 AM');
       expect(screen.getByTestId('sample-turn-text-turn_test_1')).toHaveTextContent(
         'Traffic radar readings establish 420 vehicles/hour'
       );
 
       // Verify turn 2: author, timestamp, text
-      expect(screen.getByTestId('sample-turn-author-turn_test_2')).toHaveTextContent('Aarav Sharma');
+      expect(screen.getByTestId('sample-turn-author-turn_test_2')).toHaveTextContent('Ankita Kapri');
       expect(screen.getByTestId('sample-turn-time-turn_test_2')).toHaveTextContent('10:18 AM');
       expect(screen.getByTestId('sample-turn-text-turn_test_2')).toHaveTextContent(
         'How will raised crosswalk tables accommodate heavy emergency fire tender access?'
@@ -448,8 +448,8 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
   describe('6. Local Session Seat Restoration & Missed Turns', () => {
     it('restores the same seat on reload / return from browser state', async () => {
       // Pre-save seat selection for current persona in browser demo storage
-      await useAuthStore.getState().switchPersona('user_priya');
-      SessionPreferencesService.saveSeatId('debate', 'seat_priya', 'user_priya');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
+      SessionPreferencesService.saveSeatId('debate', 'seat_priya', 'VSC-S-002');
 
       render(
         <MemoryRouter>
@@ -465,19 +465,19 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
 
       // Restored seat notice is displayed
       expect(screen.getByTestId('restored-seat-notice')).toBeInTheDocument();
-      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Priya Sharma');
+      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Niyati Chawda');
     });
 
     it('scopes restored seat to current persona and does not restore another persona\'s seat upon persona switch', async () => {
       // 1. Log in as Aarav (user_aarav)
       await act(async () => {
-        await useAuthStore.getState().switchPersona('user_aarav');
+        await useAuthStore.getState().switchPersona('VSC-S-001');
       });
-      expect(useAuthStore.getState().currentUser?.id).toBe('user_aarav');
+      expect(useAuthStore.getState().currentUser?.id).toBe('VSC-S-001');
 
       // Save seat for Aarav and Rohan
-      SessionPreferencesService.saveSeatId('debate', 'seat_aarav', 'user_aarav');
-      SessionPreferencesService.saveSeatId('debate', 'seat_rohan', 'user_rohan');
+      SessionPreferencesService.saveSeatId('debate', 'seat_aarav', 'VSC-S-001');
+      SessionPreferencesService.saveSeatId('debate', 'seat_rohan', 'VSC-S-009');
 
       const { rerender } = render(
         <MemoryRouter>
@@ -492,11 +492,11 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       );
 
       // Restored seat for Aarav is shown
-      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Aarav Sharma');
+      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Ankita Kapri');
 
       // 2. Switch persona to Rohan (user_rohan)
       await act(async () => {
-        await useAuthStore.getState().switchPersona('user_rohan');
+        await useAuthStore.getState().switchPersona('VSC-S-009');
       });
 
       // Rerender SessionSeating for the new persona
@@ -513,11 +513,11 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       );
 
       // Rohan's own seat is restored because effectiveUserId changed to user_rohan
-      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Rohan Mehta');
+      expect(screen.getByTestId('restored-seat-notice')).toHaveTextContent('Aroh Mehta');
 
       // 3. Switch persona to Priya who has no saved seat in this session
       await act(async () => {
-        await useAuthStore.getState().switchPersona('user_priya');
+        await useAuthStore.getState().switchPersona('VSC-S-002');
       });
 
       rerender(
@@ -541,7 +541,7 @@ describe('Review Additions #4: Text Mode, Low Data Preference & Session Continui
       const simulatedMissed: SessionTextTurn[] = [
         {
           id: 'missed_turn_1',
-          authorName: 'Rohan Mehta',
+          authorName: 'Aroh Mehta',
           authorRole: 'Facilitator',
           timestamp: '10:20 AM',
           text: 'Facilitator recognized Evidence Analyst for 2-minute rebuttal.',

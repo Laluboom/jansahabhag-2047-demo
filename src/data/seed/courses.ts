@@ -79,7 +79,7 @@ export const seedCourses: Course[] = [
     modules: [
       {
         id: 'mod_act_01',
-        title: 'Module 1: Municipal Structure in Rajasthan',
+        title: 'Module 1: Municipal Structure in Gujarat',
         description: 'How urban local bodies function and how youth proposals are submitted.',
         order: 1,
         lessonIds: ['les_act_301'],
@@ -198,7 +198,7 @@ export const seedCourses: Course[] = [
     programmeId: 'prog_green_jaipur',
     title: 'Urban Heat Island & Micro-Canopy Interventions',
     code: 'ENV-101',
-    description: 'Understanding shade equity, tree canopy distribution, and thermal comfort along pedestrian paths in Rajasthan cities.',
+    description: 'Understanding shade equity, tree canopy distribution, and thermal comfort along pedestrian paths in Rajkot and Gujarat cities.',
     track: 'self_growth',
     level: 'foundational',
     estimatedMinutes: 75,
@@ -264,7 +264,7 @@ export const seedLessons: Lesson[] = [
         id: 'sec_101_1',
         title: '1. What makes civic observation different?',
         type: 'reading',
-        body: 'In JanSahabhag 2047, civic action begins not with anger or assumptions, but with careful, truthful observation. When we observe a community challenge—like a hazardous intersection in Mansarovar, Jaipur—we look for verifiable patterns: traffic speed, lack of zebra markings, student pedestrian queues, and blind spots created by parked vehicles.',
+        body: 'In JanSahabhag 2047, civic action begins not with anger or assumptions, but with careful, truthful observation. When we observe a community challenge—like a hazardous intersection on Kalawad Road, Rajkot—we look for verifiable patterns: traffic speed, lack of zebra markings, student pedestrian queues, and blind spots created by parked vehicles.',
       },
       {
         id: 'sec_101_2',
@@ -388,7 +388,7 @@ export const seedLessons: Lesson[] = [
         id: 'sec_202_1',
         title: '1. Anchoring Claims in Verified Records',
         type: 'reading',
-        body: 'When proposing a speed table outside Navchetna School, refer to specific evidence ID: vehicle count logs and observed braking distances.',
+        body: 'When proposing a speed table outside Virani Science College, refer to specific evidence ID: vehicle count logs and observed braking distances.',
       },
     ],
     schemaVersion: 1,
@@ -421,7 +421,7 @@ export const seedLessons: Lesson[] = [
     id: 'les_act_301',
     courseId: 'course_action_skills_03',
     moduleId: 'mod_act_01',
-    title: 'How Rajasthan Municipal Corporations Function',
+    title: 'How Gujarat Municipal Corporations Function',
     order: 1,
     estimatedMinutes: 35,
     contentSummary: 'Understanding ward councils, mayor responsibilities, and traffic engineering cell deputations.',
@@ -429,9 +429,9 @@ export const seedLessons: Lesson[] = [
     sections: [
       {
         id: 'sec_301_1',
-        title: '1. Local Government in Jaipur',
+        title: '1. Local Government in Rajkot',
         type: 'reading',
-        body: 'Jaipur Municipal Corporation (Heritage and Greater) manages local neighbourhood streets, footpaths, and street lighting, while JDA manages arterial corridors.',
+        body: 'Rajkot Municipal Corporation (RMC) manages local neighbourhood streets, footpaths, and street lighting, while RUDA/RMC manages arterial corridors.',
       },
     ],
     schemaVersion: 1,
@@ -624,7 +624,7 @@ export const seedLessons: Lesson[] = [
         id: 'sec_701_1',
         title: '1. Shade Equity',
         type: 'reading',
-        body: 'In Rajasthan summers, asphalt surfaces reach 52°C. Shaded walking corridors reduce radiant heat by up to 14°C.',
+        body: 'In Rajkot summers, asphalt surfaces reach 52°C. Shaded walking corridors reduce radiant heat by up to 14°C.',
       },
     ],
     schemaVersion: 1,
@@ -697,10 +697,10 @@ export const seedLessons: Lesson[] = [
 ];
 
 export const seedEnrolments: Enrolment[] = [
-  // Aarav's enrolments
+  // Ankita's enrolments
   {
-    id: 'enr_aarav_01',
-    userId: 'user_aarav',
+    id: 'enr_ankita_01',
+    userId: 'VSC-S-001',
     courseId: 'course_civic_obs_01',
     status: 'in_progress',
     completedLessonIds: ['les_obs_101', 'les_obs_102'],
@@ -711,8 +711,8 @@ export const seedEnrolments: Enrolment[] = [
     updatedAt: '2026-10-08T14:30:00Z',
   },
   {
-    id: 'enr_aarav_02',
-    userId: 'user_aarav',
+    id: 'enr_ankita_02',
+    userId: 'VSC-S-001',
     courseId: 'course_deliberation_02',
     status: 'in_progress',
     completedLessonIds: ['les_delib_201'],
@@ -723,8 +723,8 @@ export const seedEnrolments: Enrolment[] = [
     updatedAt: '2026-10-05T09:00:00Z',
   },
   {
-    id: 'enr_aarav_03',
-    userId: 'user_aarav',
+    id: 'enr_ankita_03',
+    userId: 'VSC-S-001',
     courseId: 'course_mapping_04',
     status: 'not_started',
     completedLessonIds: [],
@@ -734,10 +734,10 @@ export const seedEnrolments: Enrolment[] = [
     createdAt: '2026-10-01T08:00:00Z',
     updatedAt: '2026-10-01T08:00:00Z',
   },
-  // Meera's enrolments (rich completed state)
+  // Niyati's enrolments (rich completed state)
   {
-    id: 'enr_meera_01',
-    userId: 'user_meera',
+    id: 'enr_niyati_01',
+    userId: 'VSC-S-002',
     courseId: 'course_civic_obs_01',
     status: 'completed',
     completedLessonIds: ['les_obs_101', 'les_obs_102', 'les_obs_103', 'les_obs_104'],
@@ -749,8 +749,8 @@ export const seedEnrolments: Enrolment[] = [
     updatedAt: '2026-09-01T15:00:00Z',
   },
   {
-    id: 'enr_meera_02',
-    userId: 'user_meera',
+    id: 'enr_niyati_02',
+    userId: 'VSC-S-002',
     courseId: 'course_deliberation_02',
     status: 'completed',
     completedLessonIds: ['les_delib_201', 'les_delib_202', 'les_delib_203'],
@@ -762,8 +762,8 @@ export const seedEnrolments: Enrolment[] = [
     updatedAt: '2026-09-18T16:00:00Z',
   },
   {
-    id: 'enr_meera_03',
-    userId: 'user_meera',
+    id: 'enr_niyati_03',
+    userId: 'VSC-S-002',
     courseId: 'course_uhv_leadership_05',
     status: 'completed',
     completedLessonIds: ['les_uhv_501', 'les_uhv_502'],

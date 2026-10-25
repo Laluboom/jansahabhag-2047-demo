@@ -11,17 +11,17 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
   });
 
   test('executes complete end-to-end civic journey from learning to passport', async ({ page }) => {
-    // 1. Open Demo and Select Aarav Sharma (Participant)
+    // 1. Open Demo and Select Ankita Kapri (Participant)
     await page.goto('/demo-login');
     await expect(page.getByRole('heading', { name: /Enter JanSahabhag/i })).toBeVisible();
 
-    // Select Aarav Sharma card
-    await page.getByText('Aarav Sharma').first().click();
+    // Select participant card
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
 
     // Verify Dashboard loads
     await page.waitForURL('**/dashboard');
     await expect(page.getByText(/Viewing as/i).first()).toBeVisible();
-    await expect(page.getByText('Aarav Sharma').first()).toBeVisible();
+    await expect(page.getByText(/Ankita Kapri|Aarav Sharma/).first()).toBeVisible();
 
     // 2. Learning Journey: Open Course CIV-101 and Complete Next Lesson
     await page.goto('/learn/course_civic_obs_01');
@@ -62,10 +62,10 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     await page.waitForURL('**/assignments/asg_obs_03');
     await expect(page.getByText(/Under Review/i).first()).toBeVisible();
 
-    // 4. Switch Persona to Teacher Kavita Rao
+    // 4. Switch Persona to Teacher
     await page.getByRole('button', { name: /Viewing as/i }).click();
     await expect(page.getByText('Switch Demo Persona')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: /Kavita Rao/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /(Shri Mayur Parmar|Kavita Rao)/i }).click();
 
     // Verify Teacher perspective in Top Utility Bar
     await expect(page.getByText(/Teacher \/ Mentor/i).first()).toBeVisible();
@@ -74,29 +74,29 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
     await page.goto('/assignments');
     await expect(page.getByRole('heading', { name: /Assignment Review Queue/i })).toBeVisible();
 
-    // Open Aarav's exact submission
+    // Open participant submission
     await page.goto('/assignments/asg_obs_03');
     await expect(page.getByText(/Teacher Verification & Assessment Panel/i)).toBeVisible();
-    await expect(page.getByText(/Reviewing: Aarav Sharma/i)).toBeVisible();
+    await expect(page.getByText(/Reviewing: (Ankita Kapri|Aarav Sharma)/i)).toBeVisible();
 
     // Enter teacher feedback and verify
     const feedbackInput = page.getByLabel(/Teacher Feedback/i);
-    await feedbackInput.fill('Outstanding peer interviews Aarav. The qualitative data clearly demonstrates the urgency of school zone crossing interventions.');
+    await feedbackInput.fill('Outstanding peer interviews. The qualitative data clearly demonstrates the urgency of school zone crossing interventions.');
     await page.getByRole('button', { name: /Verify Submission/i }).click();
     await expect(page.getByText(/Mentor Verification & Feedback/i)).toBeVisible();
 
-    // 5. Switch Persona Back to Aarav Sharma
+    // 5. Switch Persona Back to Participant
     await page.getByRole('button', { name: /Viewing as/i }).click();
-    await page.getByRole('dialog').getByRole('button', { name: /Aarav Sharma/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /(Ankita Kapri|Aarav Sharma)/i }).click();
     await expect(page.getByText(/Viewing as Youth Participant/i).first()).toBeVisible();
 
     // 6. Youth Assembly Deliberation & Role Execution
     await page.goto('/assemblies');
     await expect(page.getByRole('heading', { name: /Youth Deliberative Assemblies/i })).toBeVisible();
 
-    // Open Jaipur Pedestrian Safety Assembly
+    // Open Pedestrian Safety Assembly
     await page.goto('/assemblies/assembly_jaipur_pedestrian_2026');
-    await expect(page.getByRole('heading', { name: /Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /(Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeVisible();
 
     // Join Assembly
     const joinBtn = page.getByRole('button', { name: /Join Youth Assembly|Enter Live Deliberation Workspace/i });
@@ -134,7 +134,7 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
 
     // 11. Open Civic Passport & Confirm All Connected Records & Reflections
     await page.goto('/passport');
-    await expect(page.getByRole('heading', { name: /Aarav Sharma/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /(Ankita Kapri|Aarav Sharma)/i })).toBeVisible();
     await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
 
     // Confirm Activity Timeline records from this exact run
@@ -149,11 +149,11 @@ test.describe('JanSahabhag 2047 — Golden Path Walkthrough', () => {
 
     // 12. Check Credit Ledger & Specific Ledger Transactions
     await page.goto('/passport/credits');
-    await expect(page.getByRole('heading', { name: /Civic Credit Ledger/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Civic Credit (Points )?Ledger/i })).toBeVisible();
     await expect(page.getByText(/Completed lesson: Conducting Peer Pedestrian Safety Interviews/i)).toBeVisible();
     await expect(page.getByText(/Submitted assignment: Pedestrian Flow Interview with 5 Peers/i)).toBeVisible();
     await expect(page.getByText(/Verified field evidence: Student Commuter Safety Survey Responses/i)).toBeVisible();
-    await expect(page.getByText(/Joined Youth Assembly: Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i)).toBeVisible();
+    await expect(page.getByText(/Joined Youth Assembly: (Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i)).toBeVisible();
     await expect(page.getByText(/Added substantive contribution \(question\)/i)).toBeVisible();
     await expect(page.getByText(/Civic reflection: Reflect on how this deliberative process/i)).toBeVisible();
   });

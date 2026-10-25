@@ -10,9 +10,9 @@ test.describe('Package 05: Youth Assembly Procedure, Roles, Stages & Dissent (De
   });
 
   test('desktop: displays canonical 6 stages, 4 functional role zones, and performs deliberative action', async ({ page }) => {
-    // 1. Log in as Aarav Sharma
+    // 1. Log in as primary participant
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
     // 2. Navigate to Jaipur Youth Assembly
@@ -75,7 +75,7 @@ test.describe('Package 05: Youth Assembly Procedure, Roles, Stages & Dissent (De
     const speakBtn = page.getByRole('button', { name: /Request Speaking Turn/i });
     await expect(speakBtn).toBeVisible();
     await speakBtn.click();
-    await expect(page.getByText(/Aarav Sharma/i).first()).toBeVisible();
+    await expect(page.getByText(/(Ankita Kapri|Aarav Sharma)/i).first()).toBeVisible();
   });
 
   test('mobile: filterable/stacked functional role zones and responsive layout', async ({ page }) => {
@@ -83,7 +83,7 @@ test.describe('Package 05: Youth Assembly Procedure, Roles, Stages & Dissent (De
     await page.setViewportSize({ width: 375, height: 667 });
 
     await page.goto('/demo-login');
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
     // Go directly to assembly session

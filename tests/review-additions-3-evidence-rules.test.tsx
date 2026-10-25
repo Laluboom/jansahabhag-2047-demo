@@ -20,7 +20,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
   beforeEach(async () => {
     window.localStorage.clear();
     PersistenceService.resetDatabase();
-    await demoRepository.switchUser('user_aarav');
+    await demoRepository.switchUser('VSC-S-001');
     await useAuthStore.getState().initialize();
   });
 
@@ -60,7 +60,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
   describe('2. Evidence Privacy by Default & Visibility Boundaries', () => {
     it('defaults new evidence visibility to private in repository when not explicitly set', async () => {
       const ev = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
+        ownerId: 'VSC-S-001',
         ownerName: 'Aarav Sharma',
         type: 'observation',
         title: 'Unspecified Visibility Observation',
@@ -80,7 +80,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     it('enforces visibility boundaries: owner, assigned reviewer, admin can view private evidence, unrelated teacher/facilitator cannot', async () => {
       // Create private evidence owned by Aarav
       const ev = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
+        ownerId: 'VSC-S-001',
         ownerName: 'Aarav Sharma',
         type: 'observation',
         title: 'Aarav Confidential Field Log',
@@ -98,44 +98,44 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       });
 
       // 1. Owner (Aarav) can access it and see dataUrl
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const aaravEv = await demoRepository.getEvidence(ev.id);
       expect(aaravEv).not.toBeNull();
       expect(aaravEv?.title).toBe('Aarav Confidential Field Log');
       expect(aaravEv?.fileInfo?.dataUrl).toBe('data:text/plain;base64,U2VjcmV0IE5vdGVz');
 
       // 2. Peer participant (Priya) CANNOT access private evidence
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       const priyaEv = await demoRepository.getEvidence(ev.id);
       expect(priyaEv).toBeNull();
       const priyaList = await demoRepository.getEvidenceList();
       expect(priyaList.some((e) => e.id === ev.id)).toBe(false);
 
       // 3. Unrelated teacher (Kavita) cannot access private evidence before assignment
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const unassignedTeacherEv = await demoRepository.getEvidence(ev.id);
       expect(unassignedTeacherEv).toBeNull();
       const teacherListBefore = await demoRepository.getEvidenceList();
       expect(teacherListBefore.some((e) => e.id === ev.id)).toBe(false);
 
       // 4. Unrelated facilitator (Rohan) CANNOT access private evidence
-      await demoRepository.switchUser('user_rohan');
+      await demoRepository.switchUser('VSC-S-009');
       const facilitatorEv = await demoRepository.getEvidence(ev.id);
       expect(facilitatorEv).toBeNull();
       const facilitatorList = await demoRepository.getEvidenceList();
       expect(facilitatorList.some((e) => e.id === ev.id)).toBe(false);
 
       // 5. Admin (user_admin) CAN access private evidence
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const adminEv = await demoRepository.getEvidence(ev.id);
       expect(adminEv).not.toBeNull();
       expect(adminEv?.id).toBe(ev.id);
 
       // Now create a submission linking this evidence assigned to teacher Kavita
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const sub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Crossroad delay analysis with linked evidence.',
         evidenceIds: [ev.id],
       });
@@ -143,12 +143,12 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       const db = PersistenceService.loadDatabase();
       const foundSub = db.submissions.find((s) => s.id === sub.id);
       if (foundSub) {
-        foundSub.reviewerId = 'user_kavita';
+        foundSub.reviewerId = 'VSC-T-001';
         PersistenceService.saveDatabase(db);
       }
 
       // 6. Assigned reviewer (Kavita) now CAN access private evidence
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const assignedTeacherEv = await demoRepository.getEvidence(ev.id);
       expect(assignedTeacherEv).not.toBeNull();
       expect(assignedTeacherEv?.id).toBe(ev.id);
@@ -156,7 +156,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       expect(teacherListAfter.some((e) => e.id === ev.id)).toBe(true);
 
       // 7. Unrelated facilitator (Rohan) STILL cannot access
-      await demoRepository.switchUser('user_rohan');
+      await demoRepository.switchUser('VSC-S-009');
       expect(await demoRepository.getEvidence(ev.id)).toBeNull();
     });
 
@@ -205,7 +205,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     it('disallows attaching private UHV reflections to evidence or shared records', async () => {
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_aarav',
+          ownerId: 'VSC-S-001',
           ownerName: 'Aarav Sharma',
           type: 'observation',
           title: 'Illegally Attached UHV Reflection',
@@ -221,10 +221,10 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
 
     it('rejects reporting private UHV reflections into civic moderation queue', async () => {
       // Create UHV submission as user_meera
-      await demoRepository.switchUser('user_meera');
+      await demoRepository.switchUser('VSC-S-003');
       const uhvSub = await demoRepository.submitAssignment({
         assignmentId: 'asg_uhv_08',
-        userId: 'user_meera',
+        userId: 'VSC-S-003',
         content: 'Personal notes exploring family harmony.',
         evidenceIds: [],
       });
@@ -232,7 +232,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       // Active user reporting UHV submission
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_meera',
+          reporterId: 'VSC-S-003',
           targetType: 'submission',
           targetId: uhvSub.id,
           reason: 'Trying to flag personal inquiry',
@@ -246,7 +246,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       const overLimitBytes = MAX_EVIDENCE_FILE_BYTES + 1024;
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_aarav',
+          ownerId: 'VSC-S-001',
           ownerName: 'Aarav Sharma',
           type: 'observation',
           title: 'Over 250KB Evidence',
@@ -267,22 +267,22 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
 
   describe('5. Civic Reporting Path & Moderation Queue', () => {
     it('requires reporterId to match active session persona', async () => {
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_priya',
+          reporterId: 'VSC-S-002',
           targetType: 'evidence',
           targetId: 'ev_aarav_traffic_count_01',
           reason: 'Mismatch reporter test',
         })
-      ).rejects.toThrow(/reporterId \(user_priya\) must match the active session persona \(user_aarav\)/i);
+      ).rejects.toThrow(/reporterId \(VSC-S-002\) must match the active session persona \(VSC-S-001\)/i);
     });
 
     it('verifies reporter can access target: unauthorized persona cannot report another person private evidence or submission', async () => {
       // Aarav creates private evidence
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const privateEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
+        ownerId: 'VSC-S-001',
         ownerName: 'Aarav Sharma',
         type: 'observation',
         title: 'Secret Traffic Count',
@@ -294,10 +294,10 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       });
 
       // Priya attempts to report Aarav's private evidence
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_priya',
+          reporterId: 'VSC-S-002',
           targetType: 'evidence',
           targetId: privateEv.id,
           reason: 'Trying to report evidence I cannot access',
@@ -305,19 +305,19 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       ).rejects.toThrow(/cannot report private evidence not accessible to you/i);
 
       // Aarav creates private submission
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const privateSub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Confidential submission text',
         evidenceIds: [privateEv.id],
       });
 
       // Priya attempts to report Aarav's submission
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_priya',
+          reporterId: 'VSC-S-002',
           targetType: 'submission',
           targetId: privateSub.id,
           reason: 'Trying to report submission I cannot access',
@@ -326,9 +326,9 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('creates a moderation case when reporting a civic evidence item', async () => {
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_priya',
+        reporterId: 'VSC-S-002',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Vehicle speed count lacks timestamped crossroad radar log.',
@@ -337,7 +337,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
 
       expect(modCase).toBeDefined();
       expect(modCase.id).toMatch(/^mod_civic/);
-      expect(modCase.reporterId).toBe('user_priya');
+      expect(modCase.reporterId).toBe('VSC-S-002');
       expect(modCase.targetType).toBe('evidence');
       expect(modCase.targetId).toBe('ev_aarav_traffic_count_01');
       expect(modCase.reason).toBe('Vehicle speed count lacks timestamped crossroad radar log.');
@@ -352,18 +352,18 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('creates a moderation case when reporting a civic submission by legitimate owner', async () => {
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       // Aarav submits civic assignment
       const sub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Detailed 30-minute tally of crossroad delays at Madhyam Marg.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
 
       // Aarav legitimately reports/flags his submission
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_aarav',
+        reporterId: 'VSC-S-001',
         targetType: 'submission',
         targetId: sub.id,
         reason: 'Observer requesting self-flag and review for erroneous speed estimates.',
@@ -373,14 +373,14 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       expect(modCase.status).toBe('open');
       expect(modCase.targetId).toBe(sub.id);
       expect(modCase.severity).toBe('high');
-      expect(modCase.reporterId).toBe('user_aarav');
-      expect(modCase.notes).toContain('aarav.s');
+      expect(modCase.reporterId).toBe('VSC-S-001');
+      expect(modCase.notes).toContain('ankita.kapri');
     });
 
     it('avoids leaking private target details in moderation records visible to unauthorized personas', async () => {
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const privateEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
+        ownerId: 'VSC-S-001',
         ownerName: 'Aarav Sharma',
         type: 'observation',
         title: 'Sensitive Private Field Survey',
@@ -393,7 +393,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
 
       // Aarav reports his own private evidence
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_aarav',
+        reporterId: 'VSC-S-001',
         targetType: 'evidence',
         targetId: privateEv.id,
         reason: 'Self-flagging private file for redaction',
@@ -404,23 +404,23 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       expect(modCase.notes).toContain(`Private evidence item ${privateEv.id}`);
 
       // Priya (unrelated persona) retrieves moderation cases: case is completely hidden from unauthorized persona
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       const priyaCases = await demoRepository.getModerationCases();
       const priyaView = priyaCases.find((c) => c.id === modCase.id);
       expect(priyaView).toBeUndefined();
       expect(priyaCases.some((c) => c.targetId === privateEv.id)).toBe(false);
       expect(priyaCases.some((c) => c.reason?.includes('Self-flagging private file'))).toBe(false);
-      expect(priyaCases.some((c) => c.reporterId === 'user_aarav')).toBe(false);
+      expect(priyaCases.some((c) => c.reporterId === 'VSC-S-001')).toBe(false);
 
       // Aarav (the active reporter) retrieves moderation cases: can see his own reported case
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const aaravCases = await demoRepository.getModerationCases();
       const aaravView = aaravCases.find((c) => c.id === modCase.id);
       expect(aaravView).toBeDefined();
       expect(aaravView?.reason).toBe('Self-flagging private file for redaction');
 
       // Admin retrieves moderation cases: notes and reason are visible
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const adminCases = await demoRepository.getModerationCases();
       const adminView = adminCases.find((c) => c.id === modCase.id);
       expect(adminView?.reason).toBe('Self-flagging private file for redaction');
@@ -428,10 +428,10 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('requires at least 3 characters for reporting reason', async () => {
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       await expect(
         demoRepository.reportEvidenceOrSubmission({
-          reporterId: 'user_aarav',
+          reporterId: 'VSC-S-001',
           targetType: 'evidence',
           targetId: 'ev_aarav_traffic_count_01',
           reason: 'ab',
@@ -440,12 +440,12 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('renders reported case in AdminModerationPage and allows review & resolution', async () => {
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       await useAuthStore.getState().initialize();
 
       // Report an evidence item as user_admin
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_admin',
+        reporterId: 'JS-F-001',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Potential privacy violation: pedestrian faces unblurred in background photo.',
@@ -463,7 +463,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
         expect(screen.getByText(modCase.id)).toBeInTheDocument();
       });
       expect(screen.getByText(/Potential privacy violation: pedestrian faces unblurred in background photo\./i)).toBeInTheDocument();
-      expect(screen.getAllByText(/user_admin/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/JS-F-001/i).length).toBeGreaterThanOrEqual(1);
 
       // Begin Review action for the open case
       const beginReviewBtns = screen.getAllByRole('button', { name: /Begin Review/i });
@@ -476,37 +476,37 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('guards updateModerationCase against unauthorized non-staff users', async () => {
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_admin',
+        reporterId: 'JS-F-001',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Test moderation update guard',
       });
 
       // Switch to unprivileged user Priya
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       await expect(
         demoRepository.updateModerationCase(modCase.id, { status: 'actioned' })
       ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
     });
 
     it('blocks participant self-assignment attempts and unauthorized reviewer grants', async () => {
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_admin',
+        reporterId: 'JS-F-001',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Audit case for self-assignment tests',
       });
 
       // Switch to unprivileged participant Priya
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
 
       // Attempt 1: Participant tries to bypass check by setting update.reviewerId to her own ID
       await expect(
         demoRepository.updateModerationCase(modCase.id, {
-          reviewerId: 'user_priya',
+          reviewerId: 'VSC-S-002',
           status: 'under_review',
         })
       ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
@@ -514,17 +514,17 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       // Attempt 2: Participant tries to update reviewerId only
       await expect(
         demoRepository.updateModerationCase(modCase.id, {
-          reviewerId: 'user_priya',
+          reviewerId: 'VSC-S-002',
         })
       ).rejects.toThrow(/Unauthorized: only moderation reviewers or administrators may update moderation cases/i);
 
       // Attempt 3: Participant tries to invoke dedicated admin-only reviewer grant path
       await expect(
-        demoRepository.assignModerationCaseReviewer(modCase.id, 'user_priya')
+        demoRepository.assignModerationCaseReviewer(modCase.id, 'VSC-S-002')
       ).rejects.toThrow(/Unauthorized: only administrators may assign or reassign case reviewers/i);
 
       // Verify case in database remains unaltered
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const adminCases = await demoRepository.getModerationCases();
       const stored = adminCases.find((c) => c.id === modCase.id);
       expect(stored?.reviewerId).toBeUndefined();
@@ -533,34 +533,34 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
 
     it('enforces unauthorized list visibility: participant does not see other users cases or leak private data', async () => {
       // Admin creates a case
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const adminCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_admin',
+        reporterId: 'JS-F-001',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Admin confidential reason regarding radar discrepancies',
       });
 
       // Aarav creates a case
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const aaravCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_aarav',
+        reporterId: 'VSC-S-001',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Aarav private report reason for speed estimates',
       });
 
       // Switch to Priya who has not reported any case in this test
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       const priyaInitialCases = await demoRepository.getModerationCases();
       // Priya sees only her own reported cases (or cases assigned to her)
       expect(priyaInitialCases.find((c) => c.id === adminCase.id)).toBeUndefined();
       expect(priyaInitialCases.find((c) => c.id === aaravCase.id)).toBeUndefined();
-      expect(priyaInitialCases.some((c) => c.reporterId !== 'user_priya')).toBe(false);
+      expect(priyaInitialCases.some((c) => c.reporterId !== 'VSC-S-002')).toBe(false);
 
       // Now Priya reports her own case
       const priyaCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_priya',
+        reporterId: 'VSC-S-002',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Priya own report regarding lighting at crossroad',
@@ -572,13 +572,13 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       // Priya still DOES NOT see Aarav or Admin cases
       expect(priyaCasesAfter.find((c) => c.id === adminCase.id)).toBeUndefined();
       expect(priyaCasesAfter.find((c) => c.id === aaravCase.id)).toBeUndefined();
-      expect(priyaCasesAfter.every((c) => c.reporterId === 'user_priya')).toBe(true);
+      expect(priyaCasesAfter.every((c) => c.reporterId === 'VSC-S-002')).toBe(true);
     });
 
     it('allows valid admin updates and reviewer assignment while blocking arbitrary field tampering', async () => {
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const modCase = await demoRepository.reportEvidenceOrSubmission({
-        reporterId: 'user_admin',
+        reporterId: 'JS-F-001',
         targetType: 'evidence',
         targetId: 'ev_aarav_traffic_count_01',
         reason: 'Valid admin update test',
@@ -587,19 +587,19 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
       // Valid admin starts review and assigns reviewer
       const underReview = await demoRepository.updateModerationCase(modCase.id, {
         status: 'under_review',
-        reviewerId: 'user_admin',
+        reviewerId: 'JS-F-001',
         notes: 'Under review by platform admin.',
       });
       expect(underReview.status).toBe('under_review');
-      expect(underReview.reviewerId).toBe('user_admin');
+      expect(underReview.reviewerId).toBe('JS-F-001');
       expect(underReview.notes).toBe('Under review by platform admin.');
 
       // Valid admin uses dedicated assignModerationCaseReviewer method to delegate to Dev
-      const reassigned = await demoRepository.assignModerationCaseReviewer(modCase.id, 'user_dev');
-      expect(reassigned.reviewerId).toBe('user_dev');
+      const reassigned = await demoRepository.assignModerationCaseReviewer(modCase.id, 'JS-M-001');
+      expect(reassigned.reviewerId).toBe('JS-M-001');
 
       // Dev (programme_manager and assigned reviewer) resolves the case
-      await demoRepository.switchUser('user_dev');
+      await demoRepository.switchUser('JS-M-001');
       const resolved = await demoRepository.updateModerationCase(modCase.id, {
         status: 'actioned',
         resolutionDetails: 'Speed logs verified against radar metadata; advisory issued.',
@@ -631,7 +631,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
 
   describe('6. Point of Use UI (SubmitAssignmentPage)', () => {
     it('renders point-of-use media consent warning and Report button for available evidence', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_obs_03/submit']}>
@@ -686,7 +686,7 @@ describe('Review Additions 3 and V2 Evidence Rules', () => {
     });
 
     it('modal displays concise consent warning next to file picker with allowed types and 250KB limit', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_obs_03/submit']}>

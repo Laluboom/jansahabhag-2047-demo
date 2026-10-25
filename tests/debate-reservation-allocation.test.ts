@@ -56,10 +56,10 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     it('builds allocations for all canonical roles and does not silently exempt Facilitator', () => {
       const allocations = buildSessionRoleAllocations({
         sessionId: 'test_sess',
-        facilitatorId: 'user_rohan',
+        facilitatorId: 'VSC-S-009',
         roster: [
-          { userId: 'user_rohan', name: 'Rohan Mehta', role: 'Facilitator', joinedAt: '2026-10-01' },
-          { userId: 'user_priya', name: 'Priya Sharma', role: 'Evidence Analyst', joinedAt: '2026-10-01' },
+          { userId: 'VSC-S-009', name: 'Rohan Mehta', role: 'Facilitator', joinedAt: '2026-10-01' },
+          { userId: 'VSC-S-002', name: 'Priya Sharma', role: 'Evidence Analyst', joinedAt: '2026-10-01' },
         ],
       });
 
@@ -82,9 +82,9 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
       const allocations = buildSessionRoleAllocations({
         sessionId: 'test_sess',
         roster: [
-          { userId: 'user_aarav', name: 'Aarav Patel', role: 'Participant', joinedAt: '2026-10-01' },
-          { userId: 'user_kabir', name: 'Kabir Verma', role: 'Observer', joinedAt: '2026-10-01' },
-          { userId: 'user_vikram', name: 'Vikram Singh', role: 'Open Participant', joinedAt: '2026-10-01' },
+          { userId: 'VSC-S-001', name: 'Aarav Patel', role: 'Participant', joinedAt: '2026-10-01' },
+          { userId: 'VSC-S-006', name: 'Kabir Verma', role: 'Observer', joinedAt: '2026-10-01' },
+          { userId: 'VSC-S-005', name: 'Vikram Singh', role: 'Open Participant', joinedAt: '2026-10-01' },
         ],
       });
 
@@ -96,7 +96,7 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
 
   describe('2. Seeded Session Roster Inventory & Initial Status Verification', () => {
     it('initializes sess_jaipur_01 with 7 canonical roles in unvalidated_legacy or pending status', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       const session = await repository.getSession('sess_jaipur_01');
       expect(session).not.toBeNull();
       expect(session?.roleAllocations).toBeDefined();
@@ -115,35 +115,35 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     });
 
     it('verifies seeded occupants and their unvalidated legacy statuses', async () => {
-      await repository.switchPersona('user_admin');
-      const allocs = await repository.getSessionRoleAllocations('sess_jaipur_01', 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const allocs = await repository.getSessionRoleAllocations('sess_jaipur_01', 'JS-F-001');
 
       // Facilitator: Rohan (ineligible)
-      expect(allocs['Facilitator'].confirmedOccupants).toEqual(['user_rohan']);
+      expect(allocs['Facilitator'].confirmedOccupants).toEqual(['VSC-S-009']);
       expect(allocs['Facilitator'].status).toBe('unvalidated_legacy');
 
       // Questioner: Aarav (ineligible)
-      expect(allocs['Questioner'].confirmedOccupants).toEqual(['user_aarav']);
+      expect(allocs['Questioner'].confirmedOccupants).toEqual(['VSC-S-001']);
       expect(allocs['Questioner'].status).toBe('unvalidated_legacy');
 
       // Evidence Analyst: Priya (eligible)
-      expect(allocs['Evidence Analyst'].confirmedOccupants).toEqual(['user_priya']);
+      expect(allocs['Evidence Analyst'].confirmedOccupants).toEqual(['VSC-S-002']);
       expect(allocs['Evidence Analyst'].status).toBe('unvalidated_legacy');
 
       // Civic Advocate: Vikram (ineligible)
-      expect(allocs['Civic Advocate'].confirmedOccupants).toEqual(['user_vikram']);
+      expect(allocs['Civic Advocate'].confirmedOccupants).toEqual(['VSC-S-005']);
       expect(allocs['Civic Advocate'].status).toBe('unvalidated_legacy');
 
       // Community Voice: Kabir (ineligible)
-      expect(allocs['Community Voice'].confirmedOccupants).toEqual(['user_kabir']);
+      expect(allocs['Community Voice'].confirmedOccupants).toEqual(['VSC-S-006']);
       expect(allocs['Community Voice'].status).toBe('unvalidated_legacy');
 
       // Synthesiser: Siddharth (ineligible)
-      expect(allocs['Synthesiser'].confirmedOccupants).toEqual(['user_siddharth']);
+      expect(allocs['Synthesiser'].confirmedOccupants).toEqual(['VSC-S-007']);
       expect(allocs['Synthesiser'].status).toBe('unvalidated_legacy');
 
       // Rapporteur: Isha (eligible)
-      expect(allocs['Rapporteur'].confirmedOccupants).toEqual(['user_isha']);
+      expect(allocs['Rapporteur'].confirmedOccupants).toEqual(['VSC-S-004']);
       expect(allocs['Rapporteur'].status).toBe('unvalidated_legacy');
     });
   });
@@ -159,8 +159,8 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
       expect(alloc.reservedMinimum).toBe(1);
       expect(alloc.ordinaryPlaces).toBe(0);
 
-      // Ineligible candidate (user_aarav) claiming vacant 1-place reserved role
-      const claim = canUserClaimRoleAllocation(alloc, 'user_aarav', undefined, false);
+      // Ineligible candidate (VSC-S-005) claiming vacant 1-place reserved role
+      const claim = canUserClaimRoleAllocation(alloc, 'VSC-S-005', undefined, false);
       expect(claim.allowed).toBe(false);
       expect(claim.reason).toContain('reservation policy');
     });
@@ -171,67 +171,67 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
         roster: [],
       })['Questioner'];
 
-      // Eligible candidate (user_priya) claiming vacant reserved role
-      const claim = canUserClaimRoleAllocation(alloc, 'user_priya', undefined, false);
+      // Eligible candidate (VSC-S-002) claiming vacant reserved role
+      const claim = canUserClaimRoleAllocation(alloc, 'VSC-S-002', undefined, false);
       expect(claim.allowed).toBe(true);
       expect(claim.placeType).toBe('reserved');
     });
 
     it('rejects ordinary candidate assignment to vacant role through repository API', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // First withdraw Kabir from Community Voice to make it vacant
-      await repository.withdrawSessionRole('sess_jaipur_01', 'user_kabir', 'user_admin');
+      await repository.withdrawSessionRole('sess_jaipur_01', 'VSC-S-006', 'JS-F-001');
 
-      // Attempt to assign another ineligible user (user_vikram) to Community Voice
+      // Attempt to assign another ineligible user (VSC-S-005) to Community Voice
       await expect(
-        repository.assignSessionRole('sess_jaipur_01', 'user_vikram', 'Community Voice', 'user_admin')
+        repository.assignSessionRole('sess_jaipur_01', 'VSC-S-005', 'Community Voice', 'JS-F-001')
       ).rejects.toThrow(/reservation policy/i);
     });
 
     it('allows assigning eligible candidate to vacant role', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Withdraw Kabir from Community Voice
-      await repository.withdrawSessionRole('sess_jaipur_01', 'user_kabir', 'user_admin');
+      await repository.withdrawSessionRole('sess_jaipur_01', 'VSC-S-006', 'JS-F-001');
 
-      // Assign eligible candidate Ananya (user_ananya)
-      const session = await repository.assignSessionRole('sess_jaipur_01', 'user_ananya', 'Community Voice', 'user_admin');
+      // Assign eligible candidate Ananya (VSC-S-003)
+      const session = await repository.assignSessionRole('sess_jaipur_01', 'VSC-S-003', 'Community Voice', 'JS-F-001');
       const cvAlloc = session.roleAllocations?.['Community Voice'];
-      expect(cvAlloc?.confirmedOccupants).toContain('user_ananya');
+      expect(cvAlloc?.confirmedOccupants).toContain('VSC-S-003');
       expect(cvAlloc?.reservedOccupiedCount).toBe(1);
     });
   });
 
   describe('4. Finalization Guard & Platform Owner Audited Exception', () => {
     it('denies finalization of non-compliant role allocation without approved exception', async () => {
-      await repository.switchPersona('user_admin');
-      // Questioner is occupied by Aarav (ineligible, 1 place requires 1 reserved)
+      await repository.switchPersona('JS-F-001');
+      // Civic Advocate is occupied by Yash Rathod (ineligible, 1 place requires 1 reserved)
       await expect(
-        repository.finalizeSessionRoleAllocation('sess_jaipur_01', 'Questioner', 'user_admin')
+        repository.finalizeSessionRoleAllocation('sess_jaipur_01', 'Civic Advocate', 'JS-F-001')
       ).rejects.toThrow(/reservation requirement unmet/i);
 
       // Verify persistent status is unchanged
       const session = await repository.getSession('sess_jaipur_01');
-      expect(session?.roleAllocations?.['Questioner'].status).not.toBe('finalized_compliant');
-      expect(session?.roleAllocations?.['Questioner'].status).not.toBe('finalized_exception');
+      expect(session?.roleAllocations?.['Civic Advocate'].status).not.toBe('finalized_compliant');
+      expect(session?.roleAllocations?.['Civic Advocate'].status).not.toBe('finalized_exception');
     });
 
     it('allows finalization of compliant role allocation', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Evidence Analyst is occupied by Priya (eligible, fulfills 1 reserved place)
-      const session = await repository.finalizeSessionRoleAllocation('sess_jaipur_01', 'Evidence Analyst', 'user_admin');
+      const session = await repository.finalizeSessionRoleAllocation('sess_jaipur_01', 'Evidence Analyst', 'JS-F-001');
       const alloc = session.roleAllocations?.['Evidence Analyst'];
       expect(alloc?.status).toBe('finalized_compliant');
     });
 
     it('rejects participant and facilitator spoofing of Platform Owner exception approval', async () => {
       // Participant attempting exception approval
-      await repository.switchPersona('user_aarav');
+      await repository.switchPersona('VSC-S-001');
       await expect(
         repository.approveSessionRoleException(
           'sess_jaipur_01',
           'Facilitator',
           'Participant attempting exception override',
-          'user_aarav'
+          'VSC-S-001'
         )
       ).rejects.toThrow(/Only Platform Owner.*can approve reservation exceptions/i);
 
@@ -241,36 +241,36 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
           'sess_jaipur_01',
           'Facilitator',
           'Spoofing Platform Owner',
-          'user_admin' // actorId does not match active persona user_aarav
+          'JS-F-001' // actorId does not match active persona VSC-S-001
         )
       ).rejects.toThrow(/Spoof attempt rejected/i);
 
       // Facilitator attempting exception approval
-      await repository.switchPersona('user_rohan');
+      await repository.switchPersona('VSC-S-009');
       await expect(
         repository.approveSessionRoleException(
           'sess_jaipur_01',
           'Facilitator',
           'Facilitator self-approving exception',
-          'user_rohan'
+          'VSC-S-009'
         )
       ).rejects.toThrow(/Only Platform Owner.*can approve reservation exceptions/i);
     });
 
     it('rejects exception approval without substantive justification (minimum 5 chars)', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       await expect(
-        repository.approveSessionRoleException('sess_jaipur_01', 'Facilitator', 'skip', 'user_admin')
+        repository.approveSessionRoleException('sess_jaipur_01', 'Facilitator', 'skip', 'JS-F-001')
       ).rejects.toThrow(/substantive reason.*minimum 5 characters/i);
     });
 
     it('allows Platform Owner to approve audited exception with visibly distinct status', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       const { session, audit } = await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Facilitator',
         'Fictional pilot demo: Rohan confirmed as Facilitator under documented Platform Owner exception.',
-        'user_admin'
+        'JS-F-001'
       );
 
       const alloc = session.roleAllocations?.['Facilitator'];
@@ -283,27 +283,27 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
       expect(audit.action).toBe('exception_approved');
 
       // Verify audit trail in repository
-      const audits = await repository.getAllocationAudits(alloc?.allocationId, 'user_admin');
+      const audits = await repository.getAllocationAudits(alloc?.allocationId, 'JS-F-001');
       expect(audits.some((a) => a.action === 'exception_approved')).toBe(true);
     });
   });
 
   describe('5. Invalidation of Stale Exceptions on Roster or Capacity Changes', () => {
     it('invalidates prior exception when capacity changes', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception for Questioner
       await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Questioner',
         'Pilot demo exception for Aarav',
-        'user_admin'
+        'JS-F-001'
       );
 
       let session = await repository.getSession('sess_jaipur_01');
       expect(session?.roleAllocations?.['Questioner']?.status).toBe('finalized_exception');
 
       // Update capacity from 1 to 2
-      session = await repository.updateSessionRoleCapacity('sess_jaipur_01', 'Questioner', 2, 'user_admin');
+      session = await repository.updateSessionRoleCapacity('sess_jaipur_01', 'Questioner', 2, 'JS-F-001');
       const alloc = session.roleAllocations?.['Questioner'];
       expect(alloc?.status).toBe('pending');
       expect(alloc?.isException).toBe(false);
@@ -311,22 +311,22 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
       expect(alloc?.totalPlaces).toBe(2);
 
       // Verify exception_invalidated audit
-      const audits = await repository.getAllocationAudits(alloc?.allocationId, 'user_admin');
+      const audits = await repository.getAllocationAudits(alloc?.allocationId, 'JS-F-001');
       expect(audits.some((a) => a.action === 'exception_invalidated')).toBe(true);
     });
 
     it('invalidates prior exception when role occupant is withdrawn', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception for Questioner
       await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Questioner',
         'Pilot demo exception for Aarav',
-        'user_admin'
+        'JS-F-001'
       );
 
       // Withdraw Aarav
-      const session = await repository.withdrawSessionRole('sess_jaipur_01', 'user_aarav', 'user_admin');
+      const session = await repository.withdrawSessionRole('sess_jaipur_01', 'VSC-S-001', 'JS-F-001');
       const alloc = session.roleAllocations?.['Questioner'];
       expect(alloc?.status).toBe('pending');
       expect(alloc?.isException).toBe(false);
@@ -334,20 +334,20 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     });
 
     it('invalidates prior exception when role occupant is replaced', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception for Synthesiser (occupied by Siddharth, 1 place)
       await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Synthesiser',
         'Pilot demo exception for Siddharth',
-        'user_admin'
+        'JS-F-001'
       );
 
       let session = await repository.getSession('sess_jaipur_01');
       expect(session?.roleAllocations?.['Synthesiser']?.status).toBe('finalized_exception');
 
       // Replace Siddharth with eligible candidate Ananya
-      session = await repository.replaceSessionRole('sess_jaipur_01', 'user_siddharth', 'user_ananya', 'Synthesiser', 'user_admin');
+      session = await repository.replaceSessionRole('sess_jaipur_01', 'VSC-S-007', 'VSC-S-003', 'Synthesiser', 'JS-F-001');
       const alloc = session.roleAllocations?.['Synthesiser'];
       // The prior exception must be invalidated
       expect(alloc?.isException).toBe(false);
@@ -355,27 +355,27 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     });
 
     it('invalidates prior exception when role occupant changes role', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception for Facilitator (Rohan)
       await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Facilitator',
         'Pilot demo exception for Rohan',
-        'user_admin'
+        'JS-F-001'
       );
 
       // First make Civic Advocate available by withdrawing Vikram
-      await repository.withdrawSessionRole('sess_jaipur_01', 'user_vikram', 'user_admin');
+      await repository.withdrawSessionRole('sess_jaipur_01', 'VSC-S-005', 'JS-F-001');
       // Approve exception on Civic Advocate for testing
       await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Civic Advocate',
         'Pilot exception for empty Civic Advocate',
-        'user_admin'
+        'JS-F-001'
       );
 
       // Change Rohan from Facilitator to Civic Advocate (with platform_admin override)
-      const session = await repository.changeSessionRole('sess_jaipur_01', 'user_rohan', 'Civic Advocate', 'user_admin');
+      const session = await repository.changeSessionRole('sess_jaipur_01', 'VSC-S-009', 'Civic Advocate', 'JS-F-001');
       const facAlloc = session.roleAllocations?.['Facilitator'];
       // Prior Facilitator exception invalidated
       expect(facAlloc?.isException).toBe(false);
@@ -385,17 +385,17 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
 
   describe('6. Privacy Projections for Small Cohorts & Non-Owners', () => {
     it('suppresses category counts and occupant details for 1-place role for non-owner', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Approve exception on Facilitator
       await repository.approveSessionRoleException(
         'sess_jaipur_01',
         'Facilitator',
         'Pilot demo exception for Rohan',
-        'user_admin'
+        'JS-F-001'
       );
 
-      // Non-owner query (user_aarav)
-      await repository.switchPersona('user_aarav');
+      // Non-owner query (VSC-S-001)
+      await repository.switchPersona('VSC-S-001');
       const session = await repository.getSession('sess_jaipur_01');
       const facAlloc = session?.roleAllocations?.['Facilitator'];
 
@@ -415,7 +415,7 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     });
 
     it('provides full unredacted allocation details to Platform Owner', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       const session = await repository.getSession('sess_jaipur_01');
       const facAlloc = session?.roleAllocations?.['Facilitator'];
 
@@ -430,7 +430,7 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
       const db = PersistenceService.loadDatabase();
       const rawSession = db.sessions.find((s) => s.id === 'sess_jaipur_01')!;
 
-      const nonOwner = { id: 'user_aarav', role: 'student' };
+      const nonOwner = { id: 'VSC-S-001', role: 'student' };
       const projected = projectSessionForCaller(rawSession, nonOwner);
 
       const roleAlloc = projected.roleAllocations?.['Facilitator'];
@@ -445,18 +445,18 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
 
   describe('7. Mode Transitions, Integration Invariants & Migration Reload', () => {
     it('preserves role allocations across session mode transitions', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       const before = await repository.getSession('sess_jaipur_01');
       expect(before?.roleAllocations).toBeDefined();
 
       // Transition from debate_room to youth_assembly mode
-      const transitioned = await repository.switchSessionMode('sess_jaipur_01', 'user_rohan', 'youth_assembly');
+      const transitioned = await repository.switchSessionMode('sess_jaipur_01', 'VSC-S-009', 'youth_assembly');
       expect(transitioned.currentMode).toBe('youth_assembly');
       expect(transitioned.roleAllocations).toBeDefined();
       expect(Object.keys(transitioned.roleAllocations!).length).toBe(7);
 
       // Transition back to debate_room mode
-      const back = await repository.switchSessionMode('sess_jaipur_01', 'user_rohan', 'debate_room');
+      const back = await repository.switchSessionMode('sess_jaipur_01', 'VSC-S-009', 'debate_room');
       expect(back.currentMode).toBe('debate_room');
       expect(back.roleAllocations).toBeDefined();
       expect(Object.keys(back.roleAllocations!).length).toBe(7);
@@ -464,14 +464,14 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     });
 
     it('preserves speaking queue, debate phase, and motions during role operations', async () => {
-      await repository.switchPersona('user_admin');
+      await repository.switchPersona('JS-F-001');
       // Withdraw and replace an occupant
       await repository.replaceSessionRole(
         'sess_jaipur_01',
-        'user_priya',
-        'user_ananya',
+        'VSC-S-002',
+        'VSC-S-003',
         'Evidence Analyst',
-        'user_admin'
+        'JS-F-001'
       );
 
       const session = await repository.getSession('sess_jaipur_01');
@@ -509,12 +509,12 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
     });
 
     it('provides debate-specific alias methods matching session methods', async () => {
-      await repository.switchPersona('user_admin');
-      const allocs = await repository.getDebateRoleAllocations('sess_jaipur_01', 'user_admin');
+      await repository.switchPersona('JS-F-001');
+      const allocs = await repository.getDebateRoleAllocations('sess_jaipur_01', 'JS-F-001');
       expect(allocs['Facilitator']).toBeDefined();
 
       // Finalize alias (Rapporteur is occupied by Isha, eligible!)
-      const sess = await repository.finalizeDebateRoleAllocation('sess_jaipur_01', 'Rapporteur', 'user_admin');
+      const sess = await repository.finalizeDebateRoleAllocation('sess_jaipur_01', 'Rapporteur', 'JS-F-001');
       expect(sess.roleAllocations?.['Rapporteur'].status).toBe('finalized_compliant');
 
       // Exception alias
@@ -522,12 +522,12 @@ describe('Debate Room Named Role Reservation Allocation (Package 08C1)', () => {
         'sess_jaipur_01',
         'Synthesiser',
         'Audited exception for synthesiser role via alias',
-        'user_admin'
+        'JS-F-001'
       );
       expect(excSess.roleAllocations?.['Synthesiser'].status).toBe('finalized_exception');
 
       // Capacity alias
-      const capSess = await repository.updateDebateRoleCapacity('sess_jaipur_01', 'Synthesiser', 3, 'user_admin');
+      const capSess = await repository.updateDebateRoleCapacity('sess_jaipur_01', 'Synthesiser', 3, 'JS-F-001');
       expect(capSess.roleAllocations?.['Synthesiser'].totalPlaces).toBe(3);
     });
   });

@@ -239,7 +239,7 @@ export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
 
   db.sessions.forEach((session) => {
     session.currentMode = session.currentMode || (session.id === 'sess_jaipur_01' ? 'debate_room' : 'standard_meeting');
-    session.facilitatorId = session.facilitatorId || 'user_rohan';
+    session.facilitatorId = session.facilitatorId || 'VSC-S-009';
 
     if (!Array.isArray(session.roster) || session.roster.length === 0) {
       const linkedAssembly = db.assemblies?.find((a) => a.id === session.assemblyId);
@@ -248,14 +248,14 @@ export function normalizeSessionRecords(db: DemoDatabase): DemoDatabase {
         linkedAssembly.participantUserIds.forEach((pid) => participantIds.add(pid));
       }
       participantIds.add(session.facilitatorId);
-      participantIds.add('user_aarav');
+      participantIds.add('VSC-S-001');
 
       session.roster = Array.from(participantIds).map((uid) => {
         const u = db.users?.find((user) => user.id === uid);
         const isFacilitator = uid === session.facilitatorId;
         return {
           userId: uid,
-          name: u?.name || (isFacilitator ? 'Rohan Mehta' : uid),
+          name: u?.name || (isFacilitator ? 'Aroh Mehta' : uid),
           role: isFacilitator ? 'Facilitator' : 'Participant',
           joinedAt: session.createdAt || '2026-10-12T10:00:00Z',
         };
@@ -678,9 +678,9 @@ export function normalizePassportAndCreditRecords(db: DemoDatabase): DemoDatabas
             id: 'user_kavita',
             name: 'Kavita Rao',
             role: 'Teacher / Mentor',
-            label: 'Mentor Review (Jaipur Demo Simulation)',
+            label: 'Mentor Review (Rajkot Demo Simulation)',
           };
-          p.organisation = p.organisation || 'Government Senior Secondary School Navchetna, Jaipur (Demo Simulation)';
+          p.organisation = p.organisation || 'Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot (Demo Simulation)';
         } else if (
           p.sourceReferenceType === 'starting_balance' ||
           p.sourceReferenceType === 'assembly' ||

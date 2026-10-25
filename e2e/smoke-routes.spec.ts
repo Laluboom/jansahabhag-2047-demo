@@ -7,8 +7,8 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
       localStorage.removeItem('jansahbhag_demo_v1');
     });
     await page.reload();
-    // Default login as Aarav Sharma
-    await page.getByText('Aarav Sharma').first().click();
+    // Default login as Ankita Kapri
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
   });
 
@@ -18,8 +18,8 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
       { path: '/', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i },
       { path: '/welcome', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i },
       { path: '/onboarding', headingRegex: /Participant Onboarding|Civic Track/i },
-      { path: '/dashboard', headingRegex: /Civic Journey Dashboard|Welcome back, Aarav Sharma/i },
-      { path: '/profile', headingRegex: /Civic Profile|Aarav Sharma/i },
+      { path: '/dashboard', headingRegex: /Civic Journey Dashboard|Welcome back, (Ankita Kapri|Aarav Sharma)/i },
+      { path: '/profile', headingRegex: /Civic Profile|(Ankita Kapri|Aarav Sharma)/i },
       { path: '/notifications', headingRegex: /Notifications/i },
 
       // Learning
@@ -36,28 +36,28 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
       { path: '/participate', headingRegex: /Participatory Civic Stream/i },
       { path: '/activities', headingRegex: /Participatory Civic Stream/i },
       { path: '/events', headingRegex: /Civic Events & Deliberation Sessions|Civic Events/i },
-      { path: '/events/evt_jaipur_assembly_01', headingRegex: /Jaipur Youth Pedestrian Safety Assembly/i },
+      { path: '/events/evt_jaipur_assembly_01', headingRegex: /(Rajkot|Jaipur) Youth Pedestrian Safety Assembly/i },
 
       // Community
       { path: '/community', headingRegex: /Community Circles & Peer Forums|Community Circles/i },
-      { path: '/community/groups/grp_jaipur_safe_streets', headingRegex: /Jaipur Youth Safe Streets Circle/i },
+      { path: '/community/groups/grp_jaipur_safe_streets', headingRegex: /(Rajkot|Jaipur) Youth Safe Streets Circle/i },
 
       // Deliberative Assemblies & Propositions
       { path: '/assemblies', headingRegex: /Youth Deliberative Assemblies/i },
-      { path: '/assemblies/assembly_jaipur_pedestrian_2026', headingRegex: /Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i },
-      { path: '/assemblies/assembly_jaipur_pedestrian_2026/session', headingRegex: /Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i },
-      { path: '/propositions/prop_jaipur_pedestrian_01', headingRegex: /How should Jaipur Municipal Corporation|Madhyam Marg/i },
+      { path: '/assemblies/assembly_jaipur_pedestrian_2026', headingRegex: /(Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i },
+      { path: '/assemblies/assembly_jaipur_pedestrian_2026/session', headingRegex: /(Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i },
+      { path: '/propositions/prop_jaipur_pedestrian_01', headingRegex: /How should (Rajkot Municipal Corporation|RMC|Jaipur Municipal Corporation)|(Kalawad Road|Madhyam Marg)/i },
       { path: '/propositions/prop_jaipur_pedestrian_01/revisions', headingRegex: /Proposition Revision History/i },
 
       // Projects & Issues
       { path: '/projects', headingRegex: /Civic Action Projects/i },
-      { path: '/projects/proj_navchetna_crosswalk_01', headingRegex: /Navchetna Crosswalk & Speed Calming Action/i },
+      { path: '/projects/proj_navchetna_crosswalk_01', headingRegex: /(Virani.*College|Navchetna) Crosswalk & Speed Calming Action/i },
       { path: '/issues', headingRegex: /Civic Issues & Danger Spots Map|Civic Issues/i },
-      { path: '/issues/iss_01', headingRegex: /Madhyam Marg Gate 1 Speed Corridor & Faded Crosswalk/i },
+      { path: '/issues/iss_01', headingRegex: /(Kalawad Road|Madhyam Marg) Gate 1 Speed Corridor/i },
 
       // Passport & Credits
-      { path: '/passport', headingRegex: /Aarav Sharma/i },
-      { path: '/passport/credits', headingRegex: /Civic Credit Ledger/i },
+      { path: '/passport', headingRegex: /(Ankita Kapri|Aarav Sharma)/i },
+      { path: '/passport/credits', headingRegex: /Civic Credit (Points )?Ledger/i },
       { path: '/passport/evidence', headingRegex: /Verifiable Evidence Repository|Verified Field Evidence/i },
       { path: '/passport/achievements', headingRegex: /Civic Badges & Institutional Honors|Civic Honors/i },
 
@@ -70,7 +70,7 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
       { path: '/studio', headingRegex: /Civic Studio & Campaign Creator|Civic Studio/i },
 
       // Institution & Admin
-      { path: '/institution/dashboard', headingRegex: /Navchetna Public School|Institution Command Center/i },
+      { path: '/institution/dashboard', headingRegex: /(Virani Science College|Shri Manibhai Virani|Navchetna Public School|Institution Command Center)/i },
       { path: '/institution/participants', headingRegex: /Statewide & Institutional Cohort Directory|Cohort Directory/i },
       { path: '/institution/programmes', headingRegex: /Active Civic Programmes|Institutional Programmes/i },
       { path: '/admin/dashboard', headingRegex: /State Command|Platform Operations/i },
@@ -171,10 +171,10 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
       await expect(page).not.toHaveURL('**/notifications');
     }
 
-    // 2. Switch to Programme Manager Persona
+    // 2. Switch to Platform Admin / Founder Persona
     await page.getByRole('button', { name: /Viewing as/i }).click();
-    await page.getByRole('dialog').getByRole('button', { name: /Dev Patel/i }).click();
-    await expect(page.getByText(/Dev Patel/i).first()).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /(Nazim M\. Sandh|Dev Patel)/i }).click();
+    await expect(page.getByText(/(Nazim M\. Sandh|Dev Patel)/i).first()).toBeVisible();
     await expect(page.getByText(/Viewing as/i).first()).toBeVisible();
 
     // 3. Admin local change on Programmes
@@ -189,8 +189,8 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
     await expect(page.getByText(/Reset Demo Data\?/i)).toBeVisible();
     await page.getByRole('button', { name: /Yes, Restore Initial Seed/i }).click();
 
-    // Verify redirect to dashboard as Aarav Sharma after reset
+    // Verify redirect to dashboard as primary persona after reset
     await page.waitForURL('**/dashboard');
-    await expect(page.getByText(/Aarav Sharma/i).first()).toBeVisible();
+    await expect(page.getByText(/(Ankita Kapri|Aarav Sharma)/i).first()).toBeVisible();
   });
 });

@@ -137,18 +137,18 @@ describe('Task 05 Demo Audit & Core Invariants Tests', () => {
 
   describe('Core Invariants & Idempotent Operations', () => {
     it('maintains idempotency on duplicate lesson completions', async () => {
-      const initialCredits = await demoRepository.getCredits('user_aarav');
+      const initialCredits = await demoRepository.getCredits('VSC-S-001');
       const count1 = initialCredits.filter((c) => c.sourceId === 'les_obs_104').length;
 
       // Complete lesson once
-      await demoRepository.completeLesson('user_aarav', 'les_obs_104');
-      const creditsAfterFirst = await demoRepository.getCredits('user_aarav');
+      await demoRepository.completeLesson('VSC-S-001', 'les_obs_104');
+      const creditsAfterFirst = await demoRepository.getCredits('VSC-S-001');
       const count2 = creditsAfterFirst.filter((c) => c.sourceId === 'les_obs_104').length;
       expect(count2).toBe(count1 + 1);
 
       // Complete lesson second time
-      await demoRepository.completeLesson('user_aarav', 'les_obs_104');
-      const creditsAfterSecond = await demoRepository.getCredits('user_aarav');
+      await demoRepository.completeLesson('VSC-S-001', 'les_obs_104');
+      const creditsAfterSecond = await demoRepository.getCredits('VSC-S-001');
       const count3 = creditsAfterSecond.filter((c) => c.sourceId === 'les_obs_104').length;
       expect(count3).toBe(count2); // Exactly 1 credit record awarded
     });
@@ -157,26 +157,26 @@ describe('Task 05 Demo Audit & Core Invariants Tests', () => {
       // Create and submit clean assignment
       const sub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Initial field notes',
         evidenceIds: ['ev_aarav_interview_05'],
       });
 
       // Verify submission as teacher
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       await demoRepository.reviewSubmission({
         submissionId: sub.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         teacherFeedback: 'Verified by teacher.',
       });
 
       // Switch back to participant and attempt to overwrite verified submission should throw
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       await expect(
         demoRepository.saveAssignmentDraft({
           assignmentId: 'asg_obs_03',
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Illegal overwrite attempt',
         })
       ).rejects.toThrow(/Cannot modify submission with status 'verified'/i);
@@ -188,7 +188,7 @@ describe('Task 05 Demo Audit & Core Invariants Tests', () => {
         propositionId: 'prop_jaipur_pedestrian_01',
         assemblyId: 'assembly_jaipur_pedestrian_2026',
         outcome: 'QUALIFIED_SUPPORT',
-        updatedBy: 'Aarav Sharma',
+        updatedBy: 'Ankita Kapri',
       });
 
       // Attempt to finalise again should throw
@@ -197,7 +197,7 @@ describe('Task 05 Demo Audit & Core Invariants Tests', () => {
           propositionId: 'prop_jaipur_pedestrian_01',
           assemblyId: 'assembly_jaipur_pedestrian_2026',
           outcome: 'CONSENSUS',
-          updatedBy: 'Aarav Sharma',
+          updatedBy: 'Ankita Kapri',
         })
       ).rejects.toThrow(/already been finalised/i);
     });
