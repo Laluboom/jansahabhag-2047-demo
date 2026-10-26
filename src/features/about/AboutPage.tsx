@@ -117,26 +117,26 @@ export const AboutPage: React.FC = () => (
             {GRATITUDE_ENTRIES.map((entry) => (
               <li
                 key={entry.name}
-                className="flex flex-col justify-start rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors"
+                className={`rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors ${entry.name === 'Visesh Akbari' ? 'grid grid-cols-[3rem_minmax(0,1fr)] content-start gap-x-3' : 'flex flex-col justify-start'}`}
               >
                 {entry.name === 'Visesh Akbari' && (
                   <img
                     src={viseshPortrait}
                     alt="Portrait of Visesh Akbari"
-                    className="mb-3 h-36 w-28 rounded-lg bg-slate-100 object-contain"
+                    className="row-span-3 h-16 w-12 rounded-md bg-slate-100 object-contain"
                     width="1122"
                     height="1402"
                     loading="lazy"
                   />
                 )}
-                <span className="font-bold text-slate-900">{entry.name}</span>
+                <span className={`font-bold text-slate-900 ${entry.name === 'Visesh Akbari' ? 'col-start-2' : ''}`}>{entry.name}</span>
                 {entry.role && (
-                  <span className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                  <span className={`mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm ${entry.name === 'Visesh Akbari' ? 'col-start-2' : ''}`}>
                     {entry.role}
                   </span>
                 )}
                 {entry.name === 'Visesh Akbari' && (
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold sm:text-sm">
+                  <div className="col-start-2 mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold sm:text-sm">
                     <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">GitHub</a>
                     <a href="https://www.linkedin.com/in/viseshakbari/" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">LinkedIn</a>
                   </div>
