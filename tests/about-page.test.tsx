@@ -29,7 +29,10 @@ describe('AboutPage', () => {
       'mailto:nazimsandhbehappy@gmail.com'
     );
 
-    // Nazim full bio details across paragraphs
+    const nazimDisclosure = screen.getByText('See more about Nazim');
+    expect(nazimDisclosure.closest('details')).not.toHaveAttribute('open');
+
+    // The full supplied biography stays available behind See more.
     const nazimBio1 = screen.getByText(/Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology/i);
     expect(nazimBio1).toBeInTheDocument();
     expect(nazimBio1.textContent).toContain('education, governance, youth development, science and social responsibility');
@@ -61,7 +64,7 @@ describe('AboutPage', () => {
     expect(screen.queryByText(/Managing Partner \| Student of Microbiology/i)).not.toBeInTheDocument();
   });
 
-  it('renders Nazim in a wide card and Visesh in a centered compact card', () => {
+  it('orders Nazim, gratitude, and Visesh with grid details in each card', () => {
     const { container } = render(
       <MemoryRouter>
         <AboutPage />
@@ -79,14 +82,16 @@ describe('AboutPage', () => {
     expect(nazimArticle?.textContent).toContain('The Founder');
     expect(nazimArticle?.textContent).toContain('Nazim M. Sandh');
 
-    // Visesh is the second article, rendered inside a centered flex wrapper
+    // Visesh follows the gratitude section
     const viseshArticle = articles?.[1];
     expect(viseshArticle?.textContent).toContain('Developer');
     expect(viseshArticle?.textContent).toContain('Visesh Akbari');
-    expect(viseshArticle?.classList.contains('max-w-md')).toBe(true);
-    const viseshWrapper = viseshArticle?.parentElement;
-    expect(viseshWrapper?.className).toContain('flex');
-    expect(viseshWrapper?.className).toContain('justify-center');
+    const gratitudeSection = peopleSection?.querySelector('section[aria-labelledby="gratitude-heading"]');
+    expect(gratitudeSection).toBeInTheDocument();
+    expect(nazimArticle?.nextElementSibling).toBe(gratitudeSection);
+    expect(gratitudeSection?.nextElementSibling).toBe(viseshArticle);
+    expect(nazimArticle?.querySelector('.grid')).toBeInTheDocument();
+    expect(viseshArticle?.querySelector('.grid')).toBeInTheDocument();
 
   });
 

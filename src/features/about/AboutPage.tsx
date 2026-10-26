@@ -68,20 +68,25 @@ export const AboutPage: React.FC = () => (
               <h3 className="font-heading text-2xl font-bold text-slate-900">Nazim M. Sandh</h3>
               <p className="mt-1 text-sm font-medium text-slate-600">Founder and Initiator | Independent Learner</p>
             </div>
-            <div className="space-y-3 text-sm leading-6 text-slate-700">
-              <p>
-                Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology and a broader interest in education, governance, youth development, science and social responsibility.
-              </p>
-              <p>
-                His experiences span research-based awareness work with students, sustainable cultivation initiatives, community fitness, cultural engagement and youth development programmes. Across these different fields, a recurring interest has shaped his work: understanding how knowledge can inform decisions, influence behaviour and contribute to collective well-being.
-              </p>
-              <p>
-                His engagement with civic participation developed through LOK MANCH-2047, which he presented in the context of the Viksit Bharat Young Leaders Dialogue 2026. Ideas from the presentation were incorporated into the master presentation placed before the Hon’ble Prime Minister of India. This experience further informed his interest in the role young citizens can play in democratic processes and India’s development.
-              </p>
-              <p>
-                JanSahabhag 2047 reflects an ongoing effort to examine these questions and explore practical ways of connecting young people with civic life.
-              </p>
-            </div>
+            <details>
+              <summary className="w-fit cursor-pointer rounded-md px-1 py-1 text-sm font-semibold text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 focus-visible:ring-offset-2">
+                See more about Nazim
+              </summary>
+              <div className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+                <p>
+                  Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology and a broader interest in education, governance, youth development, science and social responsibility.
+                </p>
+                <p>
+                  His experiences span research-based awareness work with students, sustainable cultivation initiatives, community fitness, cultural engagement and youth development programmes. Across these different fields, a recurring interest has shaped his work: understanding how knowledge can inform decisions, influence behaviour and contribute to collective well-being.
+                </p>
+                <p>
+                  His engagement with civic participation developed through LOK MANCH-2047, which he presented in the context of the Viksit Bharat Young Leaders Dialogue 2026. Ideas from the presentation were incorporated into the master presentation placed before the Hon’ble Prime Minister of India. This experience further informed his interest in the role young citizens can play in democratic processes and India’s development.
+                </p>
+                <p>
+                  JanSahabhag 2047 reflects an ongoing effort to examine these questions and explore practical ways of connecting young people with civic life.
+                </p>
+              </div>
+            </details>
             <div className="pt-2 text-sm font-semibold">
               <a
                 href="mailto:nazimsandhbehappy@gmail.com"
@@ -94,18 +99,62 @@ export const AboutPage: React.FC = () => (
         </div>
       </article>
 
-      <div className="flex justify-center">
-        <article className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="aspect-square bg-slate-100 p-3 sm:p-4">
-            <img
-              src={viseshPortrait}
-              alt="Portrait of Visesh Akbari"
-              className="h-full w-full rounded-xl object-contain"
-              width="1122"
-              height="1402"
-            />
+      <section aria-labelledby="gratitude-heading" className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-10">
+        <div className="max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-civic-teal-700">Recognition &amp; Credits</p>
+          <h2 id="gratitude-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">With gratitude</h2>
+        </div>
+
+        <div className="max-w-3xl space-y-4 text-sm leading-relaxed text-slate-700 sm:text-base">
+          {GRATITUDE_MESSAGE.paragraphs.map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+          <p className="pt-2 font-semibold text-slate-900">— {GRATITUDE_MESSAGE.attribution}</p>
+        </div>
+
+        <div className="border-t border-slate-200 pt-8">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {GRATITUDE_ENTRIES.map((entry) => (
+              <li
+                key={entry.name}
+                className="flex flex-col justify-start rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors"
+              >
+                <span className="font-bold text-slate-900">{entry.name}</span>
+                {entry.role && (
+                  <span className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                    {entry.role}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 space-y-1.5 text-sm italic text-slate-600">
+            {GRATITUDE_CLOSING_LINES.map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
           </div>
-          <div className="flex flex-1 flex-col justify-between space-y-2 p-6 sm:p-7">
+
+          <p className="mt-8 border-t border-slate-100 pt-4 text-xs text-slate-500">
+            {GRATITUDE_DISCLOSURE}
+          </p>
+        </div>
+      </section>
+
+      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-12">
+          <div className="flex items-center justify-center bg-slate-100 p-4 sm:p-6 md:col-span-5 md:p-6 lg:p-8">
+            <div className="aspect-square w-full max-w-sm">
+              <img
+                src={viseshPortrait}
+                alt="Portrait of Visesh Akbari"
+                className="h-full w-full rounded-xl object-contain"
+                width="1122"
+                height="1402"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col justify-center space-y-3 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Developer</p>
               <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
@@ -119,51 +168,8 @@ export const AboutPage: React.FC = () => (
               </a>
             </div>
           </div>
-        </article>
-      </div>
-
-    </section>
-
-    <section aria-labelledby="gratitude-heading" className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-10">
-      <div className="max-w-2xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-civic-teal-700">Recognition &amp; Credits</p>
-        <h2 id="gratitude-heading" className="mt-2 font-heading text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">With gratitude</h2>
-      </div>
-
-      <div className="max-w-3xl space-y-4 text-sm leading-relaxed text-slate-700 sm:text-base">
-        {GRATITUDE_MESSAGE.paragraphs.map((paragraph, index) => (
-          <p key={index}>{paragraph}</p>
-        ))}
-        <p className="pt-2 font-semibold text-slate-900">— {GRATITUDE_MESSAGE.attribution}</p>
-      </div>
-
-      <div className="border-t border-slate-200 pt-8">
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {GRATITUDE_ENTRIES.map((entry) => (
-            <li
-              key={entry.name}
-              className="flex flex-col justify-start rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors"
-            >
-              <span className="font-bold text-slate-900">{entry.name}</span>
-              {entry.role && (
-                <span className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
-                  {entry.role}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-6 space-y-1.5 text-sm italic text-slate-600">
-          {GRATITUDE_CLOSING_LINES.map((line, index) => (
-            <p key={index}>{line}</p>
-          ))}
         </div>
-
-        <p className="mt-8 border-t border-slate-100 pt-4 text-xs text-slate-500">
-          {GRATITUDE_DISCLOSURE}
-        </p>
-      </div>
+      </article>
     </section>
 
     <section aria-labelledby="approach-heading" className="rounded-2xl border border-slate-200 bg-white px-6 py-8 sm:px-10 sm:py-10">

@@ -10,6 +10,15 @@ test('About page credits founder and developer while retaining gratitude', async
     'href',
     'mailto:nazimsandhbehappy@gmail.com'
   );
+  const founderBio = page.getByText(/His experiences span research-based awareness work with students/i);
+  const seeMore = page.getByText('See more about Nazim');
+  await expect(seeMore).toBeVisible();
+  await expect(founderBio).toBeHidden();
+  await seeMore.click();
+  await expect(founderBio).toBeVisible();
+  await seeMore.click();
+  await expect(founderBio).toBeHidden();
+
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
   await expect(page.getByText('Developer', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
@@ -32,12 +41,16 @@ test('About page credits founder and developer while retaining gratitude', async
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 
+  const gratitudeSection = page.locator('section[aria-labelledby="gratitude-heading"]');
   const nazimBox = await nazimCard.boundingBox();
+  const gratitudeBox = await gratitudeSection.boundingBox();
   const viseshBox = await viseshCard.boundingBox();
   expect(nazimBox).not.toBeNull();
+  expect(gratitudeBox).not.toBeNull();
   expect(viseshBox).not.toBeNull();
-  if (nazimBox && viseshBox) {
-    expect(viseshBox.y).toBeGreaterThan(nazimBox.y + nazimBox.height - 15);
+  if (nazimBox && gratitudeBox && viseshBox) {
+    expect(gratitudeBox.y).toBeGreaterThan(nazimBox.y + nazimBox.height - 15);
+    expect(viseshBox.y).toBeGreaterThan(gratitudeBox.y + gratitudeBox.height - 15);
   }
 
   // With gratitude section
