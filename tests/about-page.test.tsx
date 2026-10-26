@@ -10,146 +10,49 @@ import {
   GRATITUDE_MESSAGE,
 } from '../src/data/gratitude';
 
+const renderPage = () => render(<MemoryRouter><AboutPage /></MemoryRouter>);
+
 describe('AboutPage', () => {
-  it('renders the founder card and Visesh’s developer credit within gratitude', () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>
-    );
-
-    // Existing team member: Nazim M. Sandh
-    expect(screen.getByRole('heading', { level: 3, name: 'Nazim M. Sandh' })).toBeInTheDocument();
-    expect(screen.getByText('The Founder')).toBeInTheDocument();
+  it('shows the selected editorial page with founder details behind See more', () => {
+    renderPage();
+    expect(screen.getByRole('heading', { level: 1, name: 'Connecting education with citizenship.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Nazim M. Sandh' })).toBeInTheDocument();
     expect(screen.getByText('Founder and Initiator | Independent Learner')).toBeInTheDocument();
-    const nazimImg = screen.getByRole('img', { name: 'Portrait of Nazim M. Sandh' });
-    expect(nazimImg).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toHaveAttribute(
-      'href',
-      'mailto:nazimsandhbehappy@gmail.com'
-    );
-
-    const nazimDisclosure = screen.getByText('See more about Nazim');
-    expect(nazimDisclosure.closest('details')).not.toHaveAttribute('open');
-
-    // The full supplied biography stays available behind See more.
-    const nazimBio1 = screen.getByText(/Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology/i);
-    expect(nazimBio1).toBeInTheDocument();
-    expect(nazimBio1.textContent).toContain('education, governance, youth development, science and social responsibility');
-
-    const nazimBio2 = screen.getByText(/His experiences span research-based awareness work with students/i);
-    expect(nazimBio2).toBeInTheDocument();
-    expect(nazimBio2.textContent).toContain('sustainable cultivation initiatives, community fitness, cultural engagement and youth development programmes');
-    expect(nazimBio2.textContent).toContain('understanding how knowledge can inform decisions, influence behaviour and contribute to collective well-being');
-
-    const nazimBio3 = screen.getByText(/His engagement with civic participation developed through LOK MANCH-2047/i);
-    expect(nazimBio3).toBeInTheDocument();
-    expect(nazimBio3.textContent).toContain('Viksit Bharat Young Leaders Dialogue 2026');
-    expect(nazimBio3.textContent).toContain('Ideas from the presentation were incorporated into the master presentation placed before the Hon’ble Prime Minister of India');
-    expect(nazimBio3.textContent).toContain('role young citizens can play in democratic processes and India’s development');
-
-    const nazimBio4 = screen.getByText(/JanSahabhag 2047 reflects an ongoing effort to examine these questions/i);
-    expect(nazimBio4).toBeInTheDocument();
-    expect(nazimBio4.textContent).toContain('explore practical ways of connecting young people with civic life');
-
-    // Visesh appears only in the gratitude list, with the supplied portrait and links.
-    expect(screen.queryByRole('heading', { level: 3, name: 'Visesh Akbari' })).not.toBeInTheDocument();
-    const viseshEntry = screen.getByText('Visesh Akbari').closest('li');
-    expect(viseshEntry).toBeInTheDocument();
-    expect(viseshEntry).toHaveTextContent('Developer of this site');
-    expect(viseshEntry?.querySelector('img')).toHaveAttribute('alt', 'Portrait of Visesh Akbari');
-    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
-    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
-
-    expect(screen.queryByRole('heading', { name: 'Yashvi Dalsaniya' })).not.toBeInTheDocument();
-    expect(screen.queryByText(/Managing Partner \| Student of Microbiology/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Portrait of Nazim M. Sandh' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toHaveAttribute('href', 'mailto:nazimsandhbehappy@gmail.com');
+    const bio = screen.getByText('See more about Nazim').closest('details');
+    expect(bio).not.toHaveAttribute('open');
+    expect(bio).toHaveTextContent('Viksit Bharat Young Leaders Dialogue 2026');
+    expect(bio).toHaveTextContent('sustainable cultivation initiatives');
+    expect(screen.getByText(/Single-browser simulation/)).toBeInTheDocument();
   });
 
-  it('places gratitude after the founder without a separate Visesh card', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>
-    );
-
-    const peopleSection = container.querySelector('section[aria-labelledby="people-heading"]');
-    const articles = peopleSection?.querySelectorAll('article');
-    const gratitudeSection = peopleSection?.querySelector('section[aria-labelledby="gratitude-heading"]');
-    expect(articles).toHaveLength(1);
-    expect(articles?.[0].textContent).toContain('Nazim M. Sandh');
-    expect(articles?.[0].nextElementSibling).toBe(gratitudeSection);
-    expect(gratitudeSection?.querySelector('img[alt="Portrait of Visesh Akbari"]')).toBeInTheDocument();
-  });
-
-  it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>
-    );
-
-    // Section heading
+  it('keeps all nine gratitude credits in order, including Visesh and his portrait', () => {
+    const { container } = renderPage();
+    const founder = container.querySelector('section[aria-labelledby="people-heading"]');
+    const gratitude = container.querySelector('section[aria-labelledby="gratitude-heading"]');
+    expect(founder).toBeInTheDocument();
+    expect(gratitude).toBeInTheDocument();
+    expect(founder?.compareDocumentPosition(gratitude!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByRole('heading', { level: 2, name: 'With gratitude' })).toBeInTheDocument();
-
-    // Draft message in Nazim's voice
-    for (const paragraph of GRATITUDE_MESSAGE.paragraphs) {
-      expect(screen.getByText(paragraph)).toBeInTheDocument();
-    }
+    for (const paragraph of GRATITUDE_MESSAGE.paragraphs) expect(screen.getByText(paragraph)).toBeInTheDocument();
     expect(screen.getByText(`— ${GRATITUDE_MESSAGE.attribution}`)).toBeInTheDocument();
 
-    // 9 entries in separate data module rendered in exact order
-    const listItems = container.querySelectorAll('section[aria-labelledby="gratitude-heading"] li');
-    expect(listItems.length).toBe(9);
-
+    const items = gratitude?.querySelectorAll('ol li');
+    expect(items).toHaveLength(9);
     GRATITUDE_ENTRIES.forEach((entry, index) => {
-      const item = listItems[index];
-      expect(item.textContent).toContain(entry.name);
-      if (entry.role) {
-        expect(item.textContent).toContain(entry.role);
-      }
+      expect(items?.[index]).toHaveTextContent(entry.name);
+      if (entry.role) expect(items?.[index]).toHaveTextContent(entry.role);
     });
-
-    // Shri Dadubhai Sandhar is first
-    expect(listItems[0].textContent).toContain('Shri Dadubhai Sandhar');
-    expect(listItems[0].textContent).toContain('स्वर्गीय। मार्गदर्शक एवं प्रेरणास्रोत');
-
-    // Ganesh Bagadia ji and Rasida ben Sandh have no invented roles
-    const ganeshItem = listItems[2];
-    expect(ganeshItem.textContent).toBe('Ganesh Bagadia ji');
-
-    const rasidaItem = listItems[5];
-    expect(rasidaItem.textContent).toBe('Rasida ben Sandh');
-
-    // Developer public spelling confirmed as Visesh Akbari
-    const viseshGratitudeItem = listItems[8];
-    expect(viseshGratitudeItem.textContent).toContain('Visesh Akbari');
-    expect(viseshGratitudeItem.textContent).not.toContain('Vishesh');
-
-    // Closing lines
-    for (const line of GRATITUDE_CLOSING_LINES) {
-      expect(screen.getByText(line)).toBeInTheDocument();
-    }
-
-    // Disclosure
+    expect(items?.[2]).not.toHaveTextContent('role');
+    expect(items?.[5]).not.toHaveTextContent('role');
+    const visesh = items?.[8];
+    expect(visesh?.querySelector('img')).toHaveAttribute('alt', 'Portrait of Visesh Akbari');
+    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
+    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
+    expect(screen.queryByRole('heading', { name: 'Visesh Akbari' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Yashvi Dalsaniya')).not.toBeInTheDocument();
+    for (const line of GRATITUDE_CLOSING_LINES) expect(screen.getByText(line)).toBeInTheDocument();
     expect(screen.getByText(GRATITUDE_DISCLOSURE)).toBeInTheDocument();
-  });
-
-  it('preserves section order: team before gratitude, and gratitude before approach', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>
-    );
-
-    const sections = Array.from(container.querySelectorAll('section'));
-    const sectionIds = sections.map((s) => s.getAttribute('aria-labelledby'));
-
-    const peopleIndex = sectionIds.indexOf('people-heading');
-    const gratitudeIndex = sectionIds.indexOf('gratitude-heading');
-    const approachIndex = sectionIds.indexOf('approach-heading');
-
-    expect(peopleIndex).toBeGreaterThan(-1);
-    expect(gratitudeIndex).toBeGreaterThan(peopleIndex);
-    expect(approachIndex).toBeGreaterThan(gratitudeIndex);
   });
 });

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JanSahabhag 2047 — About page directions</title>
+  <style>
+    :root { color-scheme: light; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #eef0ef; color: #17272c; }
+    button, a, summary { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #d88332; outline-offset: 3px; }
+    .review-head { max-width: 1480px; margin: 0 auto; padding: 34px clamp(18px,4vw,54px) 22px; }
+    .review-eyebrow { margin: 0 0 8px; color: #2b7071; font-size: 12px; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+    .review-head h1 { margin: 0; font-size: clamp(26px,3.5vw,45px); line-height: 1.08; letter-spacing: -.04em; }
+    .review-head > p:last-child { max-width: 760px; margin: 12px 0 0; color: #4c5c60; font-size: 15px; line-height: 1.55; }
+    .directions { max-width: 1480px; margin: 0 auto; padding: 0 clamp(18px,4vw,54px); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+    .direction { border: 1px solid #d5dddb; border-radius: 15px; background: #fff; padding: 18px 19px; text-align: left; min-height: 150px; cursor: pointer; transition: border-color .2s, transform .2s, box-shadow .2s; }
+    .direction:hover { transform: translateY(-2px); border-color: #7ea29f; box-shadow: 0 8px 24px rgba(22,54,56,.08); }
+    .direction[aria-pressed="true"] { border: 2px solid #23666a; padding: 17px 18px; box-shadow: 0 8px 24px rgba(22,54,56,.1); }
+    .direction .n { display: block; color: #2d7776; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .direction strong { display: block; margin: 8px 0 4px; font-size: 20px; letter-spacing: -.02em; }
+    .direction .principle { display: block; color: #45565b; font-size: 13px; line-height: 1.42; }
+    .direction .tradeoff { display: block; margin-top: 10px; color: #68787b; font-size: 12px; line-height: 1.35; }
+    .controls { max-width: 1480px; margin: 0 auto; padding: 24px clamp(18px,4vw,54px) 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .compare-toggle { min-height: 40px; padding: 8px 14px; border: 1px solid #2b6b6d; border-radius: 8px; background: #fff; color: #174e50; cursor: pointer; font-size: 13px; font-weight: 750; }
+    .compare-toggle[aria-pressed="true"] { background: #185c60; color: #fff; }
+    .controls p { margin: 0; color: #54686b; font-size: 13px; }
+    #stage { max-width: 1180px; margin: 0 auto 80px; padding: 0 clamp(18px,4vw,54px); }
+    body[data-view="all"] #stage { max-width: 1650px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+    body[data-view="a"] .concept:not([data-concept="a"]), body[data-view="b"] .concept:not([data-concept="b"]), body[data-view="c"] .concept:not([data-concept="c"]) { display: none; }
+    .concept { container-type: inline-size; overflow: hidden; min-width: 0; border: 1px solid #d0d9d7; border-radius: 18px; box-shadow: 0 15px 45px rgba(21,49,49,.09); }
+    .concept-label { padding: 10px 20px; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .concept h2, .concept h3, .concept h4, .concept p { margin-top: 0; }
+    .concept a { color: inherit; text-underline-offset: 3px; }
+    .concept img { display: block; max-width: 100%; object-fit: contain; }
+    .concept details { margin-top: 14px; }
+    .concept summary { cursor: pointer; font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+    .concept details p { font-size: 14px; line-height: 1.68; }
+    .concept .bio-copy { margin-top: 16px; }
+    .concept .bio-copy p:last-child { margin-bottom: 0; }
+    .concept .contact { overflow-wrap: anywhere; font-size: 13px; font-weight: 700; }
+    .concept .credit-photo { width: 48px; height: 64px; flex: none; border-radius: 5px; }
+    .concept .credit-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 7px; font-size: 12px; font-weight: 700; }
+    .concept .small-disclosure { font-size: 11px; opacity: .72; }
+    .portrait-note { font-size: 11px; letter-spacing: .06em; }
+    .founder-photo { width: 100%; height: 100%; }
+    .closing { margin-top: 22px; font-size: 12px; font-style: italic; line-height: 1.7; }
+    .concept footer { padding: 26px 30px; font-size: 12px; }
+
+    /* A — editorial: a letter people can read */
+    .a { background: #fbf8f0; color: #242d29; font-family: Georgia, "Times New Roman", serif; }
+    .a .concept-label { background: #eee7d8; color: #6e4f27; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .a-nav { padding: 28px 5.8%; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #d7d0c1; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+    .a-nav strong { font-size: 14px; letter-spacing: -.02em; text-transform: none; }
+    .a-hero { padding: 54px 7% 44px; }
+    .a-kicker { font-family: ui-sans-serif, system-ui, sans-serif; color: #8d5d20; font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
+    .a-hero h2 { max-width: 710px; margin: 14px 0 15px; font-size: clamp(37px,5vw,68px); line-height: 1.02; font-weight: 400; letter-spacing: -.045em; }
+    .a-hero > p:last-child { max-width: 600px; color: #5c6259; font-size: 17px; line-height: 1.55; }
+    .a-founder { margin: 0 7% 65px; display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.1fr); gap: 5%; align-items: center; }
+    .a-founder figure { margin: 0; }
+    .a-founder img { aspect-ratio: 1; width: 100%; background: #e8e2d8; }
+    .a-founder figcaption { margin-top: 10px; color: #797769; font: 11px ui-sans-serif,system-ui,sans-serif; letter-spacing: .05em; }
+    .a-founder h3 { margin: 10px 0 8px; font-size: clamp(32px,4vw,55px); font-weight: 400; letter-spacing: -.04em; }
+    .a-founder .role { color: #6b715e; font: 13px ui-sans-serif,system-ui,sans-serif; }
+    .a-founder .contact { display: inline-block; margin-top: 17px; color: #395f58; font-family: ui-sans-serif,system-ui,sans-serif; }
+    .a-divider { margin: 0 7%; border: 0; border-top: 1px solid #cfc6b4; }
+    .a-gratitude { padding: 55px 7% 55px; }
+    .a-gratitude h3 { margin: 0 0 22px; font-size: clamp(33px,4vw,52px); font-weight: 400; letter-spacing: -.035em; }
+    .a-letter { max-width: 690px; font-size: 16px; line-height: 1.7; }
+    .a-letter p { margin: 0 0 14px; }
+    .a-signature { color: #756749; font-style: italic; }
+    .a-list { margin: 30px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 40px; }
+    .a-list li { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 8px; padding: 14px 0; border-top: 1px solid #d9d2c5; }
+    .a-list .idx { color: #ad8041; font: 11px ui-sans-serif,system-ui,sans-serif; }
+    .a-list strong { display: block; font-size: 16px; font-weight: 700; }
+    .a-list small { display: block; margin-top: 4px; color: #686b5e; font: 12px/1.45 ui-sans-serif,system-ui,sans-serif; }
+    .a-list .with-photo { display: flex; gap: 11px; align-items: flex-start; }
+    .a-list .credit-links { font-family: ui-sans-serif,system-ui,sans-serif; }
+    .a footer { border-top: 1px solid #d8d0c0; color: #68706a; font-family: ui-sans-serif,system-ui,sans-serif; }
+
+    /* B — directory: a civic index people can scan */
+    .b { background: #f7faf9; color: #182d36; font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .b .concept-label { background: #dceae7; color: #256661; }
+    .b-nav { padding: 20px 5%; display: flex; align-items: center; justify-content: space-between; background: #103c4a; color: #f8fbf9; font-size: 12px; }
+    .b-nav strong { font-size: 15px; letter-spacing: -.02em; }
+    .b-hero { padding: 42px 5% 32px; border-bottom: 1px solid #cddfdd; }
+    .b-hero h2 { max-width: 660px; margin: 8px 0 12px; font-size: clamp(32px,4vw,51px); line-height: 1.1; letter-spacing: -.04em; }
+    .b-hero p { max-width: 630px; color: #47616a; font-size: 15px; line-height: 1.55; }
+    .b-kicker { color: #247471; font-size: 11px; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+    .b-content { padding: 30px 5% 52px; }
+    .b-founder { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 25px; align-items: center; padding: 20px; border: 1px solid #cbdedb; border-radius: 13px; background: #fff; }
+    .b-founder img { width: 180px; height: 180px; border-radius: 8px; background: #edf2ef; }
+    .b-founder h3 { margin: 5px 0; font-size: 26px; letter-spacing: -.03em; }
+    .b-founder .role { color: #536d73; font-size: 13px; }
+    .b-founder .contact { display: inline-block; margin-top: 12px; color: #176069; }
+    .b-gratitude { margin-top: 40px; }
+    .b-gratitude h3 { margin-bottom: 10px; font-size: 27px; letter-spacing: -.03em; }
+    .b-message { padding: 17px 20px; border-left: 2px solid #ce8b39; background: #eff5f3; color: #35515a; font-size: 13px; line-height: 1.55; }
+    .b-message p { margin: 0 0 8px; }
+    .b-message p:last-child { margin-bottom: 0; }
+    .b-entries { margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+    .b-entries li { min-width: 0; list-style: none; border: 1px solid #d9e5e2; border-radius: 9px; background: #fff; padding: 14px; }
+    .b-entries strong { display: block; font-size: 14px; }
+    .b-entries small { display: block; margin-top: 4px; color: #546b70; font-size: 12px; line-height: 1.4; }
+    .b-entries .with-photo { display: flex; gap: 9px; align-items: flex-start; }
+    .b-entries .credit-links { color: #145d64; }
+    .b .closing { color: #587176; }
+    .b footer { border-top: 1px solid #d8e6e2; color: #63797c; }
+
+    /* C — ceremonial: a civic record of thanks */
+    .c { background: #f3f0e8; color: #212b30; font-family: Georgia,"Times New Roman",serif; }
+    .c .concept-label { background: #e6ddd0; color: #754c28; font-family: ui-sans-serif,system-ui,sans-serif; }
+    .c-banner { padding: 23px 5%; background: #132a36; color: #f7f2e7; display: flex; align-items: center; justify-content: space-between; font: 12px ui-sans-serif,system-ui,sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+    .c-banner b { letter-spacing: -.02em; text-transform: none; font-size: 15px; }
+    .c-hero { padding: 45px 5%; background: #132a36; color: #f7f2e7; }
+    .c-hero .a-kicker { color: #e3b678; }
+    .c-hero h2 { max-width: 780px; margin: 14px 0; font-size: clamp(35px,4.6vw,67px); line-height: 1.03; font-weight: 400; letter-spacing: -.045em; }
+    .c-hero p { max-width: 660px; color: #c9d4d3; font-size: 16px; line-height: 1.6; }
+    .c-founder { margin: 0 5%; display: grid; grid-template-columns: 270px minmax(0,1fr); gap: 34px; align-items: center; padding: 38px 0 42px; border-bottom: 1px solid #c7beb0; }
+    .c-founder img { width: 270px; height: 270px; background: #e7e1d4; border-radius: 3px; }
+    .c-founder h3 { margin: 4px 0 6px; font-size: clamp(31px,3.7vw,48px); font-weight: 400; }
+    .c-founder .role { color: #66695e; font: 13px ui-sans-serif,system-ui,sans-serif; }
+    .c-founder .contact { display: inline-block; margin-top: 12px; color: #335d60; font-family: ui-sans-serif,system-ui,sans-serif; }
+    .c-gratitude { padding: 48px 5% 55px; }
+    .c-gratitude h3 { margin-bottom: 18px; font-size: clamp(31px,3.8vw,50px); font-weight: 400; }
+    .c-quote { max-width: 770px; padding: 0 0 0 22px; border-left: 2px solid #bb8850; color: #455154; font-size: 15px; line-height: 1.65; }
+    .c-quote p { margin: 0 0 14px; }
+    .c-ledger { margin: 32px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 35px; }
+    .c-ledger li { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 11px; align-items: start; padding: 15px 0; border-top: 1px solid #c6beb1; }
+    .c-ledger .idx { color: #9b7347; font: 12px ui-sans-serif,system-ui,sans-serif; }
+    .c-ledger strong { font-size: 16px; }
+    .c-ledger small { display: block; margin-top: 5px; color: #5d6665; font: 12px/1.5 ui-sans-serif,system-ui,sans-serif; }
+    .c-ledger .with-photo { display: flex; gap: 10px; }
+    .c-ledger .credit-links { font-family: ui-sans-serif,system-ui,sans-serif; }
+    .c .closing { color: #65706a; }
+    .c footer { border-top: 1px solid #c6beb1; color: #65706a; font-family: ui-sans-serif,system-ui,sans-serif; }
+    @container (max-width: 660px) {
+      .a-founder, .c-founder { grid-template-columns: 1fr; gap: 18px; }
+      .a-founder figure { max-width: 370px; }
+      .c-founder img { width: min(100%,290px); height: auto; aspect-ratio: 1; }
+      .b-founder { grid-template-columns: 105px minmax(0,1fr); gap: 15px; padding: 14px; }
+      .b-founder img { width: 105px; height: 105px; }
+      .a-list, .c-ledger { grid-template-columns: 1fr; }
+      .b-entries { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .a-hero, .a-gratitude, .b-hero, .b-content, .c-gratitude, .c-hero { padding-left: 6%; padding-right: 6%; }
+    }
+    @container (max-width: 410px) {
+      .b-founder { grid-template-columns: 1fr; }
+      .b-entries { grid-template-columns: 1fr; }
+      .a-hero h2, .c-hero h2 { font-size: 37px; }
+      .a-nav, .b-nav, .c-banner { gap: 12px; }
+    }
+    @media (max-width: 950px) { .directions { grid-template-columns: 1fr; } body[data-view="all"] #stage { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .review-head { padding-top: 22px; } .direction { min-height: 0; } .controls { padding-top: 17px; } .concept { border-radius: 10px; } }
+  </style>
+</head>
+<body data-view="a">
+  <header class="review-head">
+    <p class="review-eyebrow">JanSahabhag 2047 / Design review</p>
+    <h1>About page: three directions</h1>
+    <p>Same people, words, and photos in each version. Choose the layout and tone you want to carry into the live About page.</p>
+  </header>
+  <div class="directions" role="group" aria-label="Design directions">
+    <button class="direction" type="button" data-select="a" aria-pressed="true"><span class="n">A / Story first</span><strong>Editorial letter</strong><span class="principle">Let Nazim’s story and the gratitude message lead. Names read like credits in a publication.</span><span class="tradeoff">Best for warmth and reading · Longer to scan</span></button>
+    <button class="direction" type="button" data-select="b" aria-pressed="false"><span class="n">B / Scan first</span><strong>Civic directory</strong><span class="principle">Treat each person as a clear entry. Information stays compact and easy to find.</span><span class="tradeoff">Best for quick lookup · Less personal</span></button>
+    <button class="direction" type="button" data-select="c" aria-pressed="false"><span class="n">C / Recognition first</span><strong>Civic record</strong><span class="principle">Give the founder and contributors a formal, enduring presentation.</span><span class="tradeoff">Best for ceremony and identity · More visual weight</span></button>
+  </div>
+  <div class="controls">
+    <button class="compare-toggle" type="button" id="compare" aria-pressed="false">Compare all three</button>
+    <p id="view-status" aria-live="polite">Showing A at full size. Choose A, B, or C above.</p>
+  </div>
+  <main id="stage" aria-label="About page previews"></main>
+  <script>
+    const base = '../../src/assets/about/';
+    const nazim = base + 'nazim-sandh.jpeg';
+    const visesh = base + 'visesh-akbari.jpg';
+    const bio = [
+      'Based in the Gir region of Gujarat, Nazim M. Sandh has an academic background in microbiology and a broader interest in education, governance, youth development, science and social responsibility.',
+      'His experiences span research-based awareness work with students, sustainable cultivation initiatives, community fitness, cultural engagement and youth development programmes. Across these different fields, a recurring interest has shaped his work: understanding how knowledge can inform decisions, influence behaviour and contribute to collective well-being.',
+      'His engagement with civic participation developed through LOK MANCH-2047, which he presented in the context of the Viksit Bharat Young Leaders Dialogue 2026. Ideas from the presentation were incorporated into the master presentation placed before the Hon’ble Prime Minister of India. This experience further informed his interest in the role young citizens can play in democratic processes and India’s development.',
+      'JanSahabhag 2047 reflects an ongoing effort to examine these questions and explore practical ways of connecting young people with civic life.'
+    ];
+    const gratitude = [
+      ['Shri Dadubhai Sandhar','स्वर्गीय। मार्गदर्शक एवं प्रेरणास्रोत: my guide and source of inspiration, whose path I follow.'],
+      ['Shri Ankit Kalaria','CVMS Cell, Atmiya University'],
+      ['Ganesh Bagadia ji',''],
+      ['Dr. Hitarth Bhatt',"Nazim's former professor"],
+      ['Shri Dr. K. D. Ladwa','Principal, Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot'],
+      ['Rasida ben Sandh',''],
+      ['Dr. Shyam Kumar','IIT Kanpur'],
+      ['Shri Vijay Danwani','CVMS Cell, Atmiya University'],
+      ['Visesh Akbari','Developer of this site. Currently pursuing studies at the University of London.']
+    ];
+    const message = [
+      'When I look at how JanSahabhag 2047 came to be, I see the time, guidance and trust that each of you gave me. I feel grateful and humble, because I could not have reached this point alone. Your support met my need for learning, encouragement and a shared purpose.',
+      'In the spirit of Jeevan Vidya, this is kritagyata: recognising, with a full heart, what I have received from you. I would like to return it by making this platform truly useful to young citizens, so that what you gave keeps growing in them.',
+      'I am also grateful to those who helped me and whom I forgot to name here. Please know that I have not forgotten what you gave, only to write your name, and my gratitude to you is the same.'
+    ];
+    const bioHtml = `<details><summary>See more about Nazim</summary><div class="bio-copy">${bio.map(p=>`<p>${p}</p>`).join('')}</div></details>`;
+    const links = `<div class="credit-links"><a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer">GitHub</a><a href="https://www.linkedin.com/in/viseshakbari/" target="_blank" rel="noopener noreferrer">LinkedIn</a></div>`;
+    const credit = (entry,index) => {
+      const [name,role] = entry;
+      const person = name === 'Visesh Akbari' ? `<span class="with-photo"><img class="credit-photo" src="${visesh}" alt="Portrait of Visesh Akbari"><span><strong>${name}</strong>${role?`<small>${role}</small>`:''}${links}</span></span>` : `<span><strong>${name}</strong>${role?`<small>${role}</small>`:''}</span>`;
+      return `<li><span class="idx">${String(index+1).padStart(2,'0')}</span>${person}</li>`;
+    };
+    const creditsA = gratitude.map((entry,i)=>credit(entry,i)).join('');
+    const creditsC = gratitude.map((entry,i)=>credit(entry,i)).join('');
+    const creditsB = gratitude.map(([name,role])=>`<li>${name==='Visesh Akbari'?`<span class="with-photo"><img class="credit-photo" src="${visesh}" alt="Portrait of Visesh Akbari"><span><strong>${name}</strong><small>${role}</small>${links}</span></span>`:`<strong>${name}</strong>${role?`<small>${role}</small>`:''}`}</li>`).join('');
+    const closings = `<p class="closing">and the entire CVMS Cell, Atmiya University<br>and everyone else who helped and whom I may have forgotten to name</p>`;
+    const disclosure = `Demo institution, not an official partnership`;
+    const letter = message.map(p=>`<p>${p}</p>`).join('');
+    document.getElementById('stage').innerHTML = `
+      <article class="concept a" data-concept="a" aria-label="Option A: Editorial letter">
+        <div class="concept-label">A / Editorial letter</div><div class="a-nav"><strong>JanSahabhag 2047</strong><span>About the work</span></div>
+        <div class="a-hero"><span class="a-kicker">The idea behind the work</span><h2>Connecting education with citizenship.</h2><p>JanSahabhag 2047 explores how young people can learn about society and take part in it responsibly.</p></div>
+        <section class="a-founder"><figure><img class="founder-photo" src="${nazim}" alt="Portrait of Nazim M. Sandh"><figcaption>Founder and Initiator · Gir region, Gujarat</figcaption></figure><div><span class="a-kicker">The founder</span><h3>Nazim M. Sandh</h3><p class="role">Founder and Initiator | Independent Learner</p>${bioHtml}<a class="contact" href="mailto:nazimsandhbehappy@gmail.com">nazimsandhbehappy@gmail.com</a></div></section>
+        <hr class="a-divider"><section class="a-gratitude"><span class="a-kicker">The people who helped</span><h3>With gratitude</h3><div class="a-letter">${letter}<p class="a-signature">— Nazim M. Sandh, Founder and Initiator</p></div><ol class="a-list">${creditsA}</ol>${closings}</section><footer>${disclosure}</footer>
+      </article>
+      <article class="concept b" data-concept="b" aria-label="Option B: Civic directory">
+        <div class="concept-label">B / Civic directory</div><div class="b-nav"><strong>JanSahabhag 2047</strong><span>About · People</span></div>
+        <div class="b-hero"><span class="b-kicker">About the initiative</span><h2>Connecting education with citizenship.</h2><p>JanSahabhag 2047 explores how young people can learn about society and take part in it responsibly.</p></div>
+        <div class="b-content"><section class="b-founder"><img src="${nazim}" alt="Portrait of Nazim M. Sandh"><div><span class="b-kicker">Founder and Initiator</span><h3>Nazim M. Sandh</h3><p class="role">Independent Learner</p>${bioHtml}<a class="contact" href="mailto:nazimsandhbehappy@gmail.com">nazimsandhbehappy@gmail.com</a></div></section>
+        <section class="b-gratitude"><span class="b-kicker">Recognition and credits</span><h3>With gratitude</h3><div class="b-message">${letter}<strong>— Nazim M. Sandh, Founder and Initiator</strong></div><ul class="b-entries">${creditsB}</ul>${closings}</section></div><footer>${disclosure}</footer>
+      </article>
+      <article class="concept c" data-concept="c" aria-label="Option C: Civic record">
+        <div class="concept-label">C / Civic record</div><div class="c-banner"><b>JanSahabhag 2047</b><span>The people behind the work</span></div>
+        <div class="c-hero"><span class="a-kicker">Our purpose</span><h2>Connecting education with citizenship.</h2><p>JanSahabhag 2047 explores how young people can learn about society and take part in it responsibly.</p></div>
+        <section class="c-founder"><img src="${nazim}" alt="Portrait of Nazim M. Sandh"><div><span class="a-kicker">Founder and Initiator</span><h3>Nazim M. Sandh</h3><p class="role">Founder and Initiator | Independent Learner</p>${bioHtml}<a class="contact" href="mailto:nazimsandhbehappy@gmail.com">nazimsandhbehappy@gmail.com</a></div></section>
+        <section class="c-gratitude"><span class="a-kicker">A record of thanks</span><h3>With gratitude</h3><div class="c-quote">${letter}<strong>— Nazim M. Sandh, Founder and Initiator</strong></div><ol class="c-ledger">${creditsC}</ol>${closings}</section><footer>${disclosure}</footer>
+      </article>`;
+    const buttons = [...document.querySelectorAll('[data-select]')];
+    const compare = document.getElementById('compare');
+    const status = document.getElementById('view-status');
+    function show(view) {
+      document.body.dataset.view = view;
+      buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.select === view)));
+      compare.setAttribute('aria-pressed', String(view === 'all'));
+      compare.textContent = view === 'all' ? 'Show one version' : 'Compare all three';
+      status.textContent = view === 'all' ? 'Showing all three versions together.' : `Showing ${view.toUpperCase()} at full size. Choose A, B, or C above.`;
+      history.replaceState(null, '', view === 'a' ? location.pathname : `#${view}`);
+    }
+    buttons.forEach(button => button.addEventListener('click', () => show(button.dataset.select)));
+    compare.addEventListener('click', () => show(document.body.dataset.view === 'all' ? 'a' : 'all'));
+    const initial = ['a','b','c','all'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'a';
+    show(initial);
+  </script>
+</body>
+</html>

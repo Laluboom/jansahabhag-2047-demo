@@ -37,8 +37,7 @@ test('About page credits founder and developer while retaining gratitude', async
     await expect.poll(() => portrait.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   }
 
-  const nazimCard = page.locator('article').filter({ hasText: 'Nazim M. Sandh' });
-  await expect(page.locator('article').filter({ hasText: 'Visesh Akbari' })).toHaveCount(0);
+  const nazimCard = page.locator('section[aria-labelledby="people-heading"]');
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 
