@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('About page credits founder, technical builder, and managing partner accurately', async ({ page }) => {
+test('About page credits founder and developer while retaining gratitude', async ({ page }) => {
   await page.goto('/about');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Connecting education with citizenship.' })).toBeVisible();
@@ -15,15 +15,12 @@ test('About page credits founder, technical builder, and managing partner accura
   await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
   await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
 
-  await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toBeVisible();
-  await expect(page.getByText('Managing Partner | Student of Microbiology | Youth & Civic Engagement', { exact: true })).toBeVisible();
-  await expect(page.getByText(/microbiology student/i)).toBeVisible();
-  await expect(page.getByText(/organisational development/i)).toBeVisible();
-  await expect(page.getByText(/vision of a developed India/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toHaveCount(0);
+  await expect(page.getByText(/Managing Partner \| Student of Microbiology/i)).toHaveCount(0);
 
   await expect(page.getByText('Single-browser simulation')).toBeVisible();
 
-  for (const name of ['Nazim M. Sandh', 'Visesh Akbari', 'Yashvi Dalsaniya']) {
+  for (const name of ['Nazim M. Sandh', 'Visesh Akbari']) {
     const portrait = page.getByRole('img', { name: `Portrait of ${name}` });
     await expect(portrait).toBeVisible();
     await expect.poll(() => portrait.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
@@ -33,38 +30,14 @@ test('About page credits founder, technical builder, and managing partner accura
   const viseshCard = page.locator('article').filter({ hasText: 'Visesh Akbari' });
   await expect(viseshCard.getByText(/founder|initiated|idea/i)).toHaveCount(0);
 
-  const yashviCard = page.locator('article').filter({ hasText: 'Yashvi Dalsaniya' });
-  await expect(yashviCard.getByText(/founder|developed the site|founded the idea/i)).toHaveCount(0);
-
-  // The approved team layout stacks the founder, developer, and managing partner cards.
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 
   const nazimBox = await nazimCard.boundingBox();
   const viseshBox = await viseshCard.boundingBox();
-  const yashviBox = await yashviCard.boundingBox();
   expect(nazimBox).not.toBeNull();
   expect(viseshBox).not.toBeNull();
-  expect(yashviBox).not.toBeNull();
-
-  if (nazimBox && viseshBox && yashviBox) {
+  if (nazimBox && viseshBox) {
     expect(viseshBox.y).toBeGreaterThan(nazimBox.y + nazimBox.height - 15);
-    expect(yashviBox.y).toBeGreaterThan(viseshBox.y + viseshBox.height - 15);
-  }
-
-  // Yashvi's 16:9 portrait and biography are beside each other on desktop
-  const yashviPortrait = page.getByRole('img', { name: 'Portrait of Yashvi Dalsaniya' });
-  const yashviPortraitBox = await yashviPortrait.boundingBox();
-  const yashviBio = yashviCard.getByText(/microbiology student/i);
-  const yashviBioBox = await yashviBio.boundingBox();
-  expect(yashviPortraitBox).not.toBeNull();
-  expect(yashviBioBox).not.toBeNull();
-
-  if (yashviPortraitBox && yashviBioBox) {
-    expect(yashviBioBox.x).toBeGreaterThan(yashviPortraitBox.x);
-    // 16:9 landscape aspect ratio (approximately 16/9 = 1.777)
-    const ratio = yashviPortraitBox.width / yashviPortraitBox.height;
-    expect(ratio).toBeGreaterThan(1.7);
-    expect(ratio).toBeLessThan(1.85);
   }
 
   // With gratitude section
@@ -87,28 +60,17 @@ test('About page portraits and content fit a narrow screen', async ({ page }) =>
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/about');
   await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'With gratitude' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 
   // Whole portrait visible and loaded on phone
-  for (const name of ['Nazim M. Sandh', 'Visesh Akbari', 'Yashvi Dalsaniya']) {
+  for (const name of ['Nazim M. Sandh', 'Visesh Akbari']) {
     const portrait = page.getByRole('img', { name: `Portrait of ${name}` });
     await expect(portrait).toBeVisible();
     await expect.poll(() => portrait.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   }
 
-  // On phone screen, Yashvi's portrait and biography are stacked vertically
-  const yashviCard = page.locator('article').filter({ hasText: 'Yashvi Dalsaniya' });
-  const yashviPortrait = page.getByRole('img', { name: 'Portrait of Yashvi Dalsaniya' });
-  const yashviPortraitBox = await yashviPortrait.boundingBox();
-  const yashviBio = yashviCard.getByText(/microbiology student/i);
-  const yashviBioBox = await yashviBio.boundingBox();
-  expect(yashviPortraitBox).not.toBeNull();
-  expect(yashviBioBox).not.toBeNull();
 
-  if (yashviPortraitBox && yashviBioBox) {
-    expect(yashviBioBox.y).toBeGreaterThan(yashviPortraitBox.y + yashviPortraitBox.height - 5);
-  }
 });

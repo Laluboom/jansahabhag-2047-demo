@@ -11,7 +11,7 @@ import {
 } from '../src/data/gratitude';
 
 describe('AboutPage', () => {
-  it('renders all three core team member cards with accurate details and portraits', () => {
+  it('renders founder and developer cards while keeping the public team limited to them', () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -57,56 +57,11 @@ describe('AboutPage', () => {
     expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
     expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
 
-    // Third team member: Yashvi Dalsaniya
-    expect(screen.getByRole('heading', { level: 3, name: 'Yashvi Dalsaniya' })).toBeInTheDocument();
-    expect(
-      screen.getByText('Managing Partner | Student of Microbiology | Youth & Civic Engagement')
-    ).toBeInTheDocument();
-    const yashviImg = screen.getByRole('img', { name: 'Portrait of Yashvi Dalsaniya' });
-    expect(yashviImg).toBeInTheDocument();
-    expect(yashviImg).toHaveAttribute('src');
-
-    // Yashvi bio details across full 4 paragraphs
-    const bio1 = screen.getByText(/microbiology student with a growing interest/i);
-    expect(bio1).toBeInTheDocument();
-    expect(bio1.textContent).toContain('youth development');
-    expect(bio1.textContent).toContain('education');
-    expect(bio1.textContent).toContain('governance');
-    expect(bio1.textContent).toContain('scientific thinking');
-    expect(bio1.textContent).toContain('social responsibility');
-    expect(bio1.textContent).toContain('evidence-based thinking');
-    expect(bio1.textContent).toContain('entrepreneurship');
-    expect(bio1.textContent).toContain('community participation');
-    expect(bio1.textContent).toContain('role of young people in shaping society');
-
-    const bio2 = screen.getByText(/brings together an interest in science, communication/i);
-    expect(bio2).toBeInTheDocument();
-    expect(bio2.textContent).toContain('organisational development');
-    expect(bio2.textContent).toContain('initiatives that encourage young people to think critically');
-    expect(bio2.textContent).toContain('meaningful development begins with informed individuals');
-    expect(bio2.textContent).toContain('responsible leadership');
-    expect(bio2.textContent).toContain('opportunities for young people to participate in decisions that shape their collective future');
-
-    const bio3 = screen.getByText(/As Managing Partner of JanSahabhag 2047/i);
-    expect(bio3).toBeInTheDocument();
-    expect(bio3.textContent).toContain('strengthening civic awareness');
-    expect(bio3.textContent).toContain('encouraging youth participation');
-    expect(bio3.textContent).toContain('meaningful connections between citizens and democratic processes');
-    expect(bio3.textContent).toContain('how ideas can translate into practical initiatives');
-    expect(bio3.textContent).toContain("active contributors to India’s development journey");
-
-    const bio4 = screen.getByText(/Through JanSahabhag 2047, she aims to contribute to a culture of informed participation/i);
-    expect(bio4).toBeInTheDocument();
-    expect(bio4.textContent).toContain('collaborative thinking and responsible citizenship');
-    expect(bio4.textContent).toContain('vision of a developed India depends not only on institutions and policies');
-    expect(bio4.textContent).toContain('awareness, initiative and collective responsibility of its people');
-
-    // Verify no invented claims for Yashvi
-    const allBioText = [bio1.textContent, bio2.textContent, bio3.textContent, bio4.textContent].join(' ');
-    expect(allBioText).not.toMatch(/founded the idea|developed the website|built the platform/i);
+    expect(screen.queryByRole('heading', { name: 'Yashvi Dalsaniya' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Managing Partner \| Student of Microbiology/i)).not.toBeInTheDocument();
   });
 
-  it('renders Nazim and Yashvi in dedicated wide team card rows and Visesh in a centered compact card', () => {
+  it('renders Nazim in a wide card and Visesh in a centered compact card', () => {
     const { container } = render(
       <MemoryRouter>
         <AboutPage />
@@ -117,7 +72,7 @@ describe('AboutPage', () => {
     expect(peopleSection).toBeInTheDocument();
 
     const articles = peopleSection?.querySelectorAll('article');
-    expect(articles?.length).toBe(3);
+    expect(articles?.length).toBe(2);
 
     // Nazim is the first article, rendered as a dedicated wide team card row
     const nazimArticle = articles?.[0];
@@ -133,10 +88,6 @@ describe('AboutPage', () => {
     expect(viseshWrapper?.className).toContain('flex');
     expect(viseshWrapper?.className).toContain('justify-center');
 
-    // Yashvi is the third article, rendered as a dedicated wide team card row
-    const yashviArticle = articles?.[2];
-    expect(yashviArticle?.textContent).toContain('Managing Partner');
-    expect(yashviArticle?.textContent).toContain('Yashvi Dalsaniya');
   });
 
   it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import nazimPortrait from '../../assets/about/nazim-sandh.jpeg';
 import viseshPortrait from '../../assets/about/visesh-akbari.jpg';
-import yashviPortrait from '../../assets/about/yashvi-dalsaniya.jpeg';
 import {
   GRATITUDE_MESSAGE,
   GRATITUDE_ENTRIES,
@@ -123,41 +122,6 @@ export const AboutPage: React.FC = () => (
         </article>
       </div>
 
-      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-12">
-          <div className="flex items-center justify-center bg-slate-100 p-4 sm:p-6 md:col-span-5 md:p-6 lg:p-8">
-            <div className="aspect-video w-full">
-              <img
-                src={yashviPortrait}
-                alt="Portrait of Yashvi Dalsaniya"
-                className="aspect-video h-full w-full rounded-xl object-contain"
-                width="1280"
-                height="720"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col justify-center space-y-4 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Managing Partner | Student of Microbiology | Youth &amp; Civic Engagement</p>
-              <h3 className="font-heading text-2xl font-bold text-slate-900">Yashvi Dalsaniya</h3>
-            </div>
-            <div className="space-y-3 text-sm leading-6 text-slate-700">
-              <p>
-                Yashvi Dalsaniya is a microbiology student with a growing interest in youth development, education, governance, scientific thinking and social responsibility. Her academic background in microbiology informs her appreciation for evidence-based thinking, while her broader interests extend to entrepreneurship, community participation and the role of young people in shaping society.
-              </p>
-              <p>
-                Her work brings together an interest in science, communication, organisational development and initiatives that encourage young people to think critically about the communities they belong to. She believes that meaningful development begins with informed individuals, responsible leadership and opportunities for young people to participate in decisions that shape their collective future.
-              </p>
-              <p>
-                As Managing Partner of JanSahabhag 2047, Yashvi contributes to the project’s broader vision of strengthening civic awareness, encouraging youth participation and exploring meaningful connections between citizens and democratic processes. Her involvement reflects a commitment to understanding how ideas can translate into practical initiatives and how young people can become active contributors to India’s development journey.
-              </p>
-              <p>
-                Through JanSahabhag 2047, she aims to contribute to a culture of informed participation, collaborative thinking and responsible citizenship, recognising that the vision of a developed India depends not only on institutions and policies, but also on the awareness, initiative and collective responsibility of its people.
-              </p>
-            </div>
-          </div>
-        </div>
-      </article>
     </section>
 
     <section aria-labelledby="gratitude-heading" className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-10">
