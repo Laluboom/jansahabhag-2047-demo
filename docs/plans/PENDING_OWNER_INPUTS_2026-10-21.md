@@ -2,7 +2,7 @@
 
 **Document Date:** 2026-10-21
 **Scope:** Tracker distinguishing settled owner decisions from genuinely pending inputs, placeholders, and verification gates for JanSahabhag 2047.
-**Operational Guidance:** No pending item in this document should block already authorized quick work or implementation passes for the competition demo.
+**Operational Guidance:** No pending item in this document blocks the published competition demo. The Rajkot transition was merged and deployed on 26 October 2026; dated Jaipur references remain historical.
 
 ---
 
@@ -12,7 +12,7 @@ The following items are confirmed as decided and settled by owner direction. The
 
 | # | Topic | Decision & Governing Source | Status / Date | Notes & Scope Boundary |
 |---|---|---|---|---|
-| 1 | **Demo Story & Target Institution** | **Rajkot college demo supersedes Jaipur as target demo** (24 Oct 2026 decision). Institution: **Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot**. Main student persona: **Ankita Kapri**. Roster: 22 named people (15 students aged 18+ with exactly 5 named women meeting 33% rule, 2 teachers, 1 principal, 1 special guest, 1 founder, 2 scoped moderators). *Note: The Rajkot implementation is being built in another branch and is not yet deployed.* (Historical 12/15 Oct Jaipur pedestrian-safety story served as the initial published baseline). | Decided (24 Oct 2026; supersedes 12/15 Oct Jaipur target) | Jaipur remains the initial published baseline; Rajkot implementation is actively in progress in a separate branch. |
+| 1 | **Demo Story & Target Institution** | **Rajkot college demo supersedes Jaipur as target demo** (24 Oct 2026 decision). Institution: **Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot**. Main student persona: **Ankita Kapri**. Roster: 22 named people (15 students aged 18+ with exactly 5 named women meeting 33% rule, 2 teachers, 1 principal, 1 special guest, 1 founder, 2 scoped moderators). *The Rajkot implementation was merged and deployed on 26 October 2026.* (Historical 12/15 Oct Jaipur pedestrian-safety story served as the initial published baseline). | Decided (24 Oct 2026; supersedes 12/15 Oct Jaipur target) | Jaipur remains the historical initial baseline; Rajkot is the current published demo. |
 | 2 | **Demo Media Mode** | **Text-first with clearly labelled video preview** for Debate Room and Youth Assembly. | Decided (15 Oct 2026, OD.4) | No working video streaming provider required for competition demo. Full product media pipeline remains deferred. |
 | 3 | **Demo Execution Mode** | **Labelled single-browser simulation** with fictional data for immediate demo pass. | Decided (12 Oct 2026, OD.14) | Settles immediate demo architecture; full multi-user server backend deferred. |
 | 4 | **33% Women's Reservation Scope** | Applied across **every named role and limited place** in the demo (Youth Assembly functional roles, Debate roles, limited events/programmes). Open participation excluded. In Rajkot student roster, exactly 5 of 15 students are women (`ceil(0.33 × 15) = 5`). Non-student staff and guests hold no student seats and are excluded from the 15 count and 33% calculation. | Decided (15 Oct 2026, OD.19; applied to Rajkot 24 Oct 2026) | Formula: `ceil(0.33 × places)` per applicable allocation; no pooling across activities. |

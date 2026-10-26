@@ -1,6 +1,6 @@
 # JanSahabhag 2047 — Frontend Demo
 
-A browser-based interactive demo of **JanSahabhag 2047** with a linked single-browser participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification. The owner selected the Jaipur pedestrian-safety story for the initial 17 October demo; on 24 October 2026, the owner designated the Rajkot college demo (Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot) with Ankita Kapri as main student to supersede Jaipur as the target demo (implementation in progress in another branch; not yet deployed).
+A browser-based interactive demo of **JanSahabhag 2047** with a linked single-browser participant journey, fictional sample data, local persistence, and selected administrative views. It covers part of the full product specification. The owner selected the Jaipur pedestrian-safety story for the initial 17 October demo; on 24 October 2026, the owner designated the Rajkot college demo (Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot) with Ankita Kapri as main student to supersede Jaipur as the target demo (merged and published on 26 October 2026).
 
 **Live demo:** [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app)
 
@@ -8,16 +8,16 @@ A browser-based interactive demo of **JanSahabhag 2047** with a linked single-br
 
 This is **not** a production implementation. It intentionally simulates backend, authentication, AI, verification, moderation, and real-time behaviour so the product can be reviewed, demonstrated, and manually tested before production infrastructure is built.
 
-**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner. This fictional single-browser demo applies `ceil(0.33 × planned places)` separately to every named role and limited place, leaves unmet reserved places vacant by default, and demonstrates owner-approved exceptions with a local audit record. This does not provide real owner authority or server-side enforcement. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records historical differences; [product decisions](docs/decisions.md) and the [current handoff](docs/HANDOFF_2026-10-16.md) record the accepted demo boundary and remaining decisions.
+**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner. This fictional single-browser demo applies `ceil(0.33 × planned places)` separately to every named role and limited place, leaves unmet reserved places vacant by default, and demonstrates owner-approved exceptions with a local audit record. This does not provide real owner authority or server-side enforcement. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records historical differences; [product decisions](docs/decisions.md) and the [current handoff](docs/HANDOFF_2026-10-26.md) record the accepted demo boundary and remaining decisions.
 
 **Published demo status & updates:**
 - **17 October 2026 baseline:** the connected fictional Jaipur demo (Aarav Sharma, Navchetna Public School) was published to GitHub and Vercel.
 - **24 October 2026 updates:**
   - The external [About page](src/features/about/AboutPage.tsx) adds Yashvi Dalsaniya as Managing Partner with her supplied portrait and team description, alongside Nazim M. Sandh (Founder and Initiator) and Visesh Akbari (Developer, with explicit spelling confirmed over the gratitude document's Vishesh). A dedicated "With gratitude" section credits 9 contributors headed by late guide Shri Dadubhai Sandhar, closing lines for the CVMS Cell at Atmiya University and all unnamed contributors, and the draft gratitude message in Nazim's voice.
   - Civic Credit Points capped at five demo points (0 starting balance, honest NEP community engagement alignment; not university credits or a graduation requirement; private UHV reflections earn 0 points).
-  - Target demo transition: the Rajkot college demo roster with Ankita Kapri as the main student supersedes Jaipur as the target demo (`docs/reference/24-10-2026/`). The implementation of the Rajkot demo is actively being built in another branch and is not yet deployed or claimed live. Sections headed “Suggested” retain some original planning language and should be read as proposals rather than live feature claims.
+  - Target demo transition: the Rajkot college demo roster with Ankita Kapri as the main student supersedes Jaipur as the target demo (`docs/reference/24-10-2026/`). The Rajkot demo was merged into `autobuild`, pushed to GitHub, and deployed on 26 October 2026. Sections headed “Suggested” retain some original planning language and should be read as proposals rather than live feature claims.
 - **25 October 2026 updates:**
-  - Nazim M. Sandh supplied founder biography: The owner directly supplied a full third-person description for Nazim M. Sandh headed "The Founder", subtitle "Founder and Initiator | Independent Learner", describing his Gir background, microbiology studies, youth awareness, sustainable cultivation, community fitness, cultural engagement, youth development, LOK MANCH-2047 at Viksit Bharat Young Leaders Dialogue 2026, master presentation placed before the Hon'ble Prime Minister of India, and JanSahabhag 2047 as an ongoing civic exploration. Merged into [AboutPage.tsx](src/features/about/AboutPage.tsx), pushed to GitHub, and verified deployed to production at `https://jansahabhag2047.vercel.app`; this supersedes the earlier owner instruction removing extended Nazim biographies. Visesh Akbari's longer biography remains unpublished. The target Rajkot demo implementation remains in progress in a separate branch and not yet deployed.
+  - Nazim M. Sandh supplied founder biography: The owner directly supplied a full third-person description for Nazim M. Sandh headed "The Founder", subtitle "Founder and Initiator | Independent Learner", describing his Gir background, microbiology studies, youth awareness, sustainable cultivation, community fitness, cultural engagement, youth development, LOK MANCH-2047 at Viksit Bharat Young Leaders Dialogue 2026, master presentation placed before the Hon'ble Prime Minister of India, and JanSahabhag 2047 as an ongoing civic exploration. Merged into [AboutPage.tsx](src/features/about/AboutPage.tsx), pushed to GitHub, and verified deployed to production at `https://jansahabhag2047.vercel.app`; this supersedes the earlier owner instruction removing extended Nazim biographies. Visesh Akbari's longer biography remains unpublished. The Rajkot demo was subsequently merged and deployed on 26 October 2026.
 
 ---
 
@@ -120,7 +120,7 @@ A component library may be added if useful, but the application should retain a 
 
 ## 4. Product navigation
 
-The learner sidebar follows the Master PRD's eleven-item order: **Home, Learn, Activities & Assignments, Debate Room, Youth Assembly, Youth Parliament, Workspace, Labs & Projects, Community, Civic Passport, UHV / Jeevan Vidya**. Profile, Notifications, Settings, Help/Rulebooks and About Us are utilities. Administration links appear separately by demo persona. Youth Parliament remains a labelled clickable preview; Debate Room and the invite-only Jaipur Workspace are labelled local simulations, with no server-enforced access.
+The learner sidebar follows the Master PRD's eleven-item order: **Home, Learn, Activities & Assignments, Debate Room, Youth Assembly, Youth Parliament, Workspace, Labs & Projects, Community, Civic Passport, UHV / Jeevan Vidya**. Profile, Notifications, Settings, Help/Rulebooks and About Us are utilities. Administration links appear separately by demo persona. Youth Parliament remains a labelled clickable preview; Debate Room and the invite-only Rajkot Workspace are labelled local simulations, with no server-enforced access.
 
 ---
 
@@ -193,7 +193,7 @@ The learner sidebar follows the Master PRD's eleven-item order: **Home, Learn, A
 
 ### Target demo: Rajkot college scenario (supersedes Jaipur target demo)
 
-*Note: The Rajkot scenario is actively being implemented in a separate branch and is not yet deployed or claimed live. The historical 17 October Jaipur demo remains documented below as the initial published baseline.*
+*Current live competition demo since 26 October 2026. The historical 17 October Jaipur demo remains documented below as the initial published baseline.*
 
 - **Target Institution:** **Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot**
 - **Main student demo persona:** **Ankita Kapri** (Demo ID: `VSC-S-001`)
@@ -252,9 +252,9 @@ The user should be able to complete this journey entirely in the browser.
 
 ## 7. Demo personas
 
-### Target demo personas: Rajkot (24 October 2026 decision, under construction)
+### Current demo personas: Rajkot (24 October 2026 decision, published 26 October)
 
-The 24 October 2026 owner decision transitions demo personas to 22 named people for Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot (see `docs/reference/24-10-2026/JanSahabhag 2047 — Demo Personas.docx`). *Being built in another branch; not yet deployed.*
+The 24 October 2026 owner decision transitions demo personas to 22 named people for Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot (see `docs/reference/24-10-2026/JanSahabhag 2047 — Demo Personas.docx`). *Merged into `autobuild` and deployed on 26 October 2026.*
 
 - **Main demo participant:** Ankita Kapri (`VSC-S-001`, main demo student, photo supplied)
 - **15 students (all 18+, exactly 5 named women meeting 33% rule):**
