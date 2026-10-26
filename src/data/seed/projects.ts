@@ -4,11 +4,11 @@ export const seedProjects: Project[] = [
   {
     id: 'proj_navchetna_crosswalk_01',
     programmeId: 'prog_my_community_future',
-    title: 'Navchetna Crosswalk & Speed Calming Action',
-    civicObjective: 'Implement a physical raised tabletop crossing, solar warning blinkers, and high-visibility zebra markings outside Navchetna Public School.',
+    title: 'Virani College Crosswalk & Speed Calming Action',
+    civicObjective: 'Implement a physical raised tabletop crossing, solar warning blinkers, and high-visibility zebra markings outside Shri Manibhai Virani and Smt. Navalben Virani Science College.',
     status: 'active',
-    leadUserId: 'user_aarav',
-    memberUserIds: ['user_aarav', 'user_priya', 'user_vikram', 'user_kabir'],
+    leadUserId: 'VSC-S-001',
+    memberUserIds: ['VSC-S-001', 'VSC-S-002', 'VSC-S-005', 'VSC-S-006'],
     milestones: [
       {
         id: 'ms_01_audit',
@@ -49,11 +49,11 @@ export const seedProjects: Project[] = [
   {
     id: 'proj_safe_routes_mansarovar_02',
     programmeId: 'prog_safe_streets_2047',
-    title: 'Safe Routes to School Audit: Mansarovar Sector 3-5',
+    title: 'Safe Routes to School Audit: Kalawad Road Sector 3-5',
     civicObjective: 'Map 4km of connecting sidewalks to identify curb drops and open trenches affecting 3,000 students.',
     status: 'planning',
-    leadUserId: 'user_vikram',
-    memberUserIds: ['user_vikram', 'user_priya', 'user_siddharth'],
+    leadUserId: 'VSC-S-005',
+    memberUserIds: ['VSC-S-005', 'VSC-S-002', 'VSC-S-007'],
     milestones: [
       {
         id: 'ms_02_1',
@@ -79,11 +79,11 @@ export const seedProjects: Project[] = [
   {
     id: 'proj_ajmer_walking_charter_03',
     programmeId: 'prog_my_community_future',
-    title: 'Ajmer Youth Pedestrian Charter & Zero-Crash Zone',
-    civicObjective: 'Establish 200m car-free pedestrian arrival plaza during morning school rush in Civil Lines Ajmer.',
+    title: 'Rajkot Youth Pedestrian Charter & Zero-Crash Zone',
+    civicObjective: 'Establish 200m car-free pedestrian arrival plaza during morning school rush in University Road Rajkot.',
     status: 'milestone_review',
-    leadUserId: 'user_meera',
-    memberUserIds: ['user_meera', 'user_diya', 'user_tanya', 'user_aditi'],
+    leadUserId: 'VSC-S-003',
+    memberUserIds: ['VSC-S-003', 'VSC-S-013', 'VSC-S-014', 'VSC-S-015'],
     milestones: [
       {
         id: 'ms_03_1',
@@ -118,11 +118,11 @@ export const seedProjects: Project[] = [
   {
     id: 'proj_green_canopy_rtu_04',
     programmeId: 'prog_green_jaipur',
-    title: 'Kota Campus Cool-Walking Canopy Project',
+    title: 'Rajkot Campus Cool-Walking Canopy Project',
     civicObjective: 'Plant 150 native shade saplings and install 2 misting benches along unshaded pedestrian highway.',
     status: 'active',
-    leadUserId: 'user_aryan',
-    memberUserIds: ['user_aryan', 'user_neha', 'user_rahul'],
+    leadUserId: 'VSC-S-010',
+    memberUserIds: ['VSC-S-010', 'VSC-S-015', 'VSC-S-012'],
     milestones: [
       {
         id: 'ms_04_1',
@@ -148,11 +148,11 @@ export const seedProjects: Project[] = [
   {
     id: 'proj_bus_stop_lighting_05',
     programmeId: 'prog_safe_streets_2047',
-    title: 'Mansarovar Evening Bus Stop Lighting Action',
+    title: 'Kalawad Road Evening Bus Stop Lighting Action',
     civicObjective: 'Upgrade 6 poorly lit student bus shelters with solar LED lighting to improve after-school transit safety.',
     status: 'completed',
-    leadUserId: 'user_kabir',
-    memberUserIds: ['user_kabir', 'user_isha', 'user_siddharth'],
+    leadUserId: 'VSC-S-006',
+    memberUserIds: ['VSC-S-006', 'VSC-S-004', 'VSC-S-007'],
     milestones: [
       {
         id: 'ms_05_1',
@@ -182,7 +182,7 @@ export const seedProjects: Project[] = [
 export const seedReflections: Reflection[] = [
   {
     id: 'refl_aarav_01',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     contextType: 'assignment',
     contextId: 'asg_obs_01',
     prompt: 'How did conducting your first real field traffic count change your perception of your daily commute?',
@@ -195,7 +195,7 @@ export const seedReflections: Reflection[] = [
   },
   {
     id: 'refl_aarav_02',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     contextType: 'assembly',
     contextId: 'assembly_jaipur_pedestrian_2026',
     prompt: 'What did you learn from your assigned role as Questioner in the Youth Assembly?',
@@ -208,7 +208,7 @@ export const seedReflections: Reflection[] = [
   },
   {
     id: 'refl_meera_01',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     contextType: 'course',
     contextId: 'course_uhv_leadership_05',
     prompt: 'Reflect on your perspectives on trust and civic responsibility in shared public spaces.',

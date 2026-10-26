@@ -22,7 +22,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   availableLanguages: [
     { code: 'en', label: 'English', isDemo: false },
     { code: 'hi', label: 'हिन्दी (Hindi - Pending Review)', isDemo: true },
-    { code: 'raj', label: 'राजस्थानी (Rajasthani - Demo)', isDemo: true },
+    { code: 'raj', label: 'राजस्थानी (Rajasthani - Unreviewed Prototype)', isDemo: true },
   ],
 
   initialize: async () => {

@@ -94,7 +94,7 @@ export const SubmitAssignmentPage: React.FC = () => {
   const [newEvType, setNewEvType] = useState<EvidenceType>('observation');
   const [newEvTime, setNewEvTime] = useState('7:45 AM - 8:15 AM');
   const [newEvDesc, setNewEvDesc] = useState('');
-  const [newEvLocation, setNewEvLocation] = useState('Navchetna School Crossing, Madhyam Marg, Jaipur');
+  const [newEvLocation, setNewEvLocation] = useState('Virani Science College Crossing, Kalawad Road, Rajkot');
   const [newEvSource, setNewEvSource] = useState('Direct Student Field Observation');
   const [newEvVisibility, setNewEvVisibility] = useState<Visibility>('private');
   const [selectedFile, setSelectedFile] = useState<{
@@ -401,7 +401,7 @@ export const SubmitAssignmentPage: React.FC = () => {
     );
     setNewEvType('image');
     setNewEvSource('Offline Community Action Field Log');
-    setNewEvLocation('Mansarovar Sector 3 Public Park & Drain, Jaipur');
+    setNewEvLocation('Kalawad Road Sector 3 Public Corridor, Rajkot');
     setNewEvTime('Offline Fieldwork (Sunday 7:30 AM - 9:30 AM)');
 
     // Create a mock binary blob (approx 2.4 MB) to demonstrate truthful browser-local IndexedDB persistence
@@ -442,7 +442,7 @@ export const SubmitAssignmentPage: React.FC = () => {
         title: newEvTitle.trim(),
         description: newEvDesc.trim(),
         source: newEvSource.trim() || 'Direct Field Observation',
-        location: newEvLocation.trim() || 'Navchetna School Crossing, Madhyam Marg, Jaipur',
+        location: newEvLocation.trim() || 'Virani Science College Crossing, Kalawad Road, Rajkot',
         visibility: newEvVisibility,
         verificationStatus: 'under_review',
         tags: ['Student Evidence', 'Fieldwork', newEvType],
@@ -1026,7 +1026,7 @@ export const SubmitAssignmentPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
               label="Field Location / Crossroad"
-              placeholder="e.g. Navchetna School Gate 1, Madhyam Marg, Jaipur"
+              placeholder="e.g. Virani Science College Gate 1, Kalawad Road, Rajkot"
               value={newEvLocation}
               onChange={(e) => setNewEvLocation(e.target.value)}
             />

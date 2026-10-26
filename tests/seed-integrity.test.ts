@@ -5,14 +5,14 @@ describe('Seed Data Integrity & Completeness', () => {
   it('has correct schemaVersion and activeUserId', () => {
     const db = getFreshSeedDatabase();
     expect(db.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    expect(db.activeUserId).toBe('user_aarav');
+    expect(db.activeUserId).toBe('VSC-S-001');
   });
 
   it('satisfies entity quantity requirements', () => {
     const db = getFreshSeedDatabase();
 
-    // At least 3 institutions
-    expect(db.institutions.length).toBeGreaterThanOrEqual(3);
+    // Exactly 1 demo institution (configurable for future schools)
+    expect(db.institutions.length).toBeGreaterThanOrEqual(1);
 
     // At least 4 programmes
     expect(db.programmes.length).toBeGreaterThanOrEqual(4);
@@ -20,8 +20,8 @@ describe('Seed Data Integrity & Completeness', () => {
     // At least 8 courses
     expect(db.courses.length).toBeGreaterThanOrEqual(8);
 
-    // At least 20 participants (users)
-    expect(db.users.length).toBeGreaterThanOrEqual(20);
+    // Exactly 22 demo personas
+    expect(db.users.length).toBe(22);
 
     // At least 3 assemblies
     expect(db.assemblies.length).toBeGreaterThanOrEqual(3);
@@ -51,26 +51,67 @@ describe('Seed Data Integrity & Completeness', () => {
     expect(db.communityGroups.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('contains all 7 required core stakeholder personas with stable string IDs', () => {
+  it('contains all 22 required Rajkot demo personas with stable string IDs and correct roles', () => {
     const db = getFreshSeedDatabase();
     const userIds = db.users.map((u) => u.id);
 
-    expect(userIds).toContain('user_aarav');
-    expect(userIds).toContain('user_meera');
-    expect(userIds).toContain('user_kavita');
-    expect(userIds).toContain('user_rohan');
-    expect(userIds).toContain('user_ananya');
-    expect(userIds).toContain('user_dev');
-    expect(userIds).toContain('user_admin');
+    // Exactly 22 people
+    expect(db.users.length).toBe(22);
 
-    const aarav = db.users.find((u) => u.id === 'user_aarav')!;
-    expect(aarav.name).toBe('Aarav Sharma');
-    expect(aarav.role).toBe('participant');
-    expect(aarav.institutionId).toBe('inst_navchetna_jaipur');
+    // 15 Students
+    for (let i = 1; i <= 15; i++) {
+      expect(userIds).toContain(`VSC-S-${String(i).padStart(3, '0')}`);
+    }
 
-    const kavita = db.users.find((u) => u.id === 'user_kavita')!;
-    expect(kavita.name).toBe('Kavita Rao');
-    expect(kavita.role).toBe('teacher');
+    // 2 Teachers
+    expect(userIds).toContain('VSC-T-001');
+    expect(userIds).toContain('VSC-T-002');
+
+    // 1 Principal
+    expect(userIds).toContain('VSC-P-001');
+
+    // 1 Special Guest
+    expect(userIds).toContain('VSC-G-001');
+
+    // 1 Founder
+    expect(userIds).toContain('JS-F-001');
+
+    // 2 Moderators
+    expect(userIds).toContain('JS-M-001');
+    expect(userIds).toContain('JS-M-002');
+
+    const ankita = db.users.find((u) => u.id === 'VSC-S-001')!;
+    expect(ankita.name).toBe('Ankita Kapri');
+    expect(ankita.role).toBe('participant');
+    expect(ankita.institutionId).toBe('inst_vsc_rajkot');
+
+    const mayur = db.users.find((u) => u.id === 'VSC-T-001')!;
+    expect(mayur.name).toBe('Shri Mayur Parmar');
+    expect(mayur.role).toBe('teacher');
+
+    const guest = db.users.find((u) => u.id === 'VSC-G-001')!;
+    expect(guest.name).toBe('Shri Param Pujya Tyagvallabh Swamiji');
+    expect(guest.role).toBe('special_guest');
+
+    const yashvi = db.users.find((u) => u.id === 'JS-M-001')!;
+    expect(yashvi.name).toBe('Yashvi Dalsaniya');
+    expect(yashvi.role).toBe('moderator');
+  });
+
+  it('enforces 33% women reservation on the student roster (ceil(0.33 * 15) = 5)', () => {
+    const db = getFreshSeedDatabase();
+    const students = db.users.filter((u) => u.role === 'participant');
+    expect(students).toHaveLength(15);
+
+    // Exactly 5 women in student roster
+    const womenStudentIds = ['VSC-S-001', 'VSC-S-002', 'VSC-S-003', 'VSC-S-004', 'VSC-S-015'];
+    const requiredReservedCount = Math.ceil(0.33 * students.length);
+    expect(requiredReservedCount).toBe(5);
+    expect(womenStudentIds).toHaveLength(5);
+
+    // Non-students hold no student seats
+    const nonStudents = db.users.filter((u) => u.role !== 'participant');
+    expect(nonStudents).toHaveLength(7); // 2 teachers + 1 principal + 1 guest + 1 founder + 2 moderators
   });
 
   it('contains varied states across submissions and moderation cases', () => {
@@ -93,8 +134,8 @@ describe('Seed Data Integrity & Completeness', () => {
     fresh1.users[0].name = 'Mutated Name';
 
     const fresh2 = getFreshSeedDatabase();
-    expect(fresh2.users[0].name).toBe('Aarav Sharma');
-    expect(seedDatabase.users[0].name).toBe('Aarav Sharma');
+    expect(fresh2.users[0].name).toBe('Ankita Kapri');
+    expect(seedDatabase.users[0].name).toBe('Ankita Kapri');
   });
 
   it('contains valid shared live session sess_jaipur_01 with typed debate data', () => {
@@ -102,7 +143,7 @@ describe('Seed Data Integrity & Completeness', () => {
     const session = db.sessions.find((s) => s.id === 'sess_jaipur_01');
     expect(session).toBeDefined();
     expect(session?.currentMode).toBe('debate_room');
-    expect(session?.facilitatorId).toBe('user_rohan');
+    expect(session?.facilitatorId).toBe('VSC-S-009');
     expect(session?.assemblyId).toBe('assembly_jaipur_pedestrian_2026');
     expect(session?.roster.length).toBeGreaterThanOrEqual(5);
     expect(session?.modeTransitions.length).toBeGreaterThanOrEqual(1);

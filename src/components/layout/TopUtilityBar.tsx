@@ -15,8 +15,12 @@ import {
   Sparkles,
   Menu,
   X,
+  Building2,
+  Info,
 } from 'lucide-react';
-import { User } from '../../types/domain';
+import { User, TransitionNotice } from '../../types/domain';
+import { DEMO_COLLEGE_FULL_NAME } from '../../data/seed/institutions';
+import { PersistenceService } from '../../services/persistence';
 import { cn } from '../../utils/cn';
 
 interface TopUtilityBarProps {
@@ -34,6 +38,9 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [transitionNotice, setTransitionNotice] = useState<TransitionNotice | null>(() =>
+    PersistenceService.getTransitionNotice()
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,14 +62,45 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
   const handleReset = async () => {
     await demoRepository.resetDemo();
-    await switchPersona('user_aarav');
+    await switchPersona('VSC-S-001');
     setIsResetModalOpen(false);
     navigate('/dashboard');
     window.location.reload();
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+    <>
+      {transitionNotice && (
+        <div
+          data-testid="transition-notice-banner"
+          role={transitionNotice.isError ? 'alert' : 'status'}
+          className={cn(
+            'border-b px-4 py-2 text-xs flex items-center justify-between gap-4 z-40 sticky top-0',
+            transitionNotice.isError
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Info className={cn('w-4 h-4 shrink-0', transitionNotice.isError ? 'text-rose-600' : 'text-amber-600')} />
+            <span>{transitionNotice.message}</span>
+          </div>
+          <button
+            onClick={() => {
+              PersistenceService.dismissTransitionNotice();
+              setTransitionNotice(null);
+            }}
+            data-testid="dismiss-transition-notice"
+            className={cn(
+              'font-semibold underline text-[11px] shrink-0',
+              transitionNotice.isError ? 'text-rose-800 hover:text-rose-950' : 'text-amber-800 hover:text-amber-950'
+            )}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+      <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
       {/* Left mobile menu toggle + breadcrumb/branding */}
       <div className="flex items-center gap-3">
         {onToggleMobileMenu && (
@@ -106,6 +144,14 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-500 ml-1" />
           </button>
+        </div>
+
+        {/* Institution Branding near Platform Navigation */}
+        <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200" data-testid="header-institution-mark">
+          <Building2 className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
+          <span className="text-xs font-semibold text-slate-700 truncate max-w-[280px] lg:max-w-[400px]" title={currentUser?.institutionName || DEMO_COLLEGE_FULL_NAME}>
+            {currentUser?.institutionName || DEMO_COLLEGE_FULL_NAME}
+          </span>
         </div>
       </div>
 
@@ -162,7 +208,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                     <span>{lang.label}</span>
                     {lang.isDemo && (
                       <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 font-normal">
-                        {lang.code === 'hi' ? 'Pending Review' : 'Simulated'}
+                        {lang.code === 'hi' ? 'Pending Review' : 'Unreviewed Prototype'}
                       </span>
                     )}
                   </button>
@@ -242,7 +288,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                         {formatRoleName(user.role)}
                       </span>
                       <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200" data-testid={`persona-age-${user.id}`}>
-                        {user.age || 18} yrs
+                        18 or older
                       </span>
                     </div>
                   </div>
@@ -279,10 +325,11 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             Deterministic Local Reset
           </p>
           <p>
-            Your browser's local database key (<code>jansahbhag_demo_v1</code>) will be purged and re-populated with Aarav Sharma's baseline Jaipur pedestrian safety journey.
+            Your browser's local database key (<code>jansahbhag_demo_v1</code>) will be purged and re-populated with Ankita Kapri's baseline Rajkot pedestrian safety journey.
           </p>
         </div>
       </Modal>
     </header>
+    </>
   );
 };

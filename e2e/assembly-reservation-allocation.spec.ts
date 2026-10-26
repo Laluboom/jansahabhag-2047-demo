@@ -10,11 +10,11 @@ test.describe('Package 08B: Youth Assembly Named Role Reservation & Platform Own
   });
 
   test('desktop: displays point-of-use rulebook, privacy suppression, denied finalization route, and authorized platform owner exception', async ({ page }) => {
-    // 1. Log in as regular participant Aarav Sharma
-    await page.getByText('Aarav Sharma').first().click();
+    // 1. Log in as regular participant Ankita Kapri
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
 
-    // 2. Navigate to Jaipur Youth Assembly detail page
+    // 2. Navigate to Youth Assembly detail page
     await page.goto('/assemblies/assembly_jaipur_pedestrian_2026');
     await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026');
 
@@ -23,7 +23,7 @@ test.describe('Package 08B: Youth Assembly Named Role Reservation & Platform Own
     await expect(rulebookBanner).toBeVisible();
     await expect(rulebookBanner.getByText(/2026\.1-womens-reservation-33/i)).toBeVisible();
     await expect(rulebookBanner.getByText(/ceil\(0\.33 × allocatedPlaces\)/i)).toBeVisible();
-    await expect(rulebookBanner.getByText(/Fictional Jaipur Prototype: one-browser simulation only/i)).toBeVisible();
+    await expect(rulebookBanner.getByText(/Fictional (Rajkot|Jaipur) Prototype: one-browser simulation only/i)).toBeVisible();
 
     // 4. Open Point-of-Use Rulebook Modal
     await page.getByTestId('open-assembly-rulebook-btn').click();
@@ -51,9 +51,9 @@ test.describe('Package 08B: Youth Assembly Named Role Reservation & Platform Own
     await expect(page.getByTestId('approve-role-exception-chair')).toHaveCount(0);
     await expect(page.getByTestId('finalize-role-chair')).toHaveCount(0);
 
-    // 6. Switch to Platform Owner persona (Dev Patel / user_admin)
+    // 6. Switch to Platform Owner persona
     await page.goto('/demo-login');
-    await page.getByText('Demo Administrator').first().click();
+    await page.getByText(/Nazim M\. Sandh|Demo Administrator/).first().click();
     await page.waitForURL('**/dashboard');
 
     await page.goto('/assemblies/assembly_jaipur_pedestrian_2026');
@@ -120,7 +120,7 @@ test.describe('Package 08B: Youth Assembly Named Role Reservation & Platform Own
 
     // 1. Log in as Platform Owner
     await page.goto('/demo-login');
-    await page.getByText('Demo Administrator').first().click();
+    await page.getByText(/Nazim M\. Sandh|Demo Administrator/).first().click();
     await page.waitForURL('**/dashboard');
 
     // 2. Navigate to Jaipur Youth Assembly

@@ -59,7 +59,7 @@ export const OnboardingPage: React.FC = () => {
           Welcome to JanSahabhag 2047, {currentUser?.name}!
         </h1>
         <p className="text-sm text-slate-600">
-          Representing <strong>{currentUser?.institutionName}</strong> in Jaipur.
+          Representing <strong>{currentUser?.institutionName}</strong> in Rajkot.
         </p>
       </div>
 
@@ -193,7 +193,7 @@ export const OnboardingPage: React.FC = () => {
               Onboarding Complete!
             </h2>
             <p className="text-xs text-slate-600 max-w-md mx-auto mt-1">
-              You are ready to access your personalized participant dashboard, track course modules, and prepare evidence for the upcoming Jaipur Pedestrian Safety Assembly.
+              You are ready to access your personalized participant dashboard, track course modules, and prepare evidence for the upcoming Rajkot Pedestrian Safety Assembly.
             </p>
             <p className="text-xs font-semibold text-civic-teal-700 mt-2" data-testid="confirmed-age-display">
               Confirmed Age: {age} years &bull; 18+ Participant Requirement Satisfied

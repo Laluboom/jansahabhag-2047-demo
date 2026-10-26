@@ -42,7 +42,7 @@ export const CURRENT_SCHEMA_VERSION = 3;
 
 export const seedDatabase: DemoDatabase = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
-  activeUserId: 'user_aarav',
+  activeUserId: 'VSC-S-001',
   users: seedUsers,
   institutions: seedInstitutions,
   programmes: seedProgrammes,

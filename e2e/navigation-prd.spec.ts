@@ -7,7 +7,7 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
       localStorage.removeItem('jansahbhag_demo_v1');
     });
     await page.reload();
-    await page.getByText('Aarav Sharma').first().click();
+    await page.getByText(/Ankita Kapri|Aarav Sharma/).first().click();
     await page.waitForURL('**/dashboard');
   });
 
@@ -41,7 +41,7 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     // 1. Debate Room (item 4): interactive local simulation
     await links.nth(3).click();
     await page.waitForURL('**/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(page.getByText('Single-Browser Local Simulation')).toBeVisible();
 
     // 2. Youth Parliament (item 6): clearly labelled prototype
@@ -51,13 +51,13 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     await expect(page.getByRole('heading', { name: /National Youth Parliament 2047/i })).toBeVisible();
     await expect(page.getByText(/National Youth Parliament Preview/i).first()).toBeVisible();
 
-    // 3. Workspace (item 7): interactive local simulation linked to Jaipur proposition
+    // 3. Workspace (item 7): interactive local simulation linked to proposition
     await page.goto('/dashboard');
     await links.nth(6).click();
     await page.waitForURL('**/workspace');
     await expect(page.getByRole('heading', { level: 1, name: 'Workspace' })).toBeVisible();
     await expect(page.getByText(/Single-Browser Local Simulation/i)).toBeVisible();
-    await expect(page.getByText(/Jaipur Ward 24 School-Zone Safety Workspace/i)).toBeVisible();
+    await expect(page.getByText(/(Rajkot|Jaipur) Ward (8|24) School-Zone Safety Workspace/i)).toBeVisible();
 
     // 4. UHV / Jeevan Vidya (item 11): dedicated stream with disclaimer
     await page.goto('/dashboard');

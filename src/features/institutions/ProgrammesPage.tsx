@@ -70,7 +70,7 @@ export const InstitutionProgrammesPage: React.FC = () => {
             <span>Active Civic Programmes</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Programmes deployed across participating schools and colleges in Rajasthan.
+            Programmes deployed across participating schools and colleges in Gujarat.
           </p>
         </div>
       </div>

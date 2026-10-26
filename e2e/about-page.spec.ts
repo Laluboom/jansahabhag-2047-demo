@@ -5,7 +5,7 @@ test('About page credits founder, technical builder, and managing partner accura
 
   await expect(page.getByRole('heading', { level: 1, name: 'Connecting education with citizenship.' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Nazim M. Sandh' })).toBeVisible();
-  await expect(page.getByText('Founder and Initiator', { exact: true })).toBeVisible();
+  await expect(page.getByText('Founder and Initiator | Independent Learner', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toHaveAttribute(
     'href',
     'mailto:nazimsandhbehappy@gmail.com'
@@ -16,10 +16,10 @@ test('About page credits founder, technical builder, and managing partner accura
   await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
 
   await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toBeVisible();
-  await expect(page.getByText('Managing Partner', { exact: true })).toBeVisible();
+  await expect(page.getByText('Managing Partner | Student of Microbiology | Youth & Civic Engagement', { exact: true })).toBeVisible();
   await expect(page.getByText(/microbiology student/i)).toBeVisible();
   await expect(page.getByText(/organisational development/i)).toBeVisible();
-  await expect(page.getByText(/developed-country vision/i)).toBeVisible();
+  await expect(page.getByText(/vision of a developed India/i)).toBeVisible();
 
   await expect(page.getByText('Single-browser simulation')).toBeVisible();
 
@@ -36,7 +36,7 @@ test('About page credits founder, technical builder, and managing partner accura
   const yashviCard = page.locator('article').filter({ hasText: 'Yashvi Dalsaniya' });
   await expect(yashviCard.getByText(/founder|developed the site|founded the idea/i)).toHaveCount(0);
 
-  // Desktop layout assertions: no horizontal overflow, Nazim & Visesh side-by-side, Yashvi below them with portrait & bio side-by-side
+  // The approved team layout stacks the founder, developer, and managing partner cards.
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 
   const nazimBox = await nazimCard.boundingBox();
@@ -47,11 +47,8 @@ test('About page credits founder, technical builder, and managing partner accura
   expect(yashviBox).not.toBeNull();
 
   if (nazimBox && viseshBox && yashviBox) {
-    // Nazim and Visesh are in the same top row
-    expect(Math.abs(nazimBox.y - viseshBox.y)).toBeLessThan(15);
-    expect(viseshBox.x).toBeGreaterThan(nazimBox.x);
-    // Yashvi is in a separate row below them
-    expect(yashviBox.y).toBeGreaterThan(nazimBox.y + nazimBox.height - 15);
+    expect(viseshBox.y).toBeGreaterThan(nazimBox.y + nazimBox.height - 15);
+    expect(yashviBox.y).toBeGreaterThan(viseshBox.y + viseshBox.height - 15);
   }
 
   // Yashvi's 16:9 portrait and biography are beside each other on desktop

@@ -58,6 +58,10 @@ export function formatRoleName(role: string): string {
       return 'Programme Manager';
     case 'platform_admin':
       return 'Platform Admin';
+    case 'moderator':
+      return 'Scoped Moderator';
+    case 'special_guest':
+      return 'Special Guest';
     default:
       return role;
   }

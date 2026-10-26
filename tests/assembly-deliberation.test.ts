@@ -15,20 +15,20 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
     it('initial seed state offers a fresh join state for Aarav on active assemblies', async () => {
       const assembly = await repository.getAssembly('assembly_jaipur_pedestrian_2026');
       expect(assembly).toBeDefined();
-      expect(assembly?.participantUserIds).not.toContain('user_aarav');
+      expect(assembly?.participantUserIds).not.toContain('VSC-S-001');
     });
 
     it('joining an assembly adds user to participants, allocates role, awards +10 Deliberation credits, and creates Passport entry', async () => {
-      const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      const initialCredits = (await repository.getCredits('VSC-S-001')).reduce((s, c) => s + c.amount, 0);
 
-      const result = await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
-      expect(result.assembly.participantUserIds).toContain('user_aarav');
+      const result = await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
+      expect(result.assembly.participantUserIds).toContain('VSC-S-001');
       expect(result.role.roleName).toBe('Shaper');
       expect(result.role.responsibilities.length).toBeGreaterThan(0);
       expect(result.role.promptSuggestions.length).toBeGreaterThan(0);
 
       // Verify +2 Deliberation Credits
-      const updatedCredits = await repository.getCredits('user_aarav');
+      const updatedCredits = await repository.getCredits('VSC-S-001');
       const updatedTotal = updatedCredits.reduce((s, c) => s + c.amount, 0);
       expect(updatedTotal).toBe(initialCredits + 2);
 
@@ -40,7 +40,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(joinCredit?.amount).toBe(2);
 
       // Verify Passport Entry
-      const passport = await repository.getPassport('user_aarav');
+      const passport = await repository.getPassport('VSC-S-001');
       const passportEntry = passport.entries.find(
         (p) => p.sourceReferenceId === 'assembly_jaipur_pedestrian_2026' && p.category === 'deliberation'
       );
@@ -50,41 +50,41 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(passportEntry?.isVerified).toBe(true);
 
       // Verify Notification
-      const notifs = await repository.getNotifications('user_aarav');
+      const notifs = await repository.getNotifications('VSC-S-001');
       const joinNotif = notifs.find((n) => n.targetRoute.includes('assembly_jaipur_pedestrian_2026'));
       expect(joinNotif).toBeDefined();
       expect(joinNotif?.type).toBe('assembly');
 
       // Verify User totalCredits
-      const user = await repository.getUser('user_aarav');
+      const user = await repository.getUser('VSC-S-001');
       expect(user?.totalCredits).toBe(updatedTotal);
     });
 
     it('joinAssembly is strictly idempotent and does not award duplicate credits on repeated calls', async () => {
-      const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      const initialCredits = (await repository.getCredits('VSC-S-001')).reduce((s, c) => s + c.amount, 0);
 
       // First Join
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
-      const creditsAfterFirst = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
+      const creditsAfterFirst = (await repository.getCredits('VSC-S-001')).reduce((s, c) => s + c.amount, 0);
       expect(creditsAfterFirst).toBe(initialCredits + 2);
 
       // Duplicate Join
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
-      const creditsAfterSecond = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
+      const creditsAfterSecond = (await repository.getCredits('VSC-S-001')).reduce((s, c) => s + c.amount, 0);
       expect(creditsAfterSecond).toBe(creditsAfterFirst);
     });
   });
 
   describe('Assembly Contributions & Validation', () => {
     beforeEach(async () => {
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
     });
 
     it('substantive contribution validates minimum content length', async () => {
       await expect(
         repository.addAssemblyContribution({
           assemblyId: 'assembly_jaipur_pedestrian_2026',
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           stage: 'think',
           type: 'question',
           text: '   ',
@@ -93,11 +93,11 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
     });
 
     it('adding a substantive contribution awards +5 Deliberation credit, creates activity and Passport entry with traceable source', async () => {
-      const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      const initialCredits = (await repository.getCredits('VSC-S-001')).reduce((s, c) => s + c.amount, 0);
 
       const contrib = await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         stage: 'think',
         type: 'question',
         text: 'How will stormwater drainage be incorporated beneath the tabletop crossing on Madhyam Marg?',
@@ -109,7 +109,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(contrib.evidenceIds).toContain('ev_aarav_traffic_count_01');
 
       // Verify +1 Deliberation Credit
-      const credits = await repository.getCredits('user_aarav');
+      const credits = await repository.getCredits('VSC-S-001');
       const updatedTotal = credits.reduce((s, c) => s + c.amount, 0);
       expect(updatedTotal).toBe(initialCredits + 1);
 
@@ -119,14 +119,14 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(contribCredit?.amount).toBe(1);
 
       // Verify Activity Record
-      const dashboard = await repository.getDashboard('user_aarav');
+      const dashboard = await repository.getDashboard('VSC-S-001');
       const activity = dashboard.recentActivities.find(
         (a) => a.type === 'contribution_added' && a.referenceId === contrib.id
       );
       expect(activity).toBeDefined();
 
       // Verify Passport Entry
-      const passport = await repository.getPassport('user_aarav');
+      const passport = await repository.getPassport('VSC-S-001');
       const passportEntry = passport.entries.find((p) => p.sourceReferenceId === contrib.id);
       expect(passportEntry).toBeDefined();
       expect(passportEntry?.category).toBe('deliberation');
@@ -169,7 +169,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
 
       const newDissent = {
         id: 'dis_aarav_01',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         userName: 'Aarav Sharma',
         reason: 'Raised tabletop ramp slope may impede high-speed ambulances.',
         suggestedAmendment: 'Reduce ramp elevation from 150mm to 100mm with gradual 1:20 transition.',
@@ -192,7 +192,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
 
   describe('Outcome Finalisation & Duplicate Prevention', () => {
     beforeEach(async () => {
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
     });
 
     it('finalises proposition outcome union, sets assembly status to concluded and stage to outcome', async () => {
@@ -212,13 +212,13 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(assembly?.currentStage).toBe('final_assembly');
 
       // Verify notifications sent to participants
-      const notifs = await repository.getNotifications('user_aarav');
+      const notifs = await repository.getNotifications('VSC-S-001');
       const outcomeNotif = notifs.find((n) => n.title.includes('Assembly Proposition Finalised'));
       expect(outcomeNotif).toBeDefined();
       expect(outcomeNotif?.message).toContain('QUALIFIED_SUPPORT');
 
       // Verify Passport Entry created for participants
-      const passport = await repository.getPassport('user_aarav');
+      const passport = await repository.getPassport('VSC-S-001');
       const resolutionEntry = passport.entries.find(
         (p) => p.title.includes('Assembly Resolution') && p.category === 'deliberation'
       );
@@ -251,10 +251,10 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
 
   describe('Post-Outcome Reflection & Civic Credits Ledger', () => {
     it('submitting a reflection awards +5 Reflection credit, creates activity and Passport entry with highlighted values', async () => {
-      const initialCredits = (await repository.getCredits('user_aarav')).reduce((s, c) => s + c.amount, 0);
+      const initialCredits = (await repository.getCredits('VSC-S-001')).reduce((s, c) => s + c.amount, 0);
 
       const reflection = await repository.addReflection({
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         contextType: 'assembly',
         contextId: 'assembly_jaipur_pedestrian_2026',
         prompt: 'How did this deliberative process balance differing stakeholder perspectives?',
@@ -267,7 +267,7 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(reflection.valuesHighlighted).toContain('Trust (Vishwas)');
 
       // Verify +1 Reflection Credits
-      const credits = await repository.getCredits('user_aarav');
+      const credits = await repository.getCredits('VSC-S-001');
       const updatedTotal = credits.reduce((s, c) => s + c.amount, 0);
       expect(updatedTotal).toBe(initialCredits + 1);
 
@@ -277,29 +277,29 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
       expect(reflCredit?.amount).toBe(1);
 
       // Verify Passport Entry
-      const passport = await repository.getPassport('user_aarav');
+      const passport = await repository.getPassport('VSC-S-001');
       const reflEntry = passport.entries.find((p) => p.sourceReferenceId === reflection.id);
       expect(reflEntry).toBeDefined();
       expect(reflEntry?.category).toBe('reflection');
       expect(reflEntry?.creditsAwarded).toBe(1);
 
       // Query reflections by user
-      const userReflections = await repository.getReflections('user_aarav');
+      const userReflections = await repository.getReflections('VSC-S-001');
       expect(userReflections.some((r) => r.id === reflection.id)).toBe(true);
     });
 
     it('passport view computes exact 6-dimension credit breakdown and maintains ledger integrity', async () => {
       // Complete full workflow: join assembly (+10 Deliberation), contribute (+5 Deliberation), reflect (+5 Reflection)
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
       await repository.addAssemblyContribution({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         stage: 'think',
         type: 'question',
         text: 'Testing ledger total calculation.',
       });
       await repository.addReflection({
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         contextType: 'assembly',
         contextId: 'assembly_jaipur_pedestrian_2026',
         prompt: 'Testing prompt.',
@@ -308,8 +308,8 @@ describe('Task 03 - Youth Assembly Deliberation, Proposition, Reflection & Civic
         isPublicInPassport: true,
       });
 
-      const passport = await repository.getPassport('user_aarav');
-      const credits = await repository.getCredits('user_aarav');
+      const passport = await repository.getPassport('VSC-S-001');
+      const credits = await repository.getCredits('VSC-S-001');
 
       const sumOfLedger = credits.reduce((sum, c) => sum + c.amount, 0);
       expect(passport.totalCredits).toBe(sumOfLedger);

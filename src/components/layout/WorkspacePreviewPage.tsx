@@ -141,7 +141,7 @@ export const WorkspacePreviewPage: React.FC = () => {
             <h3>Sample Project Initiatives</h3>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            You can review seeded sample micro-initiatives such as the Navchetna Crosswalk Action in the Labs & Projects section in this simulated browser demo.
+            You can review seeded sample micro-initiatives such as the Virani Science College Crosswalk Action in the Labs & Projects section in this simulated browser demo.
           </p>
           <Link to="/projects" className="inline-flex items-center text-xs font-semibold text-civic-teal-700 hover:text-civic-teal-900 pt-1">
             <span>Explore Labs & Projects</span>

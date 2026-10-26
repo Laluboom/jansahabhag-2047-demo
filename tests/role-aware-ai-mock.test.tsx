@@ -19,9 +19,9 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
     await useAuthStore.getState().initialize();
   });
 
-  describe('1. Participant Persona (user_aarav) Practice Prompts', () => {
+  describe('1. Participant Persona (VSC-S-001) Practice Prompts', () => {
     it('participant receives optional practice prompts and does NOT receive facilitator agendas or moderator report summaries', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/help']}>
@@ -38,7 +38,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
 
       // Active persona badge shows participant
       expect(screen.getByText(/Active Persona:/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/Aarav Sharma/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Ankita Kapri/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Participant/i).length).toBeGreaterThanOrEqual(1);
 
       // Core banner and concise notice
@@ -56,15 +56,15 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
       expect(screen.getByText(/Practice Prompt: Drafting a Measurable Proposition Clause/i)).toBeInTheDocument();
 
       // Facilitator and moderator content MUST NOT appear
-      expect(screen.queryByText(/Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Draft Candidate Agenda: Ward (8|24) (Rajkot|Jaipur) Youth Assembly/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Draft Report Summary: Public Field Submissions/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/Draft Report Summary: Workspace Conduct & Channels/i)).not.toBeInTheDocument();
     });
   });
 
-  describe('2. Facilitator Persona (user_rohan) Draft Agendas', () => {
+  describe('2. Facilitator Persona (VSC-S-009) Draft Agendas', () => {
     it('facilitator receives draft candidate agenda and does NOT receive participant practice prompts or moderator reports', async () => {
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
 
       render(
         <MemoryRouter initialEntries={['/help']}>
@@ -79,11 +79,11 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
       });
 
       // Active persona shows facilitator
-      expect(screen.getAllByText(/Rohan Mehta/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Aroh Mehta/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Facilitator/i).length).toBeGreaterThanOrEqual(1);
 
       // Draft agenda items are present
-      expect(screen.getByText(/Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly/i)).toBeInTheDocument();
+      expect(screen.getByText(/Draft Candidate Agenda: Ward (8|24) (Rajkot|Jaipur) Youth Assembly/i)).toBeInTheDocument();
       expect(screen.getByText(/Draft Candidate Agenda: Rapid Parliamentary Debate Practice/i)).toBeInTheDocument();
       expect(screen.getByText(/Proposed 6-Stage Deliberation Schedule/i)).toBeInTheDocument();
 
@@ -93,9 +93,9 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
     });
   });
 
-  describe('3. Scoped Moderator Persona (user_moderator) Active Scope Synthesis', () => {
+  describe('3. Scoped Moderator Persona (JS-M-001) Active Scope Synthesis', () => {
     it('scoped moderator receives draft report summaries strictly aligned with active founder grants', async () => {
-      await useAuthStore.getState().switchPersona('user_moderator');
+      await useAuthStore.getState().switchPersona('JS-M-001');
 
       render(
         <MemoryRouter initialEntries={['/help']}>
@@ -109,8 +109,8 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
         expect(screen.getByTestId('role-aware-assistant-surface')).toBeInTheDocument();
       });
 
-      // Persona shows Karan Verma (Moderator)
-      expect(screen.getAllByText(/Karan Verma/i).length).toBeGreaterThanOrEqual(1);
+      // Persona shows Yashvi Dalsaniya (Moderator)
+      expect(screen.getAllByText(/Yashvi Dalsaniya/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Moderator/i).length).toBeGreaterThanOrEqual(1);
 
       // Active scopes displayed (assignments, memberships, named_session)
@@ -126,7 +126,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
 
       // Participant prompts and facilitator agendas MUST NOT appear
       expect(screen.queryByText(/Practice Prompt: Opening Deliberation Statement/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Draft Candidate Agenda: Ward (8|24) (Rajkot|Jaipur) Youth Assembly/i)).not.toBeInTheDocument();
     });
 
     it('filters draft report summaries when moderator has only a single active scope', async () => {
@@ -156,7 +156,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
           granteeId: 'user_mod_single',
           granteeName: 'Single Scope Mod',
           granteeRole: 'moderator',
-          grantorId: 'user_admin',
+          grantorId: 'JS-F-001',
           grantorName: 'Admin',
           grantorRole: 'platform_admin',
           scope: { type: 'assignments', description: 'Assignments only' },
@@ -234,7 +234,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
           granteeId: 'user_mod_diff_ses',
           granteeName: 'Different Session Mod',
           granteeRole: 'moderator',
-          grantorId: 'user_admin',
+          grantorId: 'JS-F-001',
           grantorName: 'Admin',
           grantorRole: 'platform_admin',
           scope: {
@@ -287,7 +287,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
           granteeId: 'user_mod_bob',
           granteeName: 'Bob Moderator',
           granteeRole: 'moderator',
-          grantorId: 'user_admin',
+          grantorId: 'JS-F-001',
           grantorName: 'Admin',
           grantorRole: 'platform_admin',
           scope: { type: 'assignments', description: 'Bob assignment review' },
@@ -323,7 +323,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
     });
 
     it('ensures moderator summaries explicitly verify that private UHV reflections were not ingested', async () => {
-      await useAuthStore.getState().switchPersona('user_moderator');
+      await useAuthStore.getState().switchPersona('JS-M-001');
 
       render(
         <MemoryRouter initialEntries={['/help']}>
@@ -351,7 +351,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
 
   describe('5. Editable & Dismissible Suggestion Interactions', () => {
     it('allows editing a suggestion in-place, saves the edit, and allows resetting back to seed', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/help']}>
@@ -400,7 +400,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
     });
 
     it('allows dismissing a suggestion, shows dismissed count, and restores dismissed suggestions', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/help']}>

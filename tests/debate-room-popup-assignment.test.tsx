@@ -18,11 +18,11 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
   describe('1. Repository Boundary & Publication Authorization', () => {
     it('allows facilitator to publish a popup assignment using the civic assignment model', async () => {
       // Rohan is the room facilitator
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
 
       const { session, assignment } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Speed Radar Analysis Prompt',
         instruction: 'State one immediate infrastructure fix based on speed radar logs.',
         timeLimitMinutes: 10,
@@ -38,7 +38,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       // Verify session linked popup state
       expect(session.debateData?.activePopupAssignmentId).toBe(assignment.id);
       expect(session.debateData?.popupAssignment?.assignmentId).toBe(assignment.id);
-      expect(session.debateData?.popupAssignment?.pushedBy).toBe('user_rohan');
+      expect(session.debateData?.popupAssignment?.pushedBy).toBe('VSC-S-009');
       expect(session.debateData?.popupAssignment?.timeLimitMinutes).toBe(10);
       expect(session.debateData?.popupAssignment?.isClosed).toBe(false);
 
@@ -50,12 +50,12 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('rejects non-facilitator publication attempts at repository boundary', async () => {
       // Aarav is a participant (Questioner), not facilitator
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       await expect(
         demoRepository.pushDebatePopupAssignment({
           sessionId: 'sess_jaipur_01',
-          actorId: 'user_aarav',
+          actorId: 'VSC-S-001',
           title: 'Unauthorized Task',
           instruction: 'Should fail immediately',
           timeLimitMinutes: 5,
@@ -65,39 +65,39 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('rejects publication when actorId does not match active persona', async () => {
       // Active user is Aarav, attempting to claim Rohan's identity
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       await expect(
         demoRepository.pushDebatePopupAssignment({
           sessionId: 'sess_jaipur_01',
-          actorId: 'user_rohan',
+          actorId: 'VSC-S-009',
           title: 'Spoofed Task',
           instruction: 'Should fail spoof guard',
           timeLimitMinutes: 5,
         })
-      ).rejects.toThrow(/Unauthorized: actor "user_rohan" does not match active persona "user_aarav"/);
+      ).rejects.toThrow(/Unauthorized: actor "VSC-S-009" does not match active persona "VSC-S-001"/);
     });
   });
 
   describe('2. Participant Submission, Evidence Attachment & Privacy Behavior', () => {
     it('allows participant to submit text response with optional evidence, awards pending credits, and preserves privacy', async () => {
       // 1. Facilitator pushes popup task
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const { assignment } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Corridor Safety Rapid Response',
         instruction: 'Identify which crossing requires speed tables first.',
         timeLimitMinutes: 5,
       });
 
       // 2. Participant Aarav submits response with one of his evidence items
-      await useAuthStore.getState().switchPersona('user_aarav');
-      const _initialCredits = (await demoRepository.getCredits('user_aarav')).filter((c) => c.status === 'Pending').length;
+      await useAuthStore.getState().switchPersona('VSC-S-001');
+      const _initialCredits = (await demoRepository.getCredits('VSC-S-001')).filter((c) => c.status === 'Pending').length;
 
       const submission = await demoRepository.submitAssignment({
         assignmentId: assignment.id,
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Madhyam Marg intersection urgently needs tabletop crosswalk tables based on the 420 vph speed radar count.',
         evidenceIds: ['ev_aarav_traffic_count_01'],
       });
@@ -107,7 +107,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(submission.evidenceIds).toContain('ev_aarav_traffic_count_01');
 
       // Verify pending credit awarded (+2 Contribution)
-      const afterCredits = await demoRepository.getCredits('user_aarav');
+      const afterCredits = await demoRepository.getCredits('VSC-S-001');
       const pendingAsgCredits = afterCredits.filter(
         (c) => c.sourceType === 'assignment' && c.sourceId === assignment.id && c.status === 'Pending'
       );
@@ -116,8 +116,8 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(pendingAsgCredits[0].dimension).toBe('Contribution');
 
       // 3. Privacy Boundary: Another participant (Priya) cannot view or mutate Aarav's submission
-      await useAuthStore.getState().switchPersona('user_priya');
-      const priyaSubs = await demoRepository.getSubmissions('user_aarav', assignment.id);
+      await useAuthStore.getState().switchPersona('VSC-S-002');
+      const priyaSubs = await demoRepository.getSubmissions('VSC-S-001', assignment.id);
       // Non-teachers/non-facilitators cannot query another participant's submission
       expect(priyaSubs.length).toBe(0);
 
@@ -125,34 +125,34 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       await expect(
         demoRepository.submitAssignment({
           assignmentId: assignment.id,
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Malicious modification',
         })
       ).rejects.toThrow(/Unauthorized: cannot submit assignment for another persona/);
 
       // Facilitator Rohan CAN see the room's submissions
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const facilitatorSubs = await demoRepository.getSubmissions(undefined, assignment.id);
       expect(facilitatorSubs.length).toBe(1);
-      expect(facilitatorSubs[0].userId).toBe('user_aarav');
+      expect(facilitatorSubs[0].userId).toBe('VSC-S-001');
     });
 
     it('allows text-only submission when participant has no evidence attached', async () => {
       // Facilitator publishes
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const { assignment } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Text-Only Civic Inquiry',
         instruction: 'What should be the signage distance before the crosswalk?',
         timeLimitMinutes: 5,
       });
 
       // Participant Kabir submits text only (no evidence)
-      await useAuthStore.getState().switchPersona('user_kabir');
+      await useAuthStore.getState().switchPersona('VSC-S-006');
       const sub = await demoRepository.submitAssignment({
         assignmentId: assignment.id,
-        userId: 'user_kabir',
+        userId: 'VSC-S-006',
         content: 'Signage should be posted at 50 meters and 100 meters prior to the tabletop ramp.',
         evidenceIds: [],
       });
@@ -165,10 +165,10 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
   describe('3. Close & Expiry States', () => {
     it('facilitator can close popup assignment early, locking submissions', async () => {
       // Facilitator publishes
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const { session, assignment } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Speed Limit Deliberation',
         instruction: 'Propose an IRC speed limit.',
         timeLimitMinutes: 10,
@@ -177,7 +177,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(session.debateData?.popupAssignment?.isClosed).toBe(false);
 
       // Facilitator closes early
-      const closedSession = await demoRepository.closeDebatePopupAssignment('sess_jaipur_01', 'user_rohan');
+      const closedSession = await demoRepository.closeDebatePopupAssignment('sess_jaipur_01', 'VSC-S-009');
       expect(closedSession.debateData?.popupAssignment?.isClosed).toBe(true);
 
       // Verify assignment status became archived
@@ -185,11 +185,11 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(asg?.status).toBe('archived');
 
       // Participant attempting to submit to archived/closed assignment is rejected
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       await expect(
         demoRepository.submitAssignment({
           assignmentId: assignment.id,
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Too late submission',
         })
       ).rejects.toThrow(/Cannot submit for inactive assignment/);
@@ -197,10 +197,10 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('atomically archives prior active popup assignment upon publishing replacement, disallowing direct submission to old task while keeping new task active', async () => {
       // 1. Facilitator publishes first popup assignment
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const { assignment: asg1 } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'First Active Chamber Task',
         instruction: 'Initial reflection on signal timings.',
         timeLimitMinutes: 15,
@@ -211,7 +211,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       // 2. Facilitator publishes a second popup while the first is still active
       const { session: updatedSession, assignment: asg2 } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Second Replacement Chamber Task',
         instruction: 'Updated urgent prompt on pedestrian crossing guard.',
         timeLimitMinutes: 10,
@@ -229,11 +229,11 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(oldAsg?.status).toBe('archived');
 
       // 3. Participant attempts to submit to the old assignment via direct route
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       await expect(
         demoRepository.submitAssignment({
           assignmentId: asg1.id,
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Attempted submission to superseded task.',
         })
       ).rejects.toThrow(/Cannot submit for inactive assignment/);
@@ -242,7 +242,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       await expect(
         demoRepository.saveAssignmentDraft({
           assignmentId: asg1.id,
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           content: 'Draft on superseded task.',
         })
       ).rejects.toThrow(/Cannot save draft for inactive assignment/);
@@ -250,7 +250,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       // 4. Participant can submit to the newly active replacement task
       const sub2 = await demoRepository.submitAssignment({
         assignmentId: asg2.id,
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Valid response to the active replacement task.',
       });
       expect(sub2.status).toBe('submitted');
@@ -259,29 +259,29 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('preserves review and credit award workflow for participant submissions recorded prior to task replacement or closure', async () => {
       // 1. Facilitator publishes first popup assignment
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const { assignment: asg1 } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Prompt with Pre-Replacement Submission',
         instruction: 'Document peak corridor delay.',
         timeLimitMinutes: 10,
       });
 
       // 2. Participant Aarav submits before replacement
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       const sub1 = await demoRepository.submitAssignment({
         assignmentId: asg1.id,
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Observation: 4-minute delay at 8:05 AM.',
       });
       expect(sub1.status).toBe('submitted');
 
       // 3. Facilitator replaces task with a new one
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Replacement Prompt',
         instruction: 'New prompt.',
         timeLimitMinutes: 5,
@@ -292,14 +292,14 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(archivedAsg1?.status).toBe('archived');
 
       // 4. Teacher Kavita reviews Aarav's submission for archived asg1
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
       const teacherSubs = await demoRepository.getSubmissions(undefined, asg1.id);
       expect(teacherSubs.length).toBe(1);
       expect(teacherSubs[0].id).toBe(sub1.id);
 
       const reviewedSub = await demoRepository.reviewSubmission({
         submissionId: sub1.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         teacherFeedback: 'Verified observation data.',
         score: 20,
@@ -309,7 +309,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(reviewedSub.teacherFeedback).toBe('Verified observation data.');
 
       // 5. Verify credits awarded upon verification
-      const aaravCredits = await demoRepository.getCredits('user_aarav');
+      const aaravCredits = await demoRepository.getCredits('VSC-S-001');
       const verifiedCredit = aaravCredits.find(
         (c) => c.sourceId === asg1.id && c.status === 'Verified'
       );
@@ -318,18 +318,18 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
     });
 
     it('non-facilitator cannot close popup assignment', async () => {
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Closing Test',
         instruction: 'Test instruction',
         timeLimitMinutes: 10,
       });
 
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       await expect(
-        demoRepository.closeDebatePopupAssignment('sess_jaipur_01', 'user_aarav')
+        demoRepository.closeDebatePopupAssignment('sess_jaipur_01', 'VSC-S-001')
       ).rejects.toThrow(/Unauthorized: only the room facilitator can close a popup assignment/);
     });
   });
@@ -337,21 +337,21 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
   describe('4. Reload Persistence Across Storage', () => {
     it('persists popup assignment, participant submissions, and chamber votes across reload', async () => {
       // Facilitator pushes popup assignment
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       const { assignment } = await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Persistent Deliberation Task',
         instruction: 'Evaluate pedestrian flow.',
         timeLimitMinutes: 15,
       });
 
       // Participant votes and submits
-      await useAuthStore.getState().switchPersona('user_aarav');
-      await demoRepository.castDebateVote('sess_jaipur_01', 'user_aarav', 'for');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
+      await demoRepository.castDebateVote('sess_jaipur_01', 'VSC-S-001', 'for');
       await demoRepository.submitAssignment({
         assignmentId: assignment.id,
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Persistent observation notes by Aarav.',
       });
 
@@ -362,13 +362,13 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       expect(loadedSession?.debateData?.popupAssignment).toBeDefined();
       expect(loadedSession?.debateData?.popupAssignment?.assignmentId).toBe(assignment.id);
       expect(loadedSession?.debateData?.popupAssignment?.title).toBe('Persistent Deliberation Task');
-      expect(loadedSession?.debateData?.votes?.['user_aarav']).toBe('for');
+      expect(loadedSession?.debateData?.votes?.['VSC-S-001']).toBe('for');
 
       const loadedAsg = await reloadedRepo.getAssignment(assignment.id);
       expect(loadedAsg).not.toBeNull();
       expect(loadedAsg?.title).toBe('Persistent Deliberation Task');
 
-      const loadedSubs = await reloadedRepo.getSubmissions('user_aarav', assignment.id);
+      const loadedSubs = await reloadedRepo.getSubmissions('VSC-S-001', assignment.id);
       expect(loadedSubs.length).toBe(1);
       expect(loadedSubs[0].content).toContain('Persistent observation notes');
     });
@@ -377,7 +377,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
   describe('5. UI Flow: Facilitator Push, Room Popup, Submission, and Navigation', () => {
     it('facilitator pushes popup assignment from UI, participant fills response, views receipt, and can navigate to submitted assignment', async () => {
       // Step A: Facilitator pushes popup assignment from UI
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
 
       const { rerender } = render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -428,7 +428,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       });
 
       // Step B: Switch to Participant Aarav
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       rerender(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -481,7 +481,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
     });
 
     it('renders motion and For/Against counter with no inferred stances and allows participant to vote and raise hand', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -534,11 +534,11 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('renders speaking timer, Start speech and End speech for recognized floor speaker', async () => {
       // Facilitator recognizes Aarav who is in the speaking queue
-      await useAuthStore.getState().switchPersona('user_rohan');
-      await demoRepository.recognizeSpeakingTurn('sess_jaipur_01', 'user_rohan', 'user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
+      await demoRepository.recognizeSpeakingTurn('sess_jaipur_01', 'VSC-S-009', 'VSC-S-001');
 
       // Switch to recognized speaker Aarav
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -571,10 +571,10 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('renders expired/closed state when time limit has expired and allows clean modal close without focus trap', async () => {
       // Facilitator pushes task with expired date in the past
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
       await demoRepository.pushDebatePopupAssignment({
         sessionId: 'sess_jaipur_01',
-        actorId: 'user_rohan',
+        actorId: 'VSC-S-009',
         title: 'Past Time Limit Task',
         instruction: 'This task was pushed earlier.',
         timeLimitMinutes: 1,
@@ -589,7 +589,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       PersistenceService.saveDatabase(db);
 
       // Participant Aarav opens room
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -624,7 +624,7 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
 
     it('facilitator sees active replacement warning when publishing over an active task and UI updates atomically', async () => {
       // Step A: Facilitator pushes first popup assignment
-      await useAuthStore.getState().switchPersona('user_rohan');
+      await useAuthStore.getState().switchPersona('VSC-S-009');
 
       render(
         <MemoryRouter initialEntries={['/debate-room']}>
@@ -705,6 +705,100 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
           'Replacement Urgent Prompt'
         );
       });
+    });
+  });
+
+  describe('6. Active Facilitator Dynamic Resolution & Rajkot Persona Verification', () => {
+    it('derives facilitator name dynamically from session data as Aroh Mehta and avoids old Rohan Mehta strings', async () => {
+      // 1. Facilitator persona creates the popup task
+      await useAuthStore.getState().switchPersona('VSC-S-009');
+
+      // Seed a popup assignment from facilitator VSC-S-009
+      await demoRepository.pushDebatePopupAssignment({
+        sessionId: 'sess_jaipur_01',
+        actorId: 'VSC-S-009',
+        title: 'Tactile Paving Priority Inquiry',
+        instruction: 'Identify where tactile pavers are most urgently required on Kalawad Road.',
+        timeLimitMinutes: 10,
+      });
+
+      // Switch to participant persona
+      await useAuthStore.getState().switchPersona('VSC-S-001');
+
+      render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active-chamber-task-banner')).toBeInTheDocument();
+      });
+
+      // Open task modal
+      fireEvent.click(screen.getByTestId('open-chamber-task-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('debate-popup-assignment-modal')).toBeInTheDocument();
+      });
+
+      // Assert popup assignment facilitator attribution
+      expect(screen.getByText(/Pushed by Facilitator Aroh Mehta/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Rohan Mehta/i)).not.toBeInTheDocument();
+    });
+
+    it('displays dynamic facilitator name in speaking recognition and mode switch summary', async () => {
+      // Set active speaker to VSC-S-001 in session debateData
+      const db = PersistenceService.loadDatabase();
+      const sess = db.sessions.find((s) => s.id === 'sess_jaipur_01');
+      if (sess?.debateData) {
+        sess.debateData.activeSpeakerId = 'VSC-S-001';
+      }
+      PersistenceService.saveDatabase(db);
+
+      // Switch to student participant to view floor recognized by facilitator
+      await useAuthStore.getState().switchPersona('VSC-S-002');
+
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/is recognized by Facilitator Aroh Mehta/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/Rohan Mehta/i)).not.toBeInTheDocument();
+
+      unmount();
+
+      // Switch back to Facilitator to test mode transition modal
+      await useAuthStore.getState().switchPersona('VSC-S-009');
+
+      render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Switch to Youth Assembly/i })).toBeInTheDocument();
+      });
+
+      // Click switch mode button
+      fireEvent.click(screen.getByRole('button', { name: /Switch to Youth Assembly/i }));
+
+      // Check interstitial modal content
+      await waitFor(() => {
+        expect(screen.getByText(/As Facilitator Aroh Mehta, you are initiating a local session mode transition/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/Rohan Mehta/i)).not.toBeInTheDocument();
     });
   });
 });

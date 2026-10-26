@@ -24,7 +24,7 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
 
       // In initial seed: Thinker=2, Enabler=2, Troubleshooter=2, Shaper=1.
       // Deterministic equitable allocation assigns Shaper to Aarav to achieve perfect balance (2 delegates per role).
-      const joinResult = await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      const joinResult = await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
       expect(joinResult.role.roleName).toBe('Shaper');
       expect(joinResult.role.power).toBe('Proposition Call');
     });
@@ -53,8 +53,8 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       await expect(
         repository.overrideAssemblyRole(
           'assembly_jaipur_pedestrian_2026',
-          'user_rohan',
-          'user_vikram',
+          'VSC-S-009',
+          'VSC-S-005',
           'Shaper',
           '' // Empty reason
         )
@@ -64,8 +64,8 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       await expect(
         repository.overrideAssemblyRole(
           'assembly_jaipur_pedestrian_2026',
-          'user_kabir', // Kabir is regular delegate
-          'user_vikram',
+          'VSC-S-006', // Kabir is regular delegate
+          'VSC-S-005',
           'Shaper',
           'Balancing the table'
         )
@@ -74,8 +74,8 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       // Successful override by Facilitator
       const updatedRole = await repository.overrideAssemblyRole(
         'assembly_jaipur_pedestrian_2026',
-        'user_rohan',
-        'user_vikram',
+        'VSC-S-009',
+        'VSC-S-005',
         'Shaper',
         'Rebalanced to cover Shaper duties during draft phase'
       );
@@ -86,7 +86,7 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       // Verify audit trail in assembly
       const assembly = await repository.getAssembly('assembly_jaipur_pedestrian_2026');
       expect(assembly?.roleOverrideAudits).toBeDefined();
-      const audit = assembly?.roleOverrideAudits?.find((a) => a.userId === 'user_vikram');
+      const audit = assembly?.roleOverrideAudits?.find((a) => a.userId === 'VSC-S-005');
       expect(audit).toBeDefined();
       expect(audit?.previousRole).toBe('Enabler');
       expect(audit?.newRole).toBe('Shaper');
@@ -102,18 +102,18 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
 
       // Chair cannot skip directly from think to shape (skipping enable and troubleshoot)
       await expect(
-        repository.updateAssemblyStage('assembly_jaipur_pedestrian_2026', 'shape', 'user_rohan')
+        repository.updateAssemblyStage('assembly_jaipur_pedestrian_2026', 'shape', 'VSC-S-009')
       ).rejects.toThrow(/cannot skip stages/i);
 
       // Chair can advance sequentially: think -> enable
-      const updated = await repository.updateAssemblyStage('assembly_jaipur_pedestrian_2026', 'enable', 'user_rohan');
+      const updated = await repository.updateAssemblyStage('assembly_jaipur_pedestrian_2026', 'enable', 'VSC-S-009');
       expect(updated.currentStage).toBe('enable');
     });
 
     it('denies non-chair participants from advancing or changing official stage', async () => {
       // Kabir is a participant, not Chair
       await expect(
-        repository.updateAssemblyStage('assembly_jaipur_pedestrian_2026', 'enable', 'user_kabir')
+        repository.updateAssemblyStage('assembly_jaipur_pedestrian_2026', 'enable', 'VSC-S-006')
       ).rejects.toThrow(/unauthorized|chair|facilitator/i);
     });
 
@@ -155,17 +155,17 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
 
   describe('3. Four Participant Response States & Dissent Preservation', () => {
     it('records participant responses across all four canonical states and updates support profile', async () => {
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
 
       // Aarav records Support with reservations
       const propWithResp = await repository.recordPropositionResponse({
         propositionId: 'prop_jaipur_pedestrian_01',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         responseState: 'Support with reservations',
         reasonOrReservations: 'Must ensure 300mm drainage pipe is inspected before monsoon season.',
       });
 
-      const aaravResp = propWithResp.participantResponses.find((r) => r.userId === 'user_aarav');
+      const aaravResp = propWithResp.participantResponses.find((r) => r.userId === 'VSC-S-001');
       expect(aaravResp).toBeDefined();
       expect(aaravResp?.responseState).toBe('Support with reservations');
       expect(aaravResp?.reasonOrReservations).toContain('drainage pipe');
@@ -176,12 +176,12 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       // Changing response state preserves version history
       const updatedResp = await repository.recordPropositionResponse({
         propositionId: 'prop_jaipur_pedestrian_01',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         responseState: 'Support',
         reasonOrReservations: 'Drainage specification confirmed in revision.',
       });
 
-      const updatedAaravResp = updatedResp.participantResponses.find((r) => r.userId === 'user_aarav');
+      const updatedAaravResp = updatedResp.participantResponses.find((r) => r.userId === 'VSC-S-001');
       expect(updatedAaravResp?.responseState).toBe('Support');
       expect(updatedAaravResp?.history?.length).toBeGreaterThanOrEqual(1);
     });
@@ -211,7 +211,7 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       // Priya is Thinker
       const action = await repository.executeRolePowerAction({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
-        userId: 'user_priya',
+        userId: 'VSC-S-002',
         power: 'Question Setter',
         title: 'Challenging peak-hour vehicle counts',
         description: 'Does the 42 km/h average speed account for school van queuing at 7:45 AM?',
@@ -225,43 +225,43 @@ describe('Package 05 - Youth Assembly Procedure, Roles, Stages, Dissent & Bounda
       const addressedAction = await repository.respondToRolePowerAction({
         assemblyId: 'assembly_jaipur_pedestrian_2026',
         actionId: action.id,
-        userId: 'user_vikram',
+        userId: 'VSC-S-005',
         responseNote: 'Traffic count audit ev_aarav_traffic_count_01 confirms van queuing narrows usable width to 6m.',
       });
 
       expect(addressedAction.status).toBe('addressed');
-      expect(addressedAction.respondedBy).toBe('Vikram Joshi');
+      expect(addressedAction.respondedBy).toBe('Yash Rathod');
     });
 
     it('manages speaking queue with Chair recognition and release', async () => {
-      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+      await repository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
 
       // Aarav requests speaking turn
       const asmWithQueue = await repository.requestAssemblySpeakingTurn(
         'assembly_jaipur_pedestrian_2026',
-        'user_aarav'
+        'VSC-S-001'
       );
-      const queueEntry = asmWithQueue.speakingQueue?.find((s) => s.userId === 'user_aarav');
+      const queueEntry = asmWithQueue.speakingQueue?.find((s) => s.userId === 'VSC-S-001');
       expect(queueEntry).toBeDefined();
       expect(queueEntry?.status).toBe('waiting');
 
       // Non-chair cannot recognize speaker
       await expect(
-        repository.recognizeAssemblySpeaker('assembly_jaipur_pedestrian_2026', 'user_kabir', 'user_aarav')
+        repository.recognizeAssemblySpeaker('assembly_jaipur_pedestrian_2026', 'VSC-S-006', 'VSC-S-001')
       ).rejects.toThrow(/unauthorized|chair|facilitator/i);
 
       // Chair recognizes Aarav
       const asmRecognized = await repository.recognizeAssemblySpeaker(
         'assembly_jaipur_pedestrian_2026',
-        'user_rohan',
-        'user_aarav'
+        'VSC-S-009',
+        'VSC-S-001'
       );
-      expect(asmRecognized.activeSpeakerId).toBe('user_aarav');
+      expect(asmRecognized.activeSpeakerId).toBe('VSC-S-001');
 
       // Chair releases Aarav
       const asmReleased = await repository.releaseAssemblySpeaker(
         'assembly_jaipur_pedestrian_2026',
-        'user_rohan'
+        'VSC-S-009'
       );
       expect(asmReleased.activeSpeakerId).toBeNull();
     });

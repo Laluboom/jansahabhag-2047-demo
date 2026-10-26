@@ -401,7 +401,7 @@ export const ProjectsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="font-bold text-slate-700 block">Initiative Title</label>
             <Input
-              placeholder="e.g. Navchetna School Speed Table & Solar Blinker Action"
+              placeholder="e.g. Virani Science College Speed Table & Solar Blinker Action"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               required

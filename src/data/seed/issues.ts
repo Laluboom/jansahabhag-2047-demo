@@ -3,17 +3,17 @@ import { CivicIssue } from '../../types/domain';
 export const seedCivicIssues: CivicIssue[] = [
   {
     id: 'iss_01',
-    title: 'Madhyam Marg Gate 1 Speed Corridor & Faded Crosswalk',
-    location: 'Mansarovar Sector 3, Jaipur',
-    ward: 'Ward 24',
+    title: 'Kalawad Road Gate 1 Speed Corridor & Faded Crosswalk',
+    location: 'Kalawad Road Sector 3, Rajkot',
+    ward: 'Ward 8',
     coordinates: { lat: 26.8524, lng: 75.7638 },
     category: 'Pedestrian Hazard',
     severity: 'critical',
     status: 'in_deliberation',
     description:
-      'High-velocity vehicle approach outside Navchetna Public School. Peak 508 vehicles/30-min with average speeds of 42 km/h. Faded zebra crossing markings and missing warning flashers.',
+      'High-velocity vehicle approach outside Shri Manibhai Virani and Smt. Navalben Virani Science College. Peak 508 vehicles/30-min with average speeds of 42 km/h. Faded zebra crossing markings and missing warning flashers.',
     reportsCount: 14,
-    upvotedByUserIds: ['user_aarav', 'user_priya', 'user_vikram'],
+    upvotedByUserIds: ['VSC-S-001', 'VSC-S-002', 'VSC-S-005'],
     evidenceIds: ['ev_aarav_traffic_count_01', 'ev_aarav_crossing_photo_02', 'ev_aarav_incident_log_03'],
     assemblyId: 'assembly_jaipur_pedestrian_2026',
     schemaVersion: 1,
@@ -22,9 +22,9 @@ export const seedCivicIssues: CivicIssue[] = [
   },
   {
     id: 'iss_02',
-    title: 'Shipra Path Blind Curve & Obstructed Sightlines',
-    location: 'Shipra Path Junction, Mansarovar, Jaipur',
-    ward: 'Ward 24',
+    title: 'University Road Blind Curve & Obstructed Sightlines',
+    location: 'University Road Junction, Kalawad Road, Rajkot',
+    ward: 'Ward 8',
     coordinates: { lat: 26.858, lng: 75.769 },
     category: 'Road Geometry',
     severity: 'high',
@@ -32,7 +32,7 @@ export const seedCivicIssues: CivicIssue[] = [
     description:
       'Overgrown municipal hedges and unauthorized parked vans block driver sightlines of children approaching the intersection crosswalk.',
     reportsCount: 8,
-    upvotedByUserIds: ['user_vikram', 'user_priya'],
+    upvotedByUserIds: ['VSC-S-005', 'VSC-S-002'],
     evidenceIds: ['ev_vikram_photo_01'],
     schemaVersion: 1,
     createdAt: '2026-09-22T11:00:00Z',
@@ -41,7 +41,7 @@ export const seedCivicIssues: CivicIssue[] = [
   {
     id: 'iss_03',
     title: 'Civil Lines Station Approach Missing Sidewalk Verge',
-    location: 'Civil Lines, Ajmer',
+    location: 'Civil Lines, Rajkot',
     ward: 'Ward 12',
     coordinates: { lat: 26.471, lng: 74.639 },
     category: 'Accessibility',
@@ -50,7 +50,7 @@ export const seedCivicIssues: CivicIssue[] = [
     description:
       'Students walking to Government Model School must walk in the active motorized lane due to a 200m missing sidewalk segment.',
     reportsCount: 11,
-    upvotedByUserIds: ['user_meera', 'user_diya'],
+    upvotedByUserIds: ['VSC-S-003', 'VSC-S-013'],
     evidenceIds: ['ev_meera_traffic_01'],
     schemaVersion: 1,
     createdAt: '2026-09-10T09:00:00Z',
@@ -58,8 +58,8 @@ export const seedCivicIssues: CivicIssue[] = [
   },
   {
     id: 'iss_04',
-    title: 'Kota Campus Highway Bus Stop Unlit Crossing',
-    location: 'Rawatbhata Road near RTU, Kota',
+    title: 'Rajkot Campus Highway Bus Stop Unlit Crossing',
+    location: 'Rawatbhata Road near RTU, Rajkot',
     ward: 'Ward 8',
     coordinates: { lat: 25.145, lng: 75.805 },
     category: 'Lighting & Visibility',
@@ -68,7 +68,7 @@ export const seedCivicIssues: CivicIssue[] = [
     description:
       'Nighttime ambient lux below 3.2 lux at student bus stop crossing. Multiple near-misses recorded by evening student shifts.',
     reportsCount: 6,
-    upvotedByUserIds: ['user_aryan'],
+    upvotedByUserIds: ['VSC-S-010'],
     evidenceIds: ['ev_aryan_sensor_01'],
     schemaVersion: 1,
     createdAt: '2026-10-01T18:00:00Z',

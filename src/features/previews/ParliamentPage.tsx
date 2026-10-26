@@ -48,17 +48,17 @@ export const ParliamentPage: React.FC = () => {
       },
       // 2. Government & Sponsoring Benches
       {
-        id: 'seat_parl_priya',
-        userId: 'user_priya',
-        name: 'Priya Sharma',
-        role: 'Lead Motion Sponsor (Jaipur Delegation)',
+        id: 'seat_parl_ankita',
+        userId: 'VSC-S-001',
+        name: 'Ankita Kapri',
+        role: 'Lead Motion Sponsor (Rajkot Delegation)',
         sideOrBench: 'Government',
         status: 'speaking',
         isSpeaking: true,
         isReserved: true,
-        institution: 'Navchetna Public School, Jaipur (Rajasthan)',
+        institution: 'Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot (Gujarat)',
         currentActivity:
-          'Tabled Rajasthan Motion #07: Mandatory 25 km/h Safe School Perimeter Zones & Raised Crosswalk Standards',
+          'Tabled Gujarat Motion #04: Mandatory 25 km/h Safe School Perimeter Zones & Raised Crosswalk Standards',
       },
       {
         id: 'seat_parl_rahul',
@@ -72,15 +72,15 @@ export const ParliamentPage: React.FC = () => {
           'Co-Sponsoring Motion #12: Urban School Bus Staggering & Non-Motorised Freight Windows',
       },
       {
-        id: 'seat_parl_aarav',
-        userId: 'user_aarav',
-        name: 'Aarav Sharma',
-        role: 'Jaipur Youth Delegate',
+        id: 'seat_parl_yash',
+        userId: 'VSC-S-005',
+        name: 'Yash Rathod',
+        role: 'Rajkot Youth Delegate',
         sideOrBench: 'Government',
         status: 'active',
-        institution: 'Navchetna Public School, Jaipur',
+        institution: 'Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot',
         currentActivity:
-          'Presenting grassroots observational traffic counts and speed logs from Mansarovar',
+          'Presenting grassroots observational traffic counts and speed logs from Kalawad Road',
       },
       // 3. Opposition & Scrutiny Benches
       {
@@ -105,16 +105,16 @@ export const ParliamentPage: React.FC = () => {
       },
       // 4. Cross-benches & State Delegations
       {
-        id: 'seat_parl_vikram',
-        userId: 'user_vikram',
-        name: isNonCompliant ? 'Unfilled Reserved Seat' : 'Vikram Rathore',
-        role: isNonCompliant ? 'Held Vacant (33% Quota)' : 'Jaipur Youth Delegate',
+        id: 'seat_parl_kanha',
+        userId: 'VSC-S-006',
+        name: isNonCompliant ? 'Unfilled Reserved Seat' : 'Kanha Kapri',
+        role: isNonCompliant ? 'Held Vacant (33% Quota)' : 'Rajkot Youth Delegate',
         sideOrBench: 'Cross-bench',
         status: isNonCompliant ? 'vacant' : 'active',
         isReserved: isNonCompliant,
         institution: isNonCompliant
-          ? 'Jaipur Delegation Allocation'
-          : 'Jaipur Youth Deliberative Assembly',
+          ? 'Rajkot Delegation Allocation'
+          : 'Rajkot Youth Deliberative Assembly',
         currentActivity: isNonCompliant
           ? 'Unmet reserved place remains held vacant by default per 33% Reservation Policy (OD.17).'
           : isOverbooked
@@ -154,18 +154,18 @@ export const ParliamentPage: React.FC = () => {
       vacanciesCount: allocation.vacanciesCount ?? 0,
       isIllustrative: true,
       illustrativeNotice:
-        'Illustrative apex plenary prototype: 3-seat Jaipur delegation calculation via shared reservationAllocationService. No live member appointment or statutory quota enforcement is claimed for national parliament.',
+        'Illustrative apex plenary prototype: 3-seat Rajkot delegation calculation via shared reservationAllocationService. No live member appointment or statutory quota enforcement is claimed for national parliament.',
     };
   }, [allocation]);
 
   const motions = [
     {
-      id: 'MOT-RAJ-07',
-      state: 'Rajasthan',
+      id: 'MOT-GUJ-04',
+      state: 'Gujarat',
       title: 'Mandatory 25 km/h Safe School Perimeter Zones & Raised Crosswalk Standards',
-      sponsor: 'Priya Sharma (Youth Delegate, Jaipur)',
+      sponsor: 'Ankita Kapri (Youth Delegate, Rajkot)',
       status: 'Tabled in Apex Chamber',
-      support: '89% State Deliberation Consensus',
+      support: '91% State Deliberation Consensus',
       synopsis:
         'Statutory mandate requiring urban local bodies to install physical speed tables and continuous 1.8m footpaths outside high-density educational corridors.',
     },
@@ -207,7 +207,7 @@ export const ParliamentPage: React.FC = () => {
           className="flex items-center gap-1.5 self-start sm:self-auto"
         >
           <FileText className="w-4 h-4" />
-          <span>Inspect Rajasthan Motion #07</span>
+          <span>Inspect Gujarat Motion #04</span>
         </Button>
       </div>
 
@@ -345,21 +345,21 @@ export const ParliamentPage: React.FC = () => {
         sessionId="parliament_plenary_2026"
         seats={parliamentSeats}
         quotaSummary={parliamentQuotaSummary}
-        activeSpeakerId="seat_parl_priya"
+        activeSpeakerId="seat_parl_ankita"
         sampleTurns={[
           {
             id: 'turn_parl_1',
-            authorName: 'Priya Sharma',
+            authorName: 'Ankita Kapri',
             authorRole: 'Lead Motion Sponsor',
             timestamp: '11:00 AM',
-            text: 'Tabled National Motion #07: Mandatory 25 km/h school perimeter zones and safe pedestrian corridors across Tier-2 municipal corporations.',
+            text: 'Tabled National Motion #04: Mandatory 25 km/h school perimeter zones and safe pedestrian corridors across Tier-2 municipal corporations.',
           },
           {
             id: 'turn_parl_2',
             authorName: 'Ananya Sen',
             authorRole: 'Civic Scrutiny Spokesperson',
             timestamp: '11:08 AM',
-            text: 'Chamber Inquiry: Clarification requested on AMRUT 2.0 capital allocation guarantees vs municipal engineering capacity in Rajasthan.',
+            text: 'Chamber Inquiry: Clarification requested on AMRUT 2.0 capital allocation guarantees vs municipal engineering capacity in Gujarat.',
           },
           {
             id: 'turn_parl_3',
@@ -374,7 +374,7 @@ export const ParliamentPage: React.FC = () => {
         subtitle="Apex horseshoe layout with Presiding Speaker, Government, Opposition & Cross-benches"
       />
 
-      {/* Fictional Jaipur Youth Delegation Allocation Illustration */}
+      {/* Fictional Rajkot Youth Delegation Allocation Illustration */}
       <Card className="p-6 border-slate-200 bg-white space-y-5" data-testid="parliament-delegation-illustration">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
@@ -385,7 +385,7 @@ export const ParliamentPage: React.FC = () => {
               </span>
             </div>
             <CardTitle className="text-base font-bold text-slate-900 mt-1">
-              Fictional Jaipur Youth Delegation Allocation (Illustrative 3-Seat Prototype)
+              Fictional Rajkot Youth Delegation Allocation (Illustrative 3-Seat Prototype)
             </CardTitle>
             <p className="text-xs text-slate-500">
               Simulated 3-place seat allocation to the apex chamber, demonstrating how the shared reservation allocation service calculates quotas and validates compliance without hard-coded claims.
@@ -432,7 +432,7 @@ export const ParliamentPage: React.FC = () => {
             <span className="text-lg font-bold text-slate-900 font-heading block mt-0.5" data-testid="metric-total-places">
               {allocation.totalPlaces}
             </span>
-            <span className="text-[10px] text-slate-500 block">Jaipur Delegation</span>
+            <span className="text-[10px] text-slate-500 block">Rajkot Delegation</span>
           </div>
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -643,7 +643,7 @@ export const ParliamentPage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="text-xs font-mono font-bold text-civic-saffron-600 uppercase">
-                  Rajasthan State Motion #07
+                  Gujarat State Motion #04
                 </span>
                 <h3 className="text-base font-bold font-heading text-slate-900">
                   Safe School Perimeter Zone Standards (2026)
@@ -661,7 +661,7 @@ export const ParliamentPage: React.FC = () => {
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
                 <span className="font-bold block">Statutory Tabling Summary</span>
                 <p className="leading-relaxed text-[11px]">
-                  Originating from the Jaipur Pedestrian Safety Youth Assembly (#assembly_jaipur_pedestrian_2026), this resolution unifies audit findings from 12 Jaipur and Kota schools into a national standard.
+                  Originating from the Rajkot Pedestrian Safety Youth Assembly (#assembly_jaipur_pedestrian_2026), this resolution unifies audit findings from Rajkot Ward 8 school corridors into a national standard.
                 </p>
               </div>
 

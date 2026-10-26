@@ -24,13 +24,13 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
   describe('1. Private UHV draft and submit without evidence', () => {
     it('allows drafting and submitting UHV reflection without evidence, no credits awarded, and isolated from teacher queues', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
 
       // 1. Save Draft with 0 evidence
       const draft = await demoRepository.saveAssignmentDraft({
         assignmentId: 'asg_uhv_08',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         content: 'Personal notes exploring harmony in relationships.',
         evidenceIds: [],
       });
@@ -43,7 +43,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // 2. Submit reflection with 0 evidence
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_uhv_08',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         content: 'Self-inquiry observations on family harmony and mutual respect.',
         evidenceIds: [],
       });
@@ -58,12 +58,12 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(afterCredits).toBe(initialCredits);
 
       // Teacher notifications must NOT include UHV reflection
-      const teacherNotifs = await demoRepository.getNotifications('user_kavita');
+      const teacherNotifs = await demoRepository.getNotifications('VSC-T-001');
       const uhvNotifs = teacherNotifs.filter((n) => n.targetRoute?.includes('asg_uhv_08'));
       expect(uhvNotifs).toHaveLength(0);
 
       // Privacy Boundary: Teacher Kavita cannot see Meera's UHV reflection in queues or direct lookup
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
       const teacherQueue = await demoRepository.getSubmissions();
       const meeraUhvInQueue = teacherQueue.filter((s) => s.assignmentId === 'asg_uhv_08');
       expect(meeraUhvInQueue).toHaveLength(0);
@@ -75,22 +75,22 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
   describe('2. Direct-review scoring and reward rejection', () => {
     it('rejects teacher review and numeric scoring on UHV reflection even when called directly', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
       const submitted = await demoRepository.submitAssignment({
         assignmentId: 'asg_uhv_08',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         content: 'Reflective thoughts on societal harmony.',
         evidenceIds: [],
       });
 
       // Switch to actual seeded teacher Kavita Rao
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
 
       // Direct call to reviewSubmission must throw
       await expect(
         demoRepository.reviewSubmission({
           submissionId: submitted.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'VSC-T-001',
           status: 'verified',
           score: 25,
           teacherFeedback: 'Evaluative feedback should not be accepted',
@@ -98,7 +98,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       ).rejects.toThrow(/Teacher review and scoring are not permitted for private UHV reflections/);
 
       // Verify no score or review metadata was recorded
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
       const refreshed = await demoRepository.getSubmission(submitted.id);
       expect(refreshed?.score).toBeUndefined();
       expect(refreshed?.reviewerId).toBeUndefined();
@@ -110,12 +110,12 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
   describe('3. No UHV lesson credits & separate completion progress', () => {
     it('completes UHV lessons without awarding Learning credits or verified passport entries while tracking enrolment', async () => {
       // Use Aarav who has not started the UHV course yet
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
-      const initialPassport = await demoRepository.getPassport('user_aarav');
+      const initialPassport = await demoRepository.getPassport('VSC-S-001');
 
       // Complete lesson 1 of UHV track
-      const result1 = await demoRepository.completeLesson('user_aarav', 'les_uhv_501');
+      const result1 = await demoRepository.completeLesson('VSC-S-001', 'les_uhv_501');
       expect(result1.creditTransaction).toBeUndefined();
       expect(result1.enrolment.completedLessonIds).toContain('les_uhv_501');
 
@@ -123,7 +123,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(creditsAfterL1).toBe(initialCredits);
 
       // Complete lesson 2 (100% course completion)
-      const result2 = await demoRepository.completeLesson('user_aarav', 'les_uhv_502');
+      const result2 = await demoRepository.completeLesson('VSC-S-001', 'les_uhv_502');
       expect(result2.creditTransaction).toBeUndefined();
       expect(result2.enrolment.progressPercent).toBe(100);
       expect(result2.enrolment.status).toBe('completed');
@@ -132,7 +132,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(creditsAfterL2).toBe(initialCredits);
 
       // Civic passport must NOT count UHV course completion or create UHV entries
-      const passport = await demoRepository.getPassport('user_aarav');
+      const passport = await demoRepository.getPassport('VSC-S-001');
       const uhvEntries = passport.entries.filter(
         (p) =>
           p.sourceReferenceId === 'course_uhv_leadership_05' ||
@@ -146,12 +146,12 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
   describe('4. Unchanged civic assignment credit and evidence path', () => {
     it('preserves full credit, evidence verification, and scoring workflow for civic assignments', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
 
       // Add fresh mock interview evidence for civic assignment asg_obs_03
       const evidence = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
+        ownerId: 'VSC-S-001',
         ownerName: 'Aarav Sharma',
         type: 'interview',
         title: 'Peer Walking Commute Safety Interviews (5 Students)',
@@ -167,7 +167,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Submit civic assignment asg_obs_03 with attached evidence
       const sub = await demoRepository.submitAssignment({
         assignmentId: 'asg_obs_03',
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         content: 'Conducted interviews with 5 students commuting via walking along Mansarovar route.',
         evidenceIds: [evidence.id],
       });
@@ -176,7 +176,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(sub.evidenceIds).toContain(evidence.id);
 
       // +2 Contribution credit recorded as pending mentor review; total verified credits not prematurely increased
-      const credits = await demoRepository.getCredits('user_aarav');
+      const credits = await demoRepository.getCredits('VSC-S-001');
       const pendingSubCredit = credits.find((c) => c.sourceType === 'assignment' && c.sourceId === 'asg_obs_03');
       expect(pendingSubCredit?.status).toBe('Pending');
       expect(pendingSubCredit?.amount).toBe(2);
@@ -184,10 +184,10 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(creditsAfterSubmit).toBe(initialCredits);
 
       // Teacher Kavita reviews and verifies civic assignment
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
       const reviewed = await demoRepository.reviewSubmission({
         submissionId: sub.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         score: 25,
         teacherFeedback: 'Outstanding interview synthesis and verified fieldwork.',
@@ -200,7 +200,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       const updatedEv = await demoRepository.getEvidence(evidence.id);
       expect(updatedEv?.verificationStatus).toBe('verified');
 
-      const passport = await demoRepository.getPassport('user_aarav');
+      const passport = await demoRepository.getPassport('VSC-S-001');
       expect(passport.totalCredits).toBe(initialCredits + 3);
     });
   });
@@ -210,10 +210,10 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Simulate raw v1 database with defective UHV records
       const rawLegacyDb = {
         schemaVersion: 1,
-        activeUserId: 'user_meera',
+        activeUserId: 'VSC-S-002',
         users: [
           {
-            id: 'user_meera',
+            id: 'VSC-S-002',
             name: 'Meera Singh',
             email: 'meera.singh@vidyashree.edu.in',
             role: 'student',
@@ -265,13 +265,13 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           {
             id: 'sub_meera_02',
             assignmentId: 'asg_uhv_08',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             content: 'Legacy submission text',
             evidenceIds: ['ev_meera_doc_02'], // Defect: linked to public Ajmer charter
             status: 'verified',
             score: 25,
             teacherFeedback: 'Evaluative feedback from v1',
-            reviewerId: 'user_kavita',
+            reviewerId: 'VSC-T-001',
             reviewedAt: '2026-09-02T15:00:00Z',
             schemaVersion: 1,
             createdAt: '2026-09-02T14:00:00Z',
@@ -281,7 +281,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
         evidence: [
           {
             id: 'ev_meera_doc_02',
-            ownerId: 'user_meera',
+            ownerId: 'VSC-S-002',
             ownerName: 'Meera Singh',
             type: 'document',
             title: 'Youth Pedestrian Rights Charter: Ajmer Draft',
@@ -307,7 +307,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
         reflections: [
           {
             id: 'refl_custom_user_01',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             prompt: 'Custom citizen feedback inquiry',
             text: 'Participant recorded civic reflection',
             valuesHighlighted: ['Transparency'],
@@ -318,7 +318,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'refl_uhv_legacy_01',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             contextType: 'course',
             contextId: 'course_uhv_leadership_05',
             prompt: 'Legacy UHV reflection prompt',
@@ -331,7 +331,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'refl_meera_assembly_01',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             contextType: 'assembly',
             contextId: 'assembly_jaipur_pedestrian_2026',
             prompt: 'Civic reflection on assembly dialogue',
@@ -346,7 +346,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
         credits: [
           {
             id: 'tx_meera_03',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             dimension: 'Learning',
             amount: 30,
             sourceType: 'course',
@@ -358,7 +358,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'tx_legacy_uhv_refl',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             dimension: 'Reflection',
             amount: 5,
             sourceType: 'reflection',
@@ -370,7 +370,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'tx_meera_civic_01',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             dimension: 'Civic Action',
             amount: 20,
             sourceType: 'project',
@@ -382,7 +382,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'tx_meera_assembly_refl',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             dimension: 'Reflection',
             amount: 5,
             sourceType: 'reflection',
@@ -396,7 +396,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
         passportEntries: [
           {
             id: 'pass_meera_03',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             category: 'achievement',
             title: 'Master of Universal Human Values',
             subtitle: 'Graduate certificate claiming 30 credits',
@@ -410,7 +410,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'pass_legacy_uhv_refl',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             category: 'reflection',
             title: 'Legacy UHV Reflection',
             subtitle: 'Defective passport entry',
@@ -424,7 +424,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
           },
           {
             id: 'pass_meera_assembly_refl',
-            userId: 'user_meera',
+            userId: 'VSC-S-002',
             category: 'reflection',
             title: 'Assembly Deliberation Reflection',
             subtitle: 'Pedestrian dialogue',
@@ -511,7 +511,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
   describe('6. UI reflection language and absence of scoring/rubric/credit promises', () => {
     it('renders SubmitAssignmentPage for UHV with reflection disclosures and without credit promises or evidence requirements', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_uhv_08/submit']}>
@@ -534,7 +534,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
     });
 
     it('renders AssignmentDetailPage for UHV without rubrics, scores, or credit awards', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_uhv_08']}>
@@ -557,7 +557,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
     });
 
     it('renders AssignmentDetailPage for teacher with privacy informational notice and no review controls', async () => {
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_uhv_08']}>
@@ -579,7 +579,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
     it('renders LessonPage for incomplete UHV module with non-credit completion language', async () => {
       // Use Aarav who has not completed the module yet
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/learn/course_uhv_leadership_05/lesson/les_uhv_502']}>
@@ -604,13 +604,13 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
   describe('7. Direct UHV reflection method and cross-persona read isolation', () => {
     it('records direct UHV reflections privately without civic credits, passport entries, public activity, or teacher notifications', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
-      const initialPassport = await demoRepository.getPassport('user_meera');
+      const initialPassport = await demoRepository.getPassport('VSC-S-002');
 
       // Call addReflection directly with UHV context
       const refl = await demoRepository.addReflection({
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         contextType: 'course',
         contextId: 'course_uhv_leadership_05',
         prompt: 'Direct reflection on interpersonal trust',
@@ -627,23 +627,23 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(creditsAfter).toBe(initialCredits);
 
       // Passport must NOT contain any reflection entry for this reflection
-      const passportAfter = await demoRepository.getPassport('user_meera');
+      const passportAfter = await demoRepository.getPassport('VSC-S-002');
       expect(passportAfter.entries.find((p) => p.sourceReferenceId === refl.id)).toBeUndefined();
       expect(passportAfter.totalCredits).toBe(initialPassport.totalCredits);
 
       // Credits must NOT contain any transaction for this reflection
-      const creditsList = await demoRepository.getCredits('user_meera');
+      const creditsList = await demoRepository.getCredits('VSC-S-002');
       expect(creditsList.find((c) => c.sourceId === refl.id)).toBeUndefined();
 
       // Teacher Kavita must NOT receive notifications about Meera's UHV reflection
-      const teacherNotifs = await demoRepository.getNotifications('user_kavita');
+      const teacherNotifs = await demoRepository.getNotifications('VSC-T-001');
       expect(teacherNotifs.find((n) => n.message.includes('Direct reflection on interpersonal trust'))).toBeUndefined();
     });
 
     it('isolates private UHV reflections so other personas cannot read them via getReflections or getReflection', async () => {
       // Meera is active persona: can read her own seeded UHV reflection refl_meera_01
-      await useAuthStore.getState().switchPersona('user_meera');
-      const meeraRefls = await demoRepository.getReflections('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
+      const meeraRefls = await demoRepository.getReflections('VSC-S-002');
       expect(meeraRefls.find((r) => r.id === 'refl_meera_01')).toBeDefined();
 
       const directLookupMeera = await demoRepository.getReflection('refl_meera_01');
@@ -651,10 +651,10 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(directLookupMeera?.id).toBe('refl_meera_01');
 
       // Switch to Teacher Kavita: cannot access Meera's private UHV reflection
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
 
       // getReflections with Meera's ID excludes UHV reflection
-      const kavitaLookingAtMeera = await demoRepository.getReflections('user_meera');
+      const kavitaLookingAtMeera = await demoRepository.getReflections('VSC-S-002');
       expect(kavitaLookingAtMeera.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
 
       // getReflections without user ID excludes UHV reflection
@@ -669,13 +669,13 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
   describe('8. addCredit guard & intact civic Assembly reflection workflow', () => {
     it('prevents direct addCredit for UHV lesson, assignment, course, or UHV reflection sources', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
 
       // Lesson source
       await expect(
         demoRepository.addCredit({
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           dimension: 'Learning',
           amount: 5,
           sourceType: 'lesson',
@@ -688,7 +688,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Assignment source
       await expect(
         demoRepository.addCredit({
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           dimension: 'Contribution',
           amount: 10,
           sourceType: 'assignment',
@@ -701,7 +701,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Course source
       await expect(
         demoRepository.addCredit({
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           dimension: 'Learning',
           amount: 30,
           sourceType: 'course' as any,
@@ -714,7 +714,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       // Reflection source
       await expect(
         demoRepository.addCredit({
-          userId: 'user_aarav',
+          userId: 'VSC-S-001',
           dimension: 'Reflection',
           amount: 5,
           sourceType: 'reflection',
@@ -729,11 +729,11 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
     });
 
     it('preserves full +5 Reflection Credit, Passport entry, and notification for civic Assembly reflections', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
       const initialCredits = (await demoRepository.getCurrentUser()).totalCredits;
 
       const civicRefl = await demoRepository.addReflection({
-        userId: 'user_aarav',
+        userId: 'VSC-S-001',
         contextType: 'assembly',
         contextId: 'assembly_jaipur_pedestrian_2026',
         prompt: 'What did you learn from deliberating on pedestrian speed tables?',
@@ -750,34 +750,34 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(creditsAfter).toBe(initialCredits + 1);
 
       // Passport entry created and verified
-      const passport = await demoRepository.getPassport('user_aarav');
+      const passport = await demoRepository.getPassport('VSC-S-001');
       const passEntry = passport.entries.find((p) => p.sourceReferenceId === civicRefl.id);
       expect(passEntry).toBeDefined();
       expect(passEntry?.creditsAwarded).toBe(1);
       expect(passEntry?.isVerified).toBe(true);
 
       // Activity logged
-      const activities = await demoRepository.getActivities('user_aarav');
+      const activities = await demoRepository.getActivities('VSC-S-001');
       expect(activities.find((a) => a.referenceId === civicRefl.id)).toBeDefined();
 
       // Notifications received
-      const notifs = await demoRepository.getNotifications('user_aarav');
+      const notifs = await demoRepository.getNotifications('VSC-S-001');
       expect(notifs.find((n) => n.title === 'Reflection Recorded')).toBeDefined();
     });
   });
 
   describe('9. Civic surfaces reflection isolation, badge logic, and cross-persona activity suppression', () => {
     it('excludes private UHV reflection from Civic Passport while preserving civic Assembly reflections in PassportPage', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       // 1. Repository-level civic reflections check
-      const civicReflsBefore = await demoRepository.getCivicReflections('user_meera');
+      const civicReflsBefore = await demoRepository.getCivicReflections('VSC-S-002');
       expect(civicReflsBefore.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
 
       // Owner can still read her private UHV reflection via getReflections or getUhvReflections
-      const allReflsMeera = await demoRepository.getReflections('user_meera');
+      const allReflsMeera = await demoRepository.getReflections('VSC-S-002');
       expect(allReflsMeera.find((r) => r.id === 'refl_meera_01')).toBeDefined();
-      const uhvReflsMeera = await demoRepository.getUhvReflections('user_meera');
+      const uhvReflsMeera = await demoRepository.getUhvReflections('VSC-S-002');
       expect(uhvReflsMeera.find((r) => r.id === 'refl_meera_01')).toBeDefined();
 
       // Render PassportPage before adding civic reflection
@@ -801,7 +801,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
       // 2. Now record a civic Assembly reflection
       const civicAssemblyRefl = await demoRepository.addReflection({
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         contextType: 'assembly',
         contextId: 'assembly_jaipur_pedestrian_2026',
         prompt: 'What did you observe regarding cross-group consensus in the youth assembly?',
@@ -811,7 +811,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       });
 
       // getCivicReflections now returns the civic reflection, but still NOT refl_meera_01
-      const civicReflsAfter = await demoRepository.getCivicReflections('user_meera');
+      const civicReflsAfter = await demoRepository.getCivicReflections('VSC-S-002');
       expect(civicReflsAfter.find((r) => r.id === civicAssemblyRefl.id)).toBeDefined();
       expect(civicReflsAfter.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
 
@@ -835,7 +835,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
 
     it('does not earn Civic Deliberative Reflector badge from private UHV reflections in AchievementsPage', async () => {
       // Meera has only seeded private UHV reflection refl_meera_01 and 0 reflection credits initially
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       render(
         <MemoryRouter initialEntries={['/passport/achievements']}>
@@ -858,7 +858,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
     });
 
     it('excludes UHV reflections from Assembly and Proposition deliberation reflection views', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       // Assembly view
       const { unmount: unmountAssembly } = render(
@@ -898,7 +898,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       const db = PersistenceService.loadDatabase();
       const legacyUhvAct: Activity = {
         id: 'act_legacy_uhv_reflection',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         type: 'reflection_shared',
         title: 'Completed Civic & Ethical Reflection',
         description: 'When we approach community spaces with mutual respect and trust, neighbourhood cooperation...',
@@ -911,7 +911,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       };
       const meeraUhvLessonAct: Activity = {
         id: 'act_meera_uhv_lesson',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         type: 'lesson_completed',
         title: 'Completed Study Module: les_uhv_501',
         description: 'Progress in UHV reached 50% (Personal Study Stream).',
@@ -924,7 +924,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       };
       const meeraCivicAct: Activity = {
         id: 'act_meera_civic_pedestrian',
-        userId: 'user_meera',
+        userId: 'VSC-S-002',
         type: 'assembly_joined',
         title: 'Joined Youth Assembly: Jaipur School Zone Pedestrian Safety',
         description: 'Participating in pedestrian speed table deliberation.',
@@ -940,10 +940,10 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       PersistenceService.saveDatabase(db);
 
       // Switch to Teacher Kavita Rao
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
 
-      // 1. getActivities('user_meera') read by Kavita
-      const meeraActsFromKavita = await demoRepository.getActivities('user_meera');
+      // 1. getActivities('VSC-S-002') read by Kavita
+      const meeraActsFromKavita = await demoRepository.getActivities('VSC-S-002');
       expect(meeraActsFromKavita.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
       expect(meeraActsFromKavita.find((a) => a.id === 'act_meera_uhv_lesson')).toBeUndefined();
       // Unrelated civic activity MUST be preserved!
@@ -954,25 +954,25 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       expect(allActsFromKavita.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
       expect(allActsFromKavita.find((a) => a.id === 'act_meera_uhv_lesson')).toBeUndefined();
 
-      // 3. getDashboard('user_meera') read by Kavita
-      const meeraDashboardFromKavita = await demoRepository.getDashboard('user_meera');
+      // 3. getDashboard('VSC-S-002') read by Kavita
+      const meeraDashboardFromKavita = await demoRepository.getDashboard('VSC-S-002');
       expect(meeraDashboardFromKavita.recentActivities.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
       expect(meeraDashboardFromKavita.recentActivities.find((a) => a.id === 'act_meera_uhv_lesson')).toBeUndefined();
       expect(meeraDashboardFromKavita.recentActivities.find((a) => a.id === 'act_meera_civic_pedestrian')).toBeDefined();
       expect(meeraDashboardFromKavita.activeEnrolments.find((e) => e.courseId === 'course_uhv_leadership_05')).toBeUndefined();
 
       // 4. Meera reads her own timeline: legacy reflection activity is suppressed from civic trail
-      await useAuthStore.getState().switchPersona('user_meera');
-      const meeraOwnDashboard = await demoRepository.getDashboard('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
+      const meeraOwnDashboard = await demoRepository.getDashboard('VSC-S-002');
       expect(meeraOwnDashboard.recentActivities.find((a) => a.id === 'act_legacy_uhv_reflection')).toBeUndefined();
       expect(meeraOwnDashboard.recentActivities.find((a) => a.id === 'act_meera_civic_pedestrian')).toBeDefined();
     });
 
     it('allows owner Meera to read private UHV reflection in dedicated /uhv stream with privacy disclosures', async () => {
-      await useAuthStore.getState().switchPersona('user_meera');
+      await useAuthStore.getState().switchPersona('VSC-S-002');
 
       // Owner can read her UHV reflections
-      const uhvRefls = await demoRepository.getUhvReflections('user_meera');
+      const uhvRefls = await demoRepository.getUhvReflections('VSC-S-002');
       expect(uhvRefls.find((r) => r.id === 'refl_meera_01')).toBeDefined();
 
       const { unmount } = render(
@@ -997,10 +997,10 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       unmount();
 
       // Switch to Teacher Kavita: cannot see Meera's UHV reflection in /uhv stream
-      await useAuthStore.getState().switchPersona('user_kavita');
-      const kavitaUhvRefls = await demoRepository.getUhvReflections('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
+      const kavitaUhvRefls = await demoRepository.getUhvReflections('VSC-T-001');
       expect(kavitaUhvRefls.find((r) => r.id === 'refl_meera_01')).toBeUndefined();
-      const kavitaLookingAtMeeraUhv = await demoRepository.getUhvReflections('user_meera');
+      const kavitaLookingAtMeeraUhv = await demoRepository.getUhvReflections('VSC-S-002');
       expect(kavitaLookingAtMeeraUhv).toHaveLength(0);
 
       render(
@@ -1012,7 +1012,7 @@ describe('UHV / Jeevan Vidya Reflection Boundary & Privacy Isolation', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/No private UHV reflections recorded for Kavita Rao/i)).toBeInTheDocument();
+        expect(screen.getByText(/No private UHV reflections recorded for.*Mayur/i)).toBeInTheDocument();
       });
 
       expect(screen.queryByText(/When we approach community spaces with mutual respect and trust/i)).not.toBeInTheDocument();

@@ -32,7 +32,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Youth Deliberative Assemblies/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Active Deliberations/i })).toBeInTheDocument();
-      expect(screen.getByText(/Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/(Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Join Assembly/i).length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -47,7 +47,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Jaipur School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /(Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeInTheDocument();
       expect(screen.getByText(/Assembly Deliberation Pathway \(6 Stages\)/i)).toBeInTheDocument();
       expect(screen.getByText(/Chamber Evidence Pool/i)).toBeInTheDocument();
       expect(screen.getByText(/Chamber Deliberators/i)).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe('Youth Assembly & Civic Passport UI Integration Tests', () => {
 
   it('renders AssemblySessionPage with 6 stages navigation, role briefing, and interactive workspace', async () => {
     // First join assembly
-    await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'user_aarav');
+    await demoRepository.joinAssembly('assembly_jaipur_pedestrian_2026', 'VSC-S-001');
 
     render(
       <MemoryRouter initialEntries={['/assemblies/assembly_jaipur_pedestrian_2026/session']}>

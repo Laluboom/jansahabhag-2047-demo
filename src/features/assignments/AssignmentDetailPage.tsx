@@ -610,11 +610,11 @@ export const AssignmentDetailPage: React.FC = () => {
               </h2>
             </div>
             <span className="text-[11px] font-semibold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-100">
-              Jaipur Civic Stream
+              Rajkot Civic Stream
             </span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Your fieldwork observation evidence is ready to inform local deliberative chambers. You can bring your findings into the Jaipur Pedestrian Safety Youth Assembly or table arguments in the structured Debate Room.
+            Your fieldwork observation evidence is ready to inform local deliberative chambers. You can bring your findings into the Rajkot Pedestrian Safety Youth Assembly or table arguments in the structured Debate Room.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -623,7 +623,7 @@ export const AssignmentDetailPage: React.FC = () => {
               className="p-4 rounded-xl border border-civic-indigo-200 bg-white hover:border-civic-indigo-400 hover:shadow-xs transition-all group"
             >
               <div className="flex items-center justify-between font-bold text-xs text-slate-900 group-hover:text-civic-indigo-700">
-                <span>Jaipur Youth Assembly</span>
+                <span>Rajkot Youth Assembly</span>
                 <ArrowRight className="w-4 h-4 text-civic-indigo-500 group-hover:translate-x-0.5 transition-transform" />
               </div>
               <p className="text-[11px] text-slate-500 mt-1">

@@ -29,10 +29,10 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await expect(rulebook).toContainText('Never infer eligibility from names, portraits, voices, or proxies');
     await expect(rulebook).toContainText('Prototype Boundary Notice');
 
-    // 4. Verify Fictional Jaipur 3-Seat Delegation Illustration (Default: Scenario A Compliant)
+    // 4. Verify Fictional Rajkot 3-Seat Delegation Illustration (Default: Scenario A Compliant)
     const illustration = page.locator('[data-testid="parliament-delegation-illustration"]');
     await expect(illustration).toBeVisible();
-    await expect(illustration).toContainText('Fictional Jaipur Youth Delegation Allocation (Illustrative 3-Seat Prototype)');
+    await expect(illustration).toContainText('Fictional Rajkot Youth Delegation Allocation (Illustrative 3-Seat Prototype)');
 
     // Check Metrics Bar
     await expect(page.locator('[data-testid="metric-total-places"]')).toHaveText('3');
@@ -51,16 +51,19 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Seat #1 — Fictional Reserved Allocation');
     await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Reserved Allocation');
     await expect(page.locator('[data-testid="seat-card-1"]')).toContainText('Occupied by Eligible Candidate');
+    await expect(page.locator('[data-testid="seat-card-1"]')).not.toContainText('Ankita Kapri');
     await expect(page.locator('[data-testid="seat-card-1"]')).not.toContainText('Priya Sharma');
 
     await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('Seat #2 — Fictional General Allocation');
     await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('General Allocation');
     await expect(page.locator('[data-testid="seat-card-2"]')).toContainText('Occupied by General Candidate');
+    await expect(page.locator('[data-testid="seat-card-2"]')).not.toContainText('Yash Rathod');
     await expect(page.locator('[data-testid="seat-card-2"]')).not.toContainText('Aarav Sharma');
 
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Seat #3 — Fictional General Allocation');
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('General Allocation');
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Occupied by General Candidate');
+    await expect(page.locator('[data-testid="seat-card-3"]')).not.toContainText('Kanha Kapri');
     await expect(page.locator('[data-testid="seat-card-3"]')).not.toContainText('Vikram Malhotra');
 
     // 5. Switch to Scenario B: Non-Compliant (Reserved Vacancy Default)

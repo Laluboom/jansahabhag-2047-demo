@@ -23,7 +23,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     EvidenceAttachmentStore.setSimulateQuotaFailure(false);
     EvidenceAttachmentStore.setSimulateTransactionFailure(false);
     EvidenceAttachmentStore.setSimulateOpenFailure(false);
-    await demoRepository.switchUser('user_aarav');
+    await demoRepository.switchUser('VSC-S-001');
     await useAuthStore.getState().initialize();
   });
 
@@ -85,8 +85,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       // In repository
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_aarav',
-          ownerName: 'Aarav Sharma',
+          ownerId: 'VSC-S-001',
+          ownerName: 'Ankita Kapri',
           type: 'image',
           title: 'Oversized Binary Evidence',
           description: 'Testing 10MB limit enforcement.',
@@ -109,8 +109,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       // 1. Without blobKey (inline legacy): 300 KB is rejected at 250 KB
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_aarav',
-          ownerName: 'Aarav Sharma',
+          ownerId: 'VSC-S-001',
+          ownerName: 'Ankita Kapri',
           type: 'document',
           title: '300KB Inline Evidence',
           description: 'Legacy inline dataUrl limit test.',
@@ -128,8 +128,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
       // 2. With blobKey / storageType: 'indexeddb': 2.4 MB is successfully accepted
       const accepted = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'image',
         title: '2.4MB IndexedDB Binary Evidence',
         description: 'Binary store test.',
@@ -169,8 +169,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
       // Save evidence metadata to repository
       const ev = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'image',
         title: 'Community Cleanup Field Photo',
         description: 'Photo of youth cleanup along Mansarovar drain.',
@@ -248,8 +248,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       });
 
       const privateEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'document',
         title: 'Confidential Pedestrian Survey',
         description: 'Survey with resident notes.',
@@ -267,13 +267,13 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       });
 
       // 1. Owner (Aarav) CAN access attachment
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const aaravAttachment = await demoRepository.getEvidenceAttachment(privateEv.id);
       expect(aaravAttachment).not.toBeNull();
       expect(aaravAttachment?.blobKey).toBe(blobKey);
 
       // 2. Peer participant (Priya) is DENIED access: getEvidence returns null
-      await demoRepository.switchUser('user_priya');
+      await demoRepository.switchUser('VSC-S-002');
       const priyaRead = await demoRepository.getEvidence(privateEv.id);
       expect(priyaRead).toBeNull();
 
@@ -283,19 +283,19 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       ).rejects.toThrow(/Unauthorized: You do not have permission to access or download this evidence attachment/i);
 
       // 3. Unassigned teacher (Kavita) before assignment is DENIED access
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       expect(await demoRepository.getEvidence(privateEv.id)).toBeNull();
       await expect(
         demoRepository.getEvidenceAttachment(privateEv.id)
       ).rejects.toThrow(/Unauthorized: You do not have permission to access or download this evidence attachment/i);
 
       // 4. Platform Admin (user_admin) CAN access
-      await demoRepository.switchUser('user_admin');
+      await demoRepository.switchUser('JS-F-001');
       const adminAttachment = await demoRepository.getEvidenceAttachment(privateEv.id);
       expect(adminAttachment).not.toBeNull();
 
       // 5. Programme Manager (user_dev) CAN access
-      await demoRepository.switchUser('user_dev');
+      await demoRepository.switchUser('JS-F-001');
       const devAttachment = await demoRepository.getEvidenceAttachment(privateEv.id);
       expect(devAttachment).not.toBeNull();
     });
@@ -311,8 +311,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
       // Add evidence and verify it
       const ev = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'image',
         title: 'Verified Crossroad Observation',
         description: 'Photo of zebra crossing.',
@@ -330,38 +330,38 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       });
 
       // Teacher verifies evidence
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       await demoRepository.reviewEvidence({
         evidenceId: ev.id,
-        reviewerId: 'user_kavita',
+        reviewerId: 'VSC-T-001',
         status: 'verified',
         comment: 'Verified fieldwork.',
       });
 
       // Aarav (owner) viewing his own passport sees verified evidence with blobKey
-      await demoRepository.switchUser('user_aarav');
-      const aaravPassport = await demoRepository.getPassport('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
+      const aaravPassport = await demoRepository.getPassport('VSC-S-001');
       const aaravVerifiedEv = aaravPassport.verifiedEvidence.find((e) => e.id === ev.id);
       expect(aaravVerifiedEv).toBeDefined();
       expect(aaravVerifiedEv?.fileInfo?.blobKey).toBe(blobKey);
 
       // Dev (programme_manager) viewing Aarav's passport has staff admin access and sees blobKey
-      await demoRepository.switchUser('user_dev');
-      const devPassport = await demoRepository.getPassport('user_aarav');
+      await demoRepository.switchUser('JS-F-001');
+      const devPassport = await demoRepository.getPassport('VSC-S-001');
       const devVerifiedEv = devPassport.verifiedEvidence.find((e) => e.id === ev.id);
       expect(devVerifiedEv).toBeDefined();
       expect(devVerifiedEv?.fileInfo?.blobKey).toBe(blobKey);
 
       // Unassigned teacher Kavita viewing Aarav's passport does NOT receive raw private blobKey
-      await demoRepository.switchUser('user_kavita');
-      const kavitaPassport = await demoRepository.getPassport('user_aarav');
+      await demoRepository.switchUser('VSC-T-001');
+      const kavitaPassport = await demoRepository.getPassport('VSC-S-001');
       const kavitaVerifiedEv = kavitaPassport.verifiedEvidence.find((e) => e.id === ev.id);
       expect(kavitaVerifiedEv).toBeDefined();
       expect(kavitaVerifiedEv?.fileInfo?.blobKey).toBeUndefined();
 
       // Peer participant Priya is blocked from accessing another persona's private passport
-      await demoRepository.switchUser('user_priya');
-      await expect(demoRepository.getPassport('user_aarav')).rejects.toThrow(
+      await demoRepository.switchUser('VSC-S-002');
+      await expect(demoRepository.getPassport('VSC-S-001')).rejects.toThrow(
         /Unauthorized: cannot access Civic Passport of another persona/i
       );
     });
@@ -371,8 +371,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     it('handles IndexedDB quota error visibly and preserves prior storage state', async () => {
       // 1. Establish prior evidence
       const priorEv = await demoRepository.addEvidence({
-        ownerId: 'user_aarav',
-        ownerName: 'Aarav Sharma',
+        ownerId: 'VSC-S-001',
+        ownerName: 'Ankita Kapri',
         type: 'observation',
         title: 'Prior Durable Evidence',
         description: 'Durable record before quota test.',
@@ -400,9 +400,9 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     });
 
     it('rejects on non-quota transaction abort/failure, ensures NO metadata is saved in repository, and shows visible error in UI', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
-      const initialEvs = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
+      const initialEvs = await demoRepository.getEvidenceList({ ownerId: 'VSC-S-001' });
       const initialCount = initialEvs.length;
 
       // Enable non-quota transaction abort/failure simulation
@@ -451,7 +451,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       ).toBeInTheDocument();
 
       // 3. NO evidence metadata is written to repository
-      const currentEvs = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
+      const currentEvs = await demoRepository.getEvidenceList({ ownerId: 'VSC-S-001' });
       expect(currentEvs.length).toBe(initialCount);
       expect(
         currentEvs.some((e) => e.title === 'Unique Unsaved Transaction Abort Photo')
@@ -468,7 +468,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
         expect(screen.queryByRole('heading', { name: /Log Field Evidence/i })).not.toBeInTheDocument();
       });
 
-      const updatedEvs = await demoRepository.getEvidenceList({ ownerId: 'user_aarav' });
+      const updatedEvs = await demoRepository.getEvidenceList({ ownerId: 'VSC-S-001' });
       expect(updatedEvs.length).toBe(initialCount + 1);
     });
 
@@ -493,8 +493,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     it('strictly forbids attaching private UHV reflections to civic evidence or shared records', async () => {
       await expect(
         demoRepository.addEvidence({
-          ownerId: 'user_aarav',
-          ownerName: 'Aarav Sharma',
+          ownerId: 'VSC-S-001',
+          ownerName: 'Ankita Kapri',
           type: 'document',
           title: 'Illegally Attached UHV Reflection',
           description: 'Attempting to leak reflection into civic evidence.',
@@ -510,7 +510,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
   describe('6. Teacher/Mentor Cohort Attendance Sheet & Certificate Path', () => {
     it('allows teacher to attach attendance sheet on behalf of an eligible cohort with audit record and review status', async () => {
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
 
       const blobKey = 'blob_cohort_attendance_01';
       const mockBlob = new Blob(['Signed Attendance Roster Content'], { type: 'application/pdf' });
@@ -521,9 +521,9 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       });
 
       const res = await demoRepository.attachCohortEvidence({
-        mentorId: 'user_kavita',
+        mentorId: 'VSC-T-001',
         cohortId: 'cohort_navchetna_grade12',
-        participantIds: ['user_aarav', 'user_priya'],
+        participantIds: ['VSC-S-001', 'VSC-S-002'],
         documentType: 'attendance_sheet',
         title: 'Ward 24 Deliberation Workshop Attendance Sheet',
         description: 'Official countersigned in-person attendance sheet for Grade 12 cohort.',
@@ -539,7 +539,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       // 1. Audit record created with mentorId, cohortId, notes, timestamp
       expect(res.auditRecord).toBeDefined();
       expect(res.auditRecord.id).toMatch(/^audit_cohort/);
-      expect(res.auditRecord.mentorId).toBe('user_kavita');
+      expect(res.auditRecord.mentorId).toBe('VSC-T-001');
       expect(res.auditRecord.cohortId).toBe('cohort_navchetna_grade12');
       expect(res.auditRecord.documentType).toBe('attendance_sheet');
       expect(res.auditRecord.participantCount).toBe(2);
@@ -547,8 +547,8 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
       // 2. Creates evidence items for each participant
       expect(res.evidenceItems.length).toBe(2);
-      const aaravEv = res.evidenceItems.find((e) => e.ownerId === 'user_aarav');
-      const priyaEv = res.evidenceItems.find((e) => e.ownerId === 'user_priya');
+      const aaravEv = res.evidenceItems.find((e) => e.ownerId === 'VSC-S-001');
+      const priyaEv = res.evidenceItems.find((e) => e.ownerId === 'VSC-S-002');
       expect(aaravEv).toBeDefined();
       expect(priyaEv).toBeDefined();
 
@@ -562,12 +562,12 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       expect(audits.some((a) => a.id === res.auditRecord.id)).toBe(true);
 
       // 5. Participant cannot self-invoke cohort attachment
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       await expect(
         demoRepository.attachCohortEvidence({
-          mentorId: 'user_aarav',
+          mentorId: 'VSC-S-001',
           cohortId: 'cohort_navchetna_grade12',
-          participantIds: ['user_aarav'],
+          participantIds: ['VSC-S-001'],
           documentType: 'attendance_sheet',
           title: 'Illegal Participant Cohort Sheet',
           description: 'Self-attachment attempt',
@@ -578,11 +578,11 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
     it('allows reviewer to comment and verify cohort evidence; verified evidence awards credit and links to Passport', async () => {
       // 1. Teacher attaches cohort certificate
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const attachRes = await demoRepository.attachCohortEvidence({
-        mentorId: 'user_kavita',
+        mentorId: 'VSC-T-001',
         cohortId: 'cohort_navchetna_grade12',
-        participantIds: ['user_aarav'],
+        participantIds: ['VSC-S-001'],
         documentType: 'completion_certificate',
         title: 'Civic Fieldwork Completion Certificate',
         description: 'Certificate for completing 15-hour street audit curriculum.',
@@ -592,39 +592,39 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       const evId = attachRes.evidenceItems[0].id;
 
       // 2. Initial credits for Aarav
-      const initialAarav = await demoRepository.getUser('user_aarav');
+      const initialAarav = await demoRepository.getUser('VSC-S-001');
       const initialCredits = initialAarav?.totalCredits || 0;
 
-      // 3. Facilitator Rohan (or admin/mentor) reviews and verifies with comment
-      await demoRepository.switchUser('user_rohan');
+      // 3. Admin Nazim reviews and verifies with comment
+      await demoRepository.switchUser('JS-F-001');
       const verifiedEv = await demoRepository.reviewEvidence({
         evidenceId: evId,
-        reviewerId: 'user_rohan',
+        reviewerId: 'JS-F-001',
         status: 'verified',
         comment: 'Certificate verified against institutional registry.',
       });
 
       expect(verifiedEv.verificationStatus).toBe('verified');
-      expect(verifiedEv.metadata?.reviewedBy).toBe('Rohan Mehta');
+      expect(verifiedEv.metadata?.reviewedBy).toBe('Nazim M. Sandh');
       expect(verifiedEv.metadata?.reviewerComment).toBe('Certificate verified against institutional registry.');
 
       // 4. Aarav receives +1 Observation/attendance credit
-      const updatedAarav = await demoRepository.getUser('user_aarav');
+      const updatedAarav = await demoRepository.getUser('VSC-S-001');
       expect(updatedAarav?.totalCredits).toBe(initialCredits + 1);
 
       // 5. Appears in Aarav's Civic Passport verified evidence pool
-      await demoRepository.switchUser('user_aarav');
-      const passport = await demoRepository.getPassport('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
+      const passport = await demoRepository.getPassport('VSC-S-001');
       const foundInPassport = passport.verifiedEvidence.find((e) => e.id === evId);
       expect(foundInPassport).toBeDefined();
       expect(foundInPassport?.title).toBe('Civic Fieldwork Completion Certificate');
     });
 
     it('blocks self-review: mentors cannot review their own attached evidence', async () => {
-      await demoRepository.switchUser('user_kavita');
+      await demoRepository.switchUser('VSC-T-001');
       const ev = await demoRepository.addEvidence({
-        ownerId: 'user_kavita',
-        ownerName: 'Kavita Rao',
+        ownerId: 'VSC-T-001',
+        ownerName: 'Shri Mayur Parmar',
         type: 'observation',
         title: 'Teacher Self Observation',
         description: 'Demonstration log.',
@@ -637,7 +637,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
       await expect(
         demoRepository.reviewEvidence({
           evidenceId: ev.id,
-          reviewerId: 'user_kavita',
+          reviewerId: 'VSC-T-001',
           status: 'verified',
           comment: 'Self review attempt',
         })
@@ -647,7 +647,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
   describe('7. Offline Activity Example (Local Cleanup Photo)', () => {
     it('seeded evidence includes fictional local cleanup photo with IndexedDB storage metadata', async () => {
-      await demoRepository.switchUser('user_aarav');
+      await demoRepository.switchUser('VSC-S-001');
       const seeded = await demoRepository.getEvidence('ev_offline_cleanup_01');
       expect(seeded).not.toBeNull();
       expect(seeded?.title).toContain('Cleanup Photo');
@@ -659,7 +659,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
     });
 
     it('renders "Use Offline Cleanup Photo Example" in SubmitAssignmentPage modal and populates form', async () => {
-      await useAuthStore.getState().switchPersona('user_aarav');
+      await useAuthStore.getState().switchPersona('VSC-S-001');
 
       render(
         <MemoryRouter initialEntries={['/assignments/asg_obs_03/submit']}>
@@ -693,7 +693,7 @@ describe('Change Plan v2 #10 / Review Additions #3: IndexedDB Evidence Attachmen
 
   describe('8. Teacher Cohort UI in AssignmentsPage', () => {
     it('renders Attach Cohort Sheet/Certificate button and cohort evidence review queue for teachers', async () => {
-      await useAuthStore.getState().switchPersona('user_kavita');
+      await useAuthStore.getState().switchPersona('VSC-T-001');
 
       render(
         <MemoryRouter initialEntries={['/assignments']}>

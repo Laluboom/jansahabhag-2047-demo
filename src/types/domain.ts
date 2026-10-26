@@ -5,7 +5,8 @@ export type UserRole =
   | 'institution_admin'
   | 'programme_manager'
   | 'platform_admin'
-  | 'moderator';
+  | 'moderator'
+  | 'special_guest';
 
 export type Visibility = 'public' | 'institution' | 'assembly' | 'private';
 
@@ -14,6 +15,7 @@ export type VerificationStatus = 'unverified' | 'under_review' | 'verified' | 'f
 export interface User {
   id: string;
   name: string;
+  title?: string;
   role: UserRole;
   email: string;
   username?: string;
@@ -36,6 +38,9 @@ export type InstitutionType = 'school' | 'college' | 'university' | 'youth_club'
 export interface Institution {
   id: string;
   name: string;
+  fullName?: string;
+  shortName?: string;
+  logoUrl?: string;
   type: InstitutionType;
   code: string;
   district: string;
@@ -1389,6 +1394,15 @@ export interface DemoDatabase {
   scopedModeratorGrants?: ScopedModeratorGrant[];
   scopedModeratorAudits?: ScopedModeratorAuditRecord[];
   cohortEvidenceAudits?: CohortEvidenceAuditRecord[];
+  transitionNotice?: TransitionNotice;
+}
+
+export interface TransitionNotice {
+  id: string;
+  message: string;
+  backupKey?: string | null;
+  createdAt: string;
+  isError?: boolean;
 }
 
 declare module './index' {

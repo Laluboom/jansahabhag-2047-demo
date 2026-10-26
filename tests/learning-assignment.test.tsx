@@ -43,8 +43,8 @@ describe('Learning & Assignment Page Integration Tests', () => {
     });
   });
 
-  it('renders teacher review tabs and queue when logged in as Kavita Rao', async () => {
-    await useAuthStore.getState().switchPersona('user_kavita');
+  it('renders teacher review tabs and queue when logged in as Shri Mayur Parmar', async () => {
+    await useAuthStore.getState().switchPersona('VSC-T-001');
 
     render(
       <MemoryRouter>
@@ -68,7 +68,7 @@ describe('Learning & Assignment Page Integration Tests', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Welcome back, Aarav Sharma/i)).toBeInTheDocument();
+      expect(screen.getByText(/Welcome back, Ankita Kapri/i)).toBeInTheDocument();
       expect(screen.getByText(/Civic Journey Dashboard/i)).toBeInTheDocument();
       expect(screen.getByText(/Continue Action/i)).toBeInTheDocument();
       expect(screen.getByText(/Youth Deliberation Chamber/i)).toBeInTheDocument();

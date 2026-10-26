@@ -667,7 +667,7 @@ export const AssemblySessionPage: React.FC = () => {
         hasDissent,
         dissentSummary,
         isReserved,
-        institution: p.institutionName || 'Jaipur Youth Deliberative Assembly',
+        institution: p.institutionName || 'Rajkot Youth Deliberative Assembly',
         currentActivity,
         bio: p.bio,
       };
@@ -1169,7 +1169,7 @@ export const AssemblySessionPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
                     <strong className="text-slate-900 block font-heading">Location & Scope</strong>
-                    <p className="text-slate-600">{assembly.location} & Navchetna School perimeter.</p>
+                    <p className="text-slate-600">{assembly.location} & Virani Science College perimeter.</p>
                   </div>
                   <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-1">
                     <strong className="text-slate-900 block font-heading">Target Stakeholders</strong>

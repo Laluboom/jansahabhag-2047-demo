@@ -25,12 +25,12 @@ export const PolicyLabPage: React.FC = () => {
   const policyDocs: PolicyDoc[] = [
     {
       id: 'PB-2026-01',
-      title: 'Rajasthan Safe School Perimeter Zone Standard Bylaw 2026 (Model Ordinance)',
+      title: 'Gujarat Safe School Perimeter Zone Standard Bylaw 2026 (Model Ordinance)',
       category: 'Municipal Bylaw',
       statutoryLevel: 'Urban Local Bodies (ULB Section 42)',
       summary:
         'Statutory model ordinance mandating 25 km/h physical vertical deflection, continuous 1.8m sidewalks, and school-hour freight delivery bans within 200m of educational campuses.',
-      assemblySource: 'Jaipur Youth Pedestrian Assembly #assembly_jaipur_pedestrian_2026',
+      assemblySource: 'Rajkot Youth Pedestrian Assembly #assembly_jaipur_pedestrian_2026',
       clauses: [
         'Clause 4.1: Mandatory 100mm raised speed table at all mid-block pedestrian desire lines within school zone perimeters.',
         'Clause 5.2: Minimum unobstructed clear walkway width of 1.8m with anti-skid concrete pavers.',
@@ -147,7 +147,7 @@ export const PolicyLabPage: React.FC = () => {
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                 <span className="font-bold text-slate-900 block">Drafting Basis & Alignment</span>
                 <p className="leading-relaxed">
-                  Synthesized from 42 field audits and validated in the Jaipur Youth Assembly chamber. Matches IRC:103 (Guidelines for Pedestrian Facilities) standards.
+                  Synthesized from 42 field audits and validated in the Rajkot Youth Assembly chamber. Matches IRC:103 (Guidelines for Pedestrian Facilities) standards.
                 </p>
               </div>
 

@@ -758,7 +758,7 @@ export const PropositionDetailPage: React.FC = () => {
             </p>
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] text-slate-500">
-                Workspace: <strong>Jaipur Ward 24 School-Zone Safety Workspace</strong> (v1.0 rulebook)
+                Workspace: <strong>Rajkot Ward 8 School-Zone Safety Workspace</strong> (v1.0 rulebook)
               </span>
               <Link to="/workspace/ws_jaipur_school_safety">
                 <Button size="sm" className="text-xs flex items-center gap-1.5 bg-civic-teal-600 hover:bg-civic-teal-700 text-white">

@@ -4,6 +4,7 @@ import { demoRepository } from '../../services/demoRepository';
 import { ScopedModeratorGrant } from '../../types/domain';
 import { RoleAwareSuggestion } from '../../types/assistant';
 import { RoleAwareAiService } from '../../services/roleAwareAiService';
+import { PersistenceService } from '../../services/persistence';
 import { Card, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { DemoPreviewBadge } from '../ui/DemoPreviewBadge';
@@ -111,7 +112,11 @@ export const RoleAwareAssistantSurface: React.FC<RoleAwareAssistantSurfaceProps>
 
   const visibleSuggestions = suggestions.filter((s) => !s.isDismissed);
   const dismissedCount = suggestions.filter((s) => s.isDismissed).length;
-  const roleName = currentUser ? formatRoleName(currentUser.role) : 'Participant';
+  const db = PersistenceService.loadDatabase();
+  const isSessionFacilitator = Boolean(db?.sessions?.some((s) => s.facilitatorId === currentUser?.id));
+  const effectiveRole =
+    currentUser?.role === 'participant' && isSessionFacilitator ? 'facilitator' : currentUser?.role;
+  const roleName = effectiveRole ? formatRoleName(effectiveRole) : 'Youth Participant';
 
   return (
     <Card
@@ -160,7 +165,7 @@ export const RoleAwareAssistantSurface: React.FC<RoleAwareAssistantSurfaceProps>
           </span>
           <span className="font-bold text-slate-900 inline-flex items-center gap-1.5">
             <UserCheck className="w-4 h-4 text-civic-indigo-600" />
-            {currentUser?.name || 'Aarav Sharma'} ({roleName})
+            {currentUser?.name || 'Ankita Kapri'} ({roleName})
           </span>
         </div>
 

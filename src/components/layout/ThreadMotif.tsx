@@ -33,7 +33,7 @@ export const ThreadMotif: React.FC<ThreadMotifProps> = ({ currentStage = 'eviden
             Evidence-to-Action Thread
           </span>
           <span className="text-[11px] text-slate-600 hidden sm:inline">
-            Aarav's Jaipur Pedestrian Safety Pathway
+            Ankita's Rajkot Pedestrian Safety Pathway
           </span>
         </div>
       </div>

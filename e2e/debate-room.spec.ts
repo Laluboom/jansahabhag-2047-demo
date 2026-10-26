@@ -13,7 +13,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await page.waitForURL('**/debate-room');
 
     // 2. Header and motion verification
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(page.getByText('Immediate installation of tabletop pedestrian crosswalks')).toBeVisible();
 
     // 3. Single-browser local simulation notices (no live multi-user network or server authorization)
@@ -59,13 +59,13 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await page.getByRole('button', { name: /Raise Hand \(Request Turn\)/i }).click();
     await expect(page.getByText(/Speaking turn requested/i)).toBeVisible();
 
-    // 2. Switch persona to Rohan Mehta (Facilitator) via persona switcher in header
+    // 2. Switch persona to Facilitator via persona switcher in header
     await page.getByRole('button', { name: /Viewing as/i }).click();
     await expect(page.getByText('Switch Demo Persona')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: /Rohan Mehta/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /(Aroh Mehta|Rohan Mehta)/i }).click();
 
     // Facilitator controls are now active
-    await expect(page.getByText(/Persona: Rohan Mehta \(facilitator\)/i)).toBeVisible();
+    await expect(page.getByText(/Persona: (Aroh Mehta|Rohan Mehta)/i)).toBeVisible();
     const recognizeBtn = page.getByRole('button', { name: 'Recognize' }).first();
     await expect(recognizeBtn).toBeVisible();
     await recognizeBtn.click();
@@ -74,11 +74,11 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     // Spotlight now indicates active speaker
     await expect(page.getByText('Recognized Floor Speaker')).toBeVisible();
 
-    // 3. Switch persona back to Aarav Sharma
+    // 3. Switch persona back to Participant
     await page.getByRole('button', { name: /Viewing as/i }).click();
     await expect(page.getByText('Switch Demo Persona')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: /Aarav Sharma/i }).click();
-    await expect(page.getByText(/Persona: Aarav Sharma/i)).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /(Ankita Kapri|Aarav Sharma)/i }).click();
+    await expect(page.getByText(/Persona: (Ankita Kapri|Aarav Sharma)/i)).toBeVisible();
 
     // 4. Low-bandwidth text contribution path is now enabled for Aarav
     const textarea = page.getByRole('textbox', { name: /Your Substantive Debate Intervention/i });
@@ -104,16 +104,16 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(page.getByText(/Private reflection saved locally to this Debate Room journal/i)).toBeVisible();
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).toBeVisible();
 
-    // 6. Persona boundary regression: switch to unacknowledged participant Vikram in same mounted page
+    // 6. Persona boundary regression: switch to unacknowledged participant in same mounted page
     await page.getByRole('button', { name: /Viewing as/i }).click();
     await expect(page.getByText('Switch Demo Persona')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: /Vikram/i }).click();
-    await expect(page.getByText(/Persona: Vikram/i)).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: /(Kanha|Vikram)/i }).click();
+    await expect(page.getByText(/Persona: (Kanha|Vikram)/i)).toBeVisible();
 
-    // Verify Aarav's private reflection is NOT visible to Vikram
+    // Verify private reflection is NOT visible to other participant
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).not.toBeVisible();
 
-    // Verify unacknowledged rulebook banner IS visible for Vikram
+    // Verify unacknowledged rulebook banner IS visible
     await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).toBeVisible();
 
     // Attempting to request speaking turn without acknowledgement opens rulebook and shows error
@@ -122,31 +122,31 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible();
 
-    // Vikram acknowledges via rulebook modal
+    // Acknowledges via rulebook modal
     await modal.getByRole('button', { name: /Acknowledge Ground Rules/i }).click();
     await expect(modal).not.toBeVisible();
     await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).not.toBeVisible();
 
-    // Switch back to Aarav for passport link test
+    // Switch back to primary participant for passport link test
     await page.getByRole('button', { name: /Viewing as/i }).click();
     await expect(page.getByText('Switch Demo Persona')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: /Aarav Sharma/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /(Ankita Kapri|Aarav Sharma)/i }).click();
 
     await page.getByRole('button', { name: /Open Civic Passport/i }).click();
     await page.waitForURL('**/passport');
     await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Aarav Sharma/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /(Ankita Kapri|Aarav Sharma)/i })).toBeVisible();
 
-    // Verify Aarav's debate room reflection is NOT rendered in Passport credentials
+    // Verify debate room reflection is NOT rendered in Passport credentials
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).not.toBeVisible();
   });
 
   test('survives Debate Room to Youth Assembly mode switch and reciprocal roundtrip without data loss', async ({ page }) => {
-    // Switch to Rohan Mehta
+    // Switch to Facilitator
     await page.goto('/debate-room');
     await page.getByRole('button', { name: /Viewing as/i }).click();
     await expect(page.getByText('Switch Demo Persona')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: /Rohan Mehta/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: /(Aroh Mehta|Rohan Mehta)/i }).click();
 
     // Verify "Switch to Youth Assembly" button
     const switchModeBtn = page.getByRole('button', { name: /Switch to Youth Assembly/i });
@@ -165,7 +165,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
 
     // Navigates to linked Youth Assembly
     await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026/session');
-    await expect(page.getByRole('heading', { name: /Jaipur School Zone Pedestrian/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /(Rajkot|Jaipur) School Zone Pedestrian/i })).toBeVisible();
 
     // Verify reciprocal session banner
     await expect(page.getByText(/Linked Shared Session: sess_jaipur_01/i)).toBeVisible();
@@ -179,7 +179,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
 
     // Returned to Debate Room with state preserved
     await page.waitForURL('**/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Jaipur Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(page.getByText(/Session ID: sess_jaipur_01/i)).toBeVisible();
     await expect(page.getByText('Speaking Queue', { exact: true })).toBeVisible();
   });

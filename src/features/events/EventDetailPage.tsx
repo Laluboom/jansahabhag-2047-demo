@@ -459,7 +459,7 @@ export const EventDetailPage: React.FC = () => {
                 33% Women's Reservation Model & Allocation Status
               </h2>
               <p className="text-xs text-slate-500">
-                Policy Version: <span className="font-mono">{event.allocation?.policyVersion || '2026.1-womens-reservation-33'}</span> &bull; Fictional Jaipur Prototype
+                Policy Version: <span className="font-mono">{event.allocation?.policyVersion || '2026.1-womens-reservation-33'}</span> &bull; Fictional Rajkot Prototype
               </p>
             </div>
           </div>

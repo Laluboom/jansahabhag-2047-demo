@@ -2,11 +2,11 @@ import { CreditTransaction } from '../../types/domain';
 
 export const seedCredits: CreditTransaction[] = [
   // -------------------------------------------------------------
-  // Aarav Sharma Activity Transactions (Ceiling: 5, Initial: 2 Civic Credit Points)
+  // Ankita Kapri Activity Transactions (Ceiling: 5, Initial: 2 Civic Credit Points)
   // -------------------------------------------------------------
   {
     id: 'tx_aarav_01',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     dimension: 'Learning',
     amount: 1,
     sourceType: 'lesson',
@@ -20,25 +20,25 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_aarav_02',
-    userId: 'user_aarav',
+    userId: 'VSC-S-001',
     dimension: 'Observation',
     amount: 1,
     sourceType: 'assignment',
     sourceId: 'asg_obs_01',
     sourceRoute: '/assignments/asg_obs_01?submissionId=sub_aarav_01',
     status: 'Verified',
-    reason: 'Submitted verified peak-hour traffic count audit for Navchetna Gate',
+    reason: 'Submitted verified peak-hour traffic count audit for Virani Science College Gate',
     calculationExplanation: 'Fixed demo rule: +1 Observation Civic Credit Point on verified field evidence.',
     createdAt: '2026-10-04T11:00:00Z',
     schemaVersion: 1,
   },
 
   // -------------------------------------------------------------
-  // Siddharth Nair Activity Transactions (4 Civic Credit Points)
+  // Hriday Trivedi Activity Transactions (4 Civic Credit Points)
   // -------------------------------------------------------------
   {
     id: 'tx_sid_01',
-    userId: 'user_siddharth',
+    userId: 'VSC-S-007',
     dimension: 'Learning',
     amount: 1,
     sourceType: 'lesson',
@@ -52,21 +52,21 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_sid_02',
-    userId: 'user_siddharth',
+    userId: 'VSC-S-007',
     dimension: 'Deliberation',
     amount: 2,
     sourceType: 'assembly',
     sourceId: 'assembly_jaipur_pedestrian_2026',
     sourceRoute: '/assemblies/assembly_jaipur_pedestrian_2026',
     status: 'Verified',
-    reason: 'Appointed Synthesiser in Jaipur Pedestrian Safety Youth Assembly',
+    reason: 'Appointed Synthesiser in Rajkot Pedestrian Safety Youth Assembly',
     calculationExplanation: 'Fixed demo rule: +2 Deliberation Civic Credit Points on assembly admission.',
     createdAt: '2026-10-05T10:00:00Z',
     schemaVersion: 1,
   },
   {
     id: 'tx_sid_03',
-    userId: 'user_siddharth',
+    userId: 'VSC-S-007',
     dimension: 'Deliberation',
     amount: 1,
     sourceType: 'contribution',
@@ -80,11 +80,11 @@ export const seedCredits: CreditTransaction[] = [
   },
 
   // -------------------------------------------------------------
-  // Vikram Joshi Activity Transactions (3 Civic Credit Points)
+  // Yash Rathod Activity Transactions (3 Civic Credit Points)
   // -------------------------------------------------------------
   {
     id: 'tx_vikram_01',
-    userId: 'user_vikram',
+    userId: 'VSC-S-005',
     dimension: 'Learning',
     amount: 1,
     sourceType: 'lesson',
@@ -98,25 +98,25 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_vikram_02',
-    userId: 'user_vikram',
+    userId: 'VSC-S-005',
     dimension: 'Deliberation',
     amount: 2,
     sourceType: 'assembly',
     sourceId: 'assembly_jaipur_pedestrian_2026',
     sourceRoute: '/assemblies/assembly_jaipur_pedestrian_2026',
     status: 'Verified',
-    reason: 'Joined Jaipur Pedestrian Safety Youth Assembly',
+    reason: 'Joined Rajkot Pedestrian Safety Youth Assembly',
     calculationExplanation: 'Fixed demo rule: +2 Deliberation Civic Credit Points on assembly admission.',
     createdAt: '2026-10-05T10:00:00Z',
     schemaVersion: 1,
   },
 
   // -------------------------------------------------------------
-  // Meera Singh Activity Transactions (5 Civic Credit Points — Ceiled)
+  // Niyati Chawda Activity Transactions (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'tx_meera_01',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     dimension: 'Learning',
     amount: 1,
     sourceType: 'lesson',
@@ -130,39 +130,39 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_meera_02',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     dimension: 'Observation',
     amount: 2,
     sourceType: 'assignment',
     sourceId: 'asg_obs_01',
     sourceRoute: '/assignments/asg_obs_01',
     status: 'Verified',
-    reason: 'Verified Civil Lines Ajmer comprehensive traffic audit',
+    reason: 'Verified Civil Lines Rajkot comprehensive traffic audit',
     calculationExplanation: 'Fixed demo rule: +2 Observation Civic Credit Points on assignment verification.',
     createdAt: '2026-08-25T11:00:00Z',
     schemaVersion: 1,
   },
   {
     id: 'tx_meera_04',
-    userId: 'user_meera',
+    userId: 'VSC-S-002',
     dimension: 'Deliberation',
     amount: 2,
     sourceType: 'assembly',
     sourceId: 'assembly_green_canopy_2026',
     sourceRoute: '/assemblies',
     status: 'Verified',
-    reason: 'Chaired working group on shade equity in Rajasthan Youth Council',
+    reason: 'Chaired working group on shade equity in Gujarat Youth Council',
     calculationExplanation: 'Fixed demo rule: +2 Deliberation Civic Credit Points on assembly admission.',
     createdAt: '2026-09-18T16:00:00Z',
     schemaVersion: 1,
   },
 
   // -------------------------------------------------------------
-  // Priya Sharma Activity Transactions (5 Civic Credit Points — Ceiled)
+  // Harshita Kapri Activity Transactions (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'tx_priya_01',
-    userId: 'user_priya',
+    userId: 'VSC-S-003',
     dimension: 'Learning',
     amount: 1,
     sourceType: 'lesson',
@@ -176,7 +176,7 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_priya_02',
-    userId: 'user_priya',
+    userId: 'VSC-S-003',
     dimension: 'Observation',
     amount: 2,
     sourceType: 'assignment',
@@ -190,7 +190,7 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_priya_03',
-    userId: 'user_priya',
+    userId: 'VSC-S-003',
     dimension: 'Deliberation',
     amount: 2,
     sourceType: 'assembly',
@@ -204,11 +204,11 @@ export const seedCredits: CreditTransaction[] = [
   },
 
   // -------------------------------------------------------------
-  // Aryan Sen Activity Transactions (5 Civic Credit Points — Ceiled)
+  // Ajit Sanghar Activity Transactions (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'tx_aryan_01',
-    userId: 'user_aryan',
+    userId: 'VSC-S-010',
     dimension: 'Civic Action',
     amount: 2,
     sourceType: 'project',
@@ -222,7 +222,7 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_aryan_02',
-    userId: 'user_aryan',
+    userId: 'VSC-S-010',
     dimension: 'Observation',
     amount: 1,
     sourceType: 'evidence',
@@ -236,7 +236,7 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_aryan_03',
-    userId: 'user_aryan',
+    userId: 'VSC-S-010',
     dimension: 'Deliberation',
     amount: 2,
     sourceType: 'assembly',
@@ -254,21 +254,21 @@ export const seedCredits: CreditTransaction[] = [
   // -------------------------------------------------------------
   {
     id: 'tx_kabir_01',
-    userId: 'user_kabir',
+    userId: 'VSC-S-006',
     dimension: 'Observation',
     amount: 1,
     sourceType: 'evidence',
     sourceId: 'ev_kabir_photo_01',
     sourceRoute: '/passport/evidence',
     status: 'Verified',
-    reason: 'Evening lux meter audit of 6 bus stops in Mansarovar',
+    reason: 'Evening lux meter audit of 6 bus stops in Kalawad Road',
     calculationExplanation: 'Fixed demo rule: +1 Observation Civic Credit Point on verified field evidence.',
     createdAt: '2026-09-30T10:00:00Z',
     schemaVersion: 1,
   },
   {
     id: 'tx_kabir_02',
-    userId: 'user_kabir',
+    userId: 'VSC-S-006',
     dimension: 'Civic Action',
     amount: 2,
     sourceType: 'project',
@@ -282,11 +282,11 @@ export const seedCredits: CreditTransaction[] = [
   },
 
   // -------------------------------------------------------------
-  // Neha Reddy Activity Transactions (5 Civic Credit Points — Ceiled)
+  // Asmi Soni Activity Transactions (5 Civic Credit Points — Ceiled)
   // -------------------------------------------------------------
   {
     id: 'tx_neha_01',
-    userId: 'user_neha',
+    userId: 'VSC-S-015',
     dimension: 'Observation',
     amount: 1,
     sourceType: 'evidence',
@@ -300,7 +300,7 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_neha_02',
-    userId: 'user_neha',
+    userId: 'VSC-S-015',
     dimension: 'Learning',
     amount: 2,
     sourceType: 'lesson',
@@ -314,14 +314,14 @@ export const seedCredits: CreditTransaction[] = [
   },
   {
     id: 'tx_neha_03',
-    userId: 'user_neha',
+    userId: 'VSC-S-015',
     dimension: 'Deliberation',
     amount: 2,
     sourceType: 'assembly',
     sourceId: 'assembly_green_canopy_2026',
     sourceRoute: '/assemblies',
     status: 'Verified',
-    reason: 'Accessibility advocacy in Rajasthan Youth Council',
+    reason: 'Accessibility advocacy in Gujarat Youth Council',
     calculationExplanation: 'Fixed demo rule: +2 Deliberation Civic Credit Points on assembly admission.',
     createdAt: '2026-09-26T14:00:00Z',
     schemaVersion: 1,

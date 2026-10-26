@@ -59,7 +59,7 @@ export const DebateReservationRulebookBanner: React.FC<DebateReservationRulebook
           <span>Seeded legacy appointments are unvalidated records; plan is in open selection (not compliant).</span>
         </span>
         <span>&bull; Small cohorts (&le; 3 places): counts and status withheld to protect individual privacy.</span>
-        <span>&bull; Fictional Jaipur prototype: one-browser simulation only.</span>
+        <span>&bull; Fictional Rajkot prototype: one-browser simulation only.</span>
       </div>
     </Card>
   );

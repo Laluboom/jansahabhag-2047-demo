@@ -1,5 +1,6 @@
 import { RoleAwareSuggestion } from '../types/assistant';
 import { DemoDatabase, ScopedModeratorGrant, User } from '../types/domain';
+import { PersistenceService } from './persistence';
 
 // Local storage key for persistent edits / dismissals across demo sessions
 const STORAGE_KEY = 'jansahabhag_ai_assistant_edits_v1';
@@ -83,9 +84,9 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
     category: 'Policy Formulation',
     roleTarget: 'participant',
     originalContent:
-      'Formulate a clear 2-sentence proposition clause directing the Jaipur Municipal Corporation (JMC) Zone 8 engineering team to install raised pedestrian crossings outside Navchetna School, specifying a target completion timeline and monitoring criteria.',
+      'Formulate a clear 2-sentence proposition clause directing the Rajkot Municipal Corporation (RMC) Zone 8 engineering team to install raised pedestrian crossings outside Virani Science College, specifying a target completion timeline and monitoring criteria.',
     content:
-      'Formulate a clear 2-sentence proposition clause directing the Jaipur Municipal Corporation (JMC) Zone 8 engineering team to install raised pedestrian crossings outside Navchetna School, specifying a target completion timeline and monitoring criteria.',
+      'Formulate a clear 2-sentence proposition clause directing the Rajkot Municipal Corporation (RMC) Zone 8 engineering team to install raised pedestrian crossings outside Virani Science College, specifying a target completion timeline and monitoring criteria.',
     metadata: {
       targetStage: 'Stage 5: Final Proposition Voting',
       pedagogicalObjective: 'Actionable civic drafting and municipal alignment',
@@ -99,7 +100,7 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
   {
     id: 'sug_facil_agenda_01',
     type: 'draft_agenda',
-    title: 'Draft Candidate Agenda: Ward 24 Jaipur Youth Assembly',
+    title: 'Draft Candidate Agenda: Ward 8 Rajkot Youth Assembly',
     category: 'Session Planning & Procedure',
     roleTarget: 'facilitator',
     originalContent:
@@ -108,7 +109,7 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
       '• Stage 2 (15m): Review of student pedestrian survey data and verified field observations.\n' +
       '• Stage 3 (30m): Alternating floor speeches across For / Against benches (max 2 mins per speaker).\n' +
       '• Stage 4 (15m): Dissent preservation and synthesis of compromise amendments with local merchants.\n' +
-      '• Stage 5 (15m): Final vote on Draft Proposition Prop-JPR-2026-001 by secret ballot.\n' +
+      '• Stage 5 (15m): Final vote on Draft Proposition Prop-RKT-2026-001 by secret ballot.\n' +
       '• Stage 6 (5m): Adjournment, summary recording, and Civic Passport credit confirmation.',
     content:
       'Proposed 6-Stage Deliberation Schedule (90 mins total):\n' +
@@ -116,7 +117,7 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
       '• Stage 2 (15m): Review of student pedestrian survey data and verified field observations.\n' +
       '• Stage 3 (30m): Alternating floor speeches across For / Against benches (max 2 mins per speaker).\n' +
       '• Stage 4 (15m): Dissent preservation and synthesis of compromise amendments with local merchants.\n' +
-      '• Stage 5 (15m): Final vote on Draft Proposition Prop-JPR-2026-001 by secret ballot.\n' +
+      '• Stage 5 (15m): Final vote on Draft Proposition Prop-RKT-2026-001 by secret ballot.\n' +
       '• Stage 6 (5m): Adjournment, summary recording, and Civic Passport credit confirmation.',
     metadata: {
       suggestedDuration: '90 minutes',
@@ -252,7 +253,10 @@ export class RoleAwareAiService {
     if (!user) return [];
 
     const state = loadStoredState();
-    const effectiveRole = user.role || 'participant';
+    const db = _db || PersistenceService.loadDatabase();
+    const isSessionFacilitator = Boolean(db?.sessions?.some((s) => s.facilitatorId === user.id));
+    const effectiveRole =
+      user.role === 'participant' && isSessionFacilitator ? 'facilitator' : user.role || 'participant';
 
     let candidates: RoleAwareSuggestion[] = [];
 

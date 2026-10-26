@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { DEMO_COLLEGE_FULL_NAME } from '../../data/seed/institutions';
 import { seedEvents, seedSessions } from '../../data/seed/events';
 import {
   Sparkles,
@@ -158,12 +159,12 @@ const parseEventStartUtc = (dateStr: string, timeStr?: string): number => {
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const getEarliestFutureJaipurEvent = (now: Date = new Date()) => {
+export const getEarliestFutureRajkotEvent = (now: Date = new Date()) => {
   const nowUtc = now.getTime();
-  const jaipurEvents = seedEvents.filter(
-    (e) => (e.location.includes('Jaipur') || e.title.includes('Jaipur')) && e.status === 'upcoming'
+  const rajkotEvents = seedEvents.filter(
+    (e) => (e.location.includes('Rajkot') || e.title.includes('Rajkot')) && e.status === 'upcoming'
   );
-  const future = jaipurEvents
+  const future = rajkotEvents
     .filter((e) => parseEventStartUtc(e.date, e.startTime) > nowUtc)
     .sort((a, b) => {
       const diff = parseEventStartUtc(a.date, a.startTime) - parseEventStartUtc(b.date, b.startTime);
@@ -198,12 +199,12 @@ export const WelcomePage: React.FC = () => {
 
   const handleEnterPlatform = async () => {
     if (!currentUser) {
-      await switchPersona('user_aarav');
+      await switchPersona('VSC-S-001');
     }
     navigate('/dashboard');
   };
 
-  const upcomingEvent = getEarliestFutureJaipurEvent();
+  const upcomingEvent = getEarliestFutureRajkotEvent();
   const matchingSession = upcomingEvent ? seedSessions.find((s) => s.eventId === upcomingEvent.id) : undefined;
 
   return (
@@ -218,6 +219,9 @@ export const WelcomePage: React.FC = () => {
           <h1 className="text-3xl sm:text-5xl font-extrabold font-heading text-white tracking-tight leading-tight">
             JanSahabhag <span className="text-civic-saffron-400">2047</span>
           </h1>
+          <p className="text-xs sm:text-sm font-semibold text-civic-saffron-200/90 tracking-wide">
+            {DEMO_COLLEGE_FULL_NAME}
+          </p>
           <p className="text-lg sm:text-xl font-medium text-slate-200 tracking-wide">
             Learn. Deliberate. Lead.
           </p>
@@ -336,7 +340,7 @@ export const WelcomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Real Upcoming Session Card derived from earliest future fictional Jaipur event */}
+      {/* Real Upcoming Session Card derived from earliest future fictional Rajkot event */}
       {upcomingEvent && (
         <section aria-label="Upcoming Session" data-testid="welcome-upcoming-session-card">
           <Card className="border-slate-200 bg-white overflow-hidden p-0 shadow-xs">
@@ -346,7 +350,7 @@ export const WelcomePage: React.FC = () => {
                   Upcoming Event
                 </span>
                 <span className="text-xs text-slate-300 font-medium">
-                  Fictional Jaipur Demo
+                  Rajkot Civic Demo
                 </span>
               </div>
               <span className="text-xs text-slate-400">
@@ -463,15 +467,15 @@ export const WelcomePage: React.FC = () => {
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Teacher Kavita Rao</strong> to review Aarav's submitted assignments.</span>
+            <span>Switch to <strong>Teacher Shri Mayur Parmar</strong> to review Ankita's submitted assignments.</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Facilitator Rohan Mehta</strong> to advance Assembly stages and finalize propositions.</span>
+            <span>Switch to <strong>Moderator Yashvi Dalsaniya</strong> or <strong>Dilip Sanghar</strong> to manage flagged content under scoped grants.</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Admin Dev Patel</strong> or <strong>Ananya Verma</strong> for institutional metrics.</span>
+            <span>Switch to <strong>Principal Shri Dr. K. D. Ladwa</strong> or <strong>Special Guest Shri Param Pujya Tyagvallabh Swamiji</strong> (view-only).</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
@@ -486,9 +490,11 @@ export const WelcomePage: React.FC = () => {
         aria-label="Welcome page footer"
         className="border-t border-slate-200 pt-6 mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500"
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2">
           <span className="font-semibold text-slate-700">JanSahabhag 2047</span>
-          <span>&bull;</span>
+          <span className="hidden sm:inline">&bull;</span>
+          <span className="text-slate-500">Demo institution, not an official partnership</span>
+          <span className="hidden sm:inline">&bull;</span>
           <span>Interactive single-browser simulation</span>
         </div>
         <nav aria-label="Footer links" className="flex items-center gap-6">
