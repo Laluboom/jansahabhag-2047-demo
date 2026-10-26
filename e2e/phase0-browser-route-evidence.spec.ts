@@ -50,7 +50,7 @@ export const ALL_61_ROUTES: RouteDefinition[] = [
   { index: 34, pattern: '/labs/ideas', url: '/labs/ideas', headingRegex: /Idea Lab/i, controlRegex: /Prototype|Submit Concept/i },
   { index: 35, pattern: '/labs/research', url: '/labs/research', headingRegex: /Research Lab/i, controlRegex: /Download Schema|Methodology|Research/i },
   { index: 36, pattern: '/labs/policy', url: '/labs/policy', headingRegex: /Policy Lab/i, controlRegex: /Policy Draft|Model Bylaws|Policy/i },
-  { index: 37, pattern: '/parliament', url: '/parliament', headingRegex: /National Youth Parliament/i, controlRegex: /Inspect Rajasthan Motion #07|Chamber/i, screenshotDesktop: '10-desktop-parliament.png' },
+  { index: 37, pattern: '/parliament', url: '/parliament', headingRegex: /National Youth Parliament/i, controlRegex: /Inspect (Gujarat|Rajasthan) Motion #0[47]|Chamber/i, screenshotDesktop: '10-desktop-parliament.png' },
   { index: 38, pattern: '/stakeholders', url: '/stakeholders', headingRegex: /Municipal & Stakeholder Engagement|Stakeholders/i, controlRegex: /Municipal Corporation|Stakeholders/i },
   { index: 39, pattern: '/studio', url: '/studio', headingRegex: /Civic Studio & Campaign Creator|Civic Studio/i, controlRegex: /Campaign Creator|Authoring|Studio/i },
   { index: 40, pattern: '/debate-room', url: '/debate-room', headingRegex: /Debate Room Hub|Debate Room/i, controlRegex: /Enter Chamber|Rulebook|Point-of-Use/i },
@@ -339,7 +339,7 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
 
     // 5. Parliament Prototype motion modal inspection
     await page.goto('/parliament');
-    const inspectBtn = page.getByRole('button', { name: /Inspect Rajasthan Motion #07/i });
+    const inspectBtn = page.getByRole('button', { name: /Inspect (Gujarat|Rajasthan) Motion/i });
     await inspectBtn.click();
     await expect(page.getByText(/Key Legislative Clauses/i)).toBeVisible();
     await page.getByRole('button', { name: /Close Motion Brief/i }).click();

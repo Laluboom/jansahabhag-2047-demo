@@ -88,13 +88,13 @@ export const ALLOCATION_SURFACES_INVENTORY = {
   ],
   package11Coverage: [
     'youth_parliament_preview_delegation_illustration',
-    'youth_parliament_fictional_jaipur_3place_scenarios',
+    'youth_parliament_fictional_rajkot_3place_scenarios',
     'youth_parliament_point_of_use_rulebook',
     'youth_parliament_illustrative_notice_540_members',
     'comprehensive_module_rulebook_coverage_audit',
   ],
   parliamentPreviewStatus:
-    'Clickable prototype preview only. Demonstrates fictional 3-seat Jaipur delegation calculation via shared allocation service without live member appointment or backend selection enforcement.',
+    'Clickable prototype preview only. Demonstrates fictional 3-seat Rajkot delegation calculation via shared allocation service without live member appointment or backend selection enforcement.',
   programmeCohortStatus: 'No place allocation or cohort quota logic currently exists on Programme entities.',
 } as const;
 
@@ -965,7 +965,7 @@ export interface ParliamentDelegationIllustrationData {
 }
 
 /**
- * Builds a fictional 3-seat Jaipur delegation scenario for the Youth Parliament preview.
+ * Builds a fictional 3-seat Rajkot delegation scenario for the Youth Parliament preview.
  * Dynamically calculated by the shared reservation allocation service.
  * Demonstrates:
  * 1. Approved formula: ceil(0.33 * 3) = 1 reserved seat minimum, 2 ordinary seats.
@@ -974,7 +974,7 @@ export interface ParliamentDelegationIllustrationData {
  * 4. Overbooked ordinary scenario: Attempting to fill Seat 3 with an ordinary candidate -> Blocked by validation without Platform Owner exception.
  *
  * Privacy Invariant:
- * Evaluated using explicit fictional declarations only (user_priya: eligible, user_aarav/user_vikram/user_rohan: ineligible),
+ * Evaluated using explicit fictional declarations only (e.g. VSC-S-001/VSC-S-002: eligible, VSC-S-005/VSC-S-006/VSC-S-007: ineligible),
  * never inferred from names or demographic proxies.
  * Outputs anonymous fictional seat labels without exposing linked individual personas or IDs.
  */
@@ -986,10 +986,10 @@ export function buildParliamentDelegationIllustration(
   if (scenario === 'compliant') {
     const confirmedOccupants = ['VSC-S-002', 'VSC-S-005', 'VSC-S-006'];
     const allocation = buildAllocationState({
-      allocationId: 'alloc_parliament_jaipur_delegation_demo',
+      allocationId: 'alloc_parliament_rajkot_delegation_demo',
       allocationType: 'cohort_places',
       totalPlaces,
-      title: 'Jaipur Youth Delegation to Youth Parliament (3 Seats — Compliant Scenario)',
+      title: 'Rajkot Youth Delegation to Youth Parliament (3 Seats — Compliant Scenario)',
       confirmedOccupants,
       existingStatus: 'pending',
     });
@@ -1027,10 +1027,10 @@ export function buildParliamentDelegationIllustration(
   if (scenario === 'noncompliant') {
     const confirmedOccupants = ['VSC-S-005', 'VSC-S-006'];
     const allocation = buildAllocationState({
-      allocationId: 'alloc_parliament_jaipur_delegation_demo',
+      allocationId: 'alloc_parliament_rajkot_delegation_demo',
       allocationType: 'cohort_places',
       totalPlaces,
-      title: 'Jaipur Youth Delegation to Youth Parliament (3 Seats — Non-Compliant Scenario)',
+      title: 'Rajkot Youth Delegation to Youth Parliament (3 Seats — Non-Compliant Scenario)',
       confirmedOccupants,
       existingStatus: 'pending',
     });
@@ -1068,10 +1068,10 @@ export function buildParliamentDelegationIllustration(
   // overbooked_ordinary: 3 ordinary occupants without an approved owner exception
   const confirmedOccupants = ['VSC-S-005', 'VSC-S-006', 'VSC-S-007'];
   const allocation = buildAllocationState({
-    allocationId: 'alloc_parliament_jaipur_delegation_demo',
+    allocationId: 'alloc_parliament_rajkot_delegation_demo',
     allocationType: 'cohort_places',
     totalPlaces,
-    title: 'Jaipur Youth Delegation to Youth Parliament (3 Seats — Blocked Ordinary Overbooking Attempt)',
+    title: 'Rajkot Youth Delegation to Youth Parliament (3 Seats — Blocked Ordinary Overbooking Attempt)',
     confirmedOccupants,
     existingStatus: 'pending',
   });

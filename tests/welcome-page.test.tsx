@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { WelcomePage, getEarliestFutureJaipurEvent } from '../src/features/welcome/WelcomePage';
+import { WelcomePage, getEarliestFutureRajkotEvent } from '../src/features/welcome/WelcomePage';
 import { useAuthStore } from '../src/stores/authStore';
 import { PersistenceService } from '../src/services/persistence';
 import { seedEvents } from '../src/data/seed/events';
@@ -129,8 +129,8 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
       const sessionCard = screen.getByTestId('welcome-upcoming-session-card');
       expect(sessionCard).toBeInTheDocument();
 
-      // Check helper and derive expected earliest future fictional Jaipur event
-      const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-10-22T08:00:00Z'));
+      // Check helper and derive expected earliest future fictional Rajkot event
+      const earliestFutureEvent = getEarliestFutureRajkotEvent(new Date('2026-10-22T08:00:00Z'));
       expect(earliestFutureEvent).toBeDefined();
       if (!earliestFutureEvent) throw new Error('Expected earliestFutureEvent to be defined');
       expect(earliestFutureEvent.id).toBe('evt_jaipur_limited_05');
@@ -168,7 +168,7 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     vi.setSystemTime(new Date('2026-11-01T12:00:00Z'));
 
     try {
-      const earliestFutureEvent = getEarliestFutureJaipurEvent(new Date('2026-11-01T12:00:00Z'));
+      const earliestFutureEvent = getEarliestFutureRajkotEvent(new Date('2026-11-01T12:00:00Z'));
       expect(earliestFutureEvent).toBeUndefined();
 
       const { container } = render(
@@ -194,13 +194,13 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     // evt_jaipur_limited_05 is on 2026-10-25 at 10:00 AM
     // Case 1: Same day before start time (e.g. 09:00:00Z) -> is upcoming
     const beforeStart = new Date('2026-10-25T09:00:00Z');
-    const eventBefore = getEarliestFutureJaipurEvent(beforeStart);
+    const eventBefore = getEarliestFutureRajkotEvent(beforeStart);
     expect(eventBefore).toBeDefined();
     expect(eventBefore?.id).toBe('evt_jaipur_limited_05');
 
     // Case 2: Same day after start time (e.g. 10:30:00Z) -> evt_jaipur_limited_05 is no longer upcoming, moves to next (evt_jaipur_compliant_06 on 2026-10-26)
     const afterStart = new Date('2026-10-25T10:30:00Z');
-    const eventAfter = getEarliestFutureJaipurEvent(afterStart);
+    const eventAfter = getEarliestFutureRajkotEvent(afterStart);
     expect(eventAfter).toBeDefined();
     expect(eventAfter?.id).toBe('evt_jaipur_compliant_06');
   });

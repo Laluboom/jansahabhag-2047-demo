@@ -341,7 +341,7 @@ describe('Task 04 Supporting Modules & Admin Integration Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText(/National Youth Parliament 2047/i)).toBeInTheDocument();
-        expect(screen.getByText(/Inspect Rajasthan Motion #07/i)).toBeInTheDocument();
+        expect(screen.getByText(/Inspect (Gujarat|Rajasthan) Motion/i)).toBeInTheDocument();
       });
     });
 

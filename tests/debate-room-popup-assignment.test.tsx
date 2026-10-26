@@ -707,4 +707,98 @@ describe('Change Plan v2 #13: Debate Room Controls & Facilitator Popup Assignmen
       });
     });
   });
+
+  describe('6. Active Facilitator Dynamic Resolution & Rajkot Persona Verification', () => {
+    it('derives facilitator name dynamically from session data as Aroh Mehta and avoids old Rohan Mehta strings', async () => {
+      // 1. Facilitator persona creates the popup task
+      await useAuthStore.getState().switchPersona('VSC-S-009');
+
+      // Seed a popup assignment from facilitator VSC-S-009
+      await demoRepository.pushDebatePopupAssignment({
+        sessionId: 'sess_jaipur_01',
+        actorId: 'VSC-S-009',
+        title: 'Tactile Paving Priority Inquiry',
+        instruction: 'Identify where tactile pavers are most urgently required on Kalawad Road.',
+        timeLimitMinutes: 10,
+      });
+
+      // Switch to participant persona
+      await useAuthStore.getState().switchPersona('VSC-S-001');
+
+      render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active-chamber-task-banner')).toBeInTheDocument();
+      });
+
+      // Open task modal
+      fireEvent.click(screen.getByTestId('open-chamber-task-btn'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('debate-popup-assignment-modal')).toBeInTheDocument();
+      });
+
+      // Assert popup assignment facilitator attribution
+      expect(screen.getByText(/Pushed by Facilitator Aroh Mehta/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Rohan Mehta/i)).not.toBeInTheDocument();
+    });
+
+    it('displays dynamic facilitator name in speaking recognition and mode switch summary', async () => {
+      // Set active speaker to VSC-S-001 in session debateData
+      const db = PersistenceService.loadDatabase();
+      const sess = db.sessions.find((s) => s.id === 'sess_jaipur_01');
+      if (sess?.debateData) {
+        sess.debateData.activeSpeakerId = 'VSC-S-001';
+      }
+      PersistenceService.saveDatabase(db);
+
+      // Switch to student participant to view floor recognized by facilitator
+      await useAuthStore.getState().switchPersona('VSC-S-002');
+
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/is recognized by Facilitator Aroh Mehta/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/Rohan Mehta/i)).not.toBeInTheDocument();
+
+      unmount();
+
+      // Switch back to Facilitator to test mode transition modal
+      await useAuthStore.getState().switchPersona('VSC-S-009');
+
+      render(
+        <MemoryRouter initialEntries={['/debate-room']}>
+          <Routes>
+            <Route path="/debate-room" element={<DebateRoomPreviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Switch to Youth Assembly/i })).toBeInTheDocument();
+      });
+
+      // Click switch mode button
+      fireEvent.click(screen.getByRole('button', { name: /Switch to Youth Assembly/i }));
+
+      // Check interstitial modal content
+      await waitFor(() => {
+        expect(screen.getByText(/As Facilitator Aroh Mehta, you are initiating a local session mode transition/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/Rohan Mehta/i)).not.toBeInTheDocument();
+    });
+  });
 });

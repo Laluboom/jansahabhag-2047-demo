@@ -162,7 +162,7 @@ const parseEventStartUtc = (dateStr: string, timeStr?: string): number => {
 export const getEarliestFutureRajkotEvent = (now: Date = new Date()) => {
   const nowUtc = now.getTime();
   const rajkotEvents = seedEvents.filter(
-    (e) => (e.location.includes('Rajkot') || e.title.includes('Rajkot') || e.location.includes('Jaipur') || e.title.includes('Jaipur')) && e.status === 'upcoming'
+    (e) => (e.location.includes('Rajkot') || e.title.includes('Rajkot')) && e.status === 'upcoming'
   );
   const future = rajkotEvents
     .filter((e) => parseEventStartUtc(e.date, e.startTime) > nowUtc)
@@ -177,9 +177,6 @@ export const getEarliestFutureRajkotEvent = (now: Date = new Date()) => {
   }
   return undefined;
 };
-
-// Backwards-compatible export alias for tests
-export const getEarliestFutureJaipurEvent = getEarliestFutureRajkotEvent;
 
 const formatEventDate = (dateStr: string) => {
   try {
@@ -343,7 +340,7 @@ export const WelcomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Real Upcoming Session Card derived from earliest future fictional Jaipur event */}
+      {/* Real Upcoming Session Card derived from earliest future fictional Rajkot event */}
       {upcomingEvent && (
         <section aria-label="Upcoming Session" data-testid="welcome-upcoming-session-card">
           <Card className="border-slate-200 bg-white overflow-hidden p-0 shadow-xs">

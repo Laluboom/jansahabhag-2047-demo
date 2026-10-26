@@ -209,6 +209,14 @@ export const WorkspacePage: React.FC = () => {
     return currentMembership.lastAcknowledgedRuleVersion === workspace.rulebook?.version;
   }, [workspace, currentMembership]);
 
+  const moderatorNames = useMemo(() => {
+    if (!workspace) return 'Shri Mayur Parmar, Aroh Mehta';
+    const names = (workspace.moderatorIds || [])
+      .map((id) => allUsers.find((u) => u.id === id)?.name || memberships.find((m) => m.userId === id)?.userName || id)
+      .filter(Boolean);
+    return names.length > 0 ? names.join(', ') : 'Shri Mayur Parmar, Aroh Mehta';
+  }, [workspace, allUsers, memberships]);
+
   // Quick Persona switcher handler
   const handleQuickSwitchUser = async (userId: string) => {
     try {
@@ -331,7 +339,7 @@ export const WorkspacePage: React.FC = () => {
       sourceLink = {
         type: 'proposition',
         id: 'prop_jaipur_pedestrian_01',
-        label: 'Proposition PROP-JAIPUR-01: Zero Harm Pedestrian Corridors',
+        label: 'Proposition PROP-RAJKOT-01: Zero Harm Pedestrian Corridors',
       };
     } else if (newActionSourceType === 'evidence') {
       sourceLink = {
@@ -489,7 +497,7 @@ export const WorkspacePage: React.FC = () => {
             data-testid="link-back-to-proposition"
           >
             <ArrowLeft className="w-4 h-4 mr-1 text-civic-teal-600" />
-            <span>Back to Proposition PROP-JAIPUR-01</span>
+            <span>Back to Proposition PROP-RAJKOT-01</span>
           </Link>
           <span className="text-slate-300">•</span>
           <Link
@@ -791,8 +799,8 @@ export const WorkspacePage: React.FC = () => {
         </div>
         <div className="p-3 rounded-xl bg-white border border-slate-200">
           <span className="text-[11px] text-slate-500 font-medium block">Room Moderators</span>
-          <span className="font-bold text-civic-teal-700 mt-0.5 block">
-            Kavita Rao, Rohan Mehta
+          <span className="font-bold text-civic-teal-700 mt-0.5 block" data-testid="room-moderators">
+            {moderatorNames}
           </span>
         </div>
         <div className="p-3 rounded-xl bg-white border border-slate-200">
@@ -887,7 +895,7 @@ export const WorkspacePage: React.FC = () => {
                 Proposition Collaboration Feed
               </h3>
               <p className="text-xs text-slate-500">
-                Short team notes, tasks, and announcements linked to Proposition PROP-JAIPUR-01.
+                Short team notes, tasks, and announcements linked to Proposition PROP-RAJKOT-01.
               </p>
             </div>
 
@@ -947,7 +955,7 @@ export const WorkspacePage: React.FC = () => {
                       className="w-full text-xs rounded-lg border-slate-300 border p-2 bg-white"
                       data-testid="select-source-link"
                     >
-                      <option value="proposition">Proposition PROP-JAIPUR-01 (Tabletop Crosswalk)</option>
+                      <option value="proposition">Proposition PROP-RAJKOT-01 (Tabletop Crosswalk)</option>
                       <option value="evidence">Evidence EV-001 (Peak Traffic Counts)</option>
                       <option value="none">No External Link</option>
                     </select>

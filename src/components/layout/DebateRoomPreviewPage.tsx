@@ -549,6 +549,11 @@ export const DebateRoomPreviewPage: React.FC = () => {
 
   const debateData = session.debateData;
   const isFacilitator = currentUser.id === session.facilitatorId;
+  const facilitatorUser =
+    allUsers.find((u) => u.id === session.facilitatorId) ||
+    session.roster.find((r) => r.userId === session.facilitatorId || r.role === 'Facilitator') ||
+    (currentUser.id === session.facilitatorId ? currentUser : null);
+  const facilitatorName = facilitatorUser?.name || 'Aroh Mehta';
   const currentPhase = debateData?.currentPhase || 'DISCUSSION';
   const activeSpeakerId = debateData?.activeSpeakerId;
   const isCurrentUserActiveSpeaker = activeSpeakerId === currentUser.id;
@@ -1411,7 +1416,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                     {activeSpeakerId
                       ? isCurrentUserActiveSpeaker
                         ? 'You currently have the floor to contribute.'
-                        : `${activeSpeakerUser?.name} is recognized by Facilitator Rohan Mehta.`
+                        : `${activeSpeakerUser?.name} is recognized by Facilitator ${facilitatorName}.`
                       : 'Facilitator recognizes the next speaker from the queue.'}
                   </p>
                 </div>
@@ -1996,7 +2001,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs text-slate-700">
           <p className="leading-relaxed">
-            As Facilitator Rohan Mehta, you are initiating a local session mode transition in this simulation from <strong>Debate Room</strong> to the linked <strong>Youth Assembly</strong> chamber.
+            As Facilitator {facilitatorName}, you are initiating a local session mode transition in this simulation from <strong>Debate Room</strong> to the linked <strong>Youth Assembly</strong> chamber.
           </p>
 
           <div className="p-3.5 rounded-lg border border-civic-teal-200 bg-civic-teal-50/60 space-y-2">
@@ -2240,7 +2245,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                 {session.debateData.popupAssignment.instruction}
               </p>
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-amber-200/50">
-                <span>Pushed by Facilitator Rohan Mehta</span>
+                <span>Pushed by Facilitator {session.debateData?.popupAssignment?.pushedBy ? (allUsers.find((u) => u.id === session.debateData?.popupAssignment?.pushedBy)?.name || facilitatorName) : facilitatorName}</span>
                 <span>Reward: 2 Civic Credit Points (Pending Review)</span>
               </div>
             </div>

@@ -419,6 +419,30 @@ describe('Change Plan v2 Section 11: Projects and Workspace Team Boards', () => 
         expect(screen.getByTestId('user-search-result-hriday.trivedi')).toBeInTheDocument();
       });
     });
+
+    it('renders current seeded room moderators and Rajkot proposition copy in the workspace overview', async () => {
+      render(
+        <MemoryRouter initialEntries={['/workspace/ws_jaipur_school_safety']}>
+          <Routes>
+            <Route path="/workspace/:id" element={<WorkspacePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('room-moderators')).toBeInTheDocument();
+      });
+
+      const modElement = screen.getByTestId('room-moderators');
+      expect(modElement.textContent).toContain('Shri Mayur Parmar');
+      expect(modElement.textContent).toContain('Aroh Mehta');
+      expect(modElement.textContent).not.toContain('Kavita Rao');
+      expect(modElement.textContent).not.toContain('Rohan Mehta');
+
+      // Proposition backlink displays Rajkot proposition
+      expect(screen.getByTestId('link-back-to-proposition').textContent).toContain('PROP-RAJKOT-01');
+      expect(screen.getByTestId('link-back-to-proposition').textContent).not.toContain('PROP-JAIPUR-01');
+    });
   });
 
   describe('ProjectsPage: Overview with Team Boards and Status Chips', () => {

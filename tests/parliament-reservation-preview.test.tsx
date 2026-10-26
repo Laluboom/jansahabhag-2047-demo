@@ -111,11 +111,16 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       expect(rulebook.textContent).toContain('exploratory clickable prototype preview');
     });
 
-    it('renders the dynamic Jaipur 3-seat delegation illustration with compliant default', () => {
+    it('renders the dynamic Rajkot 3-seat delegation illustration with compliant default', () => {
       renderParliament();
       const illustration = screen.getByTestId('parliament-delegation-illustration');
       expect(illustration).toBeInTheDocument();
-      expect(illustration.textContent).toContain('Fictional Jaipur Youth Delegation Allocation (Illustrative 3-Seat Prototype)');
+      expect(illustration.textContent).toContain('Fictional Rajkot Youth Delegation Allocation (Illustrative 3-Seat Prototype)');
+
+      // Active speaker and Rajkot delegation in seating preview
+      expect(screen.getAllByText(/Ankita Kapri/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Lead Motion Sponsor/i).length).toBeGreaterThan(0);
+      expect(illustration.textContent).not.toContain('Jaipur Delegation');
 
       // Metrics bar
       expect(screen.getByTestId('metric-total-places').textContent).toBe('3');
@@ -135,16 +140,19 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
       expect(screen.getByTestId('seat-card-1').textContent).toContain('Seat #1 — Fictional Reserved Allocation');
       expect(screen.getByTestId('seat-card-1').textContent).toContain('Reserved Allocation');
       expect(screen.getByTestId('seat-card-1').textContent).toContain('Occupied by Eligible Candidate');
+      expect(screen.getByTestId('seat-card-1').textContent).not.toContain('Ankita Kapri');
       expect(screen.getByTestId('seat-card-1').textContent).not.toContain('Priya Sharma');
 
       expect(screen.getByTestId('seat-card-2').textContent).toContain('Seat #2 — Fictional General Allocation');
       expect(screen.getByTestId('seat-card-2').textContent).toContain('General Allocation');
       expect(screen.getByTestId('seat-card-2').textContent).toContain('Occupied by General Candidate');
+      expect(screen.getByTestId('seat-card-2').textContent).not.toContain('Yash Rathod');
       expect(screen.getByTestId('seat-card-2').textContent).not.toContain('Aarav Sharma');
 
       expect(screen.getByTestId('seat-card-3').textContent).toContain('Seat #3 — Fictional General Allocation');
       expect(screen.getByTestId('seat-card-3').textContent).toContain('General Allocation');
       expect(screen.getByTestId('seat-card-3').textContent).toContain('Occupied by General Candidate');
+      expect(screen.getByTestId('seat-card-3').textContent).not.toContain('Kanha Kapri');
       expect(screen.getByTestId('seat-card-3').textContent).not.toContain('Vikram Malhotra');
     });
 
@@ -193,14 +201,15 @@ describe('Youth Parliament Preview Reservation Policy & Delegation Allocation Il
     it('retains Tabled Motions and motion detail modal functionality', async () => {
       renderParliament();
       expect(screen.getByText('Tabled Motions on the Order Paper')).toBeInTheDocument();
-      expect(screen.getByText('MOT-RAJ-07 • Rajasthan')).toBeInTheDocument();
+      expect(screen.getByText('MOT-GUJ-04 • Gujarat')).toBeInTheDocument();
 
-      const inspectBtn = screen.getByText('Inspect Rajasthan Motion #07');
+      const inspectBtn = screen.getByText('Inspect Gujarat Motion #04');
       fireEvent.click(inspectBtn);
 
       await waitFor(() => {
         expect(screen.getByText('Safe School Perimeter Zone Standards (2026)')).toBeInTheDocument();
         expect(screen.getByText('Statutory Tabling Summary')).toBeInTheDocument();
+        expect(screen.getByText(/Rajkot Pedestrian Safety Youth Assembly/i)).toBeInTheDocument();
       });
 
       const closeBtn = screen.getByText('Close Motion Brief');
