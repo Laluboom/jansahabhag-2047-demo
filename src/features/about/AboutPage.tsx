@@ -113,17 +113,33 @@ export const AboutPage: React.FC = () => (
         </div>
 
         <div className="border-t border-slate-200 pt-8">
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {GRATITUDE_ENTRIES.map((entry) => (
               <li
                 key={entry.name}
                 className="flex flex-col justify-start rounded-xl border border-slate-100 bg-slate-50/70 p-4 transition-colors"
               >
+                {entry.name === 'Visesh Akbari' && (
+                  <img
+                    src={viseshPortrait}
+                    alt="Portrait of Visesh Akbari"
+                    className="mb-3 h-36 w-28 rounded-lg bg-slate-100 object-contain"
+                    width="1122"
+                    height="1402"
+                    loading="lazy"
+                  />
+                )}
                 <span className="font-bold text-slate-900">{entry.name}</span>
                 {entry.role && (
                   <span className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
                     {entry.role}
                   </span>
+                )}
+                {entry.name === 'Visesh Akbari' && (
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold sm:text-sm">
+                    <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">GitHub</a>
+                    <a href="https://www.linkedin.com/in/viseshakbari/" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">LinkedIn</a>
+                  </div>
                 )}
               </li>
             ))}
@@ -141,35 +157,6 @@ export const AboutPage: React.FC = () => (
         </div>
       </section>
 
-      <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-12">
-          <div className="flex items-center justify-center bg-slate-100 p-4 sm:p-6 md:col-span-5 md:p-6 lg:p-8">
-            <div className="aspect-square w-full max-w-sm">
-              <img
-                src={viseshPortrait}
-                alt="Portrait of Visesh Akbari"
-                className="h-full w-full rounded-xl object-contain"
-                width="1122"
-                height="1402"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col justify-center space-y-3 p-6 sm:p-7 md:col-span-7 md:p-8 lg:p-10">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-civic-indigo-700">Developer</p>
-              <h3 className="font-heading text-2xl font-bold text-slate-900">Visesh Akbari</h3>
-            </div>
-            <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm font-semibold">
-              <a href="https://github.com/laluboom" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
-                GitHub
-              </a>
-              <a href="https://www.linkedin.com/in/viseshakbari/" target="_blank" rel="noopener noreferrer" className="text-civic-indigo-700 underline underline-offset-4 hover:text-civic-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500">
-                LinkedIn
-              </a>
-            </div>
-          </div>
-        </div>
-      </article>
     </section>
 
     <section aria-labelledby="approach-heading" className="rounded-2xl border border-slate-200 bg-white px-6 py-8 sm:px-10 sm:py-10">

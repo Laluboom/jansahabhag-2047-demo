@@ -19,8 +19,10 @@ test('About page credits founder and developer while retaining gratitude', async
   await seeMore.click();
   await expect(founderBio).toBeHidden();
 
-  await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
-  await expect(page.getByText('Developer', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toHaveCount(0);
+  const viseshEntry = page.locator('section[aria-labelledby="gratitude-heading"] li').filter({ hasText: 'Visesh Akbari' });
+  await expect(viseshEntry).toBeVisible();
+  await expect(viseshEntry.getByText(/Developer of this site/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
   await expect(page.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
 
@@ -36,21 +38,21 @@ test('About page credits founder and developer while retaining gratitude', async
   }
 
   const nazimCard = page.locator('article').filter({ hasText: 'Nazim M. Sandh' });
-  const viseshCard = page.locator('article').filter({ hasText: 'Visesh Akbari' });
-  await expect(viseshCard.getByText(/founder|initiated|idea/i)).toHaveCount(0);
+  await expect(page.locator('article').filter({ hasText: 'Visesh Akbari' })).toHaveCount(0);
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 
   const gratitudeSection = page.locator('section[aria-labelledby="gratitude-heading"]');
   const nazimBox = await nazimCard.boundingBox();
   const gratitudeBox = await gratitudeSection.boundingBox();
-  const viseshBox = await viseshCard.boundingBox();
+  const viseshBox = await viseshEntry.boundingBox();
   expect(nazimBox).not.toBeNull();
   expect(gratitudeBox).not.toBeNull();
   expect(viseshBox).not.toBeNull();
   if (nazimBox && gratitudeBox && viseshBox) {
     expect(gratitudeBox.y).toBeGreaterThan(nazimBox.y + nazimBox.height - 15);
-    expect(viseshBox.y).toBeGreaterThan(gratitudeBox.y + gratitudeBox.height - 15);
+    expect(viseshBox.y).toBeGreaterThan(gratitudeBox.y);
+    expect(viseshBox.y + viseshBox.height).toBeLessThan(gratitudeBox.y + gratitudeBox.height);
   }
 
   // With gratitude section
@@ -72,7 +74,7 @@ test('About page is reachable from welcome and the utilities navigation', async 
 test('About page portraits and content fit a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/about');
-  await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visesh Akbari' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Yashvi Dalsaniya' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'nazimsandhbehappy@gmail.com' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'With gratitude' })).toBeVisible();
@@ -82,6 +84,7 @@ test('About page portraits and content fit a narrow screen', async ({ page }) =>
   for (const name of ['Nazim M. Sandh', 'Visesh Akbari']) {
     const portrait = page.getByRole('img', { name: `Portrait of ${name}` });
     await expect(portrait).toBeVisible();
+    await portrait.scrollIntoViewIfNeeded();
     await expect.poll(() => portrait.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   }
 

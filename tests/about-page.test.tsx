@@ -11,7 +11,7 @@ import {
 } from '../src/data/gratitude';
 
 describe('AboutPage', () => {
-  it('renders founder and developer cards while keeping the public team limited to them', () => {
+  it('renders the founder card and Visesh’s developer credit within gratitude', () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -52,11 +52,12 @@ describe('AboutPage', () => {
     expect(nazimBio4).toBeInTheDocument();
     expect(nazimBio4.textContent).toContain('explore practical ways of connecting young people with civic life');
 
-    // Existing team member: Visesh Akbari (spelling preserved on card)
-    expect(screen.getByRole('heading', { level: 3, name: 'Visesh Akbari' })).toBeInTheDocument();
-    expect(screen.getByText('Developer')).toBeInTheDocument();
-    const viseshImg = screen.getByRole('img', { name: 'Portrait of Visesh Akbari' });
-    expect(viseshImg).toBeInTheDocument();
+    // Visesh appears only in the gratitude list, with the supplied portrait and links.
+    expect(screen.queryByRole('heading', { level: 3, name: 'Visesh Akbari' })).not.toBeInTheDocument();
+    const viseshEntry = screen.getByText('Visesh Akbari').closest('li');
+    expect(viseshEntry).toBeInTheDocument();
+    expect(viseshEntry).toHaveTextContent('Developer of this site');
+    expect(viseshEntry?.querySelector('img')).toHaveAttribute('alt', 'Portrait of Visesh Akbari');
     expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
     expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');
 
@@ -64,7 +65,7 @@ describe('AboutPage', () => {
     expect(screen.queryByText(/Managing Partner \| Student of Microbiology/i)).not.toBeInTheDocument();
   });
 
-  it('orders Nazim, gratitude, and Visesh with grid details in each card', () => {
+  it('places gratitude after the founder without a separate Visesh card', () => {
     const { container } = render(
       <MemoryRouter>
         <AboutPage />
@@ -72,27 +73,12 @@ describe('AboutPage', () => {
     );
 
     const peopleSection = container.querySelector('section[aria-labelledby="people-heading"]');
-    expect(peopleSection).toBeInTheDocument();
-
     const articles = peopleSection?.querySelectorAll('article');
-    expect(articles?.length).toBe(2);
-
-    // Nazim is the first article, rendered as a dedicated wide team card row
-    const nazimArticle = articles?.[0];
-    expect(nazimArticle?.textContent).toContain('The Founder');
-    expect(nazimArticle?.textContent).toContain('Nazim M. Sandh');
-
-    // Visesh follows the gratitude section
-    const viseshArticle = articles?.[1];
-    expect(viseshArticle?.textContent).toContain('Developer');
-    expect(viseshArticle?.textContent).toContain('Visesh Akbari');
     const gratitudeSection = peopleSection?.querySelector('section[aria-labelledby="gratitude-heading"]');
-    expect(gratitudeSection).toBeInTheDocument();
-    expect(nazimArticle?.nextElementSibling).toBe(gratitudeSection);
-    expect(gratitudeSection?.nextElementSibling).toBe(viseshArticle);
-    expect(nazimArticle?.querySelector('.grid')).toBeInTheDocument();
-    expect(viseshArticle?.querySelector('.grid')).toBeInTheDocument();
-
+    expect(articles).toHaveLength(1);
+    expect(articles?.[0].textContent).toContain('Nazim M. Sandh');
+    expect(articles?.[0].nextElementSibling).toBe(gratitudeSection);
+    expect(gratitudeSection?.querySelector('img[alt="Portrait of Visesh Akbari"]')).toBeInTheDocument();
   });
 
   it('renders "With gratitude" section with Nazim message, 9 styled names in stated order, closing lines, and demo disclosure', () => {
