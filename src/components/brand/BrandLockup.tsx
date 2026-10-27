@@ -5,7 +5,7 @@ import { cn } from '../../utils/cn';
 export interface BrandLockupProps {
   className?: string;
   showRing?: boolean;
-  ringVariant?: 'color' | 'monochrome';
+  ringVariant?: 'color' | 'monochrome' | 'on-dark';
   ringSize?: number;
 }
 

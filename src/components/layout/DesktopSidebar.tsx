@@ -98,7 +98,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           onClick={() => onClose?.()}
           className="flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-400 rounded-lg"
         >
-          <ChaupalRing variant="color" size={36} className="shrink-0" />
+          <ChaupalRing variant="on-dark" size={36} className="shrink-0" />
           <div className="min-w-0">
             <h1 className="font-heading font-bold text-base text-white tracking-tight flex items-center gap-1">
               <span>JanSahabhag</span>{' '}

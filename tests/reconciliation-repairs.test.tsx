@@ -93,14 +93,14 @@ describe('Reference Reconciliation 2026-10-27 Repairs', () => {
       expect(svgContent).toContain('<desc>');
     });
 
-    it('uses brand colors and Chaupal Ring without choosing 25 Oct proposals', () => {
+    it('carries the approved Chaupal Ring mark with brand colors', () => {
       const svgContent = fs.readFileSync(faviconPath, 'utf8');
 
       // Brand colors: navy (#06038D) and saffron (#FF671F)
       expect(svgContent).toContain('#06038D');
       expect(svgContent).toContain('#FF671F');
 
-      // Mark: does not imply any of the 3 rejected proposals (spoke wheel, pillar/torch, mandala)
+      // Restraint: mark contains no chakra, pillar, or mandala
       expect(svgContent.toLowerCase()).not.toContain('chakra');
       expect(svgContent.toLowerCase()).not.toContain('pillar');
       expect(svgContent.toLowerCase()).not.toContain('mandala');

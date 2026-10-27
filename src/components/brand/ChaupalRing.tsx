@@ -8,9 +8,11 @@ import React, { useId } from 'react';
 
 export interface ChaupalRingProps {
   size?: number; // rendered px, default 32
-  variant?: 'color' | 'monochrome';
+  variant?: 'color' | 'monochrome' | 'on-dark';
   className?: string;
   title?: string; // accessible name; when omitted the svg is aria-hidden
+  monochromeColor?: string; // single color for monochrome variant on light or dark grounds (defaults to #06038D)
+  color?: string; // alias for monochrome single color
 }
 
 const TOTAL_SLOTS = 12;
@@ -21,15 +23,18 @@ const RING_RADIUS = 10.5;
 const RING_DOT_RADIUS = 1.8;
 const ENTERING_DOT_RADIUS = 2.5;
 
-// Navy and saffron brand colors
+// Navy, saffron, and white brand colors
 const NAVY_COLOR = '#06038D';
 const SAFFRON_COLOR = '#FF671F';
+const WHITE_COLOR = '#FFFFFF';
 
 export const ChaupalRing: React.FC<ChaupalRingProps> = ({
   size = 32,
   variant = 'color',
   className,
   title,
+  monochromeColor,
+  color,
 }) => {
   const titleId = useId();
 
@@ -48,8 +53,21 @@ export const ChaupalRing: React.FC<ChaupalRingProps> = ({
     y: Number((CENTER + RING_RADIUS * Math.sin(GAP_ANGLE)).toFixed(2)),
   };
 
-  const ringColor = NAVY_COLOR;
-  const enteringColor = variant === 'monochrome' ? NAVY_COLOR : SAFFRON_COLOR;
+  let ringColor: string;
+  let enteringColor: string;
+
+  if (variant === 'on-dark') {
+    ringColor = WHITE_COLOR;
+    enteringColor = SAFFRON_COLOR;
+  } else if (variant === 'monochrome') {
+    const mono = monochromeColor || color || NAVY_COLOR;
+    ringColor = mono;
+    enteringColor = mono;
+  } else {
+    // 'color' (default)
+    ringColor = NAVY_COLOR;
+    enteringColor = SAFFRON_COLOR;
+  }
 
   return (
     <svg
