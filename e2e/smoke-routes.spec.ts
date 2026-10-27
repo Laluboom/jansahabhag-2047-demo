@@ -17,6 +17,7 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
       // Core Participant Routes
       { path: '/', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i },
       { path: '/welcome', headingRegex: /JanSahabhag 2047|Welcome to JanSahabhag/i },
+      { path: '/lok-manch', headingRegex: /The Idea: LOK MANCH-2047/i },
       { path: '/onboarding', headingRegex: /Participant Onboarding|Civic Track/i },
       { path: '/dashboard', headingRegex: /Civic Journey Dashboard|Welcome back, (Ankita Kapri|Aarav Sharma)/i },
       { path: '/profile', headingRegex: /Civic Profile|(Ankita Kapri|Aarav Sharma)/i },
