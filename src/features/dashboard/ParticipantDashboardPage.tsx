@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { ThreadMotif } from '../../components/layout/ThreadMotif';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { AssignmentTaskCard } from '../../components/assignments/AssignmentTaskCard';
 import { formatRelativeTime } from '../../utils/formatters';
 import {
   Award,
@@ -28,6 +29,7 @@ export const ParticipantDashboardPage: React.FC = () => {
   const { refreshKey } = useAppRefreshStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+  const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -348,12 +350,23 @@ export const ParticipantDashboardPage: React.FC = () => {
                     {nextAssignment.prompt}
                   </p>
                 </div>
-                <Link to={`/assignments/${nextAssignment.id}`}>
-                  <Button size="sm" variant="saffron" className="shrink-0">
-                    <span>Start Submission</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
+                <div className="flex min-w-0 flex-wrap items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setActiveAssignmentId(nextAssignment.id)}
+                    aria-haspopup="dialog"
+                    className="shrink-0"
+                  >
+                    <span>View Task Card</span>
                   </Button>
-                </Link>
+                  <Link to={`/assignments/${nextAssignment.id}`}>
+                    <Button size="sm" variant="saffron" className="shrink-0">
+                      <span>Start Submission</span>
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </Card>
           )}
@@ -416,6 +429,12 @@ export const ParticipantDashboardPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      <AssignmentTaskCard
+        assignmentId={activeAssignmentId || ''}
+        isOpen={Boolean(activeAssignmentId)}
+        onClose={() => setActiveAssignmentId(null)}
+      />
     </div>
   );
 };

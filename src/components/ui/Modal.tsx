@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { cn } from '../../utils/cn';
 import { X } from 'lucide-react';
 
@@ -12,6 +12,29 @@ export interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  const elements = Array.from(
+    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+  );
+  return elements.filter((el) => {
+    return (
+      !el.hasAttribute('disabled') &&
+      el.getAttribute('aria-hidden') !== 'true' &&
+      el.tabIndex !== -1 &&
+      !el.closest('[aria-hidden="true"]')
+    );
+  });
+}
+
 export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -21,21 +44,93 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   maxWidth = 'md',
 }) => {
+  const generatedId = useId();
+  const cleanId = generatedId.replace(/:/g, '');
+  const titleId = `modal-title-${cleanId}`;
+  const descriptionId = `modal-desc-${cleanId}`;
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
     if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement | null;
       document.body.style.overflow = 'hidden';
+
+      const dialog = dialogRef.current;
+      if (dialog) {
+        const focusables = getFocusableElements(dialog);
+        if (focusables.length > 0) {
+          focusables[0].focus();
+        } else {
+          dialog.focus();
+        }
+      }
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onCloseRef.current();
+          return;
+        }
+
+        if (e.key === 'Tab' && dialogRef.current) {
+          const focusables = getFocusableElements(dialogRef.current);
+          if (focusables.length === 0) {
+            e.preventDefault();
+            dialogRef.current.focus();
+            return;
+          }
+
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if (
+            document.activeElement === dialogRef.current ||
+            !dialogRef.current.contains(document.activeElement)
+          ) {
+            e.preventDefault();
+            if (e.shiftKey) {
+              last.focus();
+            } else {
+              first.focus();
+            }
+            return;
+          }
+
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
       window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('keydown', handleKeyDown);
+        if (
+          previousActiveElement.current &&
+          typeof previousActiveElement.current.focus === 'function'
+        ) {
+          previousActiveElement.current.focus();
+          previousActiveElement.current = null;
+        }
+      };
     }
-    return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -49,10 +144,13 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      tabIndex={-1}
     >
       <div
         className="fixed inset-0"
@@ -68,11 +166,11 @@ export const Modal: React.FC<ModalProps> = ({
       >
         <div className="flex items-start justify-between p-6 border-b border-slate-100">
           <div>
-            <h2 id="modal-title" className="text-xl font-bold font-heading text-slate-900">
+            <h2 id={titleId} className="text-xl font-bold font-heading text-slate-900">
               {title}
             </h2>
             {description && (
-              <p className="mt-1 text-sm text-slate-500">
+              <p id={descriptionId} className="mt-1 text-sm text-slate-500">
                 {description}
               </p>
             )}
