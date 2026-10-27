@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { DEMO_COLLEGE_FULL_NAME } from '../../data/seed/institutions';
 import { cn } from '../../utils/cn';
+import { ChaupalRing } from '../brand/ChaupalRing';
 import {
   Home,
   BookOpen,
@@ -97,9 +98,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           onClick={() => onClose?.()}
           className="flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-400 rounded-lg"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-civic-indigo-600 via-civic-teal-500 to-civic-saffron-500 flex items-center justify-center text-white font-bold font-heading shadow-md shrink-0">
-            JS
-          </div>
+          <ChaupalRing variant="on-dark" size={36} className="shrink-0" />
           <div className="min-w-0">
             <h1 className="font-heading font-bold text-base text-white tracking-tight flex items-center gap-1">
               <span>JanSahabhag</span>{' '}
