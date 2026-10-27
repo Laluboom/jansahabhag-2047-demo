@@ -56,7 +56,14 @@ import {
   SeatingQuotaSummary,
   computeSeatingQuotaFromAllocations,
   SessionTextTurn,
+  ChamberHeader,
+  ChamberControlBar,
+  StageTrack,
+  SeatingQuotaDisplay,
 } from '../session';
+import { DemoPreviewBadge } from '../ui/DemoPreviewBadge';
+import { Disclosure } from '../ui/Disclosure';
+import { PointOfUseRulesButton } from '../ui/PointOfUseRulesButton';
 import { SessionPreferencesService } from '../../services/sessionPreferencesService';
 
 const ACTIVE_DEBATE_PHASES: DebatePhase[] = [
@@ -247,7 +254,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
     const queue = session.debateData?.speakingQueue || [];
     const motionText = session.debateData?.motion;
 
-    return roster.map((member) => {
+    const seatsList = roster.map((member) => {
       const userDetail = allUsers.find((u) => u.id === member.userId);
       const isSpeaking = Boolean(
         member.isSpeaking ||
@@ -255,6 +262,9 @@ export const DebateRoomPreviewPage: React.FC = () => {
       );
       const queueEntry = queue.find(
         (q) => q.userId === member.userId && (q.status === 'waiting' || q.status === 'speaking')
+      );
+      const hasRaisedHand = Boolean(
+        queue.find((q) => q.userId === member.userId && q.status === 'waiting')
       );
 
       // Map role to chamber seating:
@@ -298,11 +308,14 @@ export const DebateRoomPreviewPage: React.FC = () => {
         status,
         isSpeaking,
         isReserved,
+        hasRaisedHand,
         institution: userDetail?.institutionName || 'Rajkot Youth Deliberation Network',
         currentActivity,
         bio: userDetail?.bio,
       };
     });
+    (seatsList as unknown as { speakingQueue: typeof queue }).speakingQueue = queue;
+    return seatsList;
   }, [session, allUsers]);
 
   // Quota calculation pulling strictly from projected roleAllocations
@@ -872,35 +885,118 @@ export const DebateRoomPreviewPage: React.FC = () => {
     currPhaseIndex < DEBATE_PHASES.length - 1 ? DEBATE_PHASES[currPhaseIndex + 1] : null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Simulation Disclaimer & Persona Notice */}
-      <div className="p-4 rounded-xl border border-civic-indigo-200 bg-civic-indigo-50/70 text-civic-indigo-950 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-xs">
-        <div className="flex items-start gap-2.5">
-          <ShieldAlert className="w-5 h-5 text-civic-indigo-600 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-bold">
-              Single-Browser Local Simulation — Session {session.id}
-            </p>
-            <p className="text-slate-600">
-              State is only shared among personas within this browser. No live multi-user network or server-side authorization is active (OD.5 pending). The persona selector is a local simulation, not security.
-            </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* Chamber Header */}
+      <ChamberHeader
+        title="Debate Room"
+        tagline="Think Critically. Speak Respectfully."
+        statusSlot={
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              Live Debate
+            </span>
+            <span
+              className="text-xs sm:text-sm font-medium text-slate-700 truncate max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-lg"
+              title={debateData?.motion}
+            >
+              {debateData?.motion}
+            </span>
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="bg-white/90 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 font-medium">
+        }
+        timer={
+          debateData?.speechTimer
+            ? formatSpeakingTimer(debateData.speechTimer.secondsRemaining)
+            : undefined
+        }
+        timerLabel="Speech Time"
+        rulesSlot={
+          <PointOfUseRulesButton
+            moduleName="Debate Room"
+            triggerText="Rules & Guidelines"
+            modalTitle={debateData?.rulebook.title || 'JanSahabhag Debate Room Rules of Procedure'}
+            rules={(debateData?.rulebook.rules || []).map((r) => ({
+              title: r.title,
+              description: r.content,
+            }))}
+          />
+        }
+        onLeave={() => navigate('/assemblies')}
+      />
+
+      {/* Simulation Notice Badges, Persona and Facilitator Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <DemoPreviewBadge label="Single-Browser Local Simulation" size="sm" />
+          {SessionPreferencesService.getLowDataPreference() ? (
+            <span
+              className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 normal-case tracking-normal"
+              data-testid="low-data-video-notice"
+            >
+              Low Data Mode: Video Preview Suppressed
+            </span>
+          ) : (
+            <div data-testid="video-preview-badge" className="inline-flex">
+              <DemoPreviewBadge label="Text-first session" size="sm" />
+            </div>
+          )}
+          <span className="text-slate-600 bg-slate-100/90 px-2.5 py-1 rounded-md border border-slate-200">
             Persona: <strong className="text-civic-indigo-900">{currentUser.name}</strong> ({currentUser.role})
           </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsRulebookOpen(true)}
-            className="text-xs bg-white text-slate-700 hover:bg-slate-50"
-          >
-            <BookOpen className="w-3.5 h-3.5 mr-1" />
-            Rulebook (v1.0)
-          </Button>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {isFacilitator && (
+            <Button
+              size="sm"
+              variant="primary"
+              data-testid="push-popup-assignment-btn"
+              onClick={() => setIsCreateAssignmentOpen(true)}
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-7 px-2.5"
+            >
+              <FileText className="w-3.5 h-3.5 mr-1" />
+              Push Popup Assignment
+            </Button>
+          )}
+          {isFacilitator && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setIsInterstitialOpen(true)}
+              className="bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 text-xs h-7 px-2.5"
+            >
+              <Vote className="w-3.5 h-3.5 mr-1" />
+              Switch to Youth Assembly
+            </Button>
+          )}
+          <Link to="/assemblies">
+            <Button size="sm" variant="outline" className="text-xs h-7 px-2.5 bg-white text-slate-700 hover:bg-slate-50">
+              <Layers className="w-3.5 h-3.5 mr-1" />
+              All Assemblies
+            </Button>
+          </Link>
         </div>
       </div>
+
+      {/* Simulation Truthful Explanation Disclosure */}
+      <Disclosure summary="How this simulation works" testId="simulation-works-disclosure">
+        <div className="space-y-2 text-xs text-slate-600">
+          <p>
+            State is only shared among personas within this browser. No live multi-user network or server-side authorization is active. The persona selector is a local simulation, not security.
+          </p>
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsRulebookOpen(true)}
+              className="text-xs bg-white text-slate-700 hover:bg-slate-50"
+            >
+              <BookOpen className="w-3.5 h-3.5 mr-1" />
+              Rulebook (v1.0)
+            </Button>
+          </div>
+        </div>
+      </Disclosure>
 
       {/* Action Alerts */}
       {actionError && (
@@ -983,70 +1079,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
         </div>
       )}
 
-      {/* Header with Title and Mode Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap text-xs font-semibold uppercase tracking-wider text-civic-indigo-700 mb-1">
-            <div className="flex items-center gap-1.5">
-              <Scale className="w-4 h-4" />
-              <span>Shared Live Session Engine — Mode: Debate Room</span>
-            </div>
-            {SessionPreferencesService.getLowDataPreference() ? (
-              <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 normal-case tracking-normal"
-                data-testid="low-data-video-notice"
-              >
-                Low Data Mode: Video Preview Suppressed
-              </span>
-            ) : (
-              <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 normal-case tracking-normal"
-                data-testid="video-preview-badge"
-              >
-                Video Preview: Text-First Active (OD.4)
-              </span>
-            )}
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-            Rajkot Youth Pedestrian Safety Debate Room
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Structured motion-centered deliberation with speaker queues, time limits, and evidence dock.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {isFacilitator && (
-            <Button
-              size="sm"
-              variant="primary"
-              data-testid="push-popup-assignment-btn"
-              onClick={() => setIsCreateAssignmentOpen(true)}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
-            >
-              <FileText className="w-4 h-4 mr-1.5" />
-              Push Popup Assignment
-            </Button>
-          )}
-          {isFacilitator && (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setIsInterstitialOpen(true)}
-              className="bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
-            >
-              <Vote className="w-4 h-4 mr-1.5" />
-              Switch to Youth Assembly
-            </Button>
-          )}
-          <Link to="/assemblies">
-            <Button size="sm" variant="outline">
-              <Layers className="w-4 h-4 mr-1.5" />
-              All Assemblies
-            </Button>
-          </Link>
-        </div>
-      </div>
 
       {/* Pre-Action Rulebook Banner (if not acknowledged yet) */}
       {!isRulebookAcknowledged && (
@@ -1176,167 +1209,32 @@ export const DebateRoomPreviewPage: React.FC = () => {
         </Card>
       )}
 
-      {/* Motion Card with For / Against Stance Counter & Voting Controls */}
-      <Card className="border-civic-indigo-200 bg-white shadow-xs">
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-civic-indigo-600 bg-civic-indigo-50 px-2.5 py-0.5 rounded-full border border-civic-indigo-200">
-              Formal Motion Before The Chamber
-            </span>
-            <span className="text-xs text-slate-500 font-mono">
-              Session ID: {session.id}
-            </span>
-          </div>
-          <CardTitle className="text-lg sm:text-xl font-bold font-heading text-slate-900 mt-2">
-            "{debateData?.motion}"
-          </CardTitle>
-          {debateData?.linkedQuestion && (
-            <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              <strong>Linked Question:</strong> {debateData.linkedQuestion}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="pt-3 pb-3 bg-slate-50/70 border-t border-slate-100">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            {/* Stance Tallies */}
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Vote className="w-4 h-4 text-civic-indigo-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Motion Vote Counter:
-                </span>
-              </div>
-              <div className="flex items-center gap-2" data-testid="for-against-counter">
-                <span
-                  data-testid="vote-for-count"
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
-                >
-                  <ThumbsUp className="w-3.5 h-3.5" />
-                  <span>For: {forVoteCount}</span>
-                </span>
-                <span
-                  data-testid="vote-against-count"
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300"
-                >
-                  <ThumbsDown className="w-3.5 h-3.5" />
-                  <span>Against: {againstVoteCount}</span>
-                </span>
-                <span
-                  data-testid="vote-abstain-count"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-700 border border-slate-300"
-                >
-                  <span>Abstain: {abstainVoteCount}</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Voting Controls & Explicit Stance Boundary */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] text-slate-500 hidden sm:inline">
-                Cast explicit stance:
-              </span>
-              <Button
-                size="sm"
-                variant={currentUserVote === 'for' ? 'primary' : 'outline'}
-                onClick={() => handleCastVote('for')}
-                disabled={isSessionClosed || isCastingVote}
-                data-testid="vote-for-btn"
-                className={`text-xs ${
-                  currentUserVote === 'for'
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
-                    : 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
-                }`}
-              >
-                <ThumbsUp className="w-3.5 h-3.5 mr-1" />
-                {currentUserVote === 'for' ? 'Voted For' : 'Vote For'}
-              </Button>
-              <Button
-                size="sm"
-                variant={currentUserVote === 'against' ? 'primary' : 'outline'}
-                onClick={() => handleCastVote('against')}
-                disabled={isSessionClosed || isCastingVote}
-                data-testid="vote-against-btn"
-                className={`text-xs ${
-                  currentUserVote === 'against'
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700'
-                    : 'text-rose-700 border-rose-300 hover:bg-rose-50'
-                }`}
-              >
-                <ThumbsDown className="w-3.5 h-3.5 mr-1" />
-                {currentUserVote === 'against' ? 'Voted Against' : 'Vote Against'}
-              </Button>
-              {currentUserVote && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleCastVote('abstain')}
-                  disabled={isSessionClosed || isCastingVote}
-                  data-testid="vote-abstain-btn"
-                  className="text-xs text-slate-600 hover:bg-slate-100"
-                >
-                  Abstain
-                </Button>
-              )}
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-2 italic">
-            No inferred stances: Seating positions (Proposition/Opposition benches) do not predetermine votes; counts reflect explicit participant votes only.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Phase Timeline / Flow */}
-      <Card className="p-4 border-slate-200 bg-slate-900 text-white shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-civic-teal-400 uppercase tracking-wider">
-              Debate Session Stages
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-mono">
-              Current: {currentPhase}
-            </span>
-          </div>
-
-          {/* Facilitator Phase Advancement Control */}
-          {isFacilitator && nextPhaseCandidate && !isSessionClosed && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Facilitator Action:</span>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => handleAdvancePhase(nextPhaseCandidate)}
-                className="text-xs bg-civic-teal-600 hover:bg-civic-teal-500 text-white"
-              >
-                Advance to {nextPhaseCandidate}
-                <ChevronRight className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </div>
-          )}
+      {/* Stage Track (replaces bulky phase card) */}
+      <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <StageTrack
+            steps={DEBATE_PHASES.map((phase) => ({
+              id: phase,
+              label: phase
+                .replace(/_/g, ' ')
+                .toLowerCase()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            }))}
+            currentStepId={currentPhase}
+          />
         </div>
-
-        {/* Phase step pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
-          {DEBATE_PHASES.map((phase, idx) => {
-            const isCurrent = phase === currentPhase;
-            const isPast = DEBATE_PHASES.indexOf(phase) < currPhaseIndex;
-            return (
-              <div
-                key={phase}
-                className={`px-2.5 py-1 rounded-md shrink-0 flex items-center gap-1 border transition-colors ${
-                  isCurrent
-                    ? 'bg-civic-teal-500 text-slate-950 font-bold border-civic-teal-400'
-                    : isPast
-                    ? 'bg-slate-800 text-slate-400 border-slate-700'
-                    : 'bg-slate-950/50 text-slate-500 border-slate-800'
-                }`}
-              >
-                <span>{idx + 1}.</span>
-                <span>{phase.replace(/_/g, ' ')}</span>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+        {isFacilitator && nextPhaseCandidate && !isSessionClosed && (
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => handleAdvancePhase(nextPhaseCandidate)}
+            className="text-xs bg-civic-teal-600 hover:bg-civic-teal-500 text-white shrink-0 self-start sm:self-auto"
+          >
+            Advance to {nextPhaseCandidate.replace(/_/g, ' ')}
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </Button>
+        )}
+      </div>
 
       {/* Reusable Accessible SessionSeating Component (Debate Layout) */}
       <SessionSeating
@@ -1344,42 +1242,157 @@ export const DebateRoomPreviewPage: React.FC = () => {
         currentRoute="debate"
         sessionId={session?.id || 'sess_jaipur_01'}
         seats={debateSeats}
-        quotaSummary={debateQuotaSummary}
         activeSpeakerId={activeSpeakerId}
         sampleTurns={debateSampleTurns}
         title="Debate Room Chamber Seating"
         subtitle="Facing Proposition (For) & Opposition (Against) benches with Facilitator rostrum"
       />
 
-      {/* Debate Reservation Rulebook Point-of-Use Banner */}
-      <DebateReservationRulebookBanner
-        onOpenRulebook={() => setShowReservationRulebook(true)}
-      />
+      {/* 33% Women's Reservation and Role Allocations Fold */}
+      <Disclosure summary="Seats and 33% reservation" testId="seats-reservation-disclosure">
+        <div className="space-y-4 pt-2">
+          <SeatingQuotaDisplay quota={debateQuotaSummary} />
+          <DebateReservationRulebookBanner
+            onOpenRulebook={() => setShowReservationRulebook(true)}
+          />
+          <DebateRoleAllocationsCard
+            session={session}
+            currentUser={currentUser}
+            allUsers={allUsers}
+            onOpenRulebook={() => setShowReservationRulebook(true)}
+            onOpenExceptionModal={(roleName) => {
+              setSelectedRoleForException(roleName);
+              setExceptionError(null);
+            }}
+            onFinalizeRole={handleFinalizeRole}
+            onOpenAssignModal={(roleName) => {
+              setSelectedRoleForAssign(roleName);
+              setAssignError(null);
+            }}
+            onWithdrawRole={handleWithdrawRole}
+            onOpenCapacityModal={(roleName) => {
+              setSelectedRoleForCapacity(roleName);
+              setCapacityError(null);
+            }}
+            onOpenAuditsModal={handleOpenAuditsModal}
+            isFinalizingRole={isFinalizingRole}
+            isWithdrawingRole={isWithdrawingRole}
+          />
+        </div>
+      </Disclosure>
 
-      {/* Debate Room Named Role Allocations & Compliance Plan Card */}
-      <DebateRoleAllocationsCard
-        session={session}
-        currentUser={currentUser}
-        allUsers={allUsers}
-        onOpenRulebook={() => setShowReservationRulebook(true)}
-        onOpenExceptionModal={(roleName) => {
-          setSelectedRoleForException(roleName);
-          setExceptionError(null);
-        }}
-        onFinalizeRole={handleFinalizeRole}
-        onOpenAssignModal={(roleName) => {
-          setSelectedRoleForAssign(roleName);
-          setAssignError(null);
-        }}
-        onWithdrawRole={handleWithdrawRole}
-        onOpenCapacityModal={(roleName) => {
-          setSelectedRoleForCapacity(roleName);
-          setCapacityError(null);
-        }}
-        onOpenAuditsModal={handleOpenAuditsModal}
-        isFinalizingRole={isFinalizingRole}
-        isWithdrawingRole={isWithdrawingRole}
-      />
+      {/* Motion Stance & Voting Fold */}
+      <Disclosure summary="Motion stance & voting" testId="motion-voting-disclosure">
+        <div className="pt-2">
+          <Card className="border-civic-indigo-200 bg-white shadow-xs">
+            <CardHeader className="pb-3 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-civic-indigo-600 bg-civic-indigo-50 px-2.5 py-0.5 rounded-full border border-civic-indigo-200">
+                  Formal Motion Before The Chamber
+                </span>
+                <span className="text-xs text-slate-500 font-mono">
+                  Session ID: {session.id}
+                </span>
+              </div>
+              <CardTitle className="text-lg sm:text-xl font-bold font-heading text-slate-900 mt-2">
+                &ldquo;{debateData?.motion}&rdquo;
+              </CardTitle>
+              {debateData?.linkedQuestion && (
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                  <strong>Linked Question:</strong> {debateData.linkedQuestion}
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="pt-3 pb-3 bg-slate-50/70 border-t border-slate-100">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                {/* Stance Tallies */}
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Vote className="w-4 h-4 text-civic-indigo-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Motion Vote Counter:
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2" data-testid="for-against-counter">
+                    <span
+                      data-testid="vote-for-count"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      <span>For: {forVoteCount}</span>
+                    </span>
+                    <span
+                      data-testid="vote-against-count"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300"
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                      <span>Against: {againstVoteCount}</span>
+                    </span>
+                    <span
+                      data-testid="vote-abstain-count"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-700 border border-slate-300"
+                    >
+                      <span>Abstain: {abstainVoteCount}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Voting Controls & Explicit Stance Boundary */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] text-slate-500 hidden sm:inline">
+                    Cast explicit stance:
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={currentUserVote === 'for' ? 'primary' : 'outline'}
+                    onClick={() => handleCastVote('for')}
+                    disabled={isSessionClosed || isCastingVote}
+                    data-testid="vote-for-btn"
+                    className={`text-xs ${
+                      currentUserVote === 'for'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
+                        : 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5 mr-1" />
+                    {currentUserVote === 'for' ? 'Voted For' : 'Vote For'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={currentUserVote === 'against' ? 'primary' : 'outline'}
+                    onClick={() => handleCastVote('against')}
+                    disabled={isSessionClosed || isCastingVote}
+                    data-testid="vote-against-btn"
+                    className={`text-xs ${
+                      currentUserVote === 'against'
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700'
+                        : 'text-rose-700 border-rose-300 hover:bg-rose-50'
+                    }`}
+                  >
+                    <ThumbsDown className="w-3.5 h-3.5 mr-1" />
+                    {currentUserVote === 'against' ? 'Voted Against' : 'Vote Against'}
+                  </Button>
+                  {currentUserVote && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCastVote('abstain')}
+                      disabled={isSessionClosed || isCastingVote}
+                      data-testid="vote-abstain-btn"
+                      className="text-xs text-slate-600 hover:bg-slate-100"
+                    >
+                      Abstain
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2 italic">
+                No inferred stances: Seating positions (Proposition/Opposition benches) do not predetermine votes; counts reflect explicit participant votes only.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </Disclosure>
 
       {/* Main Grid: Left Column (Queue & Text Contributions) + Right Column (Dock & Info) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2468,6 +2481,16 @@ export const DebateRoomPreviewPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Chamber Bottom Control Bar */}
+      <div className="sticky bottom-0 z-40 shadow-lg -mx-4 sm:-mx-6 lg:-mx-8">
+        <ChamberControlBar
+          participantCount={session?.roster?.length || debateSeats.length || 7}
+          hasRaisedHand={Boolean(userQueueEntry && userQueueEntry.status === 'waiting')}
+          onToggleHand={userQueueEntry ? handleCancelTurn : handleRequestTurn}
+          onLeave={() => navigate('/assemblies')}
+        />
+      </div>
     </div>
   );
 };

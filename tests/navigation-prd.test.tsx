@@ -171,10 +171,10 @@ describe('Master PRD Canonical Navigation & Learner Identity Integration Tests',
         <DebateRoomPreviewPage />
       </MemoryRouter>
     );
-    expect(await screen.findByRole('heading', { name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /Debate Room/i })).toBeInTheDocument();
     expect(screen.getByText(/Single-Browser Local Simulation/i)).toBeInTheDocument();
     expect(screen.getByText(/State is only shared among personas within this browser/i)).toBeInTheDocument();
-    expect(screen.getByText(/Immediate installation of tabletop pedestrian crosswalks/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Immediate installation of tabletop pedestrian crosswalks/i)[0]).toBeInTheDocument();
 
     // Workspace interactive simulation
     rerender(

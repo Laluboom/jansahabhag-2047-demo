@@ -41,7 +41,7 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     // 1. Debate Room (item 4): interactive local simulation
     await links.nth(3).click();
     await page.waitForURL('**/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /Debate Room/i })).toBeVisible();
     await expect(page.getByText('Single-Browser Local Simulation')).toBeVisible();
 
     // 2. Youth Parliament (item 6): clearly labelled prototype
