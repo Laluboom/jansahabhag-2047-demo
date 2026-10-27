@@ -22,10 +22,10 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
 }) => {
   // Categorize seats into:
   // 1. Procedural Leadership (Chair / Facilitator / Co-Chair)
-  // 2. Thinker Zone (Question Setter)
-  // 3. Enabler Zone (Feasibility Check)
-  // 4. Troubleshooter Zone (Red Flag)
-  // 5. Shaper Zone (Proposition Call)
+  // 2. Thinkers (indigo)
+  // 3. Enablers (emerald)
+  // 4. Troubleshooters (amber)
+  // 5. Shapers (purple)
 
   const isProcedural = (s: SeatModel) =>
     s.role.toLowerCase().includes('chair') ||
@@ -62,42 +62,50 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
   const zones = [
     {
       id: 'thinker',
-      title: 'Thinker Zone',
-      subtitle: 'Question Setter & Problem Framing',
+      title: 'Thinkers',
+      purpose: 'Analyse & Research',
       icon: HelpCircle,
-      borderColor: 'border-civic-teal-300',
-      bgColor: 'bg-civic-teal-50/50',
-      headerBg: 'bg-civic-teal-100 text-civic-teal-900',
+      borderColor: 'border-indigo-200',
+      bgColor: 'bg-indigo-50/30',
+      headerBg: 'bg-indigo-600 text-white',
+      purposeColor: 'text-indigo-100',
+      badgeBg: 'bg-indigo-700/80 text-indigo-100',
       seats: thinkerSeats,
     },
     {
       id: 'enabler',
-      title: 'Enabler Zone',
-      subtitle: 'Feasibility, IRC Standards & Budgets',
+      title: 'Enablers',
+      purpose: 'Build Solutions',
       icon: CheckCircle2,
-      borderColor: 'border-civic-indigo-300',
-      bgColor: 'bg-civic-indigo-50/50',
-      headerBg: 'bg-civic-indigo-100 text-civic-indigo-900',
+      borderColor: 'border-emerald-200',
+      bgColor: 'bg-emerald-50/30',
+      headerBg: 'bg-emerald-600 text-white',
+      purposeColor: 'text-emerald-100',
+      badgeBg: 'bg-emerald-700/80 text-emerald-100',
       seats: enablerSeats,
     },
     {
       id: 'troubleshooter',
-      title: 'Troubleshooter Zone',
-      subtitle: 'Red Flags, Hazards & Unintended Consequences',
+      title: 'Troubleshooters',
+      purpose: 'Solve Challenges',
       icon: ShieldAlert,
-      borderColor: 'border-amber-300',
-      bgColor: 'bg-amber-50/50',
-      headerBg: 'bg-amber-100 text-amber-900',
+      borderColor: 'border-amber-200',
+      bgColor: 'bg-amber-50/30',
+      headerBg: 'bg-amber-600 text-white',
+      purposeColor: 'text-amber-100',
+      badgeBg: 'bg-amber-700/80 text-amber-100',
       seats: troubleshooterSeats,
     },
     {
       id: 'shaper',
-      title: 'Shaper Zone',
-      subtitle: 'Proposition Drafting & Binding Consensus',
+      title: 'Shapers',
+      purpose: 'Present & Lead',
       icon: Sparkles,
-      borderColor: 'border-purple-300',
-      bgColor: 'bg-purple-50/50',
-      headerBg: 'bg-purple-100 text-purple-900',
+      borderColor: 'border-purple-200',
+      bgColor: 'bg-purple-50/30',
+      headerBg: 'bg-purple-600 text-white',
+      purposeColor: 'text-purple-100',
+      badgeBg: 'bg-purple-700/80 text-purple-100',
       seats: shaperSeats,
     },
   ];
@@ -109,30 +117,17 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
       role="region"
       aria-label="Youth Assembly Four Functional Zones Chamber Layout"
     >
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-civic-teal-600" />
-          <h3 className="font-bold text-sm font-heading tracking-wide text-slate-900">
-            Youth Chamber: Four Balanced Functional Zones
-          </h3>
-        </div>
-        <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 self-start sm:self-auto">
-          Deliberative Non-Hierarchical Model
-        </span>
-      </div>
-
-      {/* TOP: Procedural Rostrum (Chair & Facilitator) */}
+      {/* Procedural Leadership (Chair & Facilitator) above the zones */}
       {proceduralSeats.length > 0 && (
-        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
           <div className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
             <UserCheck className="w-4 h-4 text-civic-indigo-600" />
-            <span>Chamber Procedural Rostrum (Chair & Facilitator)</span>
+            <span>Procedural Leadership (Chair & Facilitator)</span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             {proceduralSeats.map((seat) => (
-              <div key={seat.id} className="w-full sm:w-64">
+              <div key={seat.id} className="w-36 sm:w-44">
                 <SeatItem
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
@@ -146,50 +141,47 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
         </div>
       )}
 
-      {/* 4 BALANCED FUNCTIONAL ZONES (2x2 Grid) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* The four role zones as four columns (at 375px stack to one) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {zones.map((zone) => {
           const Icon = zone.icon;
           return (
             <div
               key={zone.id}
-              className={`p-4 rounded-xl border ${zone.borderColor} ${zone.bgColor} space-y-3`}
+              className={`flex flex-col rounded-xl border ${zone.borderColor} ${zone.bgColor} overflow-hidden shadow-2xs`}
               data-testid={`assembly-zone-${zone.id}`}
             >
-              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1 rounded-lg ${zone.headerBg}`}>
-                    <Icon className="w-3.5 h-3.5" />
+              {/* Coloured Header with Role Name and One-line Purpose */}
+              <div className={`p-3 ${zone.headerBg} space-y-0.5`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <h4 className="font-bold text-sm font-heading truncate">{zone.title}</h4>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-900 font-heading">
-                      {zone.title}
-                    </h4>
-                    <span className="text-[10px] text-slate-500 block">
-                      {zone.subtitle}
-                    </span>
-                  </div>
+                  <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full ${zone.badgeBg} shrink-0`}>
+                    {zone.seats.length} {zone.seats.length === 1 ? 'Seat' : 'Seats'}
+                  </span>
                 </div>
-
-                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200">
-                  {zone.seats.length} Delegates
-                </span>
+                <p className={`text-xs ${zone.purposeColor} font-medium leading-tight`}>{zone.purpose}</p>
               </div>
 
-              <div className="space-y-2">
+              {/* Zone Seat Tiles */}
+              <div className="p-3 flex-1 space-y-2">
                 {zone.seats.length > 0 ? (
-                  zone.seats.map((seat) => (
-                    <SeatItem
-                      key={seat.id}
-                      seat={seat}
-                      isSelected={selectedSeatId === seat.id}
-                      onSelect={onSelectSeat}
-                      suppressAnimation={suppressAnimation}
-                      textMode={textMode}
-                    />
-                  ))
+                  <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
+                    {zone.seats.map((seat) => (
+                      <SeatItem
+                        key={seat.id}
+                        seat={seat}
+                        isSelected={selectedSeatId === seat.id}
+                        onSelect={onSelectSeat}
+                        suppressAnimation={suppressAnimation}
+                        textMode={textMode}
+                      />
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-xs text-slate-400 italic py-3 text-center">
+                  <p className="text-xs text-slate-400 italic py-6 text-center">
                     No delegates seated in this zone.
                   </p>
                 )}
@@ -199,11 +191,11 @@ export const AssemblySeatingLayout: React.FC<AssemblySeatingLayoutProps> = ({
         })}
       </div>
 
-      {/* Open Delegates if any */}
+      {/* Additional Chamber Delegates if any */}
       {otherSeats.length > 0 && (
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
           <h4 className="font-bold text-xs text-slate-700">Additional Chamber Delegates</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {otherSeats.map((seat) => (
               <SeatItem
                 key={seat.id}

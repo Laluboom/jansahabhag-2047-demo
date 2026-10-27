@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
+import { Disclosure } from '../../components/ui/Disclosure';
+import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
 import {
-  Landmark,
   Vote,
   FileText,
   X,
@@ -20,7 +21,14 @@ import {
   POLICY_VERSION,
   buildParliamentDelegationIllustration,
 } from '../../services/reservationAllocationService';
-import { SessionSeating, SeatModel, SeatingQuotaSummary } from '../../components/session';
+import {
+  SessionSeating,
+  SeatModel,
+  SeatingQuotaSummary,
+  SeatingQuotaDisplay,
+  ChamberHeader,
+  ChamberControlBar,
+} from '../../components/session';
 
 export const ParliamentPage: React.FC = () => {
   const [selectedMotionModal, setSelectedMotionModal] = useState<boolean>(false);
@@ -116,7 +124,7 @@ export const ParliamentPage: React.FC = () => {
           ? 'Rajkot Delegation Allocation'
           : 'Rajkot Youth Deliberative Assembly',
         currentActivity: isNonCompliant
-          ? 'Unmet reserved place remains held vacant by default per 33% Reservation Policy (OD.17).'
+          ? 'Unmet reserved place remains held vacant by default per 33% Reservation Policy.'
           : isOverbooked
           ? 'Ordinary overbooking attempt blocked by validation without approved Platform Owner exception.'
           : 'Advocating 1:15 approach ramps and cross-drainage pipe installation beneath tabletop crossings.',
@@ -183,196 +191,251 @@ export const ParliamentPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <DemoPreviewBadge
-        size="banner"
-        label="National Youth Parliament Preview"
-        description="National apex deliberative chamber aggregating verified state assembly propositions into unified parliamentary submissions."
-      />
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2">
-            <Landmark className="w-6 h-6 text-civic-saffron-600" />
-            <span>National Youth Parliament 2047</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Apex youth assembly tabling grassroots civic propositions from 28 State Deliberation Grids.
-          </p>
-        </div>
-
+      {/* Top Banner Row: DemoPreviewBadge & Action Button */}
+      <div className="flex items-center justify-between gap-4">
+        <DemoPreviewBadge
+          size="sm"
+          label="National Youth Parliament Preview"
+        />
         <Button
           size="sm"
           variant="saffron"
           onClick={() => setSelectedMotionModal(true)}
-          className="flex items-center gap-1.5 self-start sm:self-auto"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <FileText className="w-4 h-4" />
           <span>Inspect Gujarat Motion #04</span>
         </Button>
       </div>
 
-      {/* Chamber Header Card */}
-      <Card className="p-8 border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl shadow-lg space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 pb-3">
-          <div className="flex items-center gap-2 text-xs font-mono text-civic-saffron-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>WINTER SESSION 2026 IN PLENARY</span>
-          </div>
-          <DemoPreviewBadge size="sm" label="Simulated Apex Chamber" />
-        </div>
-
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-heading text-white">
-            Special Plenary: Child & Pedestrian Urban Transit Protection
-          </h2>
-          <p className="text-xs text-slate-300 max-w-2xl mt-1 leading-relaxed">
-            Presiding Speaker: Youth Advisory Panel &bull; 540 Youth Parliamentarians representing all States & UTs.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-          <div className="p-3 bg-white/10 rounded-xl border border-white/10">
-            <span className="text-[10px] uppercase text-slate-400 font-bold block">Motions Tabled</span>
-            <span className="text-lg font-bold text-white font-heading mt-0.5 block">24</span>
-          </div>
-          <div className="p-3 bg-white/10 rounded-xl border border-white/10">
-            <span className="text-[10px] uppercase text-slate-400 font-bold block">Verified Audits</span>
-            <span className="text-lg font-bold text-civic-saffron-400 font-heading mt-0.5 block">42,100</span>
-          </div>
-          <div className="p-3 bg-white/10 rounded-xl border border-white/10">
-            <span className="text-[10px] uppercase text-slate-400 font-bold block">Apex Consensus</span>
-            <span className="text-lg font-bold text-emerald-400 font-heading mt-0.5 block">84.2%</span>
-          </div>
-          <div className="p-3 bg-white/10 rounded-xl border border-white/10">
-            <span className="text-[10px] uppercase text-slate-400 font-bold block">Target Ministry</span>
-            <span className="text-xs font-semibold text-slate-200 font-heading mt-1 block">MoHUA & MoRTH</span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Point-of-Use Explicit Notice on Illustrative 540-Member Plenary Metrics */}
-      <div
-        className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5 shadow-sm"
-        data-testid="parliament-illustrative-notice"
-      >
-        <div className="flex items-center gap-2 font-bold text-amber-900">
-          <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-          <span>Illustrative Chamber Notice (PRD Competition-Demo Prototype Allowance)</span>
-        </div>
-        <p className="leading-relaxed text-amber-900/90">
-          <strong>Notice on 540-Member Plenary Metrics:</strong> The 540-member plenary chamber, 28-state representation,
-          and national apex metrics displayed above are illustrative prototype figures only. They have <strong>not been validated
-          or enforced</strong> under the 33% Women&apos;s Reservation Policy. Real-data collection, national delegate selection,
-          and production parliamentary enforcement workflows remain unbuilt.
-        </p>
-      </div>
-
-      {/* Point-of-Use Reservation Policy & Rulebook Statement */}
-      <Card className="p-6 border-slate-200 bg-white space-y-4" data-testid="parliament-reservation-rulebook">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-civic-saffron-600" />
-            <CardTitle className="text-base font-bold text-slate-900">
-              Youth Parliament Reservation Policy & Point-of-Use Rulebook (§§1–10)
-            </CardTitle>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-xs font-mono font-semibold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-100">
-              Policy {POLICY_VERSION}
+      {/* Chamber Header Component */}
+      <ChamberHeader
+        title="Youth Parliament"
+        tagline="Simulate. Debate. Shape Policy."
+        statusSlot={
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-700">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="font-medium truncate max-w-xs sm:max-w-md">
+              Special Plenary: Child & Pedestrian Urban Transit Protection
             </span>
-            <Link
-              to="/help"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded py-0.5 px-1.5"
-              data-testid="parliament-full-rulebook-link"
-            >
-              <span>Full Rulebook</span>
-              <ExternalLink className="w-3 h-3" />
-            </Link>
+          </div>
+        }
+        rulesSlot={
+          <PointOfUseRulesButton
+            moduleName="Youth Parliament"
+            triggerText="Rules & Procedure"
+            modalTitle="Youth Parliament Procedural & Representation Rules"
+            description="Standing orders governing plenary sessions, 33% reservation policy, speaking queues, and tabling motions."
+            hasSeatQuotaRule={true}
+            quotaContext="Youth Parliament Plenary Benches"
+            rules={[
+              {
+                title: 'Formula: ceil(0.33 × planned places)',
+                description:
+                  'Approved per-allocation formula calculated separately without cross-chamber or cross-cohort pooling. For a 3-member delegation, the mandatory minimum is ceil(0.33 × 3) = 1 reserved place.',
+              },
+              {
+                title: 'Reserved Vacancy Default',
+                description:
+                  'Unfilled reserved places remain held vacant by default. General/ordinary candidates cannot claim reserved vacancies without an explicit, simulated Platform Owner audited exception.',
+              },
+              {
+                title: 'Privacy & Non-Inference',
+                description:
+                  'Eligibility is based strictly on explicit fictional declarations (eligible, ineligible, undeclared). Never infer eligibility from names, portraits, voices, or proxies.',
+              },
+              {
+                title: 'Prototype Boundary Notice',
+                description:
+                  'This Youth Parliament page is an exploratory clickable prototype preview. The delegation allocation is an illustrative calculation and does not appoint real members.',
+              },
+            ]}
+          />
+        }
+      />
+
+      {/* Folded Explanation & Plenary Metrics Disclosure */}
+      <Disclosure summary="About this preview" testId="parliament-about-preview-disclosure">
+        <div className="space-y-4 py-2">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            <strong>National Youth Parliament 2047:</strong> Apex youth assembly tabling grassroots civic propositions from 28 State Deliberation Grids. National apex deliberative chamber aggregating verified state assembly propositions into unified parliamentary submissions.
+          </p>
+
+          {/* Chamber Header Card */}
+          <div className="p-6 border border-slate-700 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-xl shadow-md space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 pb-2">
+              <div className="flex items-center gap-2 text-xs font-mono text-civic-saffron-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>WINTER SESSION 2026 IN PLENARY</span>
+              </div>
+              <DemoPreviewBadge size="sm" label="Simulated Apex Chamber" />
+            </div>
+
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold font-heading text-white">
+                Special Plenary: Child & Pedestrian Urban Transit Protection
+              </h2>
+              <p className="text-xs text-slate-300 max-w-2xl mt-1 leading-relaxed">
+                Presiding Speaker: Youth Advisory Panel &bull; 540 Youth Parliamentarians representing all States & UTs.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-center">
+              <div className="p-2.5 bg-white/10 rounded-lg border border-white/10">
+                <span className="text-[10px] uppercase text-slate-400 font-bold block">Motions Tabled</span>
+                <span className="text-base font-bold text-white font-heading mt-0.5 block">24</span>
+              </div>
+              <div className="p-2.5 bg-white/10 rounded-lg border border-white/10">
+                <span className="text-[10px] uppercase text-slate-400 font-bold block">Verified Audits</span>
+                <span className="text-base font-bold text-civic-saffron-400 font-heading mt-0.5 block">42,100</span>
+              </div>
+              <div className="p-2.5 bg-white/10 rounded-lg border border-white/10">
+                <span className="text-[10px] uppercase text-slate-400 font-bold block">Apex Consensus</span>
+                <span className="text-base font-bold text-emerald-400 font-heading mt-0.5 block">84.2%</span>
+              </div>
+              <div className="p-2.5 bg-white/10 rounded-lg border border-white/10">
+                <span className="text-[10px] uppercase text-slate-400 font-bold block">Target Ministry</span>
+                <span className="text-xs font-semibold text-slate-200 font-heading mt-1 block">MoHUA & MoRTH</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Point-of-Use Explicit Notice on Illustrative 540-Member Plenary Metrics */}
+          <div
+            className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1.5 shadow-xs"
+            data-testid="parliament-illustrative-notice"
+          >
+            <div className="flex items-center gap-2 font-bold text-amber-900">
+              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>Illustrative Chamber Notice (PRD Competition-Demo Prototype Allowance)</span>
+            </div>
+            <p className="leading-relaxed text-amber-900/90 text-[11px]">
+              <strong>Notice on 540-Member Plenary Metrics:</strong> The 540-member plenary chamber, 28-state representation,
+              and national apex metrics displayed above are illustrative prototype figures only. They have <strong>not been validated
+              or enforced</strong> under the 33% Women&apos;s Reservation Policy. Real-data collection, national delegate selection,
+              and production parliamentary enforcement workflows remain unbuilt.
+            </p>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-slate-900">
-              <Scale className="w-4 h-4 text-civic-saffron-600" />
-              <span>Formula: ceil(0.33 &times; planned places)</span>
-            </div>
-            <p className="leading-relaxed text-slate-600">
-              Approved per-allocation formula calculated separately without cross-chamber or cross-cohort pooling.
-              For a 3-member delegation, the mandatory minimum is <code className="font-mono font-bold text-slate-900">ceil(0.33 &times; 3) = 1</code> reserved place.
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-slate-900">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Reserved Vacancy Default</span>
-            </div>
-            <p className="leading-relaxed text-slate-600">
-              Unfilled reserved places remain held vacant by default. General/ordinary candidates cannot claim reserved vacancies
-              without an explicit, simulated Platform Owner audited exception.
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-slate-900">
-              <EyeOff className="w-4 h-4 text-civic-teal-600" />
-              <span>Privacy & Non-Inference</span>
-            </div>
-            <p className="leading-relaxed text-slate-600">
-              Eligibility is based strictly on explicit fictional declarations (<code className="font-mono">eligible</code>, <code className="font-mono">ineligible</code>, <code className="font-mono">undeclared</code>).
-              Never infer eligibility from names, portraits, voices, or proxies. In small cohorts (1–3 places), individual declarations are protected from deductive inference.
-            </p>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-            <div className="flex items-center gap-1.5 font-bold text-slate-900">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Prototype Boundary Notice</span>
-            </div>
-            <p className="leading-relaxed text-slate-600">
-              This Youth Parliament page is an exploratory clickable prototype preview. The delegation allocation below is an illustrative calculation
-              and does <strong>not</strong> appoint real members or enforce a live parliamentary selection system.
-            </p>
-          </div>
-        </div>
-      </Card>
+      </Disclosure>
 
       {/* Reusable Accessible SessionSeating Component (Parliament Horseshoe Layout) */}
-      <SessionSeating
-        layout="parliament"
-        currentRoute="parliament"
-        sessionId="parliament_plenary_2026"
-        seats={parliamentSeats}
-        quotaSummary={parliamentQuotaSummary}
-        activeSpeakerId="seat_parl_ankita"
-        sampleTurns={[
-          {
-            id: 'turn_parl_1',
-            authorName: 'Ankita Kapri',
-            authorRole: 'Lead Motion Sponsor',
-            timestamp: '11:00 AM',
-            text: 'Tabled National Motion #04: Mandatory 25 km/h school perimeter zones and safe pedestrian corridors across Tier-2 municipal corporations.',
-          },
-          {
-            id: 'turn_parl_2',
-            authorName: 'Ananya Sen',
-            authorRole: 'Civic Scrutiny Spokesperson',
-            timestamp: '11:08 AM',
-            text: 'Chamber Inquiry: Clarification requested on AMRUT 2.0 capital allocation guarantees vs municipal engineering capacity in Gujarat.',
-          },
-          {
-            id: 'turn_parl_3',
-            authorName: 'Youth Advisory Panel',
-            authorRole: 'Presiding Speaker',
-            timestamp: '11:15 AM',
-            text: 'Chamber recognized Government sponsor for two-minute clarification on statutory guidelines.',
-          },
-        ]}
-        isIllustrative={true}
-        title="National Youth Parliament Plenary Chamber"
-        subtitle="Apex horseshoe layout with Presiding Speaker, Government, Opposition & Cross-benches"
-      />
+      <div className="space-y-2">
+        <SessionSeating
+          layout="parliament"
+          currentRoute="parliament"
+          sessionId="parliament_plenary_2026"
+          seats={parliamentSeats}
+          activeSpeakerId="seat_parl_ankita"
+          sampleTurns={[
+            {
+              id: 'turn_parl_1',
+              authorName: 'Ankita Kapri',
+              authorRole: 'Lead Motion Sponsor',
+              timestamp: '11:00 AM',
+              text: 'Tabled National Motion #04: Mandatory 25 km/h school perimeter zones and safe pedestrian corridors across Tier-2 municipal corporations.',
+            },
+            {
+              id: 'turn_parl_2',
+              authorName: 'Ananya Sen',
+              authorRole: 'Civic Scrutiny Spokesperson',
+              timestamp: '11:08 AM',
+              text: 'Chamber Inquiry: Clarification requested on AMRUT 2.0 capital allocation guarantees vs municipal engineering capacity in Gujarat.',
+            },
+            {
+              id: 'turn_parl_3',
+              authorName: 'Youth Advisory Panel',
+              authorRole: 'Presiding Speaker',
+              timestamp: '11:15 AM',
+              text: 'Chamber recognized Government sponsor for two-minute clarification on statutory guidelines.',
+            },
+          ]}
+          isIllustrative={true}
+          title="National Youth Parliament Plenary Chamber"
+          subtitle="Apex horseshoe layout with Presiding Speaker, Government, Opposition & Cross-benches"
+        />
+        <ChamberControlBar
+          participantCount={parliamentSeats.length}
+          className="rounded-xl border border-slate-800"
+        />
+      </div>
+
+      {/* Folded Reservation & Delegation Illustration Disclosure */}
+      <Disclosure summary="Seats and 33% reservation" testId="parliament-reservation-disclosure">
+        <div className="space-y-6 pt-2">
+          {/* Seating Quota Allocation Display */}
+          <SeatingQuotaDisplay quota={parliamentQuotaSummary} />
+
+          {/* Point-of-Use Reservation Policy & Rulebook Statement */}
+          <Card className="p-6 border-slate-200 bg-white space-y-4" data-testid="parliament-reservation-rulebook">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-civic-saffron-600" />
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Youth Parliament Reservation Policy & Point-of-Use Rulebook (§§1–10)
+                </CardTitle>
+              </div>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs font-mono font-semibold text-civic-indigo-700 bg-civic-indigo-50 px-2 py-0.5 rounded border border-civic-indigo-100">
+                  Policy {POLICY_VERSION}
+                </span>
+                <Link
+                  to="/help"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded py-0.5 px-1.5"
+                  data-testid="parliament-full-rulebook-link"
+                >
+                  <span>Full Rulebook</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                  <Scale className="w-4 h-4 text-civic-saffron-600" />
+                  <span>Formula: ceil(0.33 &times; planned places)</span>
+                </div>
+                <p className="leading-relaxed text-slate-600">
+                  Approved per-allocation formula calculated separately without cross-chamber or cross-cohort pooling.
+                  For a 3-member delegation, the mandatory minimum is <code className="font-mono font-bold text-slate-900">ceil(0.33 &times; 3) = 1</code> reserved place.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  <span>Reserved Vacancy Default</span>
+                </div>
+                <p className="leading-relaxed text-slate-600">
+                  Unfilled reserved places remain held vacant by default. General/ordinary candidates cannot claim reserved vacancies
+                  without an explicit, simulated Platform Owner audited exception.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                  <EyeOff className="w-4 h-4 text-civic-teal-600" />
+                  <span>Privacy & Non-Inference</span>
+                </div>
+                <p className="leading-relaxed text-slate-600">
+                  Eligibility is based strictly on explicit fictional declarations (<code className="font-mono">eligible</code>, <code className="font-mono">ineligible</code>, <code className="font-mono">undeclared</code>).
+                  Never infer eligibility from names, portraits, voices, or proxies. In small cohorts (1–3 places), individual declarations are protected from deductive inference.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Prototype Boundary Notice</span>
+                </div>
+                <p className="leading-relaxed text-slate-600">
+                  This Youth Parliament page is an exploratory clickable prototype preview. The delegation allocation below is an illustrative calculation
+                  and does <strong>not</strong> appoint real members or enforce a live parliamentary selection system.
+                </p>
+              </div>
+            </div>
+          </Card>
 
       {/* Fictional Rajkot Youth Delegation Allocation Illustration */}
       <Card className="p-6 border-slate-200 bg-white space-y-5" data-testid="parliament-delegation-illustration">
@@ -591,6 +654,8 @@ export const ParliamentPage: React.FC = () => {
           </span>
         </div>
       </Card>
+      </div>
+      </Disclosure>
 
 
       {/* Motions Order of Business */}

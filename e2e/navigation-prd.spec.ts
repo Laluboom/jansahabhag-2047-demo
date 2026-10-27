@@ -48,7 +48,7 @@ test.describe('Master PRD Learner Navigation & Product Identity E2E Suite', () =
     await page.goto('/dashboard');
     await links.nth(5).click();
     await page.waitForURL('**/parliament');
-    await expect(page.getByRole('heading', { name: /National Youth Parliament 2047/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /Youth Parliament/i })).toBeVisible();
     await expect(page.getByText(/National Youth Parliament Preview/i).first()).toBeVisible();
 
     // 3. Workspace (item 7): interactive local simulation linked to proposition
