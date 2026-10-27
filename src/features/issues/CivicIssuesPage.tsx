@@ -297,7 +297,7 @@ export const CivicIssuesPage: React.FC = () => {
             <div className="space-y-1.5">
               <label className="font-bold text-slate-700 block">Specific Location</label>
               <Input
-                placeholder="e.g. Madhyam Marg, Sector 3, Mansarovar"
+                placeholder="e.g. Kalawad Road outside Virani Science College, Rajkot"
                 value={reportLocation}
                 onChange={(e) => setReportLocation(e.target.value)}
                 required
