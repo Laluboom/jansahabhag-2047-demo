@@ -13,3 +13,6 @@ test-results/
 # Owner decision, 27 October 2026: source reference documents stay local only.
 docs/reference/*
 !docs/reference/README.md
+
+# Owner decision, 27 October 2026: the next-stage deck outline stays local.
+docs/plans/HSC_NEXT_STAGE_DECK_OUTLINE.md
