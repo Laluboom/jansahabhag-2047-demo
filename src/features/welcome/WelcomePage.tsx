@@ -282,7 +282,7 @@ export const WelcomePage: React.FC = () => {
         <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-civic-saffron-500/20 border border-civic-saffron-400/40 text-civic-saffron-300 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-civic-saffron-400" />
-            Civic Participation Demo
+            Fictional single-browser simulation
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold font-heading text-white tracking-tight leading-tight">
             JanSahabhag <span className="text-civic-saffron-400">2047</span>
@@ -462,9 +462,6 @@ export const WelcomePage: React.FC = () => {
                   Rajkot Civic Demo
                 </span>
               </div>
-              <span className="text-xs text-slate-400">
-                Single-browser simulation
-              </span>
             </div>
             <div className="p-5 space-y-4">
               <div>
@@ -625,8 +622,6 @@ export const WelcomePage: React.FC = () => {
           <span className="font-semibold text-slate-700">JanSahabhag 2047</span>
           <span className="hidden sm:inline">&bull;</span>
           <span className="text-slate-500">Demo institution, not an official partnership</span>
-          <span className="hidden sm:inline">&bull;</span>
-          <span>Interactive single-browser simulation</span>
         </div>
         <nav aria-label="Footer links" className="flex items-center gap-6">
           <Link

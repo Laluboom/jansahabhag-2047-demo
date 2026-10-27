@@ -176,9 +176,6 @@ export const ProjectsPage: React.FC = () => {
           <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
             Connected Civic Innovation Labs
           </p>
-          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
-            Demo Previews
-          </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Link
