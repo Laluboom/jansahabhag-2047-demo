@@ -8,6 +8,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { AssignmentTaskCard } from '../../components/assignments/AssignmentTaskCard';
 import { UhvCreditBanner } from './UhvCreditBanner';
 import {
   ArrowLeft,
@@ -27,6 +28,7 @@ export const LessonPage: React.FC = () => {
   const [course, setCourse] = useState<Course | null>(null);
   const [enrolment, setEnrolment] = useState<Enrolment | null>(null);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionSuccess, setCompletionSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -254,19 +256,36 @@ export const LessonPage: React.FC = () => {
               <h4 className="text-sm font-bold text-slate-900">{assignment.title}</h4>
               <p className="text-xs text-slate-600 line-clamp-1">{assignment.prompt}</p>
             </div>
-            <Link to={`/assignments/${assignment.id}`}>
-              <Button size="sm" variant="saffron" className="shrink-0">
-                <FileCheck2 className="w-4 h-4 mr-1" />
-                <span>
-                  {isUhv
-                    ? 'Open Reflection Prompt'
-                    : `Go to Assignment (+${assignment.creditsReward} Civic Credit Points)`}
-                </span>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveAssignmentId(assignment.id)}
+                aria-haspopup="dialog"
+                className="shrink-0"
+              >
+                <span>View Task Card</span>
               </Button>
-            </Link>
+              <Link to={`/assignments/${assignment.id}`}>
+                <Button size="sm" variant="saffron" className="shrink-0">
+                  <FileCheck2 className="w-4 h-4 mr-1" />
+                  <span>
+                    {isUhv
+                      ? 'Open Reflection Prompt'
+                      : `Go to Assignment (+${assignment.creditsReward} Civic Credit Points)`}
+                  </span>
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </Card>
+
+      <AssignmentTaskCard
+        assignmentId={activeAssignmentId || ''}
+        isOpen={Boolean(activeAssignmentId)}
+        onClose={() => setActiveAssignmentId(null)}
+      />
     </div>
   );
 };
