@@ -97,17 +97,17 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
         </div>
       )}
 
-      {/* APEX OF HORSESHOE: Speaker's Presiding Bench */}
-      <div className="space-y-2 text-center">
+      {/* APEX OF HORSESHOE: Presiding Speaker */}
+      <div className="space-y-3 text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-civic-saffron-300 border border-civic-saffron-500/30 text-xs font-bold font-mono">
           <Landmark className="w-3.5 h-3.5" />
-          <span>Speaker of the House & Presiding Rostrum</span>
+          <span>Presiding Speaker ({speakerSeats.length})</span>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-3 max-w-md mx-auto pt-1">
+        <div className="flex justify-center max-w-xs mx-auto">
           {speakerSeats.length > 0 ? (
             speakerSeats.map((seat) => (
-              <div key={seat.id} className="w-full sm:w-60">
+              <div key={seat.id} className="w-48 sm:w-56">
                 <SeatItem
                   seat={seat}
                   isSelected={selectedSeatId === seat.id}
@@ -125,7 +125,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
 
       {/* HORSESHOE WINGS: Government (Left) vs Opposition (Right) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-        {/* LEFT ARC: Government & Sponsoring Benches */}
+        {/* LEFT ARC: Government Bench */}
         <div
           className="p-4 rounded-xl bg-slate-800/70 border border-civic-teal-700/50 space-y-3"
           data-testid="parliament-bench-government"
@@ -134,15 +134,12 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-civic-teal-400" />
               <h4 className="font-bold text-xs uppercase tracking-wider text-civic-teal-300 font-heading">
-                Government & Sponsoring Benches
+                Government Bench ({governmentSeats.length})
               </h4>
             </div>
-            <span className="text-[10px] text-slate-300 font-mono">
-              {governmentSeats.length} Seats
-            </span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {governmentSeats.length > 0 ? (
               governmentSeats.map((seat) => (
                 <SeatItem
@@ -155,14 +152,14 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 />
               ))
             ) : (
-              <p className="text-xs text-slate-300 italic py-3 text-center">
+              <p className="text-xs text-slate-300 italic py-3 text-center col-span-full">
                 No delegates seated on Government benches.
               </p>
             )}
           </div>
         </div>
 
-        {/* RIGHT ARC: Opposition & Scrutiny Benches */}
+        {/* RIGHT ARC: Opposition Bench */}
         <div
           className="p-4 rounded-xl bg-slate-800/70 border border-rose-700/50 space-y-3"
           data-testid="parliament-bench-opposition"
@@ -171,15 +168,12 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
               <h4 className="font-bold text-xs uppercase tracking-wider text-rose-300 font-heading">
-                Opposition & Scrutiny Benches
+                Opposition Bench ({oppositionSeats.length})
               </h4>
             </div>
-            <span className="text-[10px] text-slate-300 font-mono">
-              {oppositionSeats.length} Seats
-            </span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {oppositionSeats.length > 0 ? (
               oppositionSeats.map((seat) => (
                 <SeatItem
@@ -192,7 +186,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
                 />
               ))
             ) : (
-              <p className="text-xs text-slate-300 italic py-3 text-center">
+              <p className="text-xs text-slate-300 italic py-3 text-center col-span-full">
                 No delegates seated on Opposition benches.
               </p>
             )}
@@ -200,7 +194,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
         </div>
       </div>
 
-      {/* BASE OF HORSESHOE: Cross-benches (Connecting Arc) */}
+      {/* BASE OF HORSESHOE: Independent Members / Observers */}
       <div
         className="p-4 rounded-xl bg-slate-800/70 border border-slate-700 space-y-3"
         data-testid="parliament-bench-crossbench"
@@ -209,15 +203,12 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-civic-saffron-400" />
             <h4 className="font-bold text-xs uppercase tracking-wider text-civic-saffron-300 font-heading">
-              Cross-benches & State Delegations (Connecting Arc)
+              Independent Members / Observers ({crossBenchSeats.length})
             </h4>
           </div>
-          <span className="text-[10px] text-slate-300 font-mono">
-            {crossBenchSeats.length} Seats
-          </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           {crossBenchSeats.length > 0 ? (
             crossBenchSeats.map((seat) => (
               <SeatItem
