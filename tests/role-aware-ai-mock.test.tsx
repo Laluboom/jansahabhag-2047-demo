@@ -394,7 +394,7 @@ describe('Change Plan v2 §15 & Review Additions #5: Role-Aware AI Mock', () => 
 
       await waitFor(() => {
         expect(
-          screen.getByText(/Draft a 60-second opening statement on the Mansarovar Ward 24 pedestrian-safety proposal/i)
+          screen.getByText(/Draft a 60-second opening statement on the Kalawad Road Ward 8 pedestrian-safety proposal/i)
         ).toBeInTheDocument();
       });
     });

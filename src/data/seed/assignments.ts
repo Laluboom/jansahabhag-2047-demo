@@ -115,7 +115,7 @@ export const seedAssignments: Assignment[] = [
     courseId: 'course_mapping_04',
     lessonId: 'les_map_402',
     title: 'Sidewalk Obstruction & Accessibility Audit',
-    prompt: 'Document sidewalk width, surface quality, and obstructions along Madhyam Marg, Mansarovar.',
+    prompt: 'Document sidewalk width, surface quality, and obstructions along Kalawad Road outside Virani Science College, Rajkot.',
     rubric: [
       { criterion: 'Measurement Accuracy', maxPoints: 10, description: 'Clear measurements of usable sidewalk clearance.' },
     ],

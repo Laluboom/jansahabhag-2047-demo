@@ -90,8 +90,15 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-slate-400 shrink-0" />
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase">Email</span>
-              <span className="font-semibold">{currentUser.email}</span>
+              <span className="text-slate-400 block text-[10px] uppercase">Contact</span>
+              <span className="font-semibold text-slate-600" data-testid="profile-user-contact">
+                {currentUser.email &&
+                !currentUser.email.includes('@demo.') &&
+                !currentUser.email.endsWith('.internal') &&
+                !currentUser.email.includes('.internal')
+                  ? currentUser.email
+                  : 'Demo persona (Non-contact demo — no personal details attributed)'}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">

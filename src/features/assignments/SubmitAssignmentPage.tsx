@@ -397,7 +397,7 @@ export const SubmitAssignmentPage: React.FC = () => {
   const handleUseOfflineCleanupExample = () => {
     setNewEvTitle('Community Park & Storm Drain Local Cleanup Photo');
     setNewEvDesc(
-      'Field photo captured during offline youth-led community cleanup at Mansarovar Sector 3 park and storm drain, collecting 42 kg of segregated plastic waste.'
+      'Field photo captured during offline youth-led community cleanup at Kalawad Road Sector 3 park and storm drain, collecting 42 kg of segregated plastic waste.'
     );
     setNewEvType('image');
     setNewEvSource('Offline Community Action Field Log');
