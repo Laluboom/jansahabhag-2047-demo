@@ -888,7 +888,8 @@ export const DebateRoomPreviewPage: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Chamber Header */}
       <ChamberHeader
-        title="Debate Room"
+        eyebrow="Debate Room"
+        title="Rajkot Youth Pedestrian Safety Debate Room"
         tagline="Think Critically. Speak Respectfully."
         statusSlot={
           <div className="flex items-center gap-2 min-w-0">

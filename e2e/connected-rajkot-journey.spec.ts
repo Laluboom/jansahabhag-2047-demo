@@ -150,7 +150,7 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
     // -------------------------------------------------------------
     // Navigate to debate room
     await page.goto('/events/sess_jaipur_01/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
 
     // Verify video-preview badge per PRD OD.4
     const debateVideoBadge = page.getByTestId('video-preview-badge');
@@ -177,7 +177,7 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
 
     // Direct route reload check
     await page.reload();
-    await expect(page.getByRole('heading', { level: 1, name: /Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
     await expect(debateVideoBadge).toBeVisible();
 
     // Non-existent session route check: verify fallback card without infinite spinner
@@ -194,7 +194,7 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
     await page.waitForURL('**/dashboard');
 
     await page.goto('/events/sess_jaipur_01/debate-room');
-    await expect(page.getByRole('heading', { level: 1, name: /Debate Room/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
 
     // Verify Owner controls are visible (Audit trail button)
     await page.getByText('Seats and 33% reservation').click();
