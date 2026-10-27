@@ -1056,7 +1056,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
               <BookOpen className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
               <div className="text-xs text-slate-700">
                 <p className="font-bold text-amber-950">
-                  Debate Room Procedural Rules (Master PRD §A13, v1.0)
+                  Debate Room Procedural Rules (v1.0)
                 </p>
                 <p className="text-slate-600 mt-0.5">
                   Interventions must address the tabled motion using documented field evidence. Participation follows the recognized queue; video is optional via low-bandwidth text.
@@ -1290,7 +1290,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-civic-teal-400 uppercase tracking-wider">
-              Debate Phase Flow (Master PRD §A8.1)
+              Debate Session Stages
             </span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-mono">
               Current: {currentPhase}
@@ -1633,7 +1633,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
                     <span>Low-Bandwidth Text Contribution Path</span>
                   </CardTitle>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Master PRD §A7.2, §A8 — Accessible text-first intervention path.
+                    Accessible text-first intervention path for low-bandwidth connections.
                   </p>
                 </div>
                 <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
@@ -1955,7 +1955,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs text-slate-700">
           <p className="text-slate-600 leading-relaxed">
-            In accordance with Master PRD §A8 and §A13, rules of procedure are visible at the point of use and explain participant rights, speaking turns, facilitator recognition, and accessible text participation.
+            Rules of procedure are visible at the point of use and explain participant rights, speaking turns, facilitator recognition, and accessible text participation.
           </p>
 
           <div className="space-y-3">
@@ -1996,7 +1996,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
         isOpen={isInterstitialOpen}
         onClose={() => setIsInterstitialOpen(false)}
         title="Mode Transition: Switch to Youth Assembly"
-        description="Preserving common session context across deliberation modes (Master PRD §A7, §A9)"
+        description="Preserving common session context across deliberation modes"
         maxWidth="md"
       >
         <div className="space-y-4 text-xs text-slate-700">
@@ -2115,7 +2115,7 @@ export const DebateRoomPreviewPage: React.FC = () => {
       <Modal
         isOpen={isCreateAssignmentOpen}
         onClose={() => setIsCreateAssignmentOpen(false)}
-        title="Push Short Popup Assignment (Change Plan v2 §13)"
+        title="Push Short Popup Assignment"
         description="Push an immediate timed deliberation task to all participants in this Debate Room session."
         maxWidth="md"
       >

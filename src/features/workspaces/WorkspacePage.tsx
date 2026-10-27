@@ -485,7 +485,7 @@ export const WorkspacePage: React.FC = () => {
       <DemoPreviewBadge
         size="banner"
         label="Single-Browser Local Simulation • Scoped Collaboration Workspace"
-        description="Fictional browser demo under Master PRD §A12 & §A20.4. Local persistence only; not an unrestricted or anonymous chat network. Demonstrates scoped membership, exact username invitations, versioned rulebook acknowledgement, and room-scoped moderation."
+        description="Fictional browser demo with local persistence only; not an unrestricted or anonymous chat network. Demonstrates scoped membership, exact username invitations, versioned rulebook acknowledgement, and room-scoped moderation."
       />
 
       {/* 2. Top Navigation & Proposition Roundtrip Link */}
@@ -624,7 +624,7 @@ export const WorkspacePage: React.FC = () => {
               <div className="text-xs text-slate-600 space-y-1 pt-1">
                 <p>• <strong>Scope:</strong> {workspace.visibility.replace('_', ' ')} ({workspace.institutionName || 'Rajkot'})</p>
                 <p>• <strong>Conduct Rule:</strong> Zero tolerance for vehicle plates, student face disclosure, or off-topic commercial activity.</p>
-                <p className="text-amber-800 font-medium">Notice: Under Master PRD §A12.4, invited users must confirm admission before contributing substantive actions.</p>
+                <p className="text-amber-800 font-medium">Notice: Invited users must confirm admission before contributing substantive actions.</p>
               </div>
             </div>
 
@@ -876,7 +876,7 @@ export const WorkspacePage: React.FC = () => {
             Workspace Content Protected (Invite-Only Private)
           </h3>
           <p className="text-xs text-slate-600 max-w-md mx-auto">
-            Under Master PRD §A12 & §A20.4, team notes, the member directory, and audit records are private to active members. Please accept your pending invitation above to unlock full access.
+            Team notes, the member directory, and audit records are private to active members. Please accept your pending invitation above to unlock full access.
           </p>
           <div className="pt-2">
             <Button size="sm" variant="primary" onClick={() => handleRespondInvite(true)} data-testid="btn-accept-invite-tab">
@@ -1458,7 +1458,7 @@ export const WorkspacePage: React.FC = () => {
               <span>Scoped Moderation Model & Contact Directory</span>
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              In accordance with Master PRD §A12 & §A20.4, moderation authority is strictly scoped to this workspace. Platform administrators or moderators from other debate rooms or assemblies have <strong>no jurisdiction</strong> to freeze content or remove members here without room credentials.
+              Moderation authority is strictly scoped to this workspace. Platform administrators or moderators from other debate rooms or assemblies have <strong>no jurisdiction</strong> to freeze content or remove members here without room credentials.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
@@ -1541,7 +1541,7 @@ export const WorkspacePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-civic-teal-700 block">
-                Master PRD §A13 / §A20.5 Point of Use
+                Point of Use Rules of Procedure
               </span>
               <h3 className="font-bold text-slate-900 text-lg font-heading mt-0.5">
                 {workspace.rulebook?.title || 'Workspace Rulebook'}
@@ -1699,7 +1699,7 @@ export const WorkspacePage: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-600">
-              Under Master PRD §A13, substantive actions in this workspace require explicit acknowledgement of the versioned rulebook.
+              Substantive actions in this workspace require explicit acknowledgement of the versioned rulebook.
             </p>
 
             <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1 text-xs text-slate-700">

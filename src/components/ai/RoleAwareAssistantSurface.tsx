@@ -140,7 +140,7 @@ export const RoleAwareAssistantSurface: React.FC<RoleAwareAssistantSurfaceProps>
               />
             </div>
             <p className="text-xs text-slate-600 mt-0.5">
-              Change Plan v2 role-aware suggestions & Review Additions #5 human-governed AI boundaries.
+              Role-aware suggestions adhering to human-governed AI boundaries.
             </p>
           </div>
         </div>
@@ -234,7 +234,7 @@ export const RoleAwareAssistantSurface: React.FC<RoleAwareAssistantSurfaceProps>
                   No Active Scoped Moderator Grant Found
                 </p>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  In accordance with Change Plan v2 §12, platform moderation authority requires an active, founder-delegated grant for assignments, memberships, or sessions. Advisory moderation report summaries are disabled until an active grant is assigned by the Platform Owner.
+                  Platform moderation authority requires an active, founder-delegated grant for assignments, memberships, or sessions. Advisory moderation report summaries are disabled until an active grant is assigned by the Platform Owner.
                 </p>
               </div>
             ) : dismissedCount > 0 ? (

@@ -122,7 +122,7 @@ export const EvidencePage: React.FC = () => {
               },
               {
                 title: 'Durable Storage Constraints',
-                description: 'Files are stored in local browser persistence up to 250 KB (PDF, PNG, JPG).',
+                description: 'Binary media attachments support JPEG, PNG, MP4, MP3, and PDF up to 10 MB in browser-local IndexedDB. Pasted text or inline documents are limited to 250 KB for durable browser storage.',
               },
               {
                 title: 'Verification Statuses',

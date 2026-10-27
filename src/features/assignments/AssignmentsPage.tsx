@@ -300,7 +300,7 @@ export const AssignmentsPage: React.FC = () => {
                 },
                 {
                   title: 'Submission Formats & Limits',
-                  description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
+                  description: `Binary media attachments support ${ALLOWED_BINARY_FORMAT_LABELS} up to ${BINARY_ATTACHMENT_SIZE_LABEL} stored in browser-local IndexedDB. Pasted text or inline documents are limited to 250 KB to ensure durable storage.`,
                 },
                 {
                   title: 'Mentor Verification & Credit Points',
@@ -827,7 +827,7 @@ export const AssignmentsPage: React.FC = () => {
                 )}
               </div>
               <span className="text-[10px] text-slate-400 block mt-1">
-                Limit: {BINARY_ATTACHMENT_SIZE_LABEL}. Files are stored in browser-local IndexedDB.
+                Limit: {BINARY_ATTACHMENT_SIZE_LABEL} ({ALLOWED_BINARY_FORMAT_LABELS}). Files are stored in browser-local IndexedDB.
               </span>
             </div>
 
@@ -928,7 +928,7 @@ export const AssignmentsPage: React.FC = () => {
             },
             {
               title: 'Submission Formats & Limits',
-              description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
+              description: `Binary media attachments support ${ALLOWED_BINARY_FORMAT_LABELS} up to ${BINARY_ATTACHMENT_SIZE_LABEL} stored in browser-local IndexedDB. Pasted text or inline documents are limited to 250 KB to ensure durable storage.`,
             },
             {
               title: 'Mentor Verification & Credit Points',
