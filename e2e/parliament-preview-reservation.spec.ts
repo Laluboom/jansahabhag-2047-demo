@@ -6,10 +6,11 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await page.goto('/parliament');
 
     // 1. Verify Page Heading and Banner
-    await expect(page.getByRole('heading', { level: 1, name: /National Youth Parliament 2047/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /Youth Parliament/i })).toBeVisible();
     await expect(page.getByText('National Youth Parliament Preview').first()).toBeVisible();
 
-    // 2. Verify Illustrative Notice for 540-Member Plenary Metrics
+    // 2. Open About this preview disclosure and verify Illustrative Notice for 540-Member Plenary Metrics
+    await page.locator('summary', { hasText: 'About this preview' }).click();
     const notice = page.locator('[data-testid="parliament-illustrative-notice"]');
     await expect(notice).toBeVisible();
     await expect(notice).toContainText('Notice on 540-Member Plenary Metrics');
@@ -17,7 +18,8 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await expect(notice).toContainText('not been validated or enforced under the 33% Women\'s Reservation Policy');
     await expect(notice).toContainText('production parliamentary enforcement workflows remain unbuilt');
 
-    // 3. Verify Point-of-Use Reservation Rulebook Card
+    // 3. Open Seats and 33% reservation disclosure and verify Point-of-Use Reservation Rulebook Card
+    await page.locator('summary', { hasText: 'Seats and 33% reservation' }).click();
     const rulebook = page.locator('[data-testid="parliament-reservation-rulebook"]');
     await expect(rulebook).toBeVisible();
     await expect(rulebook).toContainText('Youth Parliament Reservation Policy & Point-of-Use Rulebook (§§1–10)');
@@ -73,6 +75,10 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await expect(page.locator('[data-testid="metric-reserved-filled"]')).toContainText('0 / 1');
     await expect(page.locator('[data-testid="metric-vacancies"]')).toHaveText('1');
 
+    // Verify chamber layout renders the held-vacant seat
+    await expect(page.locator('[data-testid="seat-item-seat_parl_kanha"]')).toContainText('Unfilled Reserved Seat');
+    await expect(page.locator('[data-testid="seat-item-seat_parl_kanha"]')).toContainText('Held Vacant (33% Quota)');
+
     // Verify Seat 3 is held vacant
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Held Vacant');
     await expect(page.locator('[data-testid="seat-card-3"]')).toContainText('Held Vacant by Default (Reserved)');
@@ -102,8 +108,10 @@ test.describe('Youth Parliament Preview Reservation Policy & Delegation Illustra
     await page.goto('/parliament');
 
     // Wait for content to render
-    await expect(page.getByRole('heading', { level: 1, name: /National Youth Parliament 2047/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /Youth Parliament/i })).toBeVisible();
+    await page.locator('summary', { hasText: 'About this preview' }).click();
     await expect(page.locator('[data-testid="parliament-illustrative-notice"]')).toBeVisible();
+    await page.locator('summary', { hasText: 'Seats and 33% reservation' }).click();
     await expect(page.locator('[data-testid="parliament-reservation-rulebook"]')).toBeVisible();
     await expect(page.locator('[data-testid="parliament-delegation-illustration"]')).toBeVisible();
 
