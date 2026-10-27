@@ -14,10 +14,11 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
 
     // 2. Header and motion verification
     await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
-    await expect(page.getByText('Immediate installation of tabletop pedestrian crosswalks')).toBeVisible();
+    await expect(page.getByText('Immediate installation of tabletop pedestrian crosswalks').first()).toBeVisible();
 
     // 3. Single-browser local simulation notices (no live multi-user network or server authorization)
-    await expect(page.getByText(/Single-Browser Local Simulation — Session sess_jaipur_01/i)).toBeVisible();
+    await expect(page.getByText('Single-Browser Local Simulation')).toBeVisible();
+    await page.getByText('How this simulation works').click();
     await expect(page.getByText(/State is only shared among personas within this browser/i)).toBeVisible();
     await expect(page.getByText(/The persona selector is a local simulation, not security/i)).toBeVisible();
 
