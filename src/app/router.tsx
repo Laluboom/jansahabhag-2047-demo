@@ -8,6 +8,7 @@ import { ErrorBoundary } from '../features/errors/ErrorBoundary';
 const DemoLoginPage = lazy(() => import('../features/auth-demo/DemoLoginPage').then((m) => ({ default: m.DemoLoginPage })));
 const WelcomePage = lazy(() => import('../features/welcome/WelcomePage').then((m) => ({ default: m.WelcomePage })));
 const AboutPage = lazy(() => import('../features/about/AboutPage').then((m) => ({ default: m.AboutPage })));
+const LokManchPage = lazy(() => import('../features/about/LokManchPage').then((m) => ({ default: m.LokManchPage })));
 const OnboardingPage = lazy(() => import('../features/onboarding/OnboardingPage').then((m) => ({ default: m.OnboardingPage })));
 const ParticipantDashboardPage = lazy(() => import('../features/dashboard/ParticipantDashboardPage').then((m) => ({ default: m.ParticipantDashboardPage })));
 const ProfilePage = lazy(() => import('../features/profile/ProfilePage').then((m) => ({ default: m.ProfilePage })));
@@ -110,6 +111,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoadingFallback />}>
             <AboutPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'lok-manch',
+        element: (
+          <Suspense fallback={<PageLoadingFallback />}>
+            <LokManchPage />
           </Suspense>
         ),
       },

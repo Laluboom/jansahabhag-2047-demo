@@ -25,6 +25,7 @@ describe('AboutPage', () => {
     expect(bio).toHaveTextContent('Viksit Bharat Young Leaders Dialogue 2026');
     expect(bio).toHaveTextContent('sustainable cultivation initiatives');
     expect(screen.getByText(/Single-browser simulation/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /The Idea: LOK MANCH-2047/i })).toHaveAttribute('href', '/lok-manch');
   });
 
   it('keeps all nine gratitude credits in order, including Visesh and his portrait', () => {

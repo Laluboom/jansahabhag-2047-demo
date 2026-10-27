@@ -95,11 +95,25 @@
 }
 .about-editorial__footer p { margin: 0; max-width: 530px; }
 .about-editorial__footer a { display: inline-flex; align-items: center; gap: 6px; color: #395f58; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.about-editorial__hero-link {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 16px;
+  color: #395f58; font: 700 13px ui-sans-serif, system-ui, sans-serif;
+  text-decoration: underline; text-underline-offset: 4px;
+}
+.about-editorial__hero-nav { margin: 0; }
+.about-editorial__content { padding: 0 7% 55px; }
+.about-editorial__prose { max-width: 690px; font-size: 16px; line-height: 1.7; color: #242d29; }
+.about-editorial__prose p { margin: 0 0 16px; }
+.about-editorial__section { margin-top: 40px; }
+.about-editorial__section h2 { margin: 0 0 18px; font-size: clamp(26px, 3.5vw, 42px); line-height: 1.15; letter-spacing: -.03em; }
+.about-editorial__principles { max-width: 690px; margin: 16px 0 0; padding-left: 20px; color: #242d29; font-size: 16px; line-height: 1.7; }
+.about-editorial__principles li { margin-bottom: 14px; padding-left: 4px; }
+.about-editorial__principles strong { color: #242d29; }
 @container (max-width: 660px) {
   .about-editorial__founder { grid-template-columns: 1fr; gap: 20px; }
   .about-editorial__founder figure { max-width: 370px; }
   .about-editorial__credits { grid-template-columns: 1fr; }
-  .about-editorial__hero, .about-editorial__gratitude { padding-left: 6%; padding-right: 6%; }
+  .about-editorial__hero, .about-editorial__gratitude, .about-editorial__content { padding-left: 6%; padding-right: 6%; }
 }
 @container (max-width: 410px) {
   .about-editorial__hero h1 { font-size: 37px; }

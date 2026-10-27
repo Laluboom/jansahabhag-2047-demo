@@ -22,6 +22,11 @@ export const AboutPage: React.FC = () => (
       <p className="about-editorial__kicker">The idea behind the work</p>
       <h1>Connecting education with citizenship.</h1>
       <p>JanSahabhag 2047 explores how young people can learn about society and take part in it responsibly.</p>
+      <p className="about-editorial__hero-nav">
+        <Link to="/lok-manch" className="about-editorial__hero-link">
+          The Idea: LOK MANCH-2047 <ArrowRight size={16} aria-hidden="true" />
+        </Link>
+      </p>
       <span className="about-editorial__demo">Competition demo · Single-browser simulation</span>
     </header>
 
