@@ -726,7 +726,7 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       });
 
       // Existing procedural buttons remain present
-      expect(screen.getAllByRole('button', { name: /Rulebook/i }).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByRole('button', { name: /Stage Guide/i }).length).toBeGreaterThanOrEqual(1);
     });
 
     it('renders SessionSeating inside ParliamentPage with horseshoe layout and illustrative badge', async () => {
