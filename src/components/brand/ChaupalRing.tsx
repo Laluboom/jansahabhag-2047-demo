@@ -11,8 +11,7 @@ export interface ChaupalRingProps {
   variant?: 'color' | 'monochrome' | 'on-dark';
   className?: string;
   title?: string; // accessible name; when omitted the svg is aria-hidden
-  monochromeColor?: string; // single color for monochrome variant on light or dark grounds (defaults to #06038D)
-  color?: string; // alias for monochrome single color
+  monochromeColor?: string; // single color for the monochrome variant (defaults to navy)
 }
 
 const TOTAL_SLOTS = 12;
@@ -34,7 +33,6 @@ export const ChaupalRing: React.FC<ChaupalRingProps> = ({
   className,
   title,
   monochromeColor,
-  color,
 }) => {
   const titleId = useId();
 
@@ -60,7 +58,7 @@ export const ChaupalRing: React.FC<ChaupalRingProps> = ({
     ringColor = WHITE_COLOR;
     enteringColor = SAFFRON_COLOR;
   } else if (variant === 'monochrome') {
-    const mono = monochromeColor || color || NAVY_COLOR;
+    const mono = monochromeColor || NAVY_COLOR;
     ringColor = mono;
     enteringColor = mono;
   } else {
