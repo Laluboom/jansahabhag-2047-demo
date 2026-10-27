@@ -121,12 +121,14 @@ export const Modal: React.FC<ModalProps> = ({
       return () => {
         document.body.style.overflow = 'unset';
         window.removeEventListener('keydown', handleKeyDown);
+        const target = previousActiveElement.current;
+        previousActiveElement.current = null;
         if (
-          previousActiveElement.current &&
-          typeof previousActiveElement.current.focus === 'function'
+          target &&
+          typeof target.focus === 'function' &&
+          document.contains(target)
         ) {
-          previousActiveElement.current.focus();
-          previousActiveElement.current = null;
+          target.focus();
         }
       };
     }

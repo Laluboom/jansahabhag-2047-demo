@@ -7,6 +7,7 @@ import { useAuthStore } from '../src/stores/authStore';
 import { ParticipantDashboardPage } from '../src/features/dashboard/ParticipantDashboardPage';
 import { LessonPage } from '../src/features/learning/LessonPage';
 import { AssignmentTaskCard } from '../src/components/assignments/AssignmentTaskCard';
+import { Modal } from '../src/components/ui/Modal';
 
 describe('Accessible pop-up task card for general civic assignments (§A11.1, §A20.3)', () => {
   beforeEach(async () => {
@@ -230,5 +231,91 @@ describe('Accessible pop-up task card for general civic assignments (§A11.1, §
     });
 
     expect(document.activeElement).toBe(rulesBtn);
+  });
+
+  it('detects UHV assignments, labels plainly as UHV / Jeevan Vidya reflection, states private with no credits, and omits credit chip & evidence expectations', async () => {
+    render(
+      <MemoryRouter>
+        <AssignmentTaskCard
+          assignmentId="asg_uhv_08"
+          isOpen={true}
+          onClose={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: /Civic Ethics & Community Harmony Reflection/i });
+    expect(dialog).toBeInTheDocument();
+
+    // Plainly labelled as UHV / Jeevan Vidya reflection
+    expect(screen.getByText(/UHV \/ Jeevan Vidya Reflection/i)).toBeInTheDocument();
+
+    // States that it is private and earns no Civic Credit Points
+    expect(screen.getByText(/private and earn no Civic Credit Points/i)).toBeInTheDocument();
+
+    // No credit chip is rendered
+    expect(screen.queryByText(/\+.*Credits/i)).not.toBeInTheDocument();
+
+    // No general evidence-format expectations rendered
+    expect(screen.queryByText(/Evidence Expectations & Accepted Formats/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Attachment size limit:/i)).not.toBeInTheDocument();
+  });
+
+  it('does not throw and leaves focus somewhere valid when unmounting while opener is removed', async () => {
+    const OpenerRemovalHarness: React.FC = () => {
+      const [showOpener, setShowOpener] = React.useState(true);
+      const [isOpen, setIsOpen] = React.useState(false);
+
+      return (
+        <div>
+          {showOpener && (
+            <button
+              type="button"
+              data-testid="temporary-opener"
+              onClick={() => setIsOpen(true)}
+            >
+              Open Modal
+            </button>
+          )}
+          <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Test Ephemeral Opener Modal">
+            <button
+              type="button"
+              data-testid="navigate-away-btn"
+              onClick={() => {
+                setShowOpener(false);
+                setIsOpen(false);
+              }}
+            >
+              Navigate Away & Close
+            </button>
+          </Modal>
+        </div>
+      );
+    };
+
+    render(<OpenerRemovalHarness />);
+
+    const opener = screen.getByTestId('temporary-opener');
+    opener.focus();
+    expect(document.activeElement).toBe(opener);
+
+    fireEvent.click(opener);
+
+    const dialog = await screen.findByRole('dialog', { name: /Test Ephemeral Opener Modal/i });
+    expect(dialog).toBeInTheDocument();
+
+    const navigateAwayBtn = screen.getByTestId('navigate-away-btn');
+    // Clicking this removes opener from DOM and closes modal
+    fireEvent.click(navigateAwayBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    // Opener is gone
+    expect(screen.queryByTestId('temporary-opener')).not.toBeInTheDocument();
+
+    // Focus falls somewhere valid in document (e.g. document.body) and did not throw
+    expect(document.contains(document.activeElement)).toBe(true);
   });
 });

@@ -48,6 +48,7 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
   const { currentUser } = useAuthStore();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submission, setSubmission] = useState<Submission | null>(null);
+  const [isUhv, setIsUhv] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -64,12 +65,35 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
         if (!isMounted) return;
         setAssignment(asg);
 
-        if (asg && currentUser) {
-          const subs = await demoRepository.getSubmissions(currentUser.id, assignmentId);
-          if (!isMounted) return;
-          setSubmission(subs[0] || null);
+        if (asg) {
+          let isUhvAssignment = false;
+          if (
+            asg.assignmentType === 'uhv_reflection' ||
+            asg.id.startsWith('asg_uhv_') ||
+            asg.courseId === 'course_uhv_leadership_05'
+          ) {
+            isUhvAssignment = true;
+          } else if (asg.courseId) {
+            const course = await demoRepository.getCourse(asg.courseId);
+            if (course?.track === 'uhv') {
+              isUhvAssignment = true;
+            }
+          }
+          if (isMounted) {
+            setIsUhv(isUhvAssignment);
+          }
+
+          if (currentUser) {
+            const subs = await demoRepository.getSubmissions(currentUser.id, assignmentId);
+            if (!isMounted) return;
+            setSubmission(subs[0] || null);
+          } else {
+            if (!isMounted) return;
+            setSubmission(null);
+          }
         } else {
           if (!isMounted) return;
+          setIsUhv(false);
           setSubmission(null);
         }
       } catch (err) {
@@ -77,6 +101,7 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
         if (isMounted) {
           setAssignment(null);
           setSubmission(null);
+          setIsUhv(false);
         }
       } finally {
         if (isMounted) {
@@ -94,7 +119,7 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
 
   if (!isOpen) return null;
 
-  const evidenceDetail = assignment
+  const evidenceDetail = assignment && !isUhv
     ? getEvidenceExpectationDetail(assignment.requiredEvidenceType)
     : null;
 
@@ -149,6 +174,20 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
         </div>
       ) : (
         <div className="space-y-5">
+          {/* UHV / Jeevan Vidya Reflection Label & Privacy Notice */}
+          {isUhv && (
+            <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+                  UHV / Jeevan Vidya Reflection
+                </span>
+              </div>
+              <p className="text-blue-900 leading-relaxed font-medium">
+                This is a personal study reflection for Universal Human Values (Jeevan Vidya). Reflections are private and earn no Civic Credit Points (0 credits) to ensure genuine, pressure-free self-exploration.
+              </p>
+            </div>
+          )}
+
           {/* Header metadata chips (Status, Time, Due Date, Credits) */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
             <div className="flex items-center gap-2">
@@ -156,7 +195,7 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
               <StatusChip status={submission ? submission.status : 'not_started'} />
             </div>
 
-            {assignment.creditsReward != null && assignment.creditsReward > 0 && (
+            {!isUhv && assignment.creditsReward != null && assignment.creditsReward > 0 && (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-civic-saffron-50 border border-civic-saffron-200 text-civic-saffron-800 text-xs font-semibold">
                 <Award className="w-3.5 h-3.5 text-civic-saffron-600" />
                 <span>+{assignment.creditsReward} Credits</span>
