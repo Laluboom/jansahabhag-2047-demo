@@ -114,7 +114,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).not.toBeVisible();
 
     // Verify unacknowledged rulebook banner IS visible
-    await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).toBeVisible();
+    await expect(page.getByText(/Debate Room Procedural Rules \(v1\.0\)/i)).toBeVisible();
 
     // Attempting to request speaking turn without acknowledgement opens rulebook and shows error
     await page.getByRole('button', { name: /Raise Hand \(Request Turn\)/i }).click();
@@ -125,7 +125,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     // Acknowledges via rulebook modal
     await modal.getByRole('button', { name: /Acknowledge Ground Rules/i }).click();
     await expect(modal).not.toBeVisible();
-    await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).not.toBeVisible();
+    await expect(page.getByText(/Debate Room Procedural Rules \(v1\.0\)/i)).not.toBeVisible();
 
     // Switch back to primary participant for passport link test
     await page.getByRole('button', { name: /Viewing as/i }).click();

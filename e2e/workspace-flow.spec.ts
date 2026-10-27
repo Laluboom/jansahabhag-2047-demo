@@ -157,7 +157,7 @@ test.describe('Package 06: Rajkot Proposition Workspace Invitation & Moderation 
     // Test tab navigation on mobile
     await page.locator('[data-testid="tab-rulebook"]').click();
     await expect(page.locator('[data-testid="rulebook-panel"]')).toBeVisible();
-    await expect(page.getByText('Master PRD §A13 / §A20.5 Point of Use')).toBeVisible();
+    await expect(page.getByText('Point of Use Rules of Procedure')).toBeVisible();
     await expect(page.getByText('1. Scoped Membership & Institutional Affiliation')).toBeVisible();
     await expect(page.getByText('2. Transparent Scoped Moderation')).toBeVisible();
 

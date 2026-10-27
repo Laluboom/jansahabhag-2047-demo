@@ -235,7 +235,7 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
     await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
 
     // Verify 7 PRD civic dimensions
-    await expect(page.getByText(/Civic Credit (Point )?Dimensions \(7 PRD Dimensions\)/i)).toBeVisible();
+    await expect(page.getByText(/Civic Credit (Point )?Dimensions \(7 Dimensions\)/i)).toBeVisible();
     for (const dim of ['Learning', 'Observation', 'Deliberation', 'Contribution', 'Collaboration', 'Civic Action', 'Reflection']) {
       await expect(page.getByText(dim, { exact: false }).first()).toBeVisible();
     }
