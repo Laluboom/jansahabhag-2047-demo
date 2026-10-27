@@ -94,6 +94,16 @@ declare module './repository' {
       reason: string;
       severity?: ModerationSeverity;
     }): Promise<ModerationCase>;
+    reportCommunityPost(params: {
+      reporterId: string;
+      postId: string;
+      reason: string;
+      severity?: ModerationSeverity;
+    }): Promise<ModerationCase>;
+    getCommunityPost(postId: string): Promise<CommunityPost | null>;
+    getCommunityPostContext(
+      postId: string
+    ): Promise<{ post: CommunityPost; group: CommunityGroup } | null>;
     assignModerationCaseReviewer(caseId: string, reviewerId: string): Promise<ModerationCase>;
   }
 }
@@ -2421,6 +2431,84 @@ export class LocalDemoRepository implements DemoRepository {
       severity: params.severity || 'medium',
       status: 'open',
       notes: `Report filed by @${reporter.username || reporter.name} (${reporter.role}). Target: ${targetSummary}.`,
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.moderationCases = db.moderationCases || [];
+    db.moderationCases.push(newCase);
+    this.saveDb(db);
+
+    return JSON.parse(JSON.stringify(newCase));
+  }
+
+  // Community Post Moderation Reporting
+  async reportCommunityPost(params: {
+    reporterId: string;
+    postId: string;
+    reason: string;
+    severity?: ModerationSeverity;
+  }): Promise<ModerationCase> {
+    const db = this.getDb();
+
+    // 1. Require reporterId === activeUserId
+    if (!params.reporterId || params.reporterId !== db.activeUserId) {
+      throw new Error(
+        `Unauthorized: reporterId (${params.reporterId}) must match the active session persona (${db.activeUserId}).`
+      );
+    }
+
+    // 2. The reporter must exist in db.users
+    const reporter = db.users.find((u) => u.id === params.reporterId);
+    if (!reporter) {
+      throw new Error(`Reporter user ${params.reporterId} not found`);
+    }
+
+    // 3. Special guest guard: view-only role
+    if (reporter.role === 'special_guest') {
+      throw new Error('Unauthorized: special_guest is a view-only role and cannot mutate state');
+    }
+
+    // 4. Reason trimmed must be at least 3 characters
+    const trimmedReason = params.reason?.trim();
+    if (!trimmedReason || trimmedReason.length < 3) {
+      throw new Error('A valid reason is required for moderation reporting (at least 3 characters).');
+    }
+
+    // 5. The post must exist in db.communityPosts
+    const post = (db.communityPosts || []).find((p) => p.id === params.postId);
+    if (!post) {
+      throw new Error(`Community post ${params.postId} not found`);
+    }
+
+    // 6. A participant may not report their own post
+    if (post.authorId === params.reporterId) {
+      throw new Error('You cannot report your own post. Edit or delete it instead.');
+    }
+
+    // 7. Duplicate guard
+    const existingCase = (db.moderationCases || []).find(
+      (c) =>
+        c.targetType === 'community_post' &&
+        c.targetId === params.postId &&
+        c.reporterId === params.reporterId &&
+        (c.status === 'open' || c.status === 'under_review')
+    );
+    if (existingCase) {
+      throw new Error('You have already reported this post. It is in the moderation queue.');
+    }
+
+    // 8. Append new case
+    const now = new Date().toISOString();
+    const newCase: ModerationCase = {
+      id: generateId('mod_post'),
+      reporterId: params.reporterId,
+      targetType: 'community_post',
+      targetId: params.postId,
+      reason: trimmedReason,
+      severity: params.severity ?? 'medium',
+      status: 'open',
       schemaVersion: 1,
       createdAt: now,
       updatedAt: now,
@@ -6901,6 +6989,39 @@ export class LocalDemoRepository implements DemoRepository {
     return JSON.parse(JSON.stringify(posts));
   }
 
+  async getCommunityPost(postId: string): Promise<CommunityPost | null> {
+    const db = this.getDb();
+    const post = (db.communityPosts || []).find((p) => p.id === postId);
+    if (!post) return null;
+    return JSON.parse(JSON.stringify(post));
+  }
+
+  async getCommunityPostContext(
+    postId: string
+  ): Promise<{ post: CommunityPost; group: CommunityGroup } | null> {
+    const db = this.getDb();
+    const post = (db.communityPosts || []).find((p) => p.id === postId);
+    if (!post) return null;
+    const group = (db.communityGroups || []).find((g) => g.id === post.groupId);
+    return {
+      post: JSON.parse(JSON.stringify(post)),
+      group: group
+        ? JSON.parse(JSON.stringify(group))
+        : {
+            id: post.groupId,
+            name: 'Unknown Circle',
+            category: 'General',
+            description: '',
+            memberUserIds: [],
+            postCount: 0,
+            isPrivate: false,
+            schemaVersion: 1,
+            createdAt: '',
+            updatedAt: '',
+          },
+    };
+  }
+
   async addCommunityPost(post: {
     groupId: string;
     authorId: string;
@@ -7070,6 +7191,11 @@ export class LocalDemoRepository implements DemoRepository {
             c.notes = 'Protected submission under review.';
           }
         }
+      } else if (c.targetType === 'community_post') {
+        const post = (db.communityPosts || []).find((p) => p.id === c.targetId);
+        if (!post) {
+          c.notes = 'Reported community post is no longer available.';
+        }
       }
     }
 
@@ -7126,6 +7252,16 @@ export class LocalDemoRepository implements DemoRepository {
     // Apply allowed fields only
     if (update.status !== undefined) {
       c.status = update.status;
+      if (c.targetType === 'community_post') {
+        const post = (db.communityPosts || []).find((p) => p.id === c.targetId);
+        if (post) {
+          if (update.status === 'actioned') {
+            post.isWithheld = true;
+          } else if (update.status === 'no_action') {
+            post.isWithheld = false;
+          }
+        }
+      }
     }
     if (update.notes !== undefined) {
       c.notes = update.notes;
