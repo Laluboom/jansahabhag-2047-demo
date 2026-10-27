@@ -188,14 +188,14 @@ interface CreditPointStep {
 const CREDIT_POINT_STEPS: CreditPointStep[] = [
   {
     title: 'Take part',
-    detail: 'Join an assembly, submit field evidence, or contribute to a debate.',
+    detail: 'Complete a civic lesson, join an assembly, or submit field evidence.',
     icon: Users,
     iconBg: 'bg-indigo-100',
     iconColor: 'text-indigo-700',
   },
   {
     title: 'Earn civic credit points',
-    detail: 'Each verified contribution adds points to your record.',
+    detail: 'Eligible verified activities add 1 or 2 points, up to 5 in this demo.',
     icon: Sparkles,
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-800',

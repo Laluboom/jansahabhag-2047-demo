@@ -150,9 +150,9 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     expect(strip).toBeInTheDocument();
     expect(strip).toHaveTextContent(/How participation is recorded/i);
     expect(strip).toHaveTextContent('Take part');
-    expect(strip).toHaveTextContent('Join an assembly, submit field evidence, or contribute to a debate.');
+    expect(strip).toHaveTextContent('Complete a civic lesson, join an assembly, or submit field evidence.');
     expect(strip).toHaveTextContent('Earn civic credit points');
-    expect(strip).toHaveTextContent('Each verified contribution adds points to your record.');
+    expect(strip).toHaveTextContent('Eligible verified activities add 1 or 2 points, up to 5 in this demo.');
     expect(strip).toHaveTextContent('Build your Civic Passport');
     expect(strip).toHaveTextContent('A portfolio of what you did, not a score of your worth.');
 
