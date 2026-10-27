@@ -262,7 +262,7 @@ export const seedAssemblies: Assembly[] = [
     programmeId: 'prog_safe_streets_2047',
     title: 'Clean Public Transport & Last-Mile Safety Assembly',
     theme: 'Youth Transit Passes & Safe Bus Stops',
-    question: 'How can feeder transit and pedestrian feeder paths connect high school students safely to Rajkot Municipal Transport Service (RMTS)?',
+    question: 'How can feeder transit and pedestrian feeder paths connect high school students safely to Rajkot city bus services?',
     description: 'Youth-led deliberation on bus frequencies, lighting, and safe multi-modal integration with transparent 3-person rotating multi-role coverage.',
     location: 'Rajkot Youth Center, Kalawad Road',
     scheduledDate: '2026-11-05T10:00:00Z',

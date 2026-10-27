@@ -40,6 +40,17 @@ export const ProfilePage: React.FC = () => {
 
   if (!currentUser) return null;
 
+  // Named demo personas in the competition demo must not have personal contact details attributed
+  const isNamedDemoPersona = Boolean(
+    currentUser.id?.startsWith('VSC-') ||
+    currentUser.id?.startsWith('JS-') ||
+    currentUser.id?.startsWith('user_') ||
+    currentUser.institutionId === 'inst_vsc_rajkot' ||
+    currentUser.email?.includes('@demo.') ||
+    currentUser.email?.includes('.internal') ||
+    ['participant', 'teacher', 'principal', 'guest', 'founder', 'moderator'].includes(currentUser.role)
+  );
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
@@ -92,12 +103,9 @@ export const ProfilePage: React.FC = () => {
             <div>
               <span className="text-slate-400 block text-[10px] uppercase">Contact</span>
               <span className="font-semibold text-slate-600" data-testid="profile-user-contact">
-                {currentUser.email &&
-                !currentUser.email.includes('@demo.') &&
-                !currentUser.email.endsWith('.internal') &&
-                !currentUser.email.includes('.internal')
-                  ? currentUser.email
-                  : 'Demo persona (Non-contact demo — no personal details attributed)'}
+                {isNamedDemoPersona
+                  ? 'Demo profile — contact not shown'
+                  : currentUser.email || 'Demo profile — contact not shown'}
               </span>
             </div>
           </div>
