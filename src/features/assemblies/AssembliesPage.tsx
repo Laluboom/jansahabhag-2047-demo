@@ -101,7 +101,7 @@ export const AssembliesPage: React.FC = () => {
             Youth Deliberative Assemblies
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
-            Take a seat in a chamber, weigh what your field work found, and agree on one proposal to put to the city. Pick an assembly below to join.
+            Weigh what your field work found and shape a proposal to put to the city.
           </p>
         </div>
 

@@ -408,7 +408,7 @@ export const CoursesPage: React.FC = () => {
             <DemoPreviewBadge size="sm" label="Fictional browser demo" />
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Short courses on how your city works and how to observe it. Finish one and it is recorded in your Civic Passport.
+            Short courses on how your city works and how to observe it.
           </p>
         </div>
         <PointOfUseRulesButton

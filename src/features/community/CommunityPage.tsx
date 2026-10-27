@@ -207,7 +207,7 @@ export const CommunityPage: React.FC = () => {
             <span>Community Circles & Peer Forums</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Circles where students swap tips on counting traffic, mapping a street, and what they learned. Join one and post.
+            Circles where students swap tips on counting traffic, mapping streets, and what worked.
           </p>
         </div>
 

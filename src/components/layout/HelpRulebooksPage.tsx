@@ -39,7 +39,7 @@ export const HelpRulebooksPage: React.FC = () => {
             <DemoPreviewBadge size="sm" label="Fictional browser demo" />
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            What each part of the platform expects of you. The full rulebooks are still being written.
+            Short summaries of what each part of the platform expects of you.
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            How an assembly moves through its stages, who speaks when, and why a minority view is kept on the record.
+            How an assembly moves through its stages, who speaks when, and why a minority view stays on the record. Pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/assemblies">
@@ -92,7 +92,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            How motions reach the top chamber, how representatives are drawn from assemblies, and what a policy brief contains.
+            How motions reach the apex chamber, how representatives are aggregated, and what a policy brief contains. Pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/parliament">
@@ -132,7 +132,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Taking part is voluntary, agreeing with an idea is never graded, and the curriculum rights sit with their owners.
+            Taking part is voluntary and agreeing with an idea is never graded. Curriculum rights pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/uhv">

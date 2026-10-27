@@ -88,7 +88,7 @@ export const WorkspacePreviewPage: React.FC = () => {
               <strong>Workspace</strong> is where institutions, cohorts and project teams would get their own shared space: memberships, join requests, announcements, and channels.
             </p>
             <p className="text-slate-600">
-              None of it is built yet. This preview has no live invitations, no shared document editing, and no multi-user chat.
+              Those are planned, not built. Authenticated multi-user persistence and permission-safe role isolation come later, so this preview has no live invitations, no shared document editing, and no multi-user chat.
             </p>
           </div>
         </div>

@@ -130,7 +130,7 @@ export const ProjectsPage: React.FC = () => {
             <span>Youth Civic Action Projects</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Small student-run projects that turn an agreed proposal into work on the street. Join a team below, or start your own.
+            Student-run projects that turn an agreed proposal into work on the street.
           </p>
         </div>
 

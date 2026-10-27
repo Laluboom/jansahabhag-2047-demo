@@ -274,7 +274,7 @@ export const AssignmentsPage: React.FC = () => {
               <DemoPreviewBadge size="sm" label="Fictional browser demo" />
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Check what students recorded on the street, then verify each submission or send it back for revision.
+              Check what students recorded on the street, then verify it or ask for a revision.
             </p>
           </div>
 
@@ -916,7 +916,7 @@ export const AssignmentsPage: React.FC = () => {
             <DemoPreviewBadge size="sm" label="Fictional browser demo" />
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Go out and record what you see on the street - counts, photos, interviews - then submit it for a mentor to verify.
+            Record what you see on the street, then submit it for a mentor to verify.
           </p>
         </div>
         <PointOfUseRulesButton
