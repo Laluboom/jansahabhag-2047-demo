@@ -9,6 +9,8 @@ import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { Modal } from '../../components/ui/Modal';
+import { StatusChip } from '../../components/ui/StatusChip';
 import {
   ArrowLeft,
   MessageSquare,
@@ -24,6 +26,7 @@ import {
   Tag,
   ChevronDown,
   Plus,
+  Flag,
 } from 'lucide-react';
 import { formatRelativeTime } from '../../utils/formatters';
 
@@ -35,6 +38,13 @@ export const CommunityGroupDetailPage: React.FC = () => {
   const [group, setGroup] = useState<CommunityGroup | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [expandedPostIds, setExpandedPostIds] = useState<Set<string>>(new Set());
+
+  // Report Modal State
+  const [reportingPost, setReportingPost] = useState<CommunityPost | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportedPostIds, setReportedPostIds] = useState<Set<string>>(new Set());
 
   // New Topic Form State
   const [newTitle, setNewTitle] = useState('');
@@ -149,6 +159,40 @@ export const CommunityGroupDetailPage: React.FC = () => {
     }
   };
 
+  const handleOpenReportModal = (post: CommunityPost) => {
+    setReportingPost(post);
+    setReportReason('');
+    setReportError(null);
+  };
+
+  const handleCloseReportModal = () => {
+    setReportingPost(null);
+    setReportReason('');
+    setReportError(null);
+  };
+
+  const handleSubmitReport = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!currentUser || !reportingPost) return;
+
+    setIsSubmittingReport(true);
+    setReportError(null);
+    try {
+      await demoRepository.reportCommunityPost({
+        reporterId: currentUser.id,
+        postId: reportingPost.id,
+        reason: reportReason,
+      });
+      setReportedPostIds((prev) => new Set(prev).add(reportingPost.id));
+      handleCloseReportModal();
+      triggerRefresh();
+    } catch (err: any) {
+      setReportError(err?.message || 'Failed to submit report');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading community circle">
@@ -193,6 +237,13 @@ export const CommunityGroupDetailPage: React.FC = () => {
   const renderThreadCard = (post: CommunityPost) => {
     const isExpanded = expandedPostIds.has(post.id);
     const hasLiked = currentUser ? post.likedByUserIds?.includes(currentUser.id) : false;
+    const isStaff = currentUser?.role === 'platform_admin' || currentUser?.role === 'programme_manager';
+    const isWithheld = Boolean(post.isWithheld);
+    const showFullContent = !isWithheld || isStaff;
+    const isAuthor = currentUser?.id === post.authorId;
+    const isSpecialGuest = currentUser?.role === 'special_guest';
+    const canReport = currentUser && !isAuthor && !isSpecialGuest;
+    const isReported = reportedPostIds.has(post.id);
 
     return (
       <Card
@@ -218,6 +269,9 @@ export const CommunityGroupDetailPage: React.FC = () => {
                   <Pin className="w-3 h-3" /> Pinned
                 </span>
               )}
+              {isWithheld && isStaff && (
+                <StatusChip status="withheld" className="bg-rose-100 text-rose-800 border-rose-200" />
+              )}
               <ChevronDown
                 className={`w-4 h-4 text-slate-400 transition-transform ${
                   isExpanded ? 'rotate-180 text-civic-indigo-600' : ''
@@ -227,10 +281,24 @@ export const CommunityGroupDetailPage: React.FC = () => {
           </div>
 
           {/* One-line snippet */}
-          <p className="text-xs text-slate-600 line-clamp-1 truncate">
-            {post.content}
-          </p>
+          {showFullContent ? (
+            <p className="text-xs text-slate-600 line-clamp-1 truncate">
+              {post.content}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500 italic">
+              This post was withheld after moderation review.
+            </p>
+          )}
         </button>
+
+        {/* Inline Confirmation of Report */}
+        {isReported && (
+          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-civic-indigo-600 shrink-0" />
+            <span>This post has been sent to the moderation queue and a named human reviews it.</span>
+          </div>
+        )}
 
         {/* Author avatar/initials, name, role and relative time */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs text-slate-500">
@@ -253,11 +321,17 @@ export const CommunityGroupDetailPage: React.FC = () => {
         {isExpanded && (
           <div id={`post-detail-${post.id}`} className="mt-3 pt-3 border-t border-slate-200 space-y-3">
             {/* Complete Content */}
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100">
-              {post.content}
-            </p>
+            {showFullContent ? (
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 p-3 rounded-lg border border-slate-100">
+                {post.content}
+              </p>
+            ) : (
+              <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200 text-xs text-amber-900 italic">
+                This post was withheld after moderation review.
+              </div>
+            )}
 
-            {/* Tags & Helpful Reaction */}
+            {/* Tags & Helpful Reaction & Report Control */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap gap-1.5">
                 {post.tags.map((tag, i) => (
@@ -270,18 +344,32 @@ export const CommunityGroupDetailPage: React.FC = () => {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleLikePost(post.id)}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
-                  hasLiked
-                    ? 'bg-civic-indigo-50 text-civic-indigo-700 border border-civic-indigo-200'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                <ThumbsUp className={`w-3.5 h-3.5 ${hasLiked ? 'fill-civic-indigo-600' : ''}`} />
-                <span>{post.likesCount} Helpful</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleLikePost(post.id)}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
+                    hasLiked
+                      ? 'bg-civic-indigo-50 text-civic-indigo-700 border border-civic-indigo-200'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  }`}
+                >
+                  <ThumbsUp className={`w-3.5 h-3.5 ${hasLiked ? 'fill-civic-indigo-600' : ''}`} />
+                  <span>{post.likesCount} Helpful</span>
+                </button>
+
+                {canReport && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReportModal(post)}
+                    aria-label={`Report post: ${post.title}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-slate-50 text-slate-600 hover:bg-rose-50 hover:text-rose-700 border border-slate-200 hover:border-rose-200 transition-colors"
+                  >
+                    <Flag className="w-3.5 h-3.5 text-slate-500 hover:text-rose-600" />
+                    <span>Report</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Replies Thread */}
@@ -525,6 +613,75 @@ export const CommunityGroupDetailPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Report Post Modal */}
+      {reportingPost && (
+        <Modal
+          isOpen={!!reportingPost}
+          onClose={handleCloseReportModal}
+          title="Report Community Post"
+          description="Flag inappropriate content, safety violations, or deliberative norm breaches."
+          footer={
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={handleCloseReportModal}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="button"
+                isLoading={isSubmittingReport}
+                onClick={handleSubmitReport}
+              >
+                Submit report
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleSubmitReport} className="space-y-4">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+              <span className="font-semibold text-slate-500 uppercase block text-[10px]">
+                Reported Post
+              </span>
+              <p className="font-bold text-slate-900 mt-0.5">{reportingPost.title}</p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="community-post-report-reason"
+                className="block text-xs font-bold text-slate-700 uppercase mb-1"
+              >
+                Reason for report
+              </label>
+              <textarea
+                id="community-post-report-reason"
+                rows={4}
+                value={reportReason}
+                onChange={(e) => {
+                  setReportReason(e.target.value);
+                  if (reportError) setReportError(null);
+                }}
+                placeholder="Explain why this content should be reviewed by a moderator..."
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-civic-indigo-500"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                At least 3 characters are required for moderation review.
+              </p>
+            </div>
+
+            {reportError && (
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-800 font-medium">
+                {reportError}
+              </div>
+            )}
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

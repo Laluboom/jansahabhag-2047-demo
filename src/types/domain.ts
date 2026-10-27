@@ -1060,6 +1060,7 @@ export interface CommunityPost {
   likedByUserIds?: string[];
   replies: PostReply[];
   isPinned: boolean;
+  isWithheld?: boolean;
   schemaVersion: number;
   createdAt: string;
 }
@@ -1070,7 +1071,7 @@ export type ModerationStatus = 'open' | 'under_review' | 'actioned' | 'no_action
 export interface ModerationCase {
   id: string;
   reporterId: string;
-  targetType: 'post' | 'evidence' | 'contribution' | 'user';
+  targetType: 'post' | 'community_post' | 'evidence' | 'contribution' | 'user';
   targetId: string;
   reason: string;
   severity: ModerationSeverity;
