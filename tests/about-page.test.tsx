@@ -44,8 +44,9 @@ describe('AboutPage', () => {
       expect(items?.[index]).toHaveTextContent(entry.name);
       if (entry.role) expect(items?.[index]).toHaveTextContent(entry.role);
     });
-    expect(items?.[2]).not.toHaveTextContent('role');
-    expect(items?.[5]).not.toHaveTextContent('role');
+    GRATITUDE_ENTRIES.forEach((entry, index) => {
+      if (!entry.role) expect(items?.[index]?.querySelector('small')).toBeNull();
+    });
     const visesh = items?.[10];
     expect(visesh?.querySelector('img')).toHaveAttribute('alt', 'Portrait of Visesh Akbari');
     expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
