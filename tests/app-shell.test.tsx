@@ -30,9 +30,39 @@ describe('UI & Layout Components', () => {
     expect(screen.getByText(/demo preview/i)).toBeInTheDocument();
   });
 
-  it('renders ThreadMotif with evidence-to-action stages', () => {
-    render(<ThreadMotif currentStage="evidence" />);
+  it('renders ThreadMotif with canonical five-stage product method', () => {
+    const { rerender } = render(<ThreadMotif currentStage="observe" />);
+
+    // Accessible name and landmark role
+    const region = screen.getByRole('region', { name: /five-stage product method/i });
+    expect(region).toBeInTheDocument();
+    expect(region).toHaveAttribute('aria-label', 'Five-Stage Product Method');
+
+    // Title and story context preserved
+    expect(screen.getByText(/five-stage product method/i)).toBeInTheDocument();
     expect(screen.getByText(/evidence-to-action thread/i)).toBeInTheDocument();
     expect(screen.getByText(/ankita's rajkot pedestrian safety pathway/i)).toBeInTheDocument();
+
+    // Canonical stages from Master PRD opening §1 / Part A §A3
+    expect(screen.getByText('1. Learn')).toBeInTheDocument();
+    expect(screen.getByText('2. Observe')).toBeInTheDocument();
+    expect(screen.getByText('3. Deliberate')).toBeInTheDocument();
+    expect(screen.getByText('4. Propose')).toBeInTheDocument();
+    expect(screen.getByText('5. Reflect')).toBeInTheDocument();
+
+    // Active stage indicator
+    const observeStep = screen.getByTestId('product-method-stage-observe');
+    expect(observeStep).toHaveAttribute('aria-current', 'step');
+    expect(observeStep.className).toContain('bg-civic-indigo-600');
+
+    // Inactive stage does not have aria-current step
+    const learnStep = screen.getByTestId('product-method-stage-learn');
+    expect(learnStep).not.toHaveAttribute('aria-current');
+
+    // Switching active stage updates aria-current and highlighting
+    rerender(<ThreadMotif currentStage="deliberate" />);
+    const deliberateStep = screen.getByTestId('product-method-stage-deliberate');
+    expect(deliberateStep).toHaveAttribute('aria-current', 'step');
+    expect(observeStep).not.toHaveAttribute('aria-current');
   });
 });

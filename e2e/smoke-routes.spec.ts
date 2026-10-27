@@ -147,6 +147,12 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
     await expect(page.getByText(/Canonical Deliberation Pathway \(6 Stages\)/i).first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'All 4 Zones' })).toBeVisible();
 
+    const sessionOverflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(sessionOverflow.scrollWidth).toBeLessThanOrEqual(sessionOverflow.clientWidth);
+
     // 2. Admin Dashboard on Mobile
     await page.goto('/admin/dashboard');
     await expect(page.getByRole('heading', { name: /State Command/i })).toBeVisible();
@@ -157,6 +163,55 @@ test.describe('JanSahabhag 2047 — Complete Route Smoke & Invariant Verificatio
 
     // 4. Mobile Bottom Nav is present
     await expect(page.getByRole('navigation', { name: 'Mobile Navigation' })).toBeVisible();
+  });
+
+  test('prevents document horizontal overflow at phone viewports (375px and 320px) with interactive controls', async ({ page }) => {
+    for (const width of [375, 320]) {
+      await page.setViewportSize({ width, height: 812 });
+
+      // 1. Deliberative Assembly Session Route
+      await page.goto('/assemblies/assembly_jaipur_pedestrian_2026/session');
+      await expect(page.getByRole('heading', { name: /(Rajkot|Jaipur) School Zone Pedestrian Safety Youth Assembly 2026/i })).toBeVisible();
+
+      const sessionWidths = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(sessionWidths.scrollWidth).toBeLessThanOrEqual(sessionWidths.clientWidth);
+
+      // Verify stage controls are accessible and interactive without causing overflow
+      const stageBtn = page.getByRole('button', { name: /Stage 1/i }).first();
+      if (await stageBtn.isVisible()) {
+        await stageBtn.click();
+      }
+
+      const postStageWidths = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(postStageWidths.scrollWidth).toBeLessThanOrEqual(postStageWidths.clientWidth);
+
+      // 2. Verifiable Evidence Repository Route
+      await page.goto('/passport/evidence');
+      await expect(page.getByRole('heading', { name: /Verifiable Evidence Repository/i })).toBeVisible();
+
+      const evidenceWidths = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(evidenceWidths.scrollWidth).toBeLessThanOrEqual(evidenceWidths.clientWidth);
+
+      // Verify filter controls are accessible and interactive without causing overflow
+      const verifiedFilterBtn = page.getByRole('button', { name: 'verified' });
+      await expect(verifiedFilterBtn).toBeVisible();
+      await verifiedFilterBtn.click();
+
+      const postFilterWidths = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(postFilterWidths.scrollWidth).toBeLessThanOrEqual(postFilterWidths.clientWidth);
+    }
   });
 
   test('manages persona-scoped state, notification links, and deterministic reset', async ({ page }) => {

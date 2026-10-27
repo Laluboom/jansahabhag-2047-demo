@@ -66,8 +66,8 @@ export const ParticipantDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Evidence-to-Action Thread Top Banner */}
-      <ThreadMotif currentStage="evidence" />
+      {/* Five-Stage Product Method Banner */}
+      <ThreadMotif currentStage="observe" />
 
       {/* Welcome & Scenario Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">

@@ -87,7 +87,7 @@ export const AssembliesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Evidence to Action Thread Indicator */}
+      {/* Five-Stage Product Method Banner */}
       <ThreadMotif currentStage="deliberate" />
 
       {/* Header */}

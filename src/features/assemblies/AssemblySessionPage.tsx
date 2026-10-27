@@ -774,23 +774,23 @@ export const AssemblySessionPage: React.FC = () => {
     <div className="space-y-4 max-w-7xl mx-auto">
       {/* Top Session Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900 text-white rounded-2xl shadow-md border border-slate-800">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <Link
             to={`/assemblies/${assembly.id}`}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-400 bg-civic-teal-950 px-2 py-0.5 rounded border border-civic-teal-800">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-400 bg-civic-teal-950 px-2 py-0.5 rounded border border-civic-teal-800 shrink-0">
                 Youth Chamber in Session
               </span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 shrink-0">
                 Stage {currentStageIndex + 1}/6: {CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.label}
               </span>
               {isChair && (
-                <span className="text-[10px] font-bold text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
+                <span className="text-[10px] font-bold text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-800 shrink-0">
                   Chair / Facilitator Active
                 </span>
               )}
@@ -801,7 +801,7 @@ export const AssemblySessionPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {/* Rulebook Quick Access */}
           <Button
             size="sm"
@@ -965,11 +965,11 @@ export const AssemblySessionPage: React.FC = () => {
 
         {/* Chair Procedural Controls Bar */}
         {isChair && (
-          <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-3 mt-2 border-t border-slate-100 text-xs">
             <span className="text-slate-600 font-medium">
               Chamber Stage: <strong>{assembly.currentStage.replace('_', ' ')}</strong>
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 size="sm"
                 variant="outline"
@@ -1129,8 +1129,8 @@ export const AssemblySessionPage: React.FC = () => {
       {/* MAIN TWO-COLUMN WORKSPACE: LEFT = INTERACTIVE STAGE & ROLE POWERS, RIGHT = SPEAKING QUEUE & EVIDENCE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* LEFT 8 COLUMNS: INTERACTIVE STAGE WORKSPACE */}
-        <div className="lg:col-span-8 space-y-4">
-          <Card className="border-slate-200 p-5 sm:p-6 space-y-5 bg-white shadow-sm min-h-[500px]">
+        <div className="lg:col-span-8 space-y-4 min-w-0">
+          <Card className="border-slate-200 p-4 sm:p-6 space-y-5 bg-white shadow-sm min-h-[500px] min-w-0">
             {/* Stage Title Header */}
             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-3 gap-2">
               <div>
@@ -1472,7 +1472,7 @@ export const AssemblySessionPage: React.FC = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                         {(['CONSENSUS', 'QUALIFIED_SUPPORT', 'SPLIT_DECISION', 'INSUFFICIENT_BASIS'] as PropositionOutcome[]).map((oc) => (
                           <button
                             key={oc}
@@ -1776,18 +1776,18 @@ export const AssemblySessionPage: React.FC = () => {
         </div>
 
         {/* RIGHT 4 COLUMNS: SPEAKING QUEUE & EVIDENCE POOL */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 space-y-4 min-w-0">
           {/* Active Speaking Queue Card */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm">
+          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm min-w-0">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-1.5">
-                <Mic className="w-4 h-4 text-civic-teal-600" />
+                <Mic className="w-4 h-4 text-civic-teal-600 shrink-0" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
                   Speaking Queue ({speakingQueue.filter((s) => s.status !== 'completed' && s.status !== 'cancelled').length})
                 </h3>
               </div>
               {activeSpeakerEntry && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 shrink-0">
                   <Volume2 className="w-3 h-3" />
                   Live Speaker
                 </span>
@@ -1798,9 +1798,9 @@ export const AssemblySessionPage: React.FC = () => {
             {activeSpeakerEntry ? (
               <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-200 text-xs space-y-1">
                 <span className="text-[10px] uppercase font-bold text-emerald-800 block">Current Floor:</span>
-                <div className="font-bold text-slate-900 text-sm flex items-center justify-between">
-                  <span>{activeSpeakerEntry.userName}</span>
-                  <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                <div className="font-bold text-slate-900 text-sm flex flex-wrap items-center justify-between gap-1">
+                  <span className="truncate">{activeSpeakerEntry.userName}</span>
+                  <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded shrink-0">
                     {activeSpeakerEntry.userRole || 'Delegate'}
                   </span>
                 </div>
@@ -1824,19 +1824,19 @@ export const AssemblySessionPage: React.FC = () => {
                 <p className="text-[11px] text-slate-400 text-center py-1">Queue is empty.</p>
               ) : (
                 speakingQueue.filter((s) => s.status === 'waiting').map((entry, idx) => (
-                  <div key={entry.id} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-slate-900">
+                  <div key={entry.id} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2 min-w-0">
+                    <div className="min-w-0 flex-1 truncate">
+                      <span className="font-bold text-slate-900 truncate block">
                         {idx + 1}. {entry.userName}
                       </span>
-                      <span className="text-[10px] text-slate-500 block">{entry.userRole}</span>
+                      <span className="text-[10px] text-slate-500 block truncate">{entry.userRole}</span>
                     </div>
                     {isChair && (
                       <Button
                         size="sm"
                         variant="teal"
                         onClick={() => handleRecognizeSpeaker(entry.userId)}
-                        className="h-6 text-[10px] px-2"
+                        className="h-6 text-[10px] px-2 shrink-0"
                       >
                         Recognize
                       </Button>
@@ -1861,15 +1861,15 @@ export const AssemblySessionPage: React.FC = () => {
           </Card>
 
           {/* Chamber Evidence Pool */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm">
+          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm min-w-0">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-1.5">
-                <FileCheck2 className="w-4 h-4 text-civic-teal-600" />
+                <FileCheck2 className="w-4 h-4 text-civic-teal-600 shrink-0" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
                   Evidence Pool ({evidenceList.length})
                 </h3>
               </div>
-              <span className="text-[10px] text-slate-400">Click to cite</span>
+              <span className="text-[10px] text-slate-400 shrink-0">Click to cite</span>
             </div>
 
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
@@ -1888,8 +1888,8 @@ export const AssemblySessionPage: React.FC = () => {
                   }`}
                   title="Click to cite in contribution"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-civic-teal-800 font-bold bg-civic-teal-50 px-1.5 py-0.2 rounded border border-civic-teal-200">
+                  <div className="flex flex-wrap items-center justify-between gap-1">
+                    <span className="font-mono text-[10px] text-civic-teal-800 font-bold bg-civic-teal-50 px-1.5 py-0.2 rounded border border-civic-teal-200 truncate max-w-full">
                       {ev.id}
                     </span>
                     <StatusChip status={ev.verificationStatus} />
