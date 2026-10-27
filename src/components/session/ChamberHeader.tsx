@@ -2,6 +2,8 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 
 export interface ChamberHeaderProps {
+  /** Small chamber-type label above the title, e.g. 'Youth Assembly'. */
+  eyebrow?: string;
   title: string;
   tagline: string;
   statusSlot?: React.ReactNode;   // e.g. a Live chip, a topic line, a stage chip
@@ -14,6 +16,7 @@ export interface ChamberHeaderProps {
 }
 
 export const ChamberHeader: React.FC<ChamberHeaderProps> = ({
+  eyebrow,
   title,
   tagline,
   statusSlot,
@@ -27,11 +30,16 @@ export const ChamberHeader: React.FC<ChamberHeaderProps> = ({
   return (
     <header
       className={cn(
-        'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white border-b border-slate-200 w-full max-w-full overflow-hidden',
+        'flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 p-4 bg-white border-b border-slate-200 w-full max-w-full overflow-hidden',
         className
       )}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1 sm:basis-64">
+        {eyebrow && (
+          <p className="text-[11px] font-bold uppercase tracking-wider text-civic-indigo-700">
+            {eyebrow}
+          </p>
+        )}
         <h1 className="text-xl sm:text-2xl font-bold font-heading text-slate-900 tracking-tight">
           {title}
         </h1>
@@ -40,7 +48,7 @@ export const ChamberHeader: React.FC<ChamberHeaderProps> = ({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:gap-3 min-w-0">
         {statusSlot}
         {timer && (
           <div

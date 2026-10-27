@@ -886,7 +886,8 @@ export const AssemblySessionPage: React.FC = () => {
     <div className="space-y-4 max-w-7xl mx-auto">
       {/* 1. ChamberHeader */}
       <ChamberHeader
-        title="Youth Assembly"
+        eyebrow="Youth Assembly"
+        title={assembly.title}
         tagline="Discuss. Deliberate. Build Solutions."
         statusSlot={
           <div className="min-w-0 flex-1">

@@ -41,7 +41,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     css: false,
-    exclude: [...configDefaults.exclude, '**/.subagy/**'],
+    exclude: [...configDefaults.exclude, '**/.subagy/**', '**/.claude/worktrees/**'],
   },
 });
 
