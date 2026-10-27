@@ -36,6 +36,10 @@ test.describe('Package 08B: Youth Assembly Named Role Reservation & Platform Own
     await expect(rulebookModal).not.toBeVisible();
 
     // 5. Verify Named Role Allocations Grid & Privacy Suppression for Participant View
+    const seatsDisclosure = page.getByText(/Seats and 33% reservation/i);
+    if (await seatsDisclosure.isVisible()) {
+      await seatsDisclosure.click();
+    }
     const allocationsCard = page.getByTestId('assembly-reservation-allocations-card');
     await expect(allocationsCard).toBeVisible();
 
@@ -142,6 +146,10 @@ test.describe('Package 08B: Youth Assembly Named Role Reservation & Platform Own
     await expect(rulebookModal).not.toBeVisible();
 
     // 4. Verify stacked role allocations grid
+    const seatsDisclosureMobile = page.getByText(/Seats and 33% reservation/i);
+    if (await seatsDisclosureMobile.isVisible()) {
+      await seatsDisclosureMobile.click();
+    }
     const allocationsGrid = page.getByTestId('assembly-role-allocations-grid');
     await expect(allocationsGrid).toBeVisible();
 
