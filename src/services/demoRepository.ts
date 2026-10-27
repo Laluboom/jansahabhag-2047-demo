@@ -103,7 +103,7 @@ declare module './repository' {
     getCommunityPost(postId: string): Promise<CommunityPost | null>;
     getCommunityPostContext(
       postId: string
-    ): Promise<{ post: CommunityPost; group: CommunityGroup } | null>;
+    ): Promise<{ post: CommunityPost; group: CommunityGroup | null } | null>;
     assignModerationCaseReviewer(caseId: string, reviewerId: string): Promise<ModerationCase>;
   }
 }
@@ -6983,42 +6983,51 @@ export class LocalDemoRepository implements DemoRepository {
 
   async getCommunityPosts(groupId: string): Promise<CommunityPost[]> {
     const db = this.getDb();
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isPrivileged =
+      activeUser?.role === 'platform_admin' || activeUser?.role === 'programme_manager';
+
     const posts = db.communityPosts
       .filter((p) => p.groupId === groupId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return JSON.parse(JSON.stringify(posts));
+
+    const result: CommunityPost[] = JSON.parse(JSON.stringify(posts));
+    if (!isPrivileged) {
+      for (const p of result) {
+        if (p.isWithheld) {
+          p.content = '';
+        }
+      }
+    }
+    return result;
   }
 
   async getCommunityPost(postId: string): Promise<CommunityPost | null> {
     const db = this.getDb();
     const post = (db.communityPosts || []).find((p) => p.id === postId);
     if (!post) return null;
-    return JSON.parse(JSON.stringify(post));
+
+    const activeUser = db.users.find((u) => u.id === db.activeUserId);
+    const isPrivileged =
+      activeUser?.role === 'platform_admin' || activeUser?.role === 'programme_manager';
+
+    const result: CommunityPost = JSON.parse(JSON.stringify(post));
+    if (!isPrivileged && result.isWithheld) {
+      result.content = '';
+    }
+    return result;
   }
 
   async getCommunityPostContext(
     postId: string
-  ): Promise<{ post: CommunityPost; group: CommunityGroup } | null> {
+  ): Promise<{ post: CommunityPost; group: CommunityGroup | null } | null> {
     const db = this.getDb();
     const post = (db.communityPosts || []).find((p) => p.id === postId);
     if (!post) return null;
     const group = (db.communityGroups || []).find((g) => g.id === post.groupId);
     return {
       post: JSON.parse(JSON.stringify(post)),
-      group: group
-        ? JSON.parse(JSON.stringify(group))
-        : {
-            id: post.groupId,
-            name: 'Unknown Circle',
-            category: 'General',
-            description: '',
-            memberUserIds: [],
-            postCount: 0,
-            isPrivate: false,
-            schemaVersion: 1,
-            createdAt: '',
-            updatedAt: '',
-          },
+      group: group ? JSON.parse(JSON.stringify(group)) : null,
     };
   }
 
@@ -7255,11 +7264,13 @@ export class LocalDemoRepository implements DemoRepository {
       if (c.targetType === 'community_post') {
         const post = (db.communityPosts || []).find((p) => p.id === c.targetId);
         if (post) {
-          if (update.status === 'actioned') {
-            post.isWithheld = true;
-          } else if (update.status === 'no_action') {
-            post.isWithheld = false;
-          }
+          const hasActioned = (db.moderationCases || []).some(
+            (mc) =>
+              mc.targetType === 'community_post' &&
+              mc.targetId === c.targetId &&
+              mc.status === 'actioned'
+          );
+          post.isWithheld = hasActioned;
         }
       }
     }

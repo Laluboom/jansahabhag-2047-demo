@@ -7,6 +7,7 @@ import { demoRepository } from '../src/services/demoRepository';
 import { PersistenceService } from '../src/services/persistence';
 import { useAuthStore } from '../src/stores/authStore';
 import { CommunityGroupDetailPage } from '../src/features/community/CommunityGroupDetailPage';
+import { CommunityPage } from '../src/features/community/CommunityPage';
 import { AdminModerationPage } from '../src/features/moderation/AdminModerationPage';
 
 describe('Community Post Reporting UI Tests', () => {
@@ -243,5 +244,113 @@ describe('Community Post Reporting UI Tests', () => {
 
     // Does not show reporter's name on the card
     expect(screen.queryByText(/Ankita Kapri/i)).not.toBeInTheDocument();
+  });
+
+  it('CommunityPage offers Report control on post previews and hides withheld content from participants', async () => {
+    const user = userEvent.setup();
+
+    // Mark post_02 as withheld
+    const db = PersistenceService.loadDatabase();
+    const post = db.communityPosts.find((p) => p.id === 'post_02');
+    if (post) {
+      post.isWithheld = true;
+      PersistenceService.saveDatabase(db);
+    }
+
+    render(
+      <MemoryRouter>
+        <CommunityPage />
+      </MemoryRouter>
+    );
+
+    // Wait for groups and posts to load
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Tips for accurate peak-hour traffic counts on two-lane roads/i)
+      ).toBeInTheDocument();
+    });
+
+    // Expand Yash's post (post_02)
+    const yashThreadToggle = screen
+      .getByText(/Update on Kalawad Road Ward 8 sidewalk survey/i)
+      .closest('button');
+    expect(yashThreadToggle).not.toBeNull();
+    await user.click(yashThreadToggle!);
+
+    // Verify post_02 content is not leaked to participant persona
+    expect(screen.queryByText(/Mapped 1\.8km of Kalawad Road today/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/withheld after moderation review/i).length).toBeGreaterThanOrEqual(1);
+
+    // Expand another post that is NOT withheld (e.g., post_03 if available, or unwithhold post_01)
+    // post_01 is authored by VSC-S-001 (active user)
+    const ownThreadToggle = screen
+      .getByText(/Tips for accurate peak-hour traffic counts on two-lane roads/i)
+      .closest('button');
+    expect(ownThreadToggle).not.toBeNull();
+    await user.click(ownThreadToggle!);
+
+    // Own post should NOT have Report control
+    expect(
+      screen.queryByRole('button', {
+        name: /Report post: Tips for accurate peak-hour traffic counts on two-lane roads/i,
+      })
+    ).not.toBeInTheDocument();
+
+    // Other author's post (post_02) DOES have Report control
+    const reportBtn = screen.getByRole('button', {
+      name: /Report post: Update on Kalawad Road Ward 8 sidewalk survey/i,
+    });
+    expect(reportBtn).toBeInTheDocument();
+  });
+
+  it('AdminModerationPage renders plainly when group is missing', async () => {
+    const db = PersistenceService.loadDatabase();
+    const orphanPost = {
+      id: 'post_orphan_ui_01',
+      groupId: 'grp_missing',
+      authorId: 'VSC-S-005',
+      authorName: 'Yash Rathod',
+      authorRole: 'participant',
+      title: 'Post With Missing Group',
+      content: 'Some content',
+      tags: [],
+      likesCount: 0,
+      replies: [],
+      isPinned: false,
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+    };
+    db.communityPosts.push(orphanPost);
+    db.moderationCases.push({
+      id: 'mod_orphan_01',
+      reporterId: 'VSC-S-001',
+      targetType: 'community_post',
+      targetId: 'post_orphan_ui_01',
+      reason: 'Flagged orphan post',
+      severity: 'low',
+      status: 'open',
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    PersistenceService.saveDatabase(db);
+
+    await demoRepository.switchUser('JS-F-001');
+    await useAuthStore.getState().initialize();
+
+    render(
+      <MemoryRouter>
+        <AdminModerationPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('mod_orphan_01')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Post With Missing Group')).toBeInTheDocument();
+    // Missing group is rendered plainly without crash or fabricated name
+    expect(screen.queryByText(/Unknown Circle/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/No group assigned/i)).toBeInTheDocument();
   });
 });

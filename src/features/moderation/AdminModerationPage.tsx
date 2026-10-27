@@ -23,7 +23,7 @@ export const AdminModerationPage: React.FC = () => {
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
   const [cases, setCases] = useState<ModerationCase[]>([]);
   const [communityDetails, setCommunityDetails] = useState<
-    Record<string, { title: string; groupName: string }>
+    Record<string, { title: string; groupName: string | null }>
   >({});
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'open' | 'under_review' | 'resolved'>('all');
@@ -45,14 +45,14 @@ export const AdminModerationPage: React.FC = () => {
 
         const communityCases = list.filter((c) => c.targetType === 'community_post');
         if (communityCases.length > 0) {
-          const details: Record<string, { title: string; groupName: string }> = {};
+          const details: Record<string, { title: string; groupName: string | null }> = {};
           await Promise.all(
             communityCases.map(async (c) => {
               const ctx = await demoRepository.getCommunityPostContext(c.targetId);
               if (ctx) {
                 details[c.targetId] = {
                   title: ctx.post.title,
-                  groupName: ctx.group.name,
+                  groupName: ctx.group ? ctx.group.name : null,
                 };
               }
             })
@@ -263,14 +263,12 @@ export const AdminModerationPage: React.FC = () => {
                     {communityDetails[c.targetId]?.title || c.targetId}
                   </span>
                 </div>
-                {communityDetails[c.targetId]?.groupName && (
-                  <div>
-                    <span className="font-semibold text-slate-500">Community Group: </span>
-                    <span className="font-medium text-slate-800">
-                      {communityDetails[c.targetId].groupName}
-                    </span>
-                  </div>
-                )}
+                <div>
+                  <span className="font-semibold text-slate-500">Community Group: </span>
+                  <span className="font-medium text-slate-800">
+                    {communityDetails[c.targetId]?.groupName ?? 'No group assigned'}
+                  </span>
+                </div>
               </div>
             )}
 
