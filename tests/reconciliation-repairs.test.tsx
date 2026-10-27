@@ -93,15 +93,14 @@ describe('Reference Reconciliation 2026-10-27 Repairs', () => {
       expect(svgContent).toContain('<desc>');
     });
 
-    it('uses existing project colors and initials JS without choosing 25 Oct proposals', () => {
+    it('uses brand colors and Chaupal Ring without choosing 25 Oct proposals', () => {
       const svgContent = fs.readFileSync(faviconPath, 'utf8');
 
-      // Project colors: dark civic indigo (#1e1b4b) and civic saffron (#f97316)
-      expect(svgContent).toContain('#1e1b4b');
-      expect(svgContent).toContain('#f97316');
-      expect(svgContent).toContain('JS');
+      // Brand colors: navy (#06038D) and saffron (#FF671F)
+      expect(svgContent).toContain('#06038D');
+      expect(svgContent).toContain('#FF671F');
 
-      // Neutral temporary mark: does not imply any of the 3 proposals (spoke wheel, pillar/torch, mandala)
+      // Mark: does not imply any of the 3 rejected proposals (spoke wheel, pillar/torch, mandala)
       expect(svgContent.toLowerCase()).not.toContain('chakra');
       expect(svgContent.toLowerCase()).not.toContain('pillar');
       expect(svgContent.toLowerCase()).not.toContain('mandala');
