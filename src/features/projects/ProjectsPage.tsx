@@ -8,6 +8,7 @@ import { Card, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
@@ -129,7 +130,7 @@ export const ProjectsPage: React.FC = () => {
             <span>Youth Civic Action Projects</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Simulated student-led micro-initiatives translating deliberation into pedestrian safety action in this fictional browser demo.
+            Small student-run projects that turn an agreed proposal into work on the street. Join a team below, or start your own.
           </p>
         </div>
 
@@ -162,10 +163,12 @@ export const ProjectsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Demo Disclosure Banner */}
-      <div className="p-3.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
-        <strong>Fictional Browser Demo:</strong> All project initiatives, innovation lab previews, and milestone records are synthetic demo data.
-      </div>
+      {/* Single prototype label for this screen */}
+      <DemoPreviewBadge
+        size="banner"
+        label="Fictional browser demo"
+        description="Every project, lab preview and milestone on this page is made-up demo data."
+      />
 
       {/* Connected Civic Innovation Labs Previews (Master PRD §1, Item 8) */}
       <div className="space-y-2">
@@ -245,23 +248,19 @@ export const ProjectsPage: React.FC = () => {
 
         <Card className="p-4 border-slate-200">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Active in Field (Demo)
+            Active in Field
           </span>
           <span className="text-2xl font-extrabold text-civic-saffron-700 font-heading mt-1 block">
             {projects.filter((p) => p.status === 'active' || p.status === 'milestone_review').length}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">Simulated ULB tracking</span>
         </Card>
 
         <Card className="p-4 border-slate-200">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-            Completed Actions (Demo)
+            Completed Actions
           </span>
           <span className="text-2xl font-extrabold text-civic-teal-700 font-heading mt-1 block">
             {projects.filter((p) => p.status === 'completed').length}
-          </span>
-          <span className="text-[10px] text-civic-teal-600 font-medium mt-0.5 block">
-            Simulated completion
           </span>
         </Card>
       </div>

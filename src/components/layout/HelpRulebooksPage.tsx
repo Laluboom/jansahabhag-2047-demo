@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { DemoPreviewBadge } from '../ui/DemoPreviewBadge';
 import {
   BookOpen,
   Vote,
@@ -30,12 +31,15 @@ export const HelpRulebooksPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2.5">
-            <BookOpen className="w-7 h-7 text-civic-indigo-600" />
-            <span>Help & Rulebooks (Draft Index)</span>
-          </h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 flex items-center gap-2.5">
+              <BookOpen className="w-7 h-7 text-civic-indigo-600" />
+              <span>Help & Rulebooks (Draft Index)</span>
+            </h1>
+            <DemoPreviewBadge size="sm" label="Fictional browser demo" />
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Planned draft index and procedural overviews pending owner review. Fictional browser demo.
+            What each part of the platform expects of you. The full rulebooks are still being written.
           </p>
         </div>
 
@@ -54,7 +58,7 @@ export const HelpRulebooksPage: React.FC = () => {
           <span>Draft Overview &bull; Planned Summaries Pending Owner Review</span>
         </div>
         <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-          This section serves as a draft index and navigational overview of platform guidelines. Detailed competition rubrics, deliberative standing orders, and verification criteria are planned summaries pending platform owner review. Fictional browser demo.
+          Each card below is a short summary of the rules for one part of the platform. The detailed competition rubrics, assembly standing orders and verification criteria have not been written yet.
         </p>
       </div>
 
@@ -68,7 +72,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft summary of stage progression, speaking turns, and dissent preservation for deliberative assembly mockups pending owner review.
+            How an assembly moves through its stages, who speaks when, and why a minority view is kept on the record.
           </p>
           <div className="pt-2">
             <Link to="/assemblies">
@@ -88,7 +92,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft outline of apex chamber motions, representative aggregation, and policy briefs pending owner review.
+            How motions reach the top chamber, how representatives are drawn from assemblies, and what a policy brief contains.
           </p>
           <div className="pt-2">
             <Link to="/parliament">
@@ -128,7 +132,7 @@ export const HelpRulebooksPage: React.FC = () => {
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft summary of exploratory study principles: voluntary inquiry, no grading of ideological conformity, and curriculum rights pending owner review.
+            Taking part is voluntary, agreeing with an idea is never graded, and the curriculum rights sit with their owners.
           </p>
           <div className="pt-2">
             <Link to="/uhv">

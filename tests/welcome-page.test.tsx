@@ -112,6 +112,84 @@ describe('WelcomePage & Root Landing Integration Tests', () => {
     });
   });
 
+  it('renders tiles for the four remaining platform areas: Assignments, Workspace, Community, Civic Passport', () => {
+    render(
+      <MemoryRouter initialEntries={['/welcome']}>
+        <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const expectedTiles = [
+      { id: 'assignments', name: 'Assignments', route: '/assignments', description: 'Field Evidence' },
+      { id: 'workspace', name: 'Workspace', route: '/workspace', description: 'Team Drafting' },
+      { id: 'community', name: 'Community', route: '/community', description: 'Peer Circles' },
+      { id: 'passport', name: 'Civic Passport', route: '/passport', description: 'Your Record' },
+    ];
+
+    expectedTiles.forEach((tile) => {
+      const tileEl = screen.getByTestId(`welcome-tile-${tile.id}`);
+      expect(tileEl).toBeInTheDocument();
+      expect(tileEl).toHaveAttribute('href', tile.route);
+      expect(tileEl).toHaveTextContent(tile.name);
+      expect(tileEl).toHaveTextContent(tile.description);
+    });
+  });
+
+  it('explains how participation becomes civic credit points and links to the Civic Passport', () => {
+    render(
+      <MemoryRouter initialEntries={['/welcome']}>
+        <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const strip = screen.getByTestId('welcome-credit-points');
+    expect(strip).toBeInTheDocument();
+    expect(strip).toHaveTextContent(/How participation is recorded/i);
+    expect(strip).toHaveTextContent('Take part');
+    expect(strip).toHaveTextContent('Join an assembly, submit field evidence, or contribute to a debate.');
+    expect(strip).toHaveTextContent('Earn civic credit points');
+    expect(strip).toHaveTextContent('Each verified contribution adds points to your record.');
+    expect(strip).toHaveTextContent('Build your Civic Passport');
+    expect(strip).toHaveTextContent('A portfolio of what you did, not a score of your worth.');
+
+    const passportLink = within(strip).getByRole('link', { name: /see the civic passport/i });
+    expect(passportLink).toHaveAttribute('href', '/passport');
+  });
+
+  it('keeps the full 33% rule text and the UHV clause in the DOM while their disclosures are closed', () => {
+    render(
+      <MemoryRouter initialEntries={['/welcome']}>
+        <Routes>
+          <Route path="/welcome" element={<WelcomePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Reservation banner: collapsed by default, full policy text still present
+    const policyDetails = screen.getByTestId('welcome-reservation-policy-details');
+    expect(policyDetails.tagName).toBe('DETAILS');
+    expect(policyDetails).not.toHaveAttribute('open');
+    expect(within(policyDetails).getByText(/What this rule covers/i)).toBeInTheDocument();
+    expect(screen.getByTestId('welcome-reservation-policy-banner')).toHaveTextContent(
+      /Platform Rule: At least one-third of limited seats and named roles, rounded up separately for each allocation, are reserved for women\. Open participation slots are unreserved\. This simulation rule is a platform policy rather than statutory law\. Documented exceptions require recorded administrative approval\./i
+    );
+
+    // Visible summary line above the fold
+    expect(screen.getByText('At least one-third of limited seats and named roles are reserved for women.')).toBeInTheDocument();
+
+    // UHV notice: collapsed by default, explanatory clause still present
+    const uhvDetails = screen.getByTestId('uhv-distinct-stream-details');
+    expect(uhvDetails.tagName).toBe('DETAILS');
+    expect(uhvDetails).not.toHaveAttribute('open');
+    expect(screen.getByTestId('uhv-distinct-stream-notice')).toHaveTextContent(
+      /An independent exploratory study track kept distinct from the 5-step civic deliberation loop\./i
+    );
+  });
+
   it('renders upcoming event card with earliest future fictional Jaipur event relative to a fixed clock and correct linked event', () => {
     // Fixed clock: Oct 22, 2026 08:00:00Z
     vi.useFakeTimers();

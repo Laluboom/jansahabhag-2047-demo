@@ -85,10 +85,10 @@ export const WorkspacePreviewPage: React.FC = () => {
               Nonfunctional Preview Destination
             </h2>
             <p>
-              In accordance with Master PRD §1 and Part A §A12, <strong>Workspace</strong> occupies canonical learner navigation position 7. It provides institutional, cross-institutional, team, and topic workspaces with role-scoped memberships, join requests, announcements, and channel collaboration.
+              <strong>Workspace</strong> is where institutions, cohorts and project teams would get their own shared space: memberships, join requests, announcements, and channels.
             </p>
             <p className="text-slate-600">
-              The platform owner selected the connected competition demo; authenticated multi-user persistence and permission-safe role isolation are scheduled for subsequent delivery tasks. This preview does not provide live invitations, shared document authoring, or persistent multi-user chats. Fictional browser demo.
+              None of it is built yet. This preview has no live invitations, no shared document editing, and no multi-user chat.
             </p>
           </div>
         </div>
@@ -105,7 +105,7 @@ export const WorkspacePreviewPage: React.FC = () => {
             Dedicated spaces for participating schools, colleges, and regional cohorts with verified faculty mentors and safeguarding oversight.
           </p>
           <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded">
-            Planned — Scope K / Master PRD §A12
+            Planned
           </span>
         </Card>
 
@@ -118,7 +118,7 @@ export const WorkspacePreviewPage: React.FC = () => {
             Persistent workspaces for civic project teams to organize field observations, collaborate on municipal petitions, and draft crosswalk interventions.
           </p>
           <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded">
-            Planned — Task 06 Alignment
+            Planned
           </span>
         </Card>
 
@@ -131,7 +131,7 @@ export const WorkspacePreviewPage: React.FC = () => {
             Audit-logged workspace access, age-appropriate contact boundaries, and scoped moderation authority preventing global privilege leakage.
           </p>
           <span className="inline-block text-[11px] font-medium text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded">
-            Planned — Permission-Safe Architecture
+            Planned
           </span>
         </Card>
 
