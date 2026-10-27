@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { UhvCreditBanner } from './UhvCreditBanner';
 import { UhvWorkshopMediaPlaceholders } from './UhvWorkshopMediaPlaceholders';
 import {
@@ -400,11 +401,14 @@ export const CoursesPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-            Civic Learning Hub
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
+              Civic Learning Hub
+            </h1>
+            <DemoPreviewBadge size="sm" label="Fictional browser demo" />
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Structured civic modules in a fictional browser demo.
+            Short courses on how your city works and how to observe it.
           </p>
         </div>
         <PointOfUseRulesButton
@@ -435,7 +439,7 @@ export const CoursesPage: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            <strong>Stream Separation:</strong> Universal Human Values (UHV / Jeevan Vidya) is maintained as a distinct study stream. Fictional demo material.
+            <strong>Stream Separation:</strong> Universal Human Values (UHV / Jeevan Vidya) is maintained as a distinct study stream, separate from the civic loop.
           </span>
         </div>
         <Link to="/uhv" className="shrink-0 self-start sm:self-auto">
