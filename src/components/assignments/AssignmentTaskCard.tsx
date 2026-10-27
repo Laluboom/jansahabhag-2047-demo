@@ -67,11 +67,7 @@ export const AssignmentTaskCard: React.FC<AssignmentTaskCardProps> = ({
 
         if (asg) {
           let isUhvAssignment = false;
-          if (
-            asg.assignmentType === 'uhv_reflection' ||
-            asg.id.startsWith('asg_uhv_') ||
-            asg.courseId === 'course_uhv_leadership_05'
-          ) {
+          if (asg.assignmentType === 'uhv_reflection') {
             isUhvAssignment = true;
           } else if (asg.courseId) {
             const course = await demoRepository.getCourse(asg.courseId);
