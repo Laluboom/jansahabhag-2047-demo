@@ -2,7 +2,7 @@
 
 ## Product and status
 
-This repository is a browser demo of JanSahabhag 2047 using fictional participation data. The [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs the product; `README.md` and `IMPLEMENTATION_PLAN.md` describe the earlier demo scope and may conflict with it. The archive filename says `v3.1` while its internal version table says `v3.0`; the difference is unresolved. See [Master PRD reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) and [product decisions](docs/decisions.md). The user requested the sub-agy Autobuild method; [paused.md](paused.md) records the earlier pause and completion.
+This repository is a browser demo of JanSahabhag 2047 using fictional participation data. The supplied Master PRD archive (local source document, not published here) governs the product; `README.md` and `IMPLEMENTATION_PLAN.md` describe the earlier demo scope and may conflict with it. The archive filename says `v3.1` while its internal version table says `v3.0`; the difference is unresolved. See [Master PRD reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) and [product decisions](docs/decisions.md). The user requested the sub-agy Autobuild method; [paused.md](paused.md) records the earlier pause and completion.
 
 `autobuild` contains Tasks 01–05: foundation, learning/assignment and teacher review, Youth Assembly/proposition/reflection/Passport, supporting participant/admin/preview modules, and the final audit and Playwright suite. Task 05 was merged as `ca9a188` and all checks passed again on the integrated branch. `main` remains a specification-only base. See [docs/features.md](docs/features.md) for route status.
 

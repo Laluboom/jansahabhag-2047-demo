@@ -9,3 +9,7 @@ test-results/
 
 *.tsbuildinfo
 .env*
+
+# Owner decision, 27 October 2026: source reference documents stay local only.
+docs/reference/*
+!docs/reference/README.md

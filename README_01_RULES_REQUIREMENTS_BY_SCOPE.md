@@ -9,15 +9,15 @@ Use the documents in this order when making implementation decisions:
 1. **Master PRD v3.1 Lossless Archive** — governing product specification.
    - Canonical decisions at the front override conflicting historical wording.
    - Archived appendices exist for traceability; they are not parallel governing specifications.
-   - [The supplied archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) is named `v3.1`, while its internal version table says `v3.0 — Consolidated Master PRD`. The discrepancy is unresolved; use its opening canonical rules and retained Parts A–C, and record any version decision separately.
-2. **[Cleaned Developer Start-Here Note](docs/reference/JanSahabhag_2047_Cleaned_Developer_Start_Here.docx)** — implementation/scoping guidance.
+   - The supplied archive (local source document, not published here) is named `v3.1`, while its internal version table says `v3.0 — Consolidated Master PRD`. The discrepancy is unresolved; use its opening canonical rules and retained Parts A–C, and record any version decision separately.
+2. **Cleaned Developer Start-Here Note (local source document, not published here)** — implementation/scoping guidance.
    - Use it to separate demo-critical, prototype, later-phase, and unresolved/owner-decision work.
    - It does **not** replace the Master PRD.
-3. **[Website Content & About Us — Developer Handoff](docs/reference/JanSahabhag_2047_Developer_Handoff.docx)** — public-facing identity/content supplement.
+3. **Website Content & About Us — Developer Handoff (local source document, not published here)** — public-facing identity/content supplement.
    - Use for About Us / identity copy and presentation.
    - Public facts must still pass approval/verification requirements.
 
-The [Supplementary PRD v2.0 on 33% women's reservation](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) is a proposed extension whose policy the owner **approved in principle on 12 October 2026**. The owner later approved `ceil(0.33 × applicable allocated places)` for each allocation, vacant reserved places by default, and fictional demo data only. On 15 October the owner included every named role and limited place in the fictional demo and allowed only an explicit simulated owner-approved, audited exception. Real-data privacy and production applicability remain open. It does not replace the Master PRD. Its scope and current app gaps are in the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation); its decisions and pre-launch legal review are in [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle).
+The Supplementary PRD v2.0 on 33% women's reservation (local source document, not published here) is a proposed extension whose policy the owner **approved in principle on 12 October 2026**. The owner later approved `ceil(0.33 × applicable allocated places)` for each allocation, vacant reserved places by default, and fictional demo data only. On 15 October the owner included every named role and limited place in the fictional demo and allowed only an explicit simulated owner-approved, audited exception. Real-data privacy and production applicability remain open. It does not replace the Master PRD. Its scope and current app gaps are in the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation); its decisions and pre-launch legal review are in [product decisions](docs/decisions.md#supplementary-policy-approved-in-principle).
 
 ### How to use these files for implementation
 

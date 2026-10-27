@@ -4,7 +4,7 @@
 
 **Implementation status, 17 October 2026:** The fictional Jaipur demo work, including the reservation rule for limited events, Assembly named roles and Debate named roles, is published from `autobuild`; see [the handoff](HANDOFF_2026-10-16.md). GitHub reported a successful Vercel production deployment, and the live About page was checked. Older statements below that say no reservation behavior is implemented describe the original 12 October baseline, not the current checkout. No real-data collection, server-side enforcement, or legal/public-launch approval follows from the demo work.
 
-**Reviewed:** 12 October 2026. **Governing source:** [Master PRD archive](reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A. The file is named `v3.1`, but its internal version table says `v3.0 — Consolidated Master PRD`; the reason is not documented. This record does not treat archived v2.1 defaults as new owner approvals.
+**Reviewed:** 12 October 2026. **Governing source:** Master PRD archive (local source document, not published here), opening §§1–3 and Part A. The file is named `v3.1`, but its internal version table says `v3.0 — Consolidated Master PRD`; the reason is not documented. This record does not treat archived v2.1 defaults as new owner approvals.
 
 ## Owner direction recorded 12 October 2026
 
@@ -83,7 +83,7 @@ Additional release inputs remain open: initial moderators and their scopes; mini
 
 ## Supplementary policy approved in principle
 
-The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) explicitly says **“Proposed product requirement — owner approval required”** and extends, rather than replaces, the Master PRD. The owner approved the policy in principle on 12 October 2026. The remaining inputs from §9 require separate answers before the corresponding behavior can be fixed.
+The Supplementary PRD v2.0 on 33% women's reservation (local source document, not published here) explicitly says **“Proposed product requirement — owner approval required”** and extends, rather than replaces, the Master PRD. The owner approved the policy in principle on 12 October 2026. The remaining inputs from §9 require separate answers before the corresponding behavior can be fixed.
 
 | ID | Open decision | What the supplement proposes or bounds |
 |---|---|---|

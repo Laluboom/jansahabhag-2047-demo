@@ -1,7 +1,7 @@
 # Phase 0 Route and Control Matrix — Final Fictional Jaipur Demo Branch
 
 **Date:** 16 October 2026
-**Governing Authority:** [Master PRD Archive v3.1](../../docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A §A2
+**Governing Authority:** Master PRD Archive v3.1 (local source document, not published here), opening §§1–3 and Part A §A2
 **Related Audit Records:** [PHASE0_BROWSER_ROUTE_EVIDENCE_2026-10-16.md](PHASE0_BROWSER_ROUTE_EVIDENCE_2026-10-16.md), [PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md), [MASTER_PRD_RECONCILIATION.md](MASTER_PRD_RECONCILIATION.md), [Product Decisions](../../docs/decisions.md)
 **Branch & Commit State:** Audited code base: `b33515d` (incorporating Packages 01–09), audited on branch `agy/j-20261016-144649-wf8g`
 **Execution Context:** Package 10A static and source-code evidence audit in isolated worktree
