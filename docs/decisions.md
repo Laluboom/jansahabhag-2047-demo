@@ -128,3 +128,41 @@ The Supplementary PRD v2.0 on 33% women's reservation (local source document, no
   - **Biographical narrative:** Begins "Based in the Gir region of Gujarat..." and describes his academic background in microbiology; interest in education, governance, youth development, science and social responsibility; experiences across research-based student awareness, sustainable cultivation, community fitness, cultural engagement, and youth development; his civic engagement through **LOK MANCH-2047** presented in the context of the Viksit Bharat Young Leaders Dialogue 2026; incorporation of presentation ideas into the master presentation placed before the Hon’ble Prime Minister of India; and JanSahabhag 2047 as an ongoing effort connecting youth with civic life.
   - **Implementation & deployment status:** The exact supplied wording is merged into `src/features/about/AboutPage.tsx` on `autobuild`, pushed to GitHub, and verified deployed to production at `https://jansahabhag2047.vercel.app` (HTTP 200, asset bundle matches local build). The Rajkot demo was subsequently merged and deployed on 26 October 2026.
   - **Scope boundaries:** This supersedes the historical owner request to omit longer Nazim biographies. No changes are made to Visesh Akbari's unpublished long biography decision (developer links only; longer bio remains unpublished) or Yashvi Dalsaniya's supplied full bio.
+
+## Further owner direction recorded 27 October 2026
+
+The owner answered five open questions on 27 October 2026. Each is now settled and supersedes
+any earlier "pending" wording elsewhere in this repository.
+
+- **Gratitude list — eleven names.** The 25 October revision is adopted: **Dilip Sandhar** and
+  **Mungarbhai H. Sandh** join the published list, which now holds eleven names in
+  `src/data/gratitude.ts`. Shri Dadubhai Sandhar stays first as the late guide; the rest are
+  alphabetical by first name, ignoring honorifics. The owner-confirmed spelling **Visesh Akbari**
+  still overrides the source document's `Vishesh`. *Open:* the demo roster names scoped moderator
+  `JS-M-002` as Dilip **Sanghar** while the gratitude list says Dilip **Sandhar**; whether these
+  are one person, and which spelling is correct, is with the owner.
+- **Brand — Chaupal Ring with the Shirorekha wordmark.** Direction 1 of the 25 October logo
+  research is adopted as the primary symbol, with Direction 3's Devanagari headline-as-table idea
+  for the wordmark. Implemented in code as `src/components/brand/ChaupalRing.tsx` and
+  `BrandLockup.tsx`: an eleven-dot navy (`#06038D`) ring with a gap at the upper right and a
+  larger saffron (`#FF671F`) dot entering it, with an `on-dark` variant for the sidebar, where
+  navy would measure 1.19:1 and be invisible. `public/favicon.svg` carries a five-dot
+  simplification for small sizes. *Still open, per the research itself:* a trade mark attorney has
+  not confirmed the legal position, and the name's spelling and script need a native-speaker
+  decision before any brand file is treated as final.
+- **LOK MANCH-2047 — its own page.** The longer handoff content is published at `/lok-manch`
+  (`src/features/about/LokManchPage.tsx`), not inside About, which stays a short editorial letter
+  with a single link out. The page carries the owner's wording verbatim and keeps the notice that
+  LOK MANCH-2047 is a concept under development and not an operating government platform.
+- **Reference documents — local only.** Every owner-supplied source document is untracked and
+  ignored apart from `docs/reference/README.md`. The four Word files and the portrait that were
+  public have been removed from the tip; markdown links to them across the repository now name
+  them in plain text instead. The owner chose **not** to rewrite history, so earlier commits still
+  contain those files, and this only takes effect publicly once the branch is pushed.
+- **AI-assistance disclosure — about 60%, code only.** For HSC FAQ Q23 the owner's estimate is
+  about 60% of the code produced with AI assistance, and the tool list adds Claude Code alongside
+  OpenAI Codex and the sub-agy / agy Gemini tooling. Recorded in
+  `docs/plans/HSC_NEXT_STAGE_AI_DISCLOSURE_DRAFT.md`. *Open:* Q23 asks about the whole final
+  submitted work, so whether presentation materials are disclosed separately or folded into a
+  revised figure is with the owner, as is the deck's format.
+
