@@ -1283,117 +1283,113 @@ export const DebateRoomPreviewPage: React.FC = () => {
       </Disclosure>
 
       {/* Motion Stance & Voting Fold */}
-      <Disclosure summary="Motion stance & voting" testId="motion-voting-disclosure">
-        <div className="pt-2">
-          <Card className="border-civic-indigo-200 bg-white shadow-xs">
-            <CardHeader className="pb-3 border-b border-slate-100">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-civic-indigo-600 bg-civic-indigo-50 px-2.5 py-0.5 rounded-full border border-civic-indigo-200">
-                  Formal Motion Before The Chamber
-                </span>
-                <span className="text-xs text-slate-500 font-mono">
-                  Session ID: {session.id}
-                </span>
-              </div>
-              <CardTitle className="text-lg sm:text-xl font-bold font-heading text-slate-900 mt-2">
-                &ldquo;{debateData?.motion}&rdquo;
-              </CardTitle>
-              {debateData?.linkedQuestion && (
-                <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                  <strong>Linked Question:</strong> {debateData.linkedQuestion}
-                </p>
-              )}
-            </CardHeader>
-            <CardContent className="pt-3 pb-3 bg-slate-50/70 border-t border-slate-100">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                {/* Stance Tallies */}
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Vote className="w-4 h-4 text-civic-indigo-600" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Motion Vote Counter:
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2" data-testid="for-against-counter">
-                    <span
-                      data-testid="vote-for-count"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
-                    >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      <span>For: {forVoteCount}</span>
-                    </span>
-                    <span
-                      data-testid="vote-against-count"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300"
-                    >
-                      <ThumbsDown className="w-3.5 h-3.5" />
-                      <span>Against: {againstVoteCount}</span>
-                    </span>
-                    <span
-                      data-testid="vote-abstain-count"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-700 border border-slate-300"
-                    >
-                      <span>Abstain: {abstainVoteCount}</span>
-                    </span>
-                  </div>
-                </div>
-
-                {/* Voting Controls & Explicit Stance Boundary */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] text-slate-500 hidden sm:inline">
-                    Cast explicit stance:
-                  </span>
-                  <Button
-                    size="sm"
-                    variant={currentUserVote === 'for' ? 'primary' : 'outline'}
-                    onClick={() => handleCastVote('for')}
-                    disabled={isSessionClosed || isCastingVote}
-                    data-testid="vote-for-btn"
-                    className={`text-xs ${
-                      currentUserVote === 'for'
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
-                        : 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
-                    }`}
-                  >
-                    <ThumbsUp className="w-3.5 h-3.5 mr-1" />
-                    {currentUserVote === 'for' ? 'Voted For' : 'Vote For'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={currentUserVote === 'against' ? 'primary' : 'outline'}
-                    onClick={() => handleCastVote('against')}
-                    disabled={isSessionClosed || isCastingVote}
-                    data-testid="vote-against-btn"
-                    className={`text-xs ${
-                      currentUserVote === 'against'
-                        ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700'
-                        : 'text-rose-700 border-rose-300 hover:bg-rose-50'
-                    }`}
-                  >
-                    <ThumbsDown className="w-3.5 h-3.5 mr-1" />
-                    {currentUserVote === 'against' ? 'Voted Against' : 'Vote Against'}
-                  </Button>
-                  {currentUserVote && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCastVote('abstain')}
-                      disabled={isSessionClosed || isCastingVote}
-                      data-testid="vote-abstain-btn"
-                      className="text-xs text-slate-600 hover:bg-slate-100"
-                    >
-                      Abstain
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <p className="text-[10px] text-slate-500 mt-2 italic">
-                No inferred stances: Seating positions (Proposition/Opposition benches) do not predetermine votes; counts reflect explicit participant votes only.
+        <Card className="border-civic-indigo-200 bg-white shadow-xs">
+          <CardHeader className="pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-civic-indigo-600 bg-civic-indigo-50 px-2.5 py-0.5 rounded-full border border-civic-indigo-200">
+                Formal Motion Before The Chamber
+              </span>
+              <span className="text-xs text-slate-500 font-mono">
+                Session ID: {session.id}
+              </span>
+            </div>
+            <CardTitle className="text-lg sm:text-xl font-bold font-heading text-slate-900 mt-2">
+              &ldquo;{debateData?.motion}&rdquo;
+            </CardTitle>
+            {debateData?.linkedQuestion && (
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                <strong>Linked Question:</strong> {debateData.linkedQuestion}
               </p>
-            </CardContent>
-          </Card>
-        </div>
-      </Disclosure>
+            )}
+          </CardHeader>
+          <CardContent className="pt-3 pb-3 bg-slate-50/70 border-t border-slate-100">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              {/* Stance Tallies */}
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Vote className="w-4 h-4 text-civic-indigo-600" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Motion Vote Counter:
+                  </span>
+                </div>
+                <div className="flex items-center gap-2" data-testid="for-against-counter">
+                  <span
+                    data-testid="vote-for-count"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5" />
+                    <span>For: {forVoteCount}</span>
+                  </span>
+                  <span
+                    data-testid="vote-against-count"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300"
+                  >
+                    <ThumbsDown className="w-3.5 h-3.5" />
+                    <span>Against: {againstVoteCount}</span>
+                  </span>
+                  <span
+                    data-testid="vote-abstain-count"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-700 border border-slate-300"
+                  >
+                    <span>Abstain: {abstainVoteCount}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Voting Controls & Explicit Stance Boundary */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-slate-500 hidden sm:inline">
+                  Cast explicit stance:
+                </span>
+                <Button
+                  size="sm"
+                  variant={currentUserVote === 'for' ? 'primary' : 'outline'}
+                  onClick={() => handleCastVote('for')}
+                  disabled={isSessionClosed || isCastingVote}
+                  data-testid="vote-for-btn"
+                  className={`text-xs ${
+                    currentUserVote === 'for'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
+                      : 'text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                  }`}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5 mr-1" />
+                  {currentUserVote === 'for' ? 'Voted For' : 'Vote For'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={currentUserVote === 'against' ? 'primary' : 'outline'}
+                  onClick={() => handleCastVote('against')}
+                  disabled={isSessionClosed || isCastingVote}
+                  data-testid="vote-against-btn"
+                  className={`text-xs ${
+                    currentUserVote === 'against'
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700'
+                      : 'text-rose-700 border-rose-300 hover:bg-rose-50'
+                  }`}
+                >
+                  <ThumbsDown className="w-3.5 h-3.5 mr-1" />
+                  {currentUserVote === 'against' ? 'Voted Against' : 'Vote Against'}
+                </Button>
+                {currentUserVote && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleCastVote('abstain')}
+                    disabled={isSessionClosed || isCastingVote}
+                    data-testid="vote-abstain-btn"
+                    className="text-xs text-slate-600 hover:bg-slate-100"
+                  >
+                    Abstain
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-500 mt-2 italic">
+              No inferred stances: Seating positions (Proposition/Opposition benches) do not predetermine votes; counts reflect explicit participant votes only.
+            </p>
+          </CardContent>
+        </Card>
 
       {/* Main Grid: Left Column (Queue & Text Contributions) + Right Column (Dock & Info) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

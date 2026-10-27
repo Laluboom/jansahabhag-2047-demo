@@ -168,9 +168,10 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026/session');
     await expect(page.getByRole('heading', { name: /(Rajkot|Jaipur) School Zone Pedestrian/i })).toBeVisible();
 
-    // Verify reciprocal session banner
-    await expect(page.getByText(/Linked Shared Session: sess_jaipur_01/i)).toBeVisible();
-    await expect(page.getByText(/Engine Mode: Youth Assembly/i)).toBeVisible();
+    // Verify reciprocal session banner. The session id and engine mode are no longer
+    // surfaced as visible copy; session continuity is asserted on the transition modal above.
+    await expect(page.getByText(/Single-Browser Local Simulation/i).first()).toBeVisible();
+    await page.getByText(/How this simulation works/i).first().click();
     await expect(page.getByText(/State is only shared among personas within this browser/i)).toBeVisible();
 
     // Click reciprocal link to switch back to Debate Room

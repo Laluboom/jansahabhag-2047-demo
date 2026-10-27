@@ -25,7 +25,7 @@ export const StageTrack: React.FC<StageTrackProps> = ({
   return (
     <nav
       aria-label={ariaLabel}
-      className={cn('w-full max-w-full overflow-x-auto', className)}
+      className={cn('w-full max-w-full overflow-x-auto [contain:content]', className)}
     >
       <ol className="flex items-center gap-2 py-1 px-1 min-w-max">
         {steps.map((step, index) => {

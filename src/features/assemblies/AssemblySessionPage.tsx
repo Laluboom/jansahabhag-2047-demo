@@ -1016,6 +1016,15 @@ export const AssemblySessionPage: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <DemoPreviewBadge label="Single-Browser Local Simulation" size="sm" />
+          {/* Linked-chamber navigation is a primary action; it must stay visible. */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate('/debate-room')}
+          >
+            <Scale className="w-3.5 h-3.5 mr-1.5" />
+            <span>Switch to Debate Room</span>
+          </Button>
         </div>
 
         <Disclosure summary="How this simulation works" testId="how-simulation-works-disclosure">
@@ -1023,15 +1032,6 @@ export const AssemblySessionPage: React.FC = () => {
             <p>
               Fictional simulation. State is only shared among personas within this browser.
             </p>
-            <div>
-              <Link
-                to="/debate-room"
-                className="inline-flex items-center text-xs font-semibold text-civic-teal-700 hover:text-civic-teal-800 hover:underline gap-1"
-              >
-                <Scale className="w-3.5 h-3.5" />
-                <span>Switch to Debate Room</span>
-              </Link>
-            </div>
           </div>
         </Disclosure>
 

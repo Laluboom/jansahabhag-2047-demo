@@ -130,10 +130,13 @@ describe('Reference Reconciliation 2026-10-27 Repairs', () => {
       });
 
       // Top session header has min-w-0 and flex-wrap badges
-      const headerTitleWrapper = container.querySelector('.min-w-0.flex-1');
-      expect(headerTitleWrapper).not.toBeNull();
+      // Several header blocks now carry .min-w-0.flex-1; assert the one holding the badges.
+      const headerWrappers = [...container.querySelectorAll('.min-w-0.flex-1')];
+      expect(headerWrappers.length).toBeGreaterThan(0);
 
-      const badgeContainer = headerTitleWrapper?.querySelector('.flex.flex-wrap.items-center.gap-2');
+      const badgeContainer = headerWrappers
+        .map((w) => w.querySelector('.flex.flex-wrap.items-center.gap-2'))
+        .find((el) => el !== null);
       expect(badgeContainer).not.toBeNull();
 
       // Workspace cards have min-w-0
