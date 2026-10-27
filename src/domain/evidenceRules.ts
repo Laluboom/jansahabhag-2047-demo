@@ -73,7 +73,7 @@ export const FACE_CONSENT_WARNING_TEXT =
   "Do not upload other people's faces without their permission.";
 
 export const EVIDENCE_FILE_LIMIT_TEXT =
-  `Allowed types: ${ALLOWED_EVIDENCE_FORMAT_LABELS}. Actual file limit: 250 KB (durable browser storage limit).`;
+  `Binary attachments: ${ALLOWED_BINARY_FORMAT_LABELS} up to ${BINARY_ATTACHMENT_SIZE_LABEL} (IndexedDB). Pasted or inline data: up to 250 KB (durable browser storage limit).`;
 
 export interface EvidenceAccessActor {
   id: string;

@@ -192,7 +192,7 @@ export const PassportPage: React.FC = () => {
             &bull; Fixed rule awards: Newly created participants start with <strong>0 Civic Credit Points</strong> with a hard maximum of <strong>5 verified Civic Credit Points</strong>. Subsequent eligible activities award <strong>1 or 2 Civic Credit Points</strong> until the 5-point cap: <strong>+1 Learning</strong> (module completion), <strong>+1 Observation</strong> (verified field evidence), <strong>+2 Deliberation</strong> (assembly role admission), <strong>+1 Deliberation</strong> (substantive contribution), <strong>+1 Collaboration</strong> (workspace action), <strong>+2 Civic Action</strong> (field project milestone), <strong>+1 Reflection</strong> (civic reflection), <strong>+2 Contribution</strong> (assignment submission, pending until facilitator review). No-credit activities (private UHV reflections, retained dissent, private Debate journals) award <strong>0 Civic Credit Points</strong>.
           </p>
           <p className="text-slate-500 italic">
-            Notice: Multiplicative weighting formulas from the conceptual PRD are exploratory research specifications; this local demo operates solely on transparent, fixed amounts without automated algorithmic scoring.
+            Notice: Multiplicative weighting formulas are exploratory research specifications; this local demo operates solely on transparent, fixed amounts without automated algorithmic scoring.
           </p>
         </div>
         <div className="p-3 rounded-lg bg-indigo-50/80 border border-indigo-200 text-[11px] text-indigo-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -235,7 +235,7 @@ export const PassportPage: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold font-heading text-slate-900">
-            Civic Credit Point Dimensions (7 PRD Dimensions)
+            Civic Credit Point Dimensions (7 Dimensions)
           </h2>
           <span className="text-xs text-slate-500">Verified totals only</span>
         </div>
