@@ -203,7 +203,7 @@ The learner sidebar follows the Master PRD's eleven-item order: **Home, Learn, A
   - **1 principal:** Shri Dr. K. D. Ladwa (institution_admin)
   - **1 special guest:** Shri Param Pujya Tyagvallabh Swamiji (President, Atmiya University; Chairperson of the College; view-only `special_guest` role, holds no seat, outside the 15 student count and 33% calculation)
   - **1 founder:** Nazim M. Sandh (platform_admin)
-  - **2 scoped moderators:** Yashvi Dalsaniya (`JS-M-001`, Managing Partner & Moderator) and Dilip Sanghar (`JS-M-002`, Moderator)
+  - **2 scoped moderators:** Yashvi Dalsaniya (`JS-M-001`, Managing Partner & Moderator) and Dilip Sandhar (`JS-M-002`, Moderator)
 - **Data boundaries:** Real names are used for named demo roles; student IDs are fictional (`VSC-S-xxx`, `VSC-T-xxx`, etc.); no invented personal details (roll numbers, private emails, phone numbers) are attributed to named people. Real-person photos are used only where supplied (Ankita Kapri, Dr. K. D. Ladwa, Swamiji, Nazim M. Sandh, Yashvi Dalsaniya); all others show initials.
 
 ---
@@ -268,7 +268,7 @@ The 24 October 2026 owner decision transitions demo personas to 22 named people 
   - Shri Param Pujya Tyagvallabh Swamiji (`VSC-G-001`, Special Guest, view-only `special_guest` role, photo supplied)
   - Nazim M. Sandh (`JS-F-001`, Founder and Organiser, platform_admin, photo supplied)
   - Yashvi Dalsaniya (`JS-M-001`, Moderator, photo supplied)
-  - Dilip Sanghar (`JS-M-002`, Moderator)
+  - Dilip Sandhar (`JS-M-002`, Moderator)
 
 ### Historical demo personas: Jaipur (17 October 2026 baseline, superseded)
 

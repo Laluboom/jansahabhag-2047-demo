@@ -53,7 +53,7 @@ export const SEED_FICTIONAL_RESERVATION_DECLARATIONS: Record<string, FictionalRe
   'VSC-G-001': 'ineligible', // Shri Param Pujya Tyagvallabh Swamiji
   'JS-F-001': 'ineligible',  // Nazim M. Sandh
   'JS-M-001': 'ineligible',  // Yashvi Dalsaniya
-  'JS-M-002': 'ineligible',  // Dilip Sanghar
+  'JS-M-002': 'ineligible',  // Dilip Sandhar
 };
 
 export function getFictionalReservationEligibility(userId: string): FictionalReservationEligibility {

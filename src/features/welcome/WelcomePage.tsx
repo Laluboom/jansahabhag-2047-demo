@@ -471,7 +471,7 @@ export const WelcomePage: React.FC = () => {
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Moderator Yashvi Dalsaniya</strong> or <strong>Dilip Sanghar</strong> to manage flagged content under scoped grants.</span>
+            <span>Switch to <strong>Moderator Yashvi Dalsaniya</strong> or <strong>Dilip Sandhar</strong> to manage flagged content under scoped grants.</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />

@@ -41,7 +41,7 @@ export const DemoLoginPage: React.FC = () => {
     'VSC-G-001', // Shri Param Pujya Tyagvallabh Swamiji (Special Guest)
     'JS-F-001',  // Nazim M. Sandh (Founder)
     'JS-M-001',  // Yashvi Dalsaniya (Moderator)
-    'JS-M-002',  // Dilip Sanghar (Moderator)
+    'JS-M-002',  // Dilip Sandhar (Moderator)
   ];
 
   const filteredUsers =

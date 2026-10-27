@@ -45,4 +45,4 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [ ] Obtain bilingual review before enabling Hindi; the current working journey is English.
 - [ ] Replace any media placeholders only after receiving the actual materials and permission to publish them.
 - [ ] Settle the next-stage deck: the owner's AI-assistance figure (about 60%, code only) is recorded, but the deck format and whether presentation materials are disclosed separately or folded into a revised figure are still with the owner.
-- [ ] Confirm whether scoped moderator Dilip Sanghar and the Dilip Sandhar in the gratitude list are the same person, and which spelling is correct.
+- [x] Resolved 27 Oct 2026: scoped moderator `JS-M-002` and the person thanked in the gratitude list are the same person, and the correct spelling is **Dilip Sandhar**. The moderator roster, seed data, welcome copy, decisions record and README were corrected from `Sanghar`.

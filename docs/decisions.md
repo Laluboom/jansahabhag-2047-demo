@@ -106,7 +106,7 @@ The Supplementary PRD v2.0 on 33% women's reservation (local source document, no
 
 - **Target demo transition (Supersedes Jaipur target demo):** The Rajkot college demo with **Ankita Kapri** as main student supersedes Jaipur as the target demo (see `docs/reference/24-10-2026/JanSahabhag 2047 — Demo Personas.docx`).
   - **Institution:** Full institution name is **Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot**.
-  - **Demo roster:** 22 named demo people: 15 students, two teachers (Shri Mayur Parmar and Shri Ankit Kalaria), one principal (Shri Dr. K. D. Ladwa), one special guest (Shri Param Pujya Tyagvallabh Swamiji), one founder (Nazim M. Sandh), and two scoped moderators (Yashvi Dalsaniya and Dilip Sanghar).
+  - **Demo roster:** 22 named demo people: 15 students, two teachers (Shri Mayur Parmar and Shri Ankit Kalaria), one principal (Shri Dr. K. D. Ladwa), one special guest (Shri Param Pujya Tyagvallabh Swamiji), one founder (Nazim M. Sandh), and two scoped moderators (Yashvi Dalsaniya and Dilip Sandhar).
   - **Student cohort & 33% reservation:** All 15 students must be aged at least 18. Exactly 5 named women are in the student roster to strictly satisfy the 33% women's reservation requirement: Ankita Kapri, Niyati Chawda, Harshita Kapri, Jahanvi Sandh, and Asmi Soni. Ankita and Harshita Kapri must stay in this group. Reserve names: Jinal Bhagya, Prensha Jaisalya, and Nisha Bhimani.
   - **Roles and seating:** Staff and guests (teachers, principal, special guest, founder, moderators) hold no student seats and are outside the 15 student count and 33% reservation calculation. Special guest role is view-only.
   - **Data boundaries & privacy:** Real names are used for named demo roles; student IDs are fictional (`VSC-S-xxx`, `VSC-T-xxx`, etc.); no invented personal details (roll numbers, emails, phone numbers) are attributed to named people. Real photographs are used only where supplied (Ankita Kapri, Dr. K. D. Ladwa, Swamiji, Nazim M. Sandh, Yashvi Dalsaniya); all others show initials.
@@ -140,7 +140,9 @@ any earlier "pending" wording elsewhere in this repository.
   alphabetical by first name, ignoring honorifics. The owner-confirmed spelling **Visesh Akbari**
   still overrides the source document's `Vishesh`. *Open:* the demo roster names scoped moderator
   `JS-M-002` as Dilip **Sanghar** while the gratitude list says Dilip **Sandhar**; whether these
-  are one person, and which spelling is correct, is with the owner.
+  are one person, and which spelling is correct, was settled later the same day: they are the
+  same person and the correct spelling is **Dilip Sandhar**. The moderator roster, seed data,
+  welcome copy and README were corrected from `Sanghar`.
 - **Brand — Chaupal Ring with the Shirorekha wordmark.** Direction 1 of the 25 October logo
   research is adopted as the primary symbol, with Direction 3's Devanagari headline-as-table idea
   for the wordmark. Implemented in code as `src/components/brand/ChaupalRing.tsx` and
