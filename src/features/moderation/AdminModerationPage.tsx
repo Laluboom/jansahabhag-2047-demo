@@ -150,7 +150,7 @@ export const AdminModerationPage: React.FC = () => {
           <Info className="w-4 h-4 text-civic-indigo-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <p className="font-semibold">
-              Human-in-the-Loop Moderation Protocol &bull; Change Plan v2 §12
+              Human-in-the-Loop Moderation Protocol
             </p>
             <p className="text-indigo-900/80 leading-relaxed">
               Automated scanning flags anomalous wording or rapid repetition. All moderation actions require human reviewer affirmation and recorded reasoning. Scoped moderators with active grants can moderate assignments or memberships.

@@ -287,9 +287,6 @@ export const RoleAwareAssistantSurface: React.FC<RoleAwareAssistantSurfaceProps>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-civic-indigo-700">
-                      AI assists, people decide.
-                    </span>
                     <button
                       type="button"
                       onClick={() => handleDismiss(sug.id)}

@@ -1,6 +1,33 @@
-# Autobuild handoff — 2026-10-16
+# Autobuild handoff — 2026-10-28
 
 ## Current handoff
+
+**28 October update.** No sub-agy job is running and nothing is parked. The
+sections below are kept as history and describe states that have since been
+superseded; read them as a record, not as the current position.
+
+Local `main` carries the chamber redesign, the plain-language main pages, the
+`/help` disclaimer consolidation and the on-screen jargon cleanup, each merged
+with `--no-ff` and verified on the merged tree: build clean, 623 unit tests and
+39 Playwright tests passing. The public Vercel deployment is current as far as
+the `/help` work; anything merged after that still needs a promote.
+
+Two things are open and need the owner:
+
+- The Vercel Production Branch for project `jansahabhag2047` is still not
+  `main`, so every push lands as a Preview and production has to be promoted by
+  hand. Confirmed twice by pushing. This is task #31, and note there is a second
+  project named `jansahabhag2027` in the same account that the setting may have
+  been applied to instead.
+- The judges and Parliament roster expansion from task #26 has not been started.
+
+Smaller known gaps: the twenty phase-0 audit screenshots in
+`docs/audits/phase0-screenshots/` are from 16 October and show pre-redesign
+screens; five worktrees are retained under `.subagy/worktrees` and
+`.claude/worktrees` per the never-auto-clean rule, and one orphaned `vite preview`
+still holds port 4173 from a deleted worktree.
+
+## Historical 16 October handoff
 
 **16 October post-merge update:** The owner approved and the isolated branch `agy/j-20261016-163611-vwcz` was merged into local `autobuild` at `33ac60e` without conflicts. The merged checkout passed build, 321 unit tests and 35 Playwright tests. The root app now contains the 60-route audit and fictional, anonymous three-place Parliament reservation illustration; the public Vercel deployment still contains the older build. No sub-agy job is running. See `docs/audits/PACKAGES_10_11_ACCEPTANCE_2026-10-16.md` and `docs/HANDOFF_2026-10-16.md`.
 
