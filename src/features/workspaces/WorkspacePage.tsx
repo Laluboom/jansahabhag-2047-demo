@@ -509,7 +509,7 @@ export const WorkspacePage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2" data-testid="connected-persona">
-          <span className="text-[11px] font-medium text-slate-500">Connected Demo Persona:</span>
+          <span className="text-[11px] font-medium text-slate-500">Signed in as:</span>
           <span className="text-xs font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
             {currentUser?.name} (@{currentUser?.username || currentUser?.email.split('@')[0]})
           </span>
@@ -524,9 +524,6 @@ export const WorkspacePage: React.FC = () => {
               <Layers className="w-7 h-7 text-civic-teal-600 shrink-0" />
               <span>Workspace</span>
             </h1>
-            <span className="inline-block text-xs font-bold uppercase bg-civic-teal-100 text-civic-teal-800 px-2.5 py-0.5 rounded-full border border-civic-teal-200">
-              Simulation
-            </span>
           </div>
 
           <h2 className="text-lg sm:text-xl font-bold text-slate-800 mt-1">
@@ -562,7 +559,7 @@ export const WorkspacePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
             <Users className="w-4 h-4 text-civic-indigo-600" />
-            <span>Demo Persona Switcher (Single-Browser Test):</span>
+            <span>Switch persona:</span>
           </span>
           <div className="flex flex-wrap gap-1.5">
             {[
@@ -806,7 +803,7 @@ export const WorkspacePage: React.FC = () => {
         <div className="p-3 rounded-xl bg-white border border-slate-200">
           <span className="text-[11px] text-slate-500 font-medium block">Storage Quota</span>
           <span className="font-bold text-slate-900 mt-0.5 block">
-            1.5 MB / 10.0 MB (Demo)
+            1.5 MB / 10.0 MB
           </span>
         </div>
       </div>

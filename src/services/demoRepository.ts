@@ -3344,7 +3344,7 @@ export class LocalDemoRepository implements DemoRepository {
             targetId: assemblyId,
             details: `Blocked 33% reservation exception override attempt for Assembly role "${roleName}". Scoped moderators cannot bypass the 33% rule.`,
             outcome: 'denied',
-            denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+            denialReason: 'Rule boundary: scoped moderators cannot approve 33% reservation exceptions.',
           },
           db
         );
@@ -5720,7 +5720,7 @@ export class LocalDemoRepository implements DemoRepository {
             targetId: sessionId,
             details: `Blocked 33% reservation exception override attempt for Session role "${roleName}". Scoped moderators cannot bypass the 33% rule.`,
             outcome: 'denied',
-            denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+            denialReason: 'Rule boundary: scoped moderators cannot approve 33% reservation exceptions.',
           },
           db
         );
@@ -6251,7 +6251,7 @@ export class LocalDemoRepository implements DemoRepository {
             targetId: eventId,
             details: `Blocked 33% reservation exception override attempt for Event "${eventId}". Scoped moderators cannot bypass the 33% rule.`,
             outcome: 'denied',
-            denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+            denialReason: 'Rule boundary: scoped moderators cannot approve 33% reservation exceptions.',
           },
           db
         );
