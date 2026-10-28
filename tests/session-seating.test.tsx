@@ -310,6 +310,75 @@ describe('Reusable Accessible SessionSeating Component (V2 Section 4 + Additions
       );
       expect(screen.getByTestId('parliament-illustrative-callout')).toBeInTheDocument();
     });
+
+    it('omits the Evaluation Panel section when no panellists are seated', () => {
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="parliament"
+            currentRoute="parliament"
+            seats={parliamentSeats}
+            isIllustrative={true}
+          />
+        </MemoryRouter>
+      );
+
+      expect(screen.queryByTestId('parliament-bench-evaluation')).not.toBeInTheDocument();
+    });
+
+    it('groups Evaluation Panel assessors apart from the cross-benches and states they do not score positions', () => {
+      const withPanel: SeatModel[] = [
+        ...parliamentSeats,
+        {
+          id: 'seat_eval_procedure',
+          name: 'Sunita Rege',
+          role: 'Procedure Assessor',
+          sideOrBench: 'Evaluation Panel',
+          status: 'active',
+          institution: 'Apex Secretariat',
+          currentActivity: 'Noting the order motions were put in.',
+        },
+        {
+          id: 'seat_eval_evidence',
+          name: 'Farhan Ali',
+          role: 'Evidence Assessor',
+          sideOrBench: 'Evaluation Panel',
+          status: 'active',
+          institution: 'Apex Secretariat',
+          currentActivity: 'Checking cited figures against the evidence dock.',
+        },
+      ];
+
+      render(
+        <MemoryRouter>
+          <SessionSeating
+            layout="parliament"
+            currentRoute="parliament"
+            seats={withPanel}
+            isIllustrative={true}
+          />
+        </MemoryRouter>
+      );
+
+      const panel = screen.getByTestId('parliament-bench-evaluation');
+      expect(panel).toBeInTheDocument();
+      expect(panel).toHaveTextContent('Evaluation Panel (2)');
+
+      // Both assessors belong to the panel, not the cross-bench catch-all.
+      expect(panel).toHaveTextContent('Sunita Rege');
+      expect(panel).toHaveTextContent('Farhan Ali');
+
+      const crossBench = screen.getByTestId('parliament-bench-crossbench');
+      expect(crossBench).not.toHaveTextContent('Sunita Rege');
+      expect(crossBench).not.toHaveTextContent('Farhan Ali');
+      // The ordinary cross-bench delegate is unaffected by the new grouping.
+      expect(crossBench).toHaveTextContent('Vikram Rathore');
+
+      // The no-ideological-scoring boundary is stated on screen, not implied.
+      expect(panel).toHaveTextContent(
+        /do not score positions, award civic credits or decide outcomes/i
+      );
+    });
   });
 
   describe('Seat Selection & Concise Detail Card', () => {
