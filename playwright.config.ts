@@ -10,6 +10,11 @@ const possiblePaths = [
 ];
 const detectedExecutable = possiblePaths.find((p) => fs.existsSync(p));
 
+// Not vite's default 4173: a stray preview on that port used to be silently
+// reused, so the suite ran against whatever app happened to be serving it.
+const PORT = Number(process.env.E2E_PORT ?? 4273);
+const BASE_URL = `http://localhost:${PORT}`;
+
 /**
  * Playwright E2E Configuration for JanSahabhag 2047 Demo
  */
@@ -25,7 +30,7 @@ export default defineConfig({
     timeout: 10000,
   },
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: BASE_URL,
     trace: 'off',
     screenshot: 'only-on-failure',
     video: 'off',
@@ -45,9 +50,14 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4173',
-    port: 4173,
-    reuseExistingServer: !process.env.CI,
+    // --strictPort so vite fails loudly instead of sliding to the next free
+    // port and leaving Playwright waiting on one nothing is serving.
+    command: `npm run preview -- --port ${PORT} --strictPort`,
+    // url, not port: waits for an HTTP response rather than a bare TCP listener.
+    url: BASE_URL,
+    // Never reuse: an existing server on this port is someone else's, and
+    // testing it would report a pass for a build this run never produced.
+    reuseExistingServer: false,
     timeout: 120000,
   },
 });
