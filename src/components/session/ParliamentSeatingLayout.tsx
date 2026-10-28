@@ -27,6 +27,7 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
   // 2. Government / Treasury Benches (Sponsors & State Delegations)
   // 3. Opposition / Scrutiny Benches
   // 4. Cross-benches (Regional / Independent Delegations, including Jaipur Delegation)
+  // 5. Evaluation Panel (procedure & evidence observers, not scorers of positions)
 
   const isSpeaker = (s: SeatModel) =>
     s.sideOrBench?.toLowerCase().includes('speaker') ||
@@ -45,11 +46,24 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
     s.role.toLowerCase().includes('shadow') ||
     s.role.toLowerCase().includes('opposition');
 
+  // 5. Evaluation Panel: observers who assess procedure and evidence, never
+  //    positions. Checked before the cross-bench catch-all so panellists do not
+  //    fall in among the delegates.
+  const isEvaluationPanel = (s: SeatModel) =>
+    s.sideOrBench?.toLowerCase().includes('evaluation') ||
+    s.sideOrBench?.toLowerCase().includes('panel') ||
+    s.role.toLowerCase().includes('assessor') ||
+    s.role.toLowerCase().includes('evaluator');
+
   const speakerSeats = seats.filter(isSpeaker);
   const governmentSeats = seats.filter(isGovernment);
   const oppositionSeats = seats.filter(isOpposition);
+  const evaluationSeats = seats.filter(
+    (s) => !isSpeaker(s) && !isGovernment(s) && !isOpposition(s) && isEvaluationPanel(s)
+  );
   const crossBenchSeats = seats.filter(
-    (s) => !isSpeaker(s) && !isGovernment(s) && !isOpposition(s)
+    (s) =>
+      !isSpeaker(s) && !isGovernment(s) && !isOpposition(s) && !isEvaluationPanel(s)
   );
 
   return (
@@ -227,6 +241,40 @@ export const ParliamentSeatingLayout: React.FC<ParliamentSeatingLayoutProps> = (
           )}
         </div>
       </div>
+
+      {/* GALLERY: Evaluation Panel */}
+      {evaluationSeats.length > 0 && (
+        <div
+          className="p-4 rounded-xl bg-slate-800/70 border border-slate-700 space-y-3"
+          data-testid="parliament-bench-evaluation"
+        >
+          <div className="flex flex-col gap-1 border-b border-slate-700 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-300 font-heading">
+                Evaluation Panel ({evaluationSeats.length})
+              </h4>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Panellists assess procedure, evidence quality and participation. They do not score
+              positions, award civic credits or decide outcomes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {evaluationSeats.map((seat) => (
+              <SeatItem
+                key={seat.id}
+                seat={seat}
+                isSelected={selectedSeatId === seat.id}
+                onSelect={onSelectSeat}
+                suppressAnimation={suppressAnimation}
+                textMode={textMode}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
