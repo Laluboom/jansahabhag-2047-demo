@@ -2,7 +2,7 @@
 
 - **Audit date:** 12 October 2026
 - **Original comparison source:** [Rules & Requirements by Scope](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md)
-- **Subsequent source check:** [Master PRD reconciliation](MASTER_PRD_RECONCILIATION.md) against the [supplied archive](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx)
+- **Subsequent source check:** [Master PRD reconciliation](MASTER_PRD_RECONCILIATION.md) against the supplied archive (local source document, not published here)
 - **App baseline:** `autobuild` commit `41a7b89` and the live Vercel demo at its former address, now redirected to [jansahabhag2047.vercel.app](https://jansahabhag2047.vercel.app)
 - **Method:** Three independent sub-agy agents used the three configured accounts to review separate scopes. Their reports were checked against source, tests, and the live dashboard, then corrected before consolidation.
 
@@ -1191,6 +1191,6 @@ The deployed app is a client-rendered React/Vite demo with local browser persist
 
 ## Supplementary source added after this scope audit
 
-The [Supplementary PRD v2.0 on 33% women's reservation](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was not included in this audit's original scope and labels its rule a **proposed product requirement requiring owner approval**. The owner approved the policy in principle on 12 October 2026, while operating details remain open. It proposes reservation across allocated places and formal positions, while excluding open participation without such allocations. The [updated reconciliation](MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation) records the source-checked app gaps in rulebooks, validation, calculation, exceptions, privacy and fictional demo cases; [product decisions](../decisions.md#supplementary-policy-approved-in-principle) records remaining owner choices and pre-launch legal review. Earlier findings in this file must not be read as proof that the rule is implemented.
+The Supplementary PRD v2.0 on 33% women's reservation (local source document, not published here) was not included in this audit's original scope and labels its rule a **proposed product requirement requiring owner approval**. The owner approved the policy in principle on 12 October 2026, while operating details remain open. It proposes reservation across allocated places and formal positions, while excluding open participation without such allocations. The [updated reconciliation](MASTER_PRD_RECONCILIATION.md#supplementary-proposal-33-womens-reservation) records the source-checked app gaps in rulebooks, validation, calculation, exceptions, privacy and fictional demo cases; [product decisions](../decisions.md#supplementary-policy-approved-in-principle) records remaining owner choices and pre-launch legal review. Earlier findings in this file must not be read as proof that the rule is implemented.
 
 ---

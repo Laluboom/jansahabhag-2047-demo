@@ -28,7 +28,15 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [x] Updated all fictional demo participant ages to 18+ and added demo sign-up age guard; Rajkot now replaces Jaipur as the live story.
 - [x] Reconciled the Master PRD route/control inventory in `docs/audits/MASTER_PRD_RECONCILIATION.md`.
 - [x] Reviewed the dependency audit and upgraded React Router; shipped dependencies now report zero advisories. See `docs/audits/DEPENDENCY_REVIEW_2026-10-23.md`.
+- [x] Community post reporting and its moderation queue path (27 Oct 2026): every post card on Community and on a group thread offers a Report action, reports become `community_post` moderation cases, and resolving a case as actioned withholds the post. Withholding is recomputed from every report on a post, so dismissing one report cannot republish a post another report removed, and withheld text is blanked in the repository read so no surface can leak it. Reporting is blocked for a post's own author and for the view-only special guest.
+- [x] Accessible pop-up task card for general civic assignments (27 Oct 2026): opens on demand from the dashboard and from a lesson, showing objective, estimated time, due date with its timezone, rubric, accepted formats, evidence expectations and submission status, with a deep link to the full assignment page. The shared modal gained a focus trap, initial focus, guarded focus restoration and unique `aria` ids. UHV / Jeevan Vidya reflections are labelled, marked private and show no credit chip.
 - [x] Accessibility and performance cleanup: moderator overlays gained dialog labels and keyboard focus handling; source lint has zero warnings and the main JS chunk is 449.58 kB. Repository lint still reports 23 test-file warnings (zero errors).
+
+- [x] Gratitude list published at eleven names (27 Oct 2026): added Dilip Sandhar and Mungarbhai H. Sandh, keeping Shri Dadubhai Sandhar first and the owner-confirmed `Visesh Akbari` spelling. One open spelling question sits with the owner, recorded in `docs/decisions.md`.
+- [x] Brand mark implemented (27 Oct 2026): Chaupal Ring plus the Shirorekha wordmark idea in `src/components/brand/`, with an `on-dark` variant for the sidebar and a five-dot favicon simplification. Trade mark review and the native-speaker spelling/script decision are still open before any brand file is final.
+- [x] LOK MANCH-2047 published as its own page at `/lok-manch` (27 Oct 2026), linked once from About, with the owner's wording verbatim and the concept-under-development notice kept.
+- [x] Reference source documents made local only (27 Oct 2026): untracked and ignored apart from `docs/reference/README.md`, with repository links repointed. No history rewrite, so earlier commits still contain them, and this only reaches the public repository on push.
+- [x] Browser suite repaired (27 Oct 2026): four Playwright specs still asserted interface jargon that the 27 October copy repair had removed. The approved copy stands; the assertions were corrected. `docs/plans/QUICK_CHANGE_REGRESSION_CHECKLIST.md` now records the stale-preview-server, screenshot-overwrite and copy-drift traps.
 
 ## After the competition demo
 
@@ -36,3 +44,5 @@ Source documents: `docs/reference/21-10-26/JanSahabhag 2047 — Change Plan v2.d
 - [ ] Before real participants, add authentication, server-enforced permissions, shared storage, real session continuity, media handling, moderation, analytics, privacy/safeguarding policy, and human review operations.
 - [ ] Obtain bilingual review before enabling Hindi; the current working journey is English.
 - [ ] Replace any media placeholders only after receiving the actual materials and permission to publish them.
+- [ ] Settle the next-stage deck: the owner's AI-assistance figure (about 60%, code only) is recorded, but the deck format and whether presentation materials are disclosed separately or folded into a revised figure are still with the owner.
+- [x] Resolved 27 Oct 2026: scoped moderator `JS-M-002` and the person thanked in the gratitude list are the same person, and the correct spelling is **Dilip Sandhar**. The moderator roster, seed data, welcome copy, decisions record and README were corrected from `Sanghar`.

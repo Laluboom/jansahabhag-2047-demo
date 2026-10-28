@@ -65,7 +65,7 @@ export const seedEvents: Event[] = [
     id: 'evt_green_canopy_04',
     programmeId: 'prog_green_jaipur',
     title: 'Gujarat Youth Green Canopy Summit 2026',
-    description: 'Synthesizing urban heat audits from Rajkot, Rajkot, and Rajkot.',
+    description: 'Synthesizing urban heat audits from Rajkot, Vadodara, and Ahmedabad.',
     type: 'workshop',
     date: '2026-10-24',
     startTime: '10:00 AM',

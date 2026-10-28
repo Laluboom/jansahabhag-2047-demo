@@ -358,7 +358,7 @@ export const EventDetailPage: React.FC = () => {
                       data-testid="video-preview-tag"
                       className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200"
                     >
-                      Labelled Preview (OD.4)
+                      Labelled Preview
                     </span>
                   </>
                 ) : (

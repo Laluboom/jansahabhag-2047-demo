@@ -98,10 +98,10 @@ export const EvidencePage: React.FC = () => {
         <span>Back to Passport</span>
       </Link>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm min-w-0">
         <div>
-          <h1 className="text-2xl font-bold font-heading text-slate-900 flex items-center gap-2">
-            <FileCheck2 className="w-6 h-6 text-civic-teal-600" />
+          <h1 className="text-xl sm:text-2xl font-bold font-heading text-slate-900 flex items-center gap-2">
+            <FileCheck2 className="w-6 h-6 text-civic-teal-600 shrink-0" />
             <span>Verifiable Evidence Repository</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -109,7 +109,7 @@ export const EvidencePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
           <PointOfUseRulesButton
             moduleName="Evidence"
             triggerText="Evidence Rules"
@@ -122,7 +122,7 @@ export const EvidencePage: React.FC = () => {
               },
               {
                 title: 'Durable Storage Constraints',
-                description: 'Files are stored in local browser persistence up to 250 KB (PDF, PNG, JPG).',
+                description: 'Binary media attachments support JPEG, PNG, MP4, MP3, and PDF up to 10 MB in browser-local IndexedDB. Pasted text or inline documents are limited to 250 KB for durable browser storage.',
               },
               {
                 title: 'Verification Statuses',
@@ -131,7 +131,7 @@ export const EvidencePage: React.FC = () => {
             ]}
             testId="evidence-rules-btn"
           />
-          <div className="text-xs px-3 py-1.5 rounded-xl bg-civic-teal-50 border border-civic-teal-200 text-civic-teal-900 font-semibold">
+          <div className="text-xs px-3 py-1.5 rounded-xl bg-civic-teal-50 border border-civic-teal-200 text-civic-teal-900 font-semibold shrink-0">
             {evidenceList.length} Traceable Records
           </div>
         </div>
@@ -155,8 +155,8 @@ export const EvidencePage: React.FC = () => {
           ))}
         </div>
 
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full sm:w-auto">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Search evidence or ID..."
@@ -179,36 +179,38 @@ export const EvidencePage: React.FC = () => {
             const isMine = ev.ownerId === currentUser?.id;
 
             return (
-              <Card key={ev.id} className="border-slate-200 p-5 space-y-3 flex flex-col justify-between bg-white shadow-xs">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-civic-teal-50 text-civic-teal-800 border border-civic-teal-200">
+              <Card key={ev.id} className="border-slate-200 p-4 sm:p-5 space-y-3 flex flex-col justify-between bg-white shadow-xs min-w-0">
+                <div className="space-y-2 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-civic-teal-50 text-civic-teal-800 border border-civic-teal-200 truncate max-w-full">
                         {ev.id}
                       </span>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700 shrink-0">
                         {ev.type}
                       </span>
                       {isPrivate && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold flex items-center gap-1">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold flex items-center gap-1 shrink-0">
                           <EyeOff className="w-3 h-3" />
                           Private
                         </span>
                       )}
                     </div>
-                    <StatusChip status={ev.verificationStatus} />
+                    <div className="shrink-0">
+                      <StatusChip status={ev.verificationStatus} />
+                    </div>
                   </div>
 
-                  <CardTitle className="text-sm font-bold text-slate-900 line-clamp-2 font-heading">
+                  <CardTitle className="text-sm font-bold text-slate-900 line-clamp-2 font-heading break-words">
                     {ev.title}
                   </CardTitle>
 
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 break-words">
                     {ev.description}
                   </p>
 
                   {ev.location && (
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 min-w-0">
                       <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                       <span className="truncate">{ev.location}</span>
                     </div>
@@ -222,8 +224,8 @@ export const EvidencePage: React.FC = () => {
 
                     return (
                       <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-200 text-[11px] text-blue-900 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold truncate">{ev.fileInfo.name}</span>
+                        <div className="flex flex-wrap items-center justify-between gap-1">
+                          <span className="font-semibold truncate max-w-full">{ev.fileInfo.name}</span>
                           <span className="text-[10px] text-blue-700 shrink-0">
                             {(ev.fileInfo.size / (1024 * 1024) >= 1)
                               ? `${(ev.fileInfo.size / (1024 * 1024)).toFixed(1)} MB`
@@ -265,9 +267,9 @@ export const EvidencePage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <span>By {ev.ownerName} {isMine && '(You)'}</span>
-                  <span>{formatDate(ev.createdAt)}</span>
+                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                  <span className="truncate max-w-[200px]">By {ev.ownerName} {isMine && '(You)'}</span>
+                  <span className="shrink-0">{formatDate(ev.createdAt)}</span>
                 </div>
               </Card>
             );

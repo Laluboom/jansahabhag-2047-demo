@@ -25,6 +25,7 @@ describe('AboutPage', () => {
     expect(bio).toHaveTextContent('Viksit Bharat Young Leaders Dialogue 2026');
     expect(bio).toHaveTextContent('sustainable cultivation initiatives');
     expect(screen.getByText(/Single-browser simulation/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /The Idea: LOK MANCH-2047/i })).toHaveAttribute('href', '/lok-manch');
   });
 
   it('keeps all nine gratitude credits in order, including Visesh and his portrait', () => {
@@ -39,14 +40,15 @@ describe('AboutPage', () => {
     expect(screen.getByText(`— ${GRATITUDE_MESSAGE.attribution}`)).toBeInTheDocument();
 
     const items = gratitude?.querySelectorAll('ol li');
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(11);
     GRATITUDE_ENTRIES.forEach((entry, index) => {
       expect(items?.[index]).toHaveTextContent(entry.name);
       if (entry.role) expect(items?.[index]).toHaveTextContent(entry.role);
     });
-    expect(items?.[2]).not.toHaveTextContent('role');
-    expect(items?.[5]).not.toHaveTextContent('role');
-    const visesh = items?.[8];
+    GRATITUDE_ENTRIES.forEach((entry, index) => {
+      if (!entry.role) expect(items?.[index]?.querySelector('small')).toBeNull();
+    });
+    const visesh = items?.[10];
     expect(visesh?.querySelector('img')).toHaveAttribute('alt', 'Portrait of Visesh Akbari');
     expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/laluboom');
     expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('href', 'https://www.linkedin.com/in/viseshakbari/');

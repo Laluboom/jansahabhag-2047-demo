@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useAppRefreshStore } from '../../stores/useAppRefreshStore';
 import { demoRepository } from '../../services/demoRepository';
@@ -27,6 +27,8 @@ import { Button } from '../../components/ui/Button';
 import { Textarea, Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
 import { StatusChip } from '../../components/ui/StatusChip';
+import { Disclosure } from '../../components/ui/Disclosure';
+import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import {
   SessionSeating,
   SeatModel,
@@ -34,6 +36,11 @@ import {
   SeatingQuotaSummary,
   computeSeatingQuotaFromAllocations,
   SessionTextTurn,
+  ChamberHeader,
+  ChamberControlBar,
+  StageTrack,
+  StageTrackStep,
+  SeatingQuotaDisplay,
 } from '../../components/session';
 import {
   ArrowLeft,
@@ -84,7 +91,14 @@ const ROLE_POWER_MAP: Record<AssemblyRoleType, { power: AssemblyRolePower; oblig
   },
 };
 
+const STAGE_TRACK_STEPS: StageTrackStep[] = CANONICAL_ASSEMBLY_STAGES.map((s) => ({
+  id: s.stage,
+  label: s.label,
+  description: s.desc,
+}));
+
 export const AssemblySessionPage: React.FC = () => {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const stageFromUrlRaw = searchParams.get('stage');
@@ -102,6 +116,7 @@ export const AssemblySessionPage: React.FC = () => {
   const [userRole, setUserRole] = useState<AssemblyRole | null>(null);
   const [allRoles, setAllRoles] = useState<AssemblyRole[]>([]);
   const [participants, setParticipants] = useState<User[]>([]);
+  const [allUsersList, setAllUsersList] = useState<User[]>([]);
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([]);
   const [proposition, setProposition] = useState<Proposition | null>(null);
@@ -225,6 +240,7 @@ export const AssemblySessionPage: React.FC = () => {
           }
           const pUsers = allUsers.filter((u) => asm.participantUserIds.includes(u.id));
           setParticipants(pUsers);
+          setAllUsersList(allUsers);
 
           if (asm.evidenceIds.length) {
             const evs = await Promise.all(
@@ -593,15 +609,98 @@ export const AssemblySessionPage: React.FC = () => {
     const propDissent = proposition?.dissent || [];
     const propResponses = proposition?.participantResponses || [];
 
-    return participants.map((p) => {
+    const proceduralSeats: SeatModel[] = [];
+
+    // Resolve Chair directly from assembly.chairId by direct user lookup
+    if (assembly.chairId) {
+      const chairUser = allUsersList.find((u) => u.id === assembly.chairId);
+      if (chairUser) {
+        const isSpeaking = Boolean(
+          activeSpkId === chairUser.id ||
+          queue.some((s) => s.userId === chairUser.id && s.status === 'speaking')
+        );
+        const isWaiting = queue.some(
+          (s) => s.userId === chairUser.id && s.status === 'waiting'
+        );
+        proceduralSeats.push({
+          id: `seat_${assembly.id}_chair_${chairUser.id}`,
+          userId: chairUser.id,
+          name: chairUser.name,
+          avatar: chairUser.avatar,
+          role: 'Chair',
+          sideOrBench: 'Chair Zone',
+          status: isSpeaking ? 'speaking' : isWaiting ? 'waiting' : 'active',
+          isSpeaking,
+          hasRaisedHand: isWaiting,
+          hasDissent: false,
+          institution: chairUser.institutionName || 'Rajkot Youth Deliberative Assembly',
+          currentActivity: 'Presiding over Youth Chamber deliberative proceedings.',
+          bio: chairUser.bio,
+        });
+      }
+    }
+
+    // Resolve Facilitator directly from assembly.facilitatorId by direct user lookup
+    if (assembly.facilitatorId) {
+      const facUser = allUsersList.find((u) => u.id === assembly.facilitatorId);
+      if (facUser) {
+        const isSpeaking = Boolean(
+          activeSpkId === facUser.id ||
+          queue.some((s) => s.userId === facUser.id && s.status === 'speaking')
+        );
+        const isWaiting = queue.some(
+          (s) => s.userId === facUser.id && s.status === 'waiting'
+        );
+        proceduralSeats.push({
+          id: `seat_${assembly.id}_facilitator_${facUser.id}`,
+          userId: facUser.id,
+          name: facUser.name,
+          avatar: facUser.avatar,
+          role: 'Facilitator',
+          sideOrBench: 'Facilitator Zone',
+          status: isSpeaking ? 'speaking' : isWaiting ? 'waiting' : 'active',
+          isSpeaking,
+          hasRaisedHand: isWaiting,
+          hasDissent: false,
+          institution: facUser.institutionName || 'Rajkot Youth Deliberative Assembly',
+          currentActivity: 'Facilitating chamber stage agenda and speaker turns.',
+          bio: facUser.bio,
+        });
+      }
+    }
+
+    // Resolve Co-Chair ONLY when coChairId is explicitly set; do not invent a Co-Chair
+    if (assembly.coChairId) {
+      const coChairUser = allUsersList.find((u) => u.id === assembly.coChairId);
+      if (coChairUser) {
+        const isSpeaking = Boolean(
+          activeSpkId === coChairUser.id ||
+          queue.some((s) => s.userId === coChairUser.id && s.status === 'speaking')
+        );
+        const isWaiting = queue.some(
+          (s) => s.userId === coChairUser.id && s.status === 'waiting'
+        );
+        proceduralSeats.push({
+          id: `seat_${assembly.id}_cochair_${coChairUser.id}`,
+          userId: coChairUser.id,
+          name: coChairUser.name,
+          avatar: coChairUser.avatar,
+          role: 'Co-Chair',
+          sideOrBench: 'Co-Chair Zone',
+          status: isSpeaking ? 'speaking' : isWaiting ? 'waiting' : 'active',
+          isSpeaking,
+          hasRaisedHand: isWaiting,
+          hasDissent: false,
+          institution: coChairUser.institutionName || 'Rajkot Youth Deliberative Assembly',
+          currentActivity: 'Co-presiding over chamber proceedings.',
+          bio: coChairUser.bio,
+        });
+      }
+    }
+
+    const participantSeats = participants.map((p) => {
       const roleObj = allRoles.find((r) => r.userId === p.id);
-      const roleName =
-        roleObj?.roleName ||
-        (p.id === assembly.chairId
-          ? 'Chair'
-          : p.id === assembly.facilitatorId
-          ? 'Facilitator'
-          : 'Delegate');
+      const roleName = roleObj?.roleName || 'Delegate';
 
       const isSpeaking = Boolean(
         activeSpkId === p.id ||
@@ -664,6 +763,7 @@ export const AssemblySessionPage: React.FC = () => {
         sideOrBench: `${roleName} Zone`,
         status,
         isSpeaking,
+        hasRaisedHand: isWaiting,
         hasDissent,
         dissentSummary,
         isReserved,
@@ -672,7 +772,9 @@ export const AssemblySessionPage: React.FC = () => {
         bio: p.bio,
       };
     });
-  }, [assembly, participants, allRoles, proposition, currentStageIndex]);
+
+    return [...proceduralSeats, ...participantSeats];
+  }, [assembly, participants, allUsersList, allRoles, proposition, currentStageIndex]);
 
   // Quota calculation pulling strictly from projected roleAllocations
   // Sum of per-role minimums and capacities; no second calculation; no hard-coded capacity.
@@ -770,89 +872,109 @@ export const AssemblySessionPage: React.FC = () => {
   const activeSpeakerEntry = speakingQueue.find((s) => s.status === 'speaking');
   const roleActions = assembly.roleActions || [];
 
+  const currentCanonicalStage = CANONICAL_ASSEMBLY_STAGES.find((s) => s.stage === assembly.currentStage);
+  const currentStageChipText = currentCanonicalStage
+    ? `${currentCanonicalStage.label}: ${currentCanonicalStage.desc}`
+    : '';
+
+  const myWaitingEntry = speakingQueue.find(
+    (s) => s.userId === currentUser?.id && s.status === 'waiting'
+  );
+  const hasRaisedHand = Boolean(myWaitingEntry);
+
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
-      {/* Top Session Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900 text-white rounded-2xl shadow-md border border-slate-800">
-        <div className="flex items-center gap-3">
-          <Link
-            to={`/assemblies/${assembly.id}`}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-400 bg-civic-teal-950 px-2 py-0.5 rounded border border-civic-teal-800">
+      {/* 1. ChamberHeader */}
+      <ChamberHeader
+        eyebrow="Youth Assembly"
+        title={assembly.title}
+        tagline="Discuss. Deliberate. Build Solutions."
+        statusSlot={
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-civic-teal-700 bg-civic-teal-50 px-2.5 py-1 rounded-full border border-civic-teal-200 shrink-0">
                 Youth Chamber in Session
               </span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-                Stage {currentStageIndex + 1}/6: {CANONICAL_ASSEMBLY_STAGES[currentStageIndex]?.label}
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200"
+                data-testid="chamber-stage-status-chip"
+                title={currentStageChipText}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" aria-hidden="true" />
+                <span className="truncate max-w-xs sm:max-w-md">{currentStageChipText}</span>
               </span>
-              {isChair && (
-                <span className="text-[10px] font-bold text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">
-                  Chair / Facilitator Active
-                </span>
-              )}
             </div>
-            <h1 className="text-base sm:text-lg font-bold font-heading text-white truncate mt-0.5">
-              {assembly.title}
-            </h1>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Rulebook Quick Access */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowRulebookModal(true)}
-            className="bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 text-xs"
-          >
-            <BookOpen className="w-3.5 h-3.5 mr-1 text-civic-teal-400" />
-            <span>Rulebook ({assembly.rulebook?.version ? (assembly.rulebook.version.startsWith('v') ? assembly.rulebook.version : `v${assembly.rulebook.version}`) : 'v1.0'})</span>
-          </Button>
-
-          {/* Roles & Powers Sheet */}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowRolesModal(true)}
-            className="bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 text-xs"
-          >
-            <Sparkles className="w-3.5 h-3.5 mr-1 text-civic-saffron-400" />
-            <span>Roles & Powers</span>
-          </Button>
-
-          {/* Facilitator Override Action */}
-          {isChair && (
+        }
+        rulesSlot={
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setShowOverrideModal(true)}
-              className="bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700 text-xs"
+              onClick={() => setShowRulebookModal(true)}
+              className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 text-xs inline-flex items-center gap-1.5"
+              data-testid="stage-guide-btn"
             >
-              <UserCheck className="w-3.5 h-3.5 mr-1" />
-              <span>Role Override Audit</span>
+              <BookOpen className="w-3.5 h-3.5 text-civic-teal-600" />
+              <span>Stage Guide</span>
             </Button>
-          )}
-
-          {proposition && (
-            <Link to={`/propositions/${proposition.id}`}>
-              <Button size="sm" variant="outline" className="bg-slate-800 text-white border-slate-700 hover:bg-slate-700 text-xs">
-                <Layers className="w-3.5 h-3.5 mr-1" />
-                <span>Proposition</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowRulebookModal(true)}
+              className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 text-xs inline-flex items-center gap-1.5"
+              data-testid="rulebook-quick-btn"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-slate-500" />
+              <span>Rulebook</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowRolesModal(true)}
+              className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 text-xs inline-flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-civic-saffron-500" />
+              <span>Roles & Powers</span>
+            </Button>
+            {isChair && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowOverrideModal(true)}
+                className="bg-white text-amber-800 border-amber-300 hover:bg-amber-50 text-xs inline-flex items-center gap-1"
+              >
+                <UserCheck className="w-3.5 h-3.5 mr-1" />
+                <span>Role Override Audit</span>
+              </Button>
+            )}
+            {proposition && (
+              <Link to={`/propositions/${proposition.id}`}>
+                <Button size="sm" variant="outline" className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 text-xs inline-flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Proposition</span>
+                </Button>
+              </Link>
+            )}
+            <Link to="/passport">
+              <Button size="sm" variant="outline" className="bg-white text-slate-700 border-slate-200 hover:bg-slate-50 text-xs inline-flex items-center gap-1">
+                <Award className="w-3.5 h-3.5 text-civic-saffron-500" />
+                <span>Passport</span>
               </Button>
             </Link>
-          )}
+          </div>
+        }
+        onLeave={() => navigate(`/assemblies/${assembly.id}`)}
+        leaveLabel="Leave"
+      />
 
-          <Link to="/passport">
-            <Button size="sm" variant="outline" className="bg-slate-800 text-civic-saffron-400 border-slate-700 hover:bg-slate-700 text-xs">
-              <Award className="w-3.5 h-3.5 mr-1" />
-              <span>Passport</span>
-            </Button>
-          </Link>
-        </div>
+      {/* 2. StageTrack beneath ChamberHeader */}
+      <div className="w-full max-w-full overflow-x-auto py-2 bg-slate-50 rounded-xl border border-slate-200 px-3">
+        <StageTrack
+          steps={STAGE_TRACK_STEPS}
+          currentStepId={assembly.currentStage}
+          className="w-full"
+        />
       </div>
 
       {/* Material Rulebook Notice Banner if applicable */}
@@ -890,21 +1012,46 @@ export const AssemblySessionPage: React.FC = () => {
         </div>
       )}
 
-      {/* Shared Session Reciprocal Link & Single-Browser Notice */}
-      <div className="p-3.5 rounded-xl border border-civic-teal-200 bg-civic-teal-50/70 text-civic-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
-        <div className="flex items-center gap-2">
-          <Scale className="w-4 h-4 text-civic-teal-700 shrink-0" />
-          <span>
-            <strong>Linked Shared Session: {linkedSession ? linkedSession.id : 'sess_jaipur_01'}</strong> | <strong>Engine Mode: Youth Assembly</strong> — Fictional simulation. State is only shared among personas within this browser.
-          </span>
+      {/* Standing text moved into Disclosures */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <DemoPreviewBadge label="Single-Browser Local Simulation" size="sm" />
+          {/* Linked-chamber navigation is a primary action; it must stay visible. */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate('/debate-room')}
+          >
+            <Scale className="w-3.5 h-3.5 mr-1.5" />
+            <span>Switch to Debate Room</span>
+          </Button>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link to="/debate-room">
-            <Button size="sm" variant="outline" className="bg-white text-civic-teal-800 border-civic-teal-300 hover:bg-civic-teal-100 text-xs">
-              <Scale className="w-3.5 h-3.5 mr-1" />
-              <span>Switch to Debate Room</span>
-            </Button>
-          </Link>
+
+        <Disclosure summary="How this simulation works" testId="how-simulation-works-disclosure">
+          <div className="space-y-2 text-xs text-slate-600">
+            <p>
+              Fictional simulation. State is only shared among personas within this browser.
+            </p>
+          </div>
+        </Disclosure>
+
+        <Disclosure summary="Seats and 33% reservation" testId="seats-and-reservation-disclosure">
+          <div className="pt-1">
+            <SeatingQuotaDisplay quota={assemblyQuotaSummary} />
+          </div>
+        </Disclosure>
+
+        {/* Dissent retention is not optional: visible outside any disclosure */}
+        <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-700">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-civic-indigo-600 shrink-0" />
+            <span>
+              <strong>Dissent Retention Policy:</strong> Split votes and minority reservations stay permanently recorded across all outcome revisions.
+            </span>
+          </div>
+          <span className="text-[10px] uppercase font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200 shrink-0">
+            Permanent Record
+          </span>
         </div>
       </div>
 
@@ -965,11 +1112,11 @@ export const AssemblySessionPage: React.FC = () => {
 
         {/* Chair Procedural Controls Bar */}
         {isChair && (
-          <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-3 mt-2 border-t border-slate-100 text-xs">
             <span className="text-slate-600 font-medium">
               Chamber Stage: <strong>{assembly.currentStage.replace('_', ' ')}</strong>
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Button
                 size="sm"
                 variant="outline"
@@ -1001,7 +1148,6 @@ export const AssemblySessionPage: React.FC = () => {
         currentRoute="assembly"
         sessionId={assembly.id || 'assembly_jaipur_pedestrian_2026'}
         seats={assemblySeats}
-        quotaSummary={assemblyQuotaSummary}
         activeSpeakerId={assembly.activeSpeakerId}
         sampleTurns={assemblySampleTurns}
         title="Youth Assembly Deliberative Chamber Seating"
@@ -1129,8 +1275,8 @@ export const AssemblySessionPage: React.FC = () => {
       {/* MAIN TWO-COLUMN WORKSPACE: LEFT = INTERACTIVE STAGE & ROLE POWERS, RIGHT = SPEAKING QUEUE & EVIDENCE */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* LEFT 8 COLUMNS: INTERACTIVE STAGE WORKSPACE */}
-        <div className="lg:col-span-8 space-y-4">
-          <Card className="border-slate-200 p-5 sm:p-6 space-y-5 bg-white shadow-sm min-h-[500px]">
+        <div className="lg:col-span-8 space-y-4 min-w-0">
+          <Card className="border-slate-200 p-4 sm:p-6 space-y-5 bg-white shadow-sm min-h-[500px] min-w-0">
             {/* Stage Title Header */}
             <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-3 gap-2">
               <div>
@@ -1472,7 +1618,7 @@ export const AssemblySessionPage: React.FC = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                         {(['CONSENSUS', 'QUALIFIED_SUPPORT', 'SPLIT_DECISION', 'INSUFFICIENT_BASIS'] as PropositionOutcome[]).map((oc) => (
                           <button
                             key={oc}
@@ -1776,18 +1922,18 @@ export const AssemblySessionPage: React.FC = () => {
         </div>
 
         {/* RIGHT 4 COLUMNS: SPEAKING QUEUE & EVIDENCE POOL */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="lg:col-span-4 space-y-4 min-w-0">
           {/* Active Speaking Queue Card */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm">
+          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm min-w-0">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-1.5">
-                <Mic className="w-4 h-4 text-civic-teal-600" />
+                <Mic className="w-4 h-4 text-civic-teal-600 shrink-0" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
                   Speaking Queue ({speakingQueue.filter((s) => s.status !== 'completed' && s.status !== 'cancelled').length})
                 </h3>
               </div>
               {activeSpeakerEntry && (
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 shrink-0">
                   <Volume2 className="w-3 h-3" />
                   Live Speaker
                 </span>
@@ -1798,9 +1944,9 @@ export const AssemblySessionPage: React.FC = () => {
             {activeSpeakerEntry ? (
               <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-200 text-xs space-y-1">
                 <span className="text-[10px] uppercase font-bold text-emerald-800 block">Current Floor:</span>
-                <div className="font-bold text-slate-900 text-sm flex items-center justify-between">
-                  <span>{activeSpeakerEntry.userName}</span>
-                  <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                <div className="font-bold text-slate-900 text-sm flex flex-wrap items-center justify-between gap-1">
+                  <span className="truncate">{activeSpeakerEntry.userName}</span>
+                  <span className="text-[10px] text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded shrink-0">
                     {activeSpeakerEntry.userRole || 'Delegate'}
                   </span>
                 </div>
@@ -1824,19 +1970,19 @@ export const AssemblySessionPage: React.FC = () => {
                 <p className="text-[11px] text-slate-400 text-center py-1">Queue is empty.</p>
               ) : (
                 speakingQueue.filter((s) => s.status === 'waiting').map((entry, idx) => (
-                  <div key={entry.id} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-slate-900">
+                  <div key={entry.id} className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2 min-w-0">
+                    <div className="min-w-0 flex-1 truncate">
+                      <span className="font-bold text-slate-900 truncate block">
                         {idx + 1}. {entry.userName}
                       </span>
-                      <span className="text-[10px] text-slate-500 block">{entry.userRole}</span>
+                      <span className="text-[10px] text-slate-500 block truncate">{entry.userRole}</span>
                     </div>
                     {isChair && (
                       <Button
                         size="sm"
                         variant="teal"
                         onClick={() => handleRecognizeSpeaker(entry.userId)}
-                        className="h-6 text-[10px] px-2"
+                        className="h-6 text-[10px] px-2 shrink-0"
                       >
                         Recognize
                       </Button>
@@ -1861,15 +2007,15 @@ export const AssemblySessionPage: React.FC = () => {
           </Card>
 
           {/* Chamber Evidence Pool */}
-          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm">
+          <Card className="border-slate-200 p-4 space-y-3 bg-white shadow-sm min-w-0">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-1.5">
-                <FileCheck2 className="w-4 h-4 text-civic-teal-600" />
+                <FileCheck2 className="w-4 h-4 text-civic-teal-600 shrink-0" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
                   Evidence Pool ({evidenceList.length})
                 </h3>
               </div>
-              <span className="text-[10px] text-slate-400">Click to cite</span>
+              <span className="text-[10px] text-slate-400 shrink-0">Click to cite</span>
             </div>
 
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
@@ -1888,8 +2034,8 @@ export const AssemblySessionPage: React.FC = () => {
                   }`}
                   title="Click to cite in contribution"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-civic-teal-800 font-bold bg-civic-teal-50 px-1.5 py-0.2 rounded border border-civic-teal-200">
+                  <div className="flex flex-wrap items-center justify-between gap-1">
+                    <span className="font-mono text-[10px] text-civic-teal-800 font-bold bg-civic-teal-50 px-1.5 py-0.2 rounded border border-civic-teal-200 truncate max-w-full">
                       {ev.id}
                     </span>
                     <StatusChip status={ev.verificationStatus} />
@@ -2072,6 +2218,15 @@ export const AssemblySessionPage: React.FC = () => {
           </Card>
         </div>
       )}
+      {/* 5. ChamberControlBar at the bottom */}
+      <div className="sticky bottom-0 z-30 pt-2">
+        <ChamberControlBar
+          participantCount={participants.length}
+          hasRaisedHand={hasRaisedHand}
+          onToggleHand={handleRequestSpeakingTurn}
+          onLeave={() => navigate(`/assemblies/${assembly.id}`)}
+        />
+      </div>
     </div>
   );
 };

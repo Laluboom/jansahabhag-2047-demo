@@ -328,14 +328,14 @@ test.describe('Package 10B: Master PRD Phase 0 Complete Browser Route Evidence',
 
     // 4. Debate Room speaking turn & reload persistence
     await page.goto('/events/sess_jaipur_01/debate-room');
-    await expect(page.getByText(/Text-First Active \(OD\.4\)/i)).toBeVisible();
+    await expect(page.getByText(/Text-first session/i)).toBeVisible();
     const turnBtn = page.getByRole('button', { name: /Request Speaking Turn/i });
     if (await turnBtn.isVisible()) {
       await turnBtn.click();
     }
     // Reload page and confirm state survives
     await page.reload();
-    await expect(page.getByText(/Text-First Active \(OD\.4\)/i)).toBeVisible();
+    await expect(page.getByText(/Text-first session/i)).toBeVisible();
 
     // 5. Parliament Prototype motion modal inspection
     await page.goto('/parliament');

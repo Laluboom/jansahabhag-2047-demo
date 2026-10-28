@@ -87,7 +87,7 @@ export const AssembliesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Evidence to Action Thread Indicator */}
+      {/* Five-Stage Product Method Banner */}
       <ThreadMotif currentStage="deliberate" />
 
       {/* Header */}
@@ -101,7 +101,7 @@ export const AssembliesPage: React.FC = () => {
             Youth Deliberative Assemblies
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
-            Non-adversarial democratic chambers synthesizing field observations and expert evidence into binding civic propositions for municipal authorities.
+            Weigh what your field work found and shape a proposal to put to the city.
           </p>
         </div>
 

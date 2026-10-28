@@ -8,10 +8,10 @@
 
 ## Read in this order
 
-1. [Master PRD archive](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx): opening §§1–3 govern, Part A and retained Parts B/C provide detail. The archive appendices are historical copies.
+1. Master PRD archive (local source document, not published here): opening §§1–3 govern, Part A and retained Parts B/C provide detail. The archive appendices are historical copies.
 2. [Scope guide](../../README_01_RULES_REQUIREMENTS_BY_SCOPE.md): find source sections and delivery priority.
 3. [Reconciliation](../audits/MASTER_PRD_RECONCILIATION.md): see observed gaps, then recheck affected code and deployed behavior.
-4. [Product decisions](../decisions.md): distinguish settled rules from owner inputs. The [reservation supplement](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) has in-principle policy approval, while its operating details remain open.
+4. [Product decisions](../decisions.md): distinguish settled rules from owner inputs. The reservation supplement (local source document, not published here) has in-principle policy approval, while its operating details remain open.
 5. This plan: convert each agreed slice into a standalone `.subagy/plans/NN-*.md` task with file scope, executable acceptance commands and the exact approved rules. Follow the Autobuild method at `~/Softwares/sub-agy/AUTOBUILD-PROMPT.md` where available. Do not treat an agent's self-reported tests as verification.
 
 ## Current delivery boundary

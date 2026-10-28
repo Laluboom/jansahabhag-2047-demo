@@ -41,7 +41,7 @@ test.describe('Package 07 — Evidence-based Passport and Explainable Credits E2
     await expect(page.getByText(/Civic Passport Portfolio \(Demo Simulation\)/i)).toBeVisible();
     await expect(page.getByText(/Portfolio of evidence, not a score of moral worth/i)).toBeVisible();
 
-    // 4. Verify 7 PRD Dimensions Grid
+    // 4. Verify the 7 Dimensions grid
     for (const dim of ['Learning', 'Observation', 'Deliberation', 'Contribution', 'Collaboration', 'Civic Action', 'Reflection']) {
       await expect(page.getByText(dim, { exact: false }).first()).toBeVisible();
     }
@@ -77,7 +77,7 @@ test.describe('Package 07 — Evidence-based Passport and Explainable Credits E2
     await page.goto('/passport/credits');
     await expect(page.getByRole('heading', { name: /Civic Credit (Points )?Ledger/i })).toBeVisible();
     await expect(page.getByText(/Transparent Activity Award Rules & Explainable Formula/i)).toBeVisible();
-    await expect(page.getByText(/7 PRD Dimensions/i)).toBeVisible();
+    await expect(page.getByText(/7 Dimensions/i)).toBeVisible();
 
     // Check pending credits callout
     await expect(page.getByText(/Pending Mentor Review/i).first()).toBeVisible();

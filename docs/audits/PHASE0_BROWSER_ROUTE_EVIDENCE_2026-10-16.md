@@ -1,7 +1,7 @@
 # Phase 0 Complete Browser Route Evidence — Final Fictional Jaipur Demo Branch
 
 **Date:** 16 October 2026
-**Governing Authority:** [Master PRD Archive v3.1](../../docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A §A2
+**Governing Authority:** Master PRD Archive v3.1 (local source document, not published here), opening §§1–3 and Part A §A2
 **Executable Test Suite:** [e2e/phase0-browser-route-evidence.spec.ts](../../e2e/phase0-browser-route-evidence.spec.ts) (Automated Playwright Suite)
 **Related Audit Records:** [PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md](PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md), [PHASE0_LIVE_EVIDENCE.md](PHASE0_LIVE_EVIDENCE.md)
 **Execution Context:** Package 10B browser verification in isolated worktree (`j-20261016-151430-7j62`)

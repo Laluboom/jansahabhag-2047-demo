@@ -80,7 +80,7 @@ export const CreditAppealModal: React.FC<CreditAppealModalProps> = ({
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1 text-xs text-amber-900">
           <div className="flex items-center gap-1.5 font-bold text-amber-800">
             <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
-            <span>PRD §14 / §27 Human Adjudication Guarantee</span>
+            <span>Human Adjudication Guarantee</span>
           </div>
           <p className="text-[11px] leading-relaxed text-amber-950">
             Automated AI algorithms are strictly barred from evaluating credit disputes, sanctioning records, or altering civic status. This appeal is routed exclusively to a fictional human reviewer (<strong>Shri Mayur Parmar</strong>, Lead Mentor & Civic Reviewer).

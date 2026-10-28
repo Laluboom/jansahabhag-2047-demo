@@ -458,7 +458,7 @@ export const seedUsers: User[] = [
   // 22. Moderator (Scoped Moderator, Initials only)
   {
     id: 'JS-M-002',
-    name: 'Dilip Sanghar',
+    name: 'Dilip Sandhar',
     title: 'Moderator',
     role: 'moderator',
     email: 'dilip.sanghar@demo.jansahabhag.internal',

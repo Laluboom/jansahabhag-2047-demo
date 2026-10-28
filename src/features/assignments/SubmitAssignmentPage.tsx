@@ -397,7 +397,7 @@ export const SubmitAssignmentPage: React.FC = () => {
   const handleUseOfflineCleanupExample = () => {
     setNewEvTitle('Community Park & Storm Drain Local Cleanup Photo');
     setNewEvDesc(
-      'Field photo captured during offline youth-led community cleanup at Mansarovar Sector 3 park and storm drain, collecting 42 kg of segregated plastic waste.'
+      'Field photo captured during offline youth-led community cleanup at Kalawad Road Sector 3 park and storm drain, collecting 42 kg of segregated plastic waste.'
     );
     setNewEvType('image');
     setNewEvSource('Offline Community Action Field Log');
@@ -1071,9 +1071,6 @@ export const SubmitAssignmentPage: React.FC = () => {
               <p className="text-[11px] text-amber-900 leading-relaxed font-semibold">
                 {FACE_CONSENT_WARNING_TEXT} {NO_RECORDING_RULE_TITLE}.
               </p>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Allowed formats: <strong>{ALLOWED_EVIDENCE_FORMAT_LABELS}</strong>. Actual file limit: <strong>250 KB</strong> (durable browser storage limit).
-              </p>
               <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950 space-y-1">
                 <span className="font-bold text-emerald-900 block">
                   Browser-Local IndexedDB Binary Attachment Store
@@ -1082,6 +1079,9 @@ export const SubmitAssignmentPage: React.FC = () => {
                   Accepts <strong>{ALLOWED_BINARY_FORMAT_LABELS}</strong> up to <strong>{BINARY_ATTACHMENT_SIZE_LABEL}</strong>. Binary media is stored directly in your local browser IndexedDB, avoiding large localStorage data URLs.
                 </span>
               </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Supported evidence formats: <strong>{ALLOWED_EVIDENCE_FORMAT_LABELS}</strong>. Pasted content and inline documents (WebP, CSV, TXT) are limited to <strong>250 KB</strong> (durable browser storage limit).
+              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">

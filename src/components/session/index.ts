@@ -8,3 +8,6 @@ export * from './DebateSeatingLayout';
 export * from './AssemblySeatingLayout';
 export * from './ParliamentSeatingLayout';
 export * from './AccessibleListView';
+export * from './ChamberHeader';
+export * from './ChamberControlBar';
+export * from './StageTrack';

@@ -14,10 +14,11 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
 
     // 2. Header and motion verification
     await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
-    await expect(page.getByText('Immediate installation of tabletop pedestrian crosswalks')).toBeVisible();
+    await expect(page.getByText('Immediate installation of tabletop pedestrian crosswalks').first()).toBeVisible();
 
     // 3. Single-browser local simulation notices (no live multi-user network or server authorization)
-    await expect(page.getByText(/Single-Browser Local Simulation — Session sess_jaipur_01/i)).toBeVisible();
+    await expect(page.getByText('Single-Browser Local Simulation')).toBeVisible();
+    await page.getByText('How this simulation works').click();
     await expect(page.getByText(/State is only shared among personas within this browser/i)).toBeVisible();
     await expect(page.getByText(/The persona selector is a local simulation, not security/i)).toBeVisible();
 
@@ -114,7 +115,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await expect(page.getByText(/Hearing community observations proved that physical tabletop ramps are needed/i)).not.toBeVisible();
 
     // Verify unacknowledged rulebook banner IS visible
-    await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).toBeVisible();
+    await expect(page.getByText(/Debate Room Procedural Rules \(v1\.0\)/i)).toBeVisible();
 
     // Attempting to request speaking turn without acknowledgement opens rulebook and shows error
     await page.getByRole('button', { name: /Raise Hand \(Request Turn\)/i }).click();
@@ -125,7 +126,7 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     // Acknowledges via rulebook modal
     await modal.getByRole('button', { name: /Acknowledge Ground Rules/i }).click();
     await expect(modal).not.toBeVisible();
-    await expect(page.getByText(/Debate Room Procedural Rules \(Master PRD §A13, v1\.0\)/i)).not.toBeVisible();
+    await expect(page.getByText(/Debate Room Procedural Rules \(v1\.0\)/i)).not.toBeVisible();
 
     // Switch back to primary participant for passport link test
     await page.getByRole('button', { name: /Viewing as/i }).click();
@@ -167,9 +168,10 @@ test.describe('Task 04: Connected Local Debate Room Simulation & Shared Session 
     await page.waitForURL('**/assemblies/assembly_jaipur_pedestrian_2026/session');
     await expect(page.getByRole('heading', { name: /(Rajkot|Jaipur) School Zone Pedestrian/i })).toBeVisible();
 
-    // Verify reciprocal session banner
-    await expect(page.getByText(/Linked Shared Session: sess_jaipur_01/i)).toBeVisible();
-    await expect(page.getByText(/Engine Mode: Youth Assembly/i)).toBeVisible();
+    // Verify reciprocal session banner. The session id and engine mode are no longer
+    // surfaced as visible copy; session continuity is asserted on the transition modal above.
+    await expect(page.getByText(/Single-Browser Local Simulation/i).first()).toBeVisible();
+    await page.getByText(/How this simulation works/i).first().click();
     await expect(page.getByText(/State is only shared among personas within this browser/i)).toBeVisible();
 
     // Click reciprocal link to switch back to Debate Room

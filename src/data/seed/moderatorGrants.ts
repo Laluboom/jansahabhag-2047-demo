@@ -63,7 +63,7 @@ export const seedModeratorGrants: ScopedModeratorGrant[] = [
   {
     id: 'grant_mod_dilip_01',
     granteeId: 'JS-M-002',
-    granteeName: 'Dilip Sanghar',
+    granteeName: 'Dilip Sandhar',
     granteeRole: 'moderator',
     granteeEmail: 'dilip.sanghar@demo.jansahabhag.internal',
     grantorId: 'JS-F-001',
@@ -82,7 +82,7 @@ export const seedModeratorGrants: ScopedModeratorGrant[] = [
   {
     id: 'grant_mod_rev_01',
     granteeId: 'JS-M-002',
-    granteeName: 'Dilip Sanghar',
+    granteeName: 'Dilip Sandhar',
     granteeRole: 'moderator',
     granteeEmail: 'dilip.sanghar@demo.jansahabhag.internal',
     grantorId: 'JS-F-001',
@@ -176,7 +176,7 @@ export const seedModeratorAudits: ScopedModeratorAuditRecord[] = [
     actorRole: 'platform_admin',
     scopeType: 'assignments',
     targetId: 'JS-M-002',
-    details: 'Platform Owner issued temporary assignment grant to Dilip Sanghar.',
+    details: 'Platform Owner issued temporary assignment grant to Dilip Sandhar.',
     outcome: 'success',
     timestamp: '2026-10-10T08:00:00Z',
     schemaVersion: 1,

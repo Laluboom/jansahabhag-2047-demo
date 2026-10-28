@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Disclosure } from '../../components/ui/Disclosure';
 import { DEMO_COLLEGE_FULL_NAME } from '../../data/seed/institutions';
 import { seedEvents, seedSessions } from '../../data/seed/events';
 import {
@@ -20,6 +21,9 @@ import {
   MessageSquare,
   Landmark,
   FolderGit2,
+  FileCheck2,
+  Layers,
+  Users2,
   Calendar,
   Clock,
   MapPin,
@@ -139,6 +143,70 @@ const ICON_TILES: IconTile[] = [
     description: 'Independent Stream',
     colorClasses: { bg: 'bg-teal-50', text: 'text-teal-700', borderHover: 'hover:border-teal-400' },
   },
+  {
+    id: 'assignments',
+    label: 'Assignments',
+    to: '/assignments',
+    icon: FileCheck2,
+    description: 'Field Evidence',
+    colorClasses: { bg: 'bg-emerald-50', text: 'text-emerald-700', borderHover: 'hover:border-emerald-400' },
+  },
+  {
+    id: 'workspace',
+    label: 'Workspace',
+    to: '/workspace',
+    icon: Layers,
+    description: 'Team Drafting',
+    colorClasses: { bg: 'bg-sky-50', text: 'text-sky-700', borderHover: 'hover:border-sky-400' },
+  },
+  {
+    id: 'community',
+    label: 'Community',
+    to: '/community',
+    icon: Users2,
+    description: 'Peer Circles',
+    colorClasses: { bg: 'bg-violet-50', text: 'text-violet-700', borderHover: 'hover:border-violet-400' },
+  },
+  {
+    id: 'passport',
+    label: 'Civic Passport',
+    to: '/passport',
+    icon: Award,
+    description: 'Your Record',
+    colorClasses: { bg: 'bg-orange-50', text: 'text-orange-700', borderHover: 'hover:border-orange-400' },
+  },
+];
+
+interface CreditPointStep {
+  title: string;
+  detail: string;
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+  iconBg: string;
+  iconColor: string;
+}
+
+const CREDIT_POINT_STEPS: CreditPointStep[] = [
+  {
+    title: 'Take part',
+    detail: 'Complete a civic lesson, join an assembly, or submit field evidence.',
+    icon: Users,
+    iconBg: 'bg-indigo-100',
+    iconColor: 'text-indigo-700',
+  },
+  {
+    title: 'Earn civic credit points',
+    detail: 'Eligible verified activities add 1 or 2 points, up to 5 in this demo.',
+    icon: Sparkles,
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-800',
+  },
+  {
+    title: 'Build your Civic Passport',
+    detail: 'A portfolio of what you did, not a score of your worth.',
+    icon: Award,
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-700',
+  },
 ];
 
 const parseEventStartUtc = (dateStr: string, timeStr?: string): number => {
@@ -214,7 +282,7 @@ export const WelcomePage: React.FC = () => {
         <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-civic-saffron-500/20 border border-civic-saffron-400/40 text-civic-saffron-300 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-civic-saffron-400" />
-            Civic Participation Demo
+            Fictional single-browser simulation
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold font-heading text-white tracking-tight leading-tight">
             JanSahabhag <span className="text-civic-saffron-400">2047</span>
@@ -306,7 +374,7 @@ export const WelcomePage: React.FC = () => {
         </ol>
       </nav>
 
-      {/* Six concise linked icon tiles */}
+      {/* Linked icon tiles covering every area of the platform */}
       <section aria-label="Core Platform Modules" className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -316,7 +384,7 @@ export const WelcomePage: React.FC = () => {
             Direct navigation
           </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {ICON_TILES.map((tile) => (
             <Link
               key={tile.id}
@@ -340,6 +408,47 @@ export const WelcomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* How participation is recorded */}
+      <section
+        aria-label="How participation is recorded"
+        data-testid="welcome-credit-points"
+        className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs space-y-3"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <h2 className="text-sm font-bold font-heading text-slate-900">
+            How participation is recorded
+          </h2>
+          <Link
+            to="/passport"
+            data-testid="welcome-credit-points-passport-link"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
+          >
+            <span>See the Civic Passport</span>
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+        <ol className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          {CREDIT_POINT_STEPS.map((step) => (
+            <li
+              key={step.title}
+              className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 bg-slate-50/60"
+            >
+              <span className={`w-8 h-8 rounded-lg ${step.iconBg} ${step.iconColor} flex items-center justify-center shrink-0`}>
+                <step.icon className="w-4 h-4" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-slate-900 leading-snug">
+                  {step.title}
+                </span>
+                <span className="block text-xs text-slate-600 leading-snug mt-0.5">
+                  {step.detail}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       {/* Real Upcoming Session Card derived from earliest future fictional Rajkot event */}
       {upcomingEvent && (
         <section aria-label="Upcoming Session" data-testid="welcome-upcoming-session-card">
@@ -353,9 +462,6 @@ export const WelcomePage: React.FC = () => {
                   Rajkot Civic Demo
                 </span>
               </div>
-              <span className="text-xs text-slate-400">
-                Single-browser simulation
-              </span>
             </div>
             <div className="p-5 space-y-4">
               <div>
@@ -419,43 +525,65 @@ export const WelcomePage: React.FC = () => {
       {/* 33% Platform Rule Banner */}
       <div
         data-testid="welcome-reservation-policy-banner"
-        className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs sm:text-sm text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+        className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs sm:text-sm text-amber-950 flex flex-col gap-3 shadow-xs"
       >
-        <div className="flex items-start sm:items-center gap-2.5">
-          <span className="inline-flex items-center px-2 py-0.5 rounded font-semibold text-xs bg-amber-200 text-amber-900 shrink-0">
-            33% Platform Rule
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <span className="inline-flex items-center px-2 py-0.5 rounded font-semibold text-xs bg-amber-200 text-amber-900 shrink-0">
+              33% Platform Rule
+            </span>
+            <p className="text-slate-800 leading-snug">
+              At least one-third of limited seats and named roles are reserved for women.
+            </p>
+          </div>
+          <Link
+            to="/help"
+            className="inline-flex items-center gap-1 font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
+          >
+            <span>View Rules</span>
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+        <Disclosure
+          summary="What this rule covers"
+          testId="welcome-reservation-policy-details"
+          className="border-amber-200 bg-white/70"
+        >
           <p className="text-slate-800 leading-snug">
             <strong>Platform Rule:</strong> At least one-third of limited seats and named roles, rounded up separately for each allocation, are reserved for women. Open participation slots are unreserved. This simulation rule is a platform policy rather than statutory law. Documented exceptions require recorded administrative approval.
           </p>
-        </div>
-        <Link
-          to="/help"
-          className="inline-flex items-center gap-1 font-semibold text-civic-indigo-700 hover:text-civic-indigo-900 underline shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-indigo-500 rounded"
-        >
-          <span>View Rules</span>
-          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-        </Link>
+        </Disclosure>
       </div>
 
       {/* Distinct UHV Stream Notice */}
       <div
         data-testid="uhv-distinct-stream-notice"
-        className="rounded-xl border border-teal-200 bg-teal-50/60 p-3 sm:p-4 text-xs sm:text-sm text-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+        className="rounded-xl border border-teal-200 bg-teal-50/60 p-3 sm:p-4 text-xs sm:text-sm text-teal-950 flex flex-col gap-3 shadow-xs"
       >
-        <div className="flex items-start sm:items-center gap-2.5">
-          <HeartHandshake className="w-4 h-4 text-teal-700 shrink-0 mt-0.5 sm:mt-0" aria-hidden="true" />
-          <p className="text-slate-800 leading-snug">
-            <strong>Universal Human Values (UHV / Jeevan Vidya):</strong> An independent exploratory study track kept distinct from the 5-step civic deliberation loop.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <HeartHandshake className="w-4 h-4 text-teal-700 shrink-0 mt-0.5 sm:mt-0" aria-hidden="true" />
+            <p className="text-slate-800 leading-snug">
+              <strong>Universal Human Values (UHV / Jeevan Vidya)</strong>
+            </p>
+          </div>
+          <Link
+            to="/uhv"
+            className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-900 underline shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded"
+          >
+            <span>Open UHV Stream</span>
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+          </Link>
         </div>
-        <Link
-          to="/uhv"
-          className="inline-flex items-center gap-1 font-semibold text-teal-700 hover:text-teal-900 underline shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded"
+        <Disclosure
+          summary="How this stream fits in"
+          testId="uhv-distinct-stream-details"
+          className="border-teal-200 bg-white/70"
         >
-          <span>Open UHV Stream</span>
-          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-        </Link>
+          <p className="text-slate-800 leading-snug">
+            An independent exploratory study track kept distinct from the 5-step civic deliberation loop.
+          </p>
+        </Disclosure>
       </div>
 
       {/* Reviewer Quick Guide */}
@@ -471,7 +599,7 @@ export const WelcomePage: React.FC = () => {
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
-            <span>Switch to <strong>Moderator Yashvi Dalsaniya</strong> or <strong>Dilip Sanghar</strong> to manage flagged content under scoped grants.</span>
+            <span>Switch to <strong>Moderator Yashvi Dalsaniya</strong> or <strong>Dilip Sandhar</strong> to manage flagged content under scoped grants.</span>
           </li>
           <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-civic-teal-600 shrink-0 mt-0.5" />
@@ -494,8 +622,6 @@ export const WelcomePage: React.FC = () => {
           <span className="font-semibold text-slate-700">JanSahabhag 2047</span>
           <span className="hidden sm:inline">&bull;</span>
           <span className="text-slate-500">Demo institution, not an official partnership</span>
-          <span className="hidden sm:inline">&bull;</span>
-          <span>Interactive single-browser simulation</span>
         </div>
         <nav aria-label="Footer links" className="flex items-center gap-6">
           <Link

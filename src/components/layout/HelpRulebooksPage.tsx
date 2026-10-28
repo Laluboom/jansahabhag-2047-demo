@@ -35,7 +35,7 @@ export const HelpRulebooksPage: React.FC = () => {
             <span>Help & Rulebooks (Draft Index)</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Planned draft index and procedural overviews pending owner review. Fictional browser demo.
+            What each part of the platform expects of you, in short.
           </p>
         </div>
 
@@ -54,7 +54,7 @@ export const HelpRulebooksPage: React.FC = () => {
           <span>Draft Overview &bull; Planned Summaries Pending Owner Review</span>
         </div>
         <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-          This section serves as a draft index and navigational overview of platform guidelines. Detailed competition rubrics, deliberative standing orders, and verification criteria are planned summaries pending platform owner review. Fictional browser demo.
+          Detailed competition rubrics, deliberative standing orders, and verification criteria are planned summaries pending platform owner review. Fictional browser demo.
         </p>
       </div>
 
@@ -64,11 +64,11 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-civic-indigo-700 font-semibold text-sm">
             <Vote className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              Draft Overview: Youth Assembly Protocol
+              Youth Assembly Protocol
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft summary of stage progression, speaking turns, and dissent preservation for deliberative assembly mockups pending owner review.
+            Stage progression, who holds the floor, and how a minority view stays on the record.
           </p>
           <div className="pt-2">
             <Link to="/assemblies">
@@ -84,11 +84,11 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-civic-saffron-700 font-semibold text-sm">
             <Landmark className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              Draft Overview: National Youth Parliament Standing Orders
+              National Youth Parliament Standing Orders
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft outline of apex chamber motions, representative aggregation, and policy briefs pending owner review.
+            How motions reach the apex chamber, how representatives aggregate, and what a policy brief contains.
           </p>
           <div className="pt-2">
             <Link to="/parliament">
@@ -104,7 +104,7 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm">
             <FileCheck2 className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              Draft Overview: Field Evidence & Verification Standard
+              Field Evidence & Verification Standard
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
@@ -124,11 +124,11 @@ export const HelpRulebooksPage: React.FC = () => {
           <div className="flex items-center gap-2 text-teal-700 font-semibold text-sm">
             <HeartHandshake className="w-5 h-5" />
             <CardTitle className="text-base font-bold text-slate-900">
-              Draft Overview: UHV / Jeevan Vidya Study Charter
+              UHV / Jeevan Vidya Study Charter
             </CardTitle>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Planned draft summary of exploratory study principles: voluntary inquiry, no grading of ideological conformity, and curriculum rights pending owner review.
+            Exploratory study principles: voluntary inquiry, and no grading of ideological conformity. Curriculum rights pending owner review.
           </p>
           <div className="pt-2">
             <Link to="/uhv">

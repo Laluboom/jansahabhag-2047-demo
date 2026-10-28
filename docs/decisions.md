@@ -4,7 +4,7 @@
 
 **Implementation status, 17 October 2026:** The fictional Jaipur demo work, including the reservation rule for limited events, Assembly named roles and Debate named roles, is published from `autobuild`; see [the handoff](HANDOFF_2026-10-16.md). GitHub reported a successful Vercel production deployment, and the live About page was checked. Older statements below that say no reservation behavior is implemented describe the original 12 October baseline, not the current checkout. No real-data collection, server-side enforcement, or legal/public-launch approval follows from the demo work.
 
-**Reviewed:** 12 October 2026. **Governing source:** [Master PRD archive](reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A. The file is named `v3.1`, but its internal version table says `v3.0 — Consolidated Master PRD`; the reason is not documented. This record does not treat archived v2.1 defaults as new owner approvals.
+**Reviewed:** 12 October 2026. **Governing source:** Master PRD archive (local source document, not published here), opening §§1–3 and Part A. The file is named `v3.1`, but its internal version table says `v3.0 — Consolidated Master PRD`; the reason is not documented. This record does not treat archived v2.1 defaults as new owner approvals.
 
 ## Owner direction recorded 12 October 2026
 
@@ -83,7 +83,7 @@ Additional release inputs remain open: initial moderators and their scopes; mini
 
 ## Supplementary policy approved in principle
 
-The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) explicitly says **“Proposed product requirement — owner approval required”** and extends, rather than replaces, the Master PRD. The owner approved the policy in principle on 12 October 2026. The remaining inputs from §9 require separate answers before the corresponding behavior can be fixed.
+The Supplementary PRD v2.0 on 33% women's reservation (local source document, not published here) explicitly says **“Proposed product requirement — owner approval required”** and extends, rather than replaces, the Master PRD. The owner approved the policy in principle on 12 October 2026. The remaining inputs from §9 require separate answers before the corresponding behavior can be fixed.
 
 | ID | Open decision | What the supplement proposes or bounds |
 |---|---|---|
@@ -106,7 +106,7 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
 
 - **Target demo transition (Supersedes Jaipur target demo):** The Rajkot college demo with **Ankita Kapri** as main student supersedes Jaipur as the target demo (see `docs/reference/24-10-2026/JanSahabhag 2047 — Demo Personas.docx`).
   - **Institution:** Full institution name is **Shri Manibhai Virani and Smt. Navalben Virani Science College (Autonomous), Rajkot**.
-  - **Demo roster:** 22 named demo people: 15 students, two teachers (Shri Mayur Parmar and Shri Ankit Kalaria), one principal (Shri Dr. K. D. Ladwa), one special guest (Shri Param Pujya Tyagvallabh Swamiji), one founder (Nazim M. Sandh), and two scoped moderators (Yashvi Dalsaniya and Dilip Sanghar).
+  - **Demo roster:** 22 named demo people: 15 students, two teachers (Shri Mayur Parmar and Shri Ankit Kalaria), one principal (Shri Dr. K. D. Ladwa), one special guest (Shri Param Pujya Tyagvallabh Swamiji), one founder (Nazim M. Sandh), and two scoped moderators (Yashvi Dalsaniya and Dilip Sandhar).
   - **Student cohort & 33% reservation:** All 15 students must be aged at least 18. Exactly 5 named women are in the student roster to strictly satisfy the 33% women's reservation requirement: Ankita Kapri, Niyati Chawda, Harshita Kapri, Jahanvi Sandh, and Asmi Soni. Ankita and Harshita Kapri must stay in this group. Reserve names: Jinal Bhagya, Prensha Jaisalya, and Nisha Bhimani.
   - **Roles and seating:** Staff and guests (teachers, principal, special guest, founder, moderators) hold no student seats and are outside the 15 student count and 33% reservation calculation. Special guest role is view-only.
   - **Data boundaries & privacy:** Real names are used for named demo roles; student IDs are fictional (`VSC-S-xxx`, `VSC-T-xxx`, etc.); no invented personal details (roll numbers, emails, phone numbers) are attributed to named people. Real photographs are used only where supplied (Ankita Kapri, Dr. K. D. Ladwa, Swamiji, Nazim M. Sandh, Yashvi Dalsaniya); all others show initials.
@@ -128,3 +128,43 @@ The [Supplementary PRD v2.0 on 33% women's reservation](reference/JanSahabhag_20
   - **Biographical narrative:** Begins "Based in the Gir region of Gujarat..." and describes his academic background in microbiology; interest in education, governance, youth development, science and social responsibility; experiences across research-based student awareness, sustainable cultivation, community fitness, cultural engagement, and youth development; his civic engagement through **LOK MANCH-2047** presented in the context of the Viksit Bharat Young Leaders Dialogue 2026; incorporation of presentation ideas into the master presentation placed before the Hon’ble Prime Minister of India; and JanSahabhag 2047 as an ongoing effort connecting youth with civic life.
   - **Implementation & deployment status:** The exact supplied wording is merged into `src/features/about/AboutPage.tsx` on `autobuild`, pushed to GitHub, and verified deployed to production at `https://jansahabhag2047.vercel.app` (HTTP 200, asset bundle matches local build). The Rajkot demo was subsequently merged and deployed on 26 October 2026.
   - **Scope boundaries:** This supersedes the historical owner request to omit longer Nazim biographies. No changes are made to Visesh Akbari's unpublished long biography decision (developer links only; longer bio remains unpublished) or Yashvi Dalsaniya's supplied full bio.
+
+## Further owner direction recorded 27 October 2026
+
+The owner answered five open questions on 27 October 2026. Each is now settled and supersedes
+any earlier "pending" wording elsewhere in this repository.
+
+- **Gratitude list — eleven names.** The 25 October revision is adopted: **Dilip Sandhar** and
+  **Mungarbhai H. Sandh** join the published list, which now holds eleven names in
+  `src/data/gratitude.ts`. Shri Dadubhai Sandhar stays first as the late guide; the rest are
+  alphabetical by first name, ignoring honorifics. The owner-confirmed spelling **Visesh Akbari**
+  still overrides the source document's `Vishesh`. *Open:* the demo roster names scoped moderator
+  `JS-M-002` as Dilip **Sanghar** while the gratitude list says Dilip **Sandhar**; whether these
+  are one person, and which spelling is correct, was settled later the same day: they are the
+  same person and the correct spelling is **Dilip Sandhar**. The moderator roster, seed data,
+  welcome copy and README were corrected from `Sanghar`.
+- **Brand — Chaupal Ring with the Shirorekha wordmark.** Direction 1 of the 25 October logo
+  research is adopted as the primary symbol, with Direction 3's Devanagari headline-as-table idea
+  for the wordmark. Implemented in code as `src/components/brand/ChaupalRing.tsx` and
+  `BrandLockup.tsx`: an eleven-dot navy (`#06038D`) ring with a gap at the upper right and a
+  larger saffron (`#FF671F`) dot entering it, with an `on-dark` variant for the sidebar, where
+  navy would measure 1.19:1 and be invisible. `public/favicon.svg` carries a five-dot
+  simplification for small sizes. *Still open, per the research itself:* a trade mark attorney has
+  not confirmed the legal position, and the name's spelling and script need a native-speaker
+  decision before any brand file is treated as final.
+- **LOK MANCH-2047 — its own page.** The longer handoff content is published at `/lok-manch`
+  (`src/features/about/LokManchPage.tsx`), not inside About, which stays a short editorial letter
+  with a single link out. The page carries the owner's wording verbatim and keeps the notice that
+  LOK MANCH-2047 is a concept under development and not an operating government platform.
+- **Reference documents — local only.** Every owner-supplied source document is untracked and
+  ignored apart from `docs/reference/README.md`. The four Word files and the portrait that were
+  public have been removed from the tip; markdown links to them across the repository now name
+  them in plain text instead. The owner chose **not** to rewrite history, so earlier commits still
+  contain those files, and this only takes effect publicly once the branch is pushed.
+- **AI-assistance disclosure — about 60%, code only.** For HSC FAQ Q23 the owner's estimate is
+  about 60% of the code produced with AI assistance, and the tool list adds Claude Code alongside
+  OpenAI Codex and the sub-agy / agy Gemini tooling. Recorded in
+  `docs/plans/HSC_NEXT_STAGE_AI_DISCLOSURE_DRAFT.md`. *Open:* Q23 asks about the whole final
+  submitted work, so whether presentation materials are disclosed separately or folded into a
+  revised figure is with the owner, as is the deck's format.
+

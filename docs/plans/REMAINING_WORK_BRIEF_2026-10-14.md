@@ -2,7 +2,7 @@
 
 **16 October status:** The detailed numbered list below records the 15 October plan. For current status, use [the 16 October handoff](../HANDOFF_2026-10-16.md) and [Package 09 acceptance record](../audits/PACKAGE_09_CONNECTED_JAIPUR_ACCEPTANCE_2026-10-16.md). Packages 08A, 08B, 08C1, 08C2 and 09 are accepted in one dependent isolated branch chain, ending at `agy/j-20261016-073737-pt3p` with independently passing build, 311 unit tests and 29 browser tests. Root integration and deployed verification remain open.
 
-**Updated 15 October 2026.** This is a task list for the owner's chosen fictional, labelled, single-browser Jaipur demonstration. The [Master PRD](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs the product, the [reservation supplement](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) supplies the approved-in-principle policy, [decisions](../decisions.md) records owner choices, and the [package plan](COMPETITION_DEMO_PRD_PLAN.md) holds detailed acceptance criteria. This brief does not redefine those sources.
+**Updated 15 October 2026.** This is a task list for the owner's chosen fictional, labelled, single-browser Jaipur demonstration. The Master PRD (local source document, not published here) governs the product, the reservation supplement (local source document, not published here) supplies the approved-in-principle policy, [decisions](../decisions.md) records owner choices, and the [package plan](COMPETITION_DEMO_PRD_PLAN.md) holds detailed acceptance criteria. This brief does not redefine those sources.
 
 ## How much remains
 

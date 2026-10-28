@@ -22,6 +22,9 @@ export const GRATITUDE_ENTRIES: GratitudeEntry[] = [
     role: 'CVMS Cell, Atmiya University',
   },
   {
+    name: 'Dilip Sandhar',
+  },
+  {
     name: 'Ganesh Bagadia ji',
   },
   {
@@ -31,6 +34,9 @@ export const GRATITUDE_ENTRIES: GratitudeEntry[] = [
   {
     name: 'Shri Dr. K. D. Ladwa',
     role: 'Principal, Shri Manibhai Virani and Smt. Navalben Virani Science College, Rajkot',
+  },
+  {
+    name: 'Mungarbhai H. Sandh',
   },
   {
     name: 'Rasida ben Sandh',

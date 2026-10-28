@@ -8,7 +8,7 @@ A browser-based interactive demo of **JanSahabhag 2047** with a linked single-br
 
 This is **not** a production implementation. It intentionally simulates backend, authentication, AI, verification, moderation, and real-time behaviour so the product can be reviewed, demonstrated, and manually tested before production infrastructure is built.
 
-**Product authority:** the [supplied Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) governs product requirements. The [33% women's reservation supplement](docs/reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx) was approved in principle by the owner. This fictional single-browser demo applies `ceil(0.33 × planned places)` separately to every named role and limited place, leaves unmet reserved places vacant by default, and demonstrates owner-approved exceptions with a local audit record. This does not provide real owner authority or server-side enforcement. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records historical differences; [product decisions](docs/decisions.md) and the [current handoff](docs/HANDOFF_2026-10-26.md) record the accepted demo boundary and remaining decisions.
+**Product authority:** the supplied Master PRD archive (local source document, not published here) governs product requirements. The 33% women's reservation supplement (local source document, not published here) was approved in principle by the owner. This fictional single-browser demo applies `ceil(0.33 × planned places)` separately to every named role and limited place, leaves unmet reserved places vacant by default, and demonstrates owner-approved exceptions with a local audit record. This does not provide real owner authority or server-side enforcement. The [scope guide](README_01_RULES_REQUIREMENTS_BY_SCOPE.md) explains how to read the sources; the [reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md) records historical differences; [product decisions](docs/decisions.md) and the [current handoff](docs/HANDOFF_2026-10-26.md) record the accepted demo boundary and remaining decisions.
 
 **Published demo status & updates:**
 - **17 October 2026 baseline:** the connected fictional Jaipur demo (Aarav Sharma, Navchetna Public School) was published to GitHub and Vercel.
@@ -203,7 +203,7 @@ The learner sidebar follows the Master PRD's eleven-item order: **Home, Learn, A
   - **1 principal:** Shri Dr. K. D. Ladwa (institution_admin)
   - **1 special guest:** Shri Param Pujya Tyagvallabh Swamiji (President, Atmiya University; Chairperson of the College; view-only `special_guest` role, holds no seat, outside the 15 student count and 33% calculation)
   - **1 founder:** Nazim M. Sandh (platform_admin)
-  - **2 scoped moderators:** Yashvi Dalsaniya (`JS-M-001`, Managing Partner & Moderator) and Dilip Sanghar (`JS-M-002`, Moderator)
+  - **2 scoped moderators:** Yashvi Dalsaniya (`JS-M-001`, Managing Partner & Moderator) and Dilip Sandhar (`JS-M-002`, Moderator)
 - **Data boundaries:** Real names are used for named demo roles; student IDs are fictional (`VSC-S-xxx`, `VSC-T-xxx`, etc.); no invented personal details (roll numbers, private emails, phone numbers) are attributed to named people. Real-person photos are used only where supplied (Ankita Kapri, Dr. K. D. Ladwa, Swamiji, Nazim M. Sandh, Yashvi Dalsaniya); all others show initials.
 
 ---
@@ -268,7 +268,7 @@ The 24 October 2026 owner decision transitions demo personas to 22 named people 
   - Shri Param Pujya Tyagvallabh Swamiji (`VSC-G-001`, Special Guest, view-only `special_guest` role, photo supplied)
   - Nazim M. Sandh (`JS-F-001`, Founder and Organiser, platform_admin, photo supplied)
   - Yashvi Dalsaniya (`JS-M-001`, Moderator, photo supplied)
-  - Dilip Sanghar (`JS-M-002`, Moderator)
+  - Dilip Sandhar (`JS-M-002`, Moderator)
 
 ### Historical demo personas: Jaipur (17 October 2026 baseline, superseded)
 

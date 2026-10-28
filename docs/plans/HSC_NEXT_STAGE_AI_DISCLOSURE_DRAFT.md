@@ -12,10 +12,12 @@
 
 - **Known AI Engineering Assistance:**
   - Used OpenAI Codex for orchestration, planning, and review.
+  - Used Claude Code for orchestration, planning, review, and verification of delegated work.
   - Used sub-agy / agy Gemini coding tools for implementation assistance (code implementation, test file generation, and documentation drafting).
   - Human review, design direction, and feature scoping guided implementation choices.
 - **Estimated Proportion of Final Work:**
-  - Approximate proportion of final submitted work with AI assistance: `[owner estimate pending: __%]`
+  - Approximate proportion of the code with AI assistance: **about 60%** (owner estimate, 27 October 2026).
+  - This figure covers the code only. It does not cover presentation materials.
   - *Note:* Development combined human engineering and AI assistance; neither an all-human nor an all-AI origin is claimed for the resulting work.
 - **Runtime Environment (No Active Generative AI Provider):**
   - The fictional competition demo runs entirely in the browser using client-side mock data and deterministic logic.
@@ -29,6 +31,8 @@
 
 Before using this material in next-stage evaluation materials, the owner needs to confirm:
 
-- [ ] **1. Approximate Percentage Estimate:** Confirm or adjust the placeholder `[owner estimate pending: __%]` for the approximate share of the final submitted work with AI assistance (per HSC FAQ Q23).
-- [ ] **2. Presentation Materials & Tool Scope:** Clarify whether this approximate percentage estimate includes presentation materials (e.g. slide decks, visual diagrams, scripts) and whether any other AI tools were used beyond OpenAI Codex and sub-agy / agy Gemini assistance.
-- [ ] **3. Scope of Presentation Talking Points:** Confirm that presentation notes align with the submitted entry and describe the current prototype accurately.
+- [x] **1. Approximate Percentage Estimate:** Settled 27 October 2026 — about 60%, covering the code only (per HSC FAQ Q23).
+- [x] **2. Tool Scope:** Settled 27 October 2026 — Claude Code added alongside OpenAI Codex and sub-agy / agy Gemini assistance.
+- [ ] **3. Presentation Materials:** HSC FAQ Q23 asks about the approximate share of the whole final submitted work, not the code alone. If the deck is itself produced with AI assistance, this slide needs a separate line stating that presentation materials were AI-assisted and sit outside the 60%, or the figure needs revising upward to cover everything. The owner decides which, because the figure is a declaration made to the jury.
+- [ ] **4. Deck Format:** Awaiting the owner's choice between published slides (exportable to .pptx and PDF) and a markdown outline for their own slide tool.
+- [ ] **5. Scope of Presentation Talking Points:** Confirm that presentation notes align with the submitted entry and describe the current prototype accurately.

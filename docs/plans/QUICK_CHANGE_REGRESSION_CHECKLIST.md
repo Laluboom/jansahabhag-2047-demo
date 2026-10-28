@@ -103,6 +103,25 @@ npx playwright test e2e/debate-room-reservation-allocation.spec.ts
 npx playwright test e2e/parliament-preview-reservation.spec.ts
 ```
 
+**Before trusting any browser run, check for a stale preview server.** `playwright.config.ts`
+sets `reuseExistingServer: !process.env.CI`, so if anything is already listening on port
+4173 Playwright attaches to it and tests whatever bundle that process started with. A run
+against a stale server can report a full pass on code it never loaded, and it can also
+fail on routes that do exist. Check with `ss -ltnp | grep 4173`, and stop that process or
+run on another port before relying on the result.
+
+**Browser runs rewrite tracked audit screenshots.** `e2e/phase0-browser-route-evidence.spec.ts`
+overwrites the twenty dated PNGs in `docs/audits/phase0-screenshots/`, which are historical
+evidence for the 16 October audit. Restore them with
+`git checkout -- docs/audits/phase0-screenshots/` after running, and never `git add -A`
+straight after a browser run.
+
+**Interface copy and browser assertions drift apart.** When owner-approved copy changes,
+the Playwright specs that assert the old strings keep passing only until someone runs them
+on a current bundle. The 27 October jargon removal left four specs asserting text the UI no
+longer had. If a copy change is approved, grep `e2e/` for the old wording in the same
+change.
+
 ---
 
 ## 3. Current Verification vs. Future Acceptance

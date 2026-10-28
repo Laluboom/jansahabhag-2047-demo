@@ -10,6 +10,7 @@ import { StatusChip } from '../../components/ui/StatusChip';
 import { Tabs } from '../../components/ui/Tabs';
 import { Avatar } from '../../components/ui/Avatar';
 import { PointOfUseRulesButton } from '../../components/ui/PointOfUseRulesButton';
+import { DemoPreviewBadge } from '../../components/ui/DemoPreviewBadge';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Textarea } from '../../components/ui/Input';
 import { EvidenceAttachmentStore } from '../../services/evidenceAttachmentStore';
@@ -266,11 +267,14 @@ export const AssignmentsPage: React.FC = () => {
               <ShieldCheck className="w-4 h-4 text-amber-600" />
               <span>Institutional Teacher & Mentor Perspective</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-              Assignment Review Queue
-            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
+                Assignment Review Queue
+              </h1>
+              <DemoPreviewBadge size="sm" label="Fictional browser demo" />
+            </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Verify simulated student observations, field audits, and evidence submissions in this browser demo.
+              Check what students recorded on the street, then verify it or ask for a revision.
             </p>
           </div>
 
@@ -300,7 +304,7 @@ export const AssignmentsPage: React.FC = () => {
                 },
                 {
                   title: 'Submission Formats & Limits',
-                  description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
+                  description: `Binary media attachments support ${ALLOWED_BINARY_FORMAT_LABELS} up to ${BINARY_ATTACHMENT_SIZE_LABEL} stored in browser-local IndexedDB. Pasted text or inline documents are limited to 250 KB to ensure durable storage.`,
                 },
                 {
                   title: 'Mentor Verification & Credit Points',
@@ -325,7 +329,7 @@ export const AssignmentsPage: React.FC = () => {
               Activities & Assignments Hub
             </span>
             <p className="text-slate-600">
-              Field observations connect directly to simulated participatory action events. Review simulated student participation in the Activities Stream.
+              Field observations feed straight into participation events. Review student participation in the Activities Stream.
             </p>
           </div>
           <Link to="/activities" className="shrink-0">
@@ -827,7 +831,7 @@ export const AssignmentsPage: React.FC = () => {
                 )}
               </div>
               <span className="text-[10px] text-slate-400 block mt-1">
-                Limit: {BINARY_ATTACHMENT_SIZE_LABEL}. Files are stored in browser-local IndexedDB.
+                Limit: {BINARY_ATTACHMENT_SIZE_LABEL} ({ALLOWED_BINARY_FORMAT_LABELS}). Files are stored in browser-local IndexedDB.
               </span>
             </div>
 
@@ -905,11 +909,14 @@ export const AssignmentsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-            Field Evidence & Assignments
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
+              Field Evidence & Assignments
+            </h1>
+            <DemoPreviewBadge size="sm" label="Fictional browser demo" />
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Collect observable field data, traffic counts, and community interviews verified by mentors (fictional browser demo).
+            Record what you see on the street, then submit it for a mentor to verify.
           </p>
         </div>
         <PointOfUseRulesButton
@@ -928,7 +935,7 @@ export const AssignmentsPage: React.FC = () => {
             },
             {
               title: 'Submission Formats & Limits',
-              description: 'Supported files are PDF, PNG, and JPG up to 250 KB to ensure durable in-browser storage and privacy.',
+              description: `Binary media attachments support ${ALLOWED_BINARY_FORMAT_LABELS} up to ${BINARY_ATTACHMENT_SIZE_LABEL} stored in browser-local IndexedDB. Pasted text or inline documents are limited to 250 KB to ensure durable storage.`,
             },
             {
               title: 'Mentor Verification & Credit Points',
@@ -946,7 +953,7 @@ export const AssignmentsPage: React.FC = () => {
             Activities & Assignments Stream
           </span>
           <p className="text-slate-600">
-            Log simulated participation hours, neighborhood observation audits, and collaborative field sessions.
+            Log participation hours, neighbourhood observation audits, and group field sessions.
           </p>
         </div>
         <Link to="/activities" className="shrink-0">
@@ -963,7 +970,7 @@ export const AssignmentsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <HeartHandshake className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            <strong>UHV Stream Separation:</strong> Universal Human Values reflections are isolated from civic grading under Scope F. Fictional browser demo.
+            <strong>UHV Stream Separation:</strong> Universal Human Values reflections are kept out of civic grading.
           </span>
         </div>
         <Link to="/uhv" className="shrink-0">

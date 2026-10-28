@@ -22,6 +22,9 @@ export const AdminModerationPage: React.FC = () => {
   const { currentUser } = useAuthStore();
   const { refreshKey, triggerRefresh } = useAppRefreshStore();
   const [cases, setCases] = useState<ModerationCase[]>([]);
+  const [communityDetails, setCommunityDetails] = useState<
+    Record<string, { title: string; groupName: string | null }>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'open' | 'under_review' | 'resolved'>('all');
 
@@ -39,6 +42,23 @@ export const AdminModerationPage: React.FC = () => {
       try {
         const list = await demoRepository.getModerationCases();
         setCases(list);
+
+        const communityCases = list.filter((c) => c.targetType === 'community_post');
+        if (communityCases.length > 0) {
+          const details: Record<string, { title: string; groupName: string | null }> = {};
+          await Promise.all(
+            communityCases.map(async (c) => {
+              const ctx = await demoRepository.getCommunityPostContext(c.targetId);
+              if (ctx) {
+                details[c.targetId] = {
+                  title: ctx.post.title,
+                  groupName: ctx.group ? ctx.group.name : null,
+                };
+              }
+            })
+          );
+          setCommunityDetails(details);
+        }
       } catch (err) {
         console.error('Failed to load moderation cases', err);
       } finally {
@@ -221,14 +241,36 @@ export const AdminModerationPage: React.FC = () => {
                   Severity: {c.severity}
                 </span>
                 <span className="text-xs text-slate-500">
-                  Target: <strong>{c.targetType} ({c.targetId})</strong>
+                  Target:{' '}
+                  <strong>
+                    {c.targetType === 'community_post' ? 'Community post' : c.targetType} ({c.targetId})
+                  </strong>
                 </span>
-                <span className="text-xs text-slate-500">
-                  Reporter: <strong>{c.reporterId}</strong>
-                </span>
+                {c.targetType !== 'community_post' && (
+                  <span className="text-xs text-slate-500">
+                    Reporter: <strong>{c.reporterId}</strong>
+                  </span>
+                )}
               </div>
               <StatusChip status={c.status} />
             </div>
+
+            {c.targetType === 'community_post' && (
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1">
+                <div>
+                  <span className="font-semibold text-slate-500">Post Title: </span>
+                  <span className="font-bold text-slate-900">
+                    {communityDetails[c.targetId]?.title || c.targetId}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-500">Community Group: </span>
+                  <span className="font-medium text-slate-800">
+                    {communityDetails[c.targetId]?.groupName ?? 'No group assigned'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div>
               <span className="text-xs font-semibold text-slate-500 uppercase block">Report Reason</span>

@@ -330,7 +330,7 @@ export const AdminModeratorGrantsPage: React.FC = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="font-bold uppercase tracking-wider text-amber-900">
-              One-Browser Simulation Disclosure &bull; Change Plan v2 §12
+              One-Browser Simulation Disclosure
             </span>
             <span className="bg-amber-200 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded">
               Competition Demo
@@ -406,7 +406,7 @@ export const AdminModeratorGrantsPage: React.FC = () => {
             <span>Strict 33% Women's Reservation Boundary</span>
           </div>
           <p className="leading-relaxed">
-            Under Master PRD Supplementary §6, OD.17, and Change Plan v2 §12: <strong>Moderators can NEVER approve or bypass a 33% reservation exception.</strong> The exception approval path is strictly restricted to the Platform Owner persona (<code className="font-mono bg-white px-1 py-0.5 rounded border border-rose-200">platform_admin</code>).
+            <strong>Moderators can NEVER approve or bypass a 33% reservation exception.</strong> The exception approval path is strictly restricted to the Platform Owner persona (<code className="font-mono bg-white px-1 py-0.5 rounded border border-rose-200">platform_admin</code>).
           </p>
         </Card>
       </div>

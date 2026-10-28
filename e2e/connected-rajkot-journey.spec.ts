@@ -155,9 +155,10 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
     // Verify video-preview badge per PRD OD.4
     const debateVideoBadge = page.getByTestId('video-preview-badge');
     await expect(debateVideoBadge).toBeVisible();
-    await expect(debateVideoBadge).toContainText('Text-First Active (OD.4)');
+    await expect(debateVideoBadge).toContainText('Text-first session');
 
-    // Verify Point-of-Use Reservation Rulebook banner
+    // Open reservation disclosure and verify Point-of-Use Reservation Rulebook banner
+    await page.getByText('Seats and 33% reservation').click();
     const debateRulebookBanner = page.getByTestId('debate-reservation-rulebook-banner');
     await expect(debateRulebookBanner).toBeVisible();
     await expect(debateRulebookBanner.getByText(/ceil\(0\.33 × planned places\)/i)).toBeVisible();
@@ -196,6 +197,7 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
     await expect(page.getByRole('heading', { level: 1, name: /(Rajkot|Jaipur) Youth Pedestrian Safety Debate Room/i })).toBeVisible();
 
     // Verify Owner controls are visible (Audit trail button)
+    await page.getByText('Seats and 33% reservation').click();
     const auditBtn = page.getByTestId('view-role-audits-btn-facilitator');
     await expect(auditBtn).toBeVisible();
     await auditBtn.click();
@@ -235,7 +237,7 @@ test.describe('Package 09: Connected Fictional Rajkot Journey End-to-End Accepta
     await expect(page.getByText(/Civic Passport Portfolio/i)).toBeVisible();
 
     // Verify 7 PRD civic dimensions
-    await expect(page.getByText(/Civic Credit (Point )?Dimensions \(7 PRD Dimensions\)/i)).toBeVisible();
+    await expect(page.getByText(/Civic Credit (Point )?Dimensions \(7 Dimensions\)/i)).toBeVisible();
     for (const dim of ['Learning', 'Observation', 'Deliberation', 'Contribution', 'Collaboration', 'Civic Action', 'Reflection']) {
       await expect(page.getByText(dim, { exact: false }).first()).toBeVisible();
     }

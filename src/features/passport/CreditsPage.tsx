@@ -124,13 +124,13 @@ export const CreditsPage: React.FC = () => {
       <Card className="p-4 bg-slate-50 border-slate-200 text-xs text-slate-600 space-y-2">
         <div className="flex items-center gap-1.5 font-bold text-slate-900">
           <Info className="w-4 h-4 text-civic-indigo-600 shrink-0" />
-          <span>Transparent Activity Award Rules & Explainable Formula (7 PRD Dimensions)</span>
+          <span>Transparent Activity Award Rules & Explainable Formula (7 Dimensions)</span>
         </div>
         <p className="leading-relaxed">
           &bull; <strong>Starting Balance</strong>: 0 (No starting bonus points; hard ceiling of 5 verified Civic Credit Points per persona) &bull; <strong>Learning</strong>: +1 (Module completion) &bull; <strong>Observation</strong>: +1 (Verified field evidence) &bull; <strong>Deliberation</strong>: +2 (Assembly role), +1 (Substantive contribution) &bull; <strong>Contribution</strong>: +2 (Assignment submission; held in Pending status until mentor review) &bull; <strong>Collaboration</strong>: +1 (Workspace action contribution) &bull; <strong>Civic Action</strong>: +2 (Community initiative milestone) &bull; <strong>Reflection</strong>: +1 (Civic reflection); private UHV reflections, retained dissent, and private Debate journals award 0 Civic Credit Points.
         </p>
         <p className="text-[11px] text-slate-500 italic">
-          Scoring notice: This demo uses fixed amounts per confirmed action. PRD conceptual multiplication equations are exploratory research formulas, not automated production algorithms.
+          Scoring notice: This demo uses fixed amounts per confirmed action. Multiplicative weighting equations are exploratory research formulas, not automated production algorithms.
         </p>
         <div className="p-3 rounded-lg bg-indigo-50/80 border border-indigo-200 text-[11px] text-indigo-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="space-y-0.5">

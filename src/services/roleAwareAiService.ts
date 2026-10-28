@@ -50,9 +50,9 @@ export const SEEDED_ROLE_SUGGESTIONS: RoleAwareSuggestion[] = [
     category: 'Deliberation Preparation',
     roleTarget: 'participant',
     originalContent:
-      'Draft a 60-second opening statement on the Mansarovar Ward 24 pedestrian-safety proposal. Focus on shared student safety, cite observed peak morning traffic counts, and acknowledge local merchant loading requirements without assigning blame.',
+      'Draft a 60-second opening statement on the Kalawad Road Ward 8 pedestrian-safety proposal. Focus on shared student safety, cite observed peak morning traffic counts, and acknowledge local merchant loading requirements without assigning blame.',
     content:
-      'Draft a 60-second opening statement on the Mansarovar Ward 24 pedestrian-safety proposal. Focus on shared student safety, cite observed peak morning traffic counts, and acknowledge local merchant loading requirements without assigning blame.',
+      'Draft a 60-second opening statement on the Kalawad Road Ward 8 pedestrian-safety proposal. Focus on shared student safety, cite observed peak morning traffic counts, and acknowledge local merchant loading requirements without assigning blame.',
     metadata: {
       targetStage: 'Stage 3: Deliberation & Floor Debate',
       suggestedDuration: '60–90 seconds',

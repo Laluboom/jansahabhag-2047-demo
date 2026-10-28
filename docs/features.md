@@ -1,6 +1,6 @@
 # Feature index and verified status
 
-Tasks 01–05 are merged in `autobuild`. Every route listed in the earlier demo `README.md` has a router entry and passed the Task 05 browser route smoke test. This does not mean every [Master PRD](reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) route or rule is implemented: see [the reconciliation](audits/MASTER_PRD_RECONCILIATION.md). [paused.md](../paused.md) records the original build history.
+Tasks 01–05 are merged in `autobuild`. Every route listed in the earlier demo `README.md` has a router entry and passed the Task 05 browser route smoke test. This does not mean every Master PRD (local source document, not published here) route or rule is implemented: see [the reconciliation](audits/MASTER_PRD_RECONCILIATION.md). [paused.md](../paused.md) records the original build history.
 
 | Area | Routes | Behavior |
 | --- | --- | --- |

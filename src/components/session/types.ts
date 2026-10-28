@@ -37,6 +37,9 @@ export interface SeatModel {
   institution?: string;
   currentActivity?: string;
   bio?: string;
+  isMuted?: boolean;
+  isCameraOff?: boolean;
+  hasRaisedHand?: boolean;
 }
 
 export interface SeatingQuotaSummary {

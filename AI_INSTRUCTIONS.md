@@ -6,7 +6,7 @@
 
 ## Current handoff
 
-The previous user-requested pause has ended. [paused.md](paused.md) records Autobuild Tasks 01–05, merged into `autobuild`. The demo is published to GitHub and Vercel. The supplied [Master PRD archive](docs/reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx) was checked against the app in [the reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md); [product decisions](docs/decisions.md) identifies owner inputs. Check current sub-agy quota before any new dispatch and follow the requested method's 20% Gemini five-hour threshold.
+The previous user-requested pause has ended. [paused.md](paused.md) records Autobuild Tasks 01–05, merged into `autobuild`. The demo is published to GitHub and Vercel. The supplied Master PRD archive (local source document, not published here) was checked against the app in [the reconciliation](docs/audits/MASTER_PRD_RECONCILIATION.md); [product decisions](docs/decisions.md) identifies owner inputs. Check current sub-agy quota before any new dispatch and follow the requested method's 20% Gemini five-hour threshold.
 
 ## Working rules
 

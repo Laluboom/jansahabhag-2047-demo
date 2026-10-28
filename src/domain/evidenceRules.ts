@@ -73,7 +73,57 @@ export const FACE_CONSENT_WARNING_TEXT =
   "Do not upload other people's faces without their permission.";
 
 export const EVIDENCE_FILE_LIMIT_TEXT =
-  `Allowed types: ${ALLOWED_EVIDENCE_FORMAT_LABELS}. Actual file limit: 250 KB (durable browser storage limit).`;
+  `Binary attachments: ${ALLOWED_BINARY_FORMAT_LABELS} up to ${BINARY_ATTACHMENT_SIZE_LABEL} (IndexedDB). Pasted or inline data: up to 250 KB (durable browser storage limit).`;
+
+export interface EvidenceExpectationDetail {
+  typeLabel: string;
+  expectation: string;
+  acceptedFormats: string;
+  sizeLimitLabel: string;
+}
+
+export function getEvidenceExpectationDetail(evidenceType?: string): EvidenceExpectationDetail {
+  let typeLabel = 'General Civic Evidence';
+  let expectation = 'Factual field records or verified civic documentation.';
+
+  switch (evidenceType) {
+    case 'observation':
+      typeLabel = 'Civic Observation';
+      expectation = 'Direct observation logs, timestamped civic notes, or audit counts.';
+      break;
+    case 'image':
+      typeLabel = 'Photographic Evidence';
+      expectation = 'Visual documentation or photos of civic conditions or facilities.';
+      break;
+    case 'interview':
+      typeLabel = 'Stakeholder Interview';
+      expectation = 'Structured interview notes, spoken transcripts, or community quotes.';
+      break;
+    case 'survey':
+      typeLabel = 'Community Survey';
+      expectation = 'Aggregated survey findings, public responses, or questionnaire sheets.';
+      break;
+    case 'document':
+      typeLabel = 'Documentary Record';
+      expectation = 'Official reports, memoranda, study summaries, or reference materials.';
+      break;
+    case 'attendance':
+      typeLabel = 'Session Attendance';
+      expectation = 'Verified session participation, minutes, or attendance records.';
+      break;
+    case 'link':
+      typeLabel = 'External Civic Link';
+      expectation = 'Verified link to public civic records, portals, or repository resources.';
+      break;
+  }
+
+  return {
+    typeLabel,
+    expectation,
+    acceptedFormats: ALLOWED_BINARY_FORMAT_LABELS,
+    sizeLimitLabel: BINARY_ATTACHMENT_SIZE_LABEL,
+  };
+}
 
 export interface EvidenceAccessActor {
   id: string;

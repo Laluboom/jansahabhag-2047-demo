@@ -2,8 +2,8 @@
 
 **Date:** 16 October 2026
 **Governing Authorities:**
-- [Master PRD Archive v3.1](../reference/JanSahabhag_2047_MASTER_PRD_v3.1_LOSSLESS_ARCHIVE.docx), opening §§1–3 and Part A §§A2, A6–A9, A13
-- [Supplementary PRD v2.0: 33% Women's Reservation](../reference/JanSahabhag_2047_Supplementary_PRD_33pct_Womens_Reservation_v2.docx), sections 1–10
+- Master PRD Archive v3.1 (local source document, not published here), opening §§1–3 and Part A §§A2, A6–A9, A13
+- Supplementary PRD v2.0: 33% Women's Reservation (local source document, not published here), sections 1–10
 - [Product Decisions Record](../decisions.md), OD.15–OD.19
 - [Master PRD Reconciliation](../audits/MASTER_PRD_RECONCILIATION.md)
 - [Phase 0 Route & Control Matrix](PHASE0_ROUTE_CONTROL_MATRIX_2026-10-16.md)

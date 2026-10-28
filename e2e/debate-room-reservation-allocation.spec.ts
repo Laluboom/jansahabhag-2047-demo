@@ -19,6 +19,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await page.waitForURL('**/debate-room');
 
     // 3. Verify Point-of-Use Reservation Rulebook Banner & Formula Callout
+    await page.getByText('Seats and 33% reservation').click();
     const rulebookBanner = page.getByTestId('debate-reservation-rulebook-banner');
     await expect(rulebookBanner).toBeVisible();
     await expect(rulebookBanner.getByText(/2026\.1-womens-reservation-33/i)).toBeVisible();
@@ -75,6 +76,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await page.waitForURL('**/debate-room');
 
     // 8. Verify Platform Owner unsuppressed view
+    await page.getByText('Seats and 33% reservation').click();
     const ownerCommVoiceCard = page.getByTestId('role-allocation-card-community-voice');
     await expect(ownerCommVoiceCard).toBeVisible();
     // Platform Owner sees exact metrics without privacy suppression
@@ -181,6 +183,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await page.reload();
     await page.waitForLoadState('networkidle');
 
+    await page.getByText('Seats and 33% reservation').click();
     const reloadedFacilitatorCard = page.getByTestId('role-allocation-card-facilitator');
     await expect(reloadedFacilitatorCard.getByTestId('status-finalized-exception')).toBeVisible();
     const reloadedCommVoiceCard = page.getByTestId('role-allocation-card-community-voice');
@@ -195,6 +198,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await page.goto('/debate-room');
     await page.waitForURL('**/debate-room');
 
+    await page.getByText('Seats and 33% reservation').click();
     const participantFacCard = page.getByTestId('role-allocation-card-facilitator');
     await expect(participantFacCard.getByTestId('status-privacy-suppressed')).toBeVisible();
     await expect(participantFacCard.getByText('Withheld (Privacy)').first()).toBeVisible();
@@ -227,6 +231,7 @@ test.describe('Package 08C2: Debate Room Point-of-Use Reservation Rulebook, Role
     await page.waitForURL('**/debate-room');
 
     // 3. Verify mobile banner and modal interactions
+    await page.getByText('Seats and 33% reservation').click();
     const rulebookBanner = page.getByTestId('debate-reservation-rulebook-banner');
     await expect(rulebookBanner).toBeVisible();
 
