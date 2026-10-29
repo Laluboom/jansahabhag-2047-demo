@@ -304,7 +304,7 @@ export const seedSessions: Session[] = [
           },
           {
             title: 'Single-Browser Simulation Boundary',
-            content: 'This interface is a local single-browser simulation. Persona switching simulates participant roles locally without server-side authorization (OD.5 pending).',
+            content: 'This interface is a local single-browser simulation. Persona switching simulates participant roles locally without server-side authorization.',
           },
         ],
       },

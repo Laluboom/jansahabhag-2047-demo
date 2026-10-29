@@ -44,10 +44,16 @@ Every pattern was evaluated for the first three runtime checks below; the fourth
 | **Mobile Viewport Run (375x667)** | 60 Passed / 0 Failed | **Pass** (Clean render, 0 spinners, 0 overflow) |
 | **Privileged & Persona-Scoped Flow** | 4 Checks Passed / 0 Failed | **Pass** (Admin banner, Workspace denial, 33% quota denial, Chair advance) |
 | **Interactive Controls & Lifecycle Flow** | 7 Checks Passed / 0 Failed | **Pass** (Lang switch, Mobile drawer trap, Autosave submit, Debate turn reload, Parliament modal, Admin filter, 404 return) |
-| **Representative Screenshots Saved** | **20 PNG captures** | **Verified in `docs/audits/phase0-screenshots/`** |
+| **Representative Screenshots Saved** | **20 PNG captures** | **In `docs/audits/phase0-screenshots/`, refreshed on every run** |
 | **Independent Playwright Rerun** | **4 cases passed (40.8s)** | **Local branch, 16 October 2026** |
 
 ---
+
+> **About the linked screenshots.** The PNGs under `phase0-screenshots/` are
+> overwritten by `e2e/phase0-browser-route-evidence.spec.ts` on every run, so
+> they show the build of the most recent run rather than the state on
+> 16 October 2026. The pass/fail findings in the tables below are the record
+> for that date; the images are current-build illustrations of the same routes.
 
 ## 3. Comprehensive 60-Route Browser Evidence Table
 

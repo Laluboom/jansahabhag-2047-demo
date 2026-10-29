@@ -70,7 +70,6 @@ export const ParliamentPage: React.FC = () => {
       },
       {
         id: 'seat_parl_rahul',
-        userId: 'user_rahul',
         name: 'Rahul Deshmukh',
         role: 'Co-Sponsor (Pune Delegation)',
         sideOrBench: 'Government',
@@ -148,6 +147,72 @@ export const ParliamentPage: React.FC = () => {
         institution: 'Bengaluru Active Mobility Youth Network (Karnataka)',
         currentActivity:
           'Presenting data on smart solar warning beacons at 50m approaches',
+      },
+      {
+        id: 'seat_parl_meera',
+        name: 'Meera Joshi',
+        role: 'Eastern Zone Delegate',
+        sideOrBench: 'Cross-bench',
+        status: 'waiting',
+        hasRaisedHand: true,
+        institution: 'Bhubaneswar School Safety Collective (Odisha)',
+        currentActivity:
+          'Waiting to table coastal-district findings on monsoon visibility at unlit crossings',
+      },
+      {
+        id: 'seat_parl_imran',
+        name: 'Imran Qureshi',
+        role: 'Committee Rapporteur',
+        sideOrBench: 'Government',
+        status: 'active',
+        isMuted: true,
+        institution: 'Lucknow Civic Study Circle (Uttar Pradesh)',
+        currentActivity:
+          'Recording the chamber record and preparing the motion summary for circulation',
+      },
+      {
+        id: 'seat_parl_nisha',
+        name: 'Nisha Barman',
+        role: 'Shadow Committee Member',
+        sideOrBench: 'Opposition',
+        status: 'waiting',
+        hasRaisedHand: true,
+        institution: 'Guwahati Youth Deliberative Forum (Assam)',
+        currentActivity:
+          'Seeking the floor to question maintenance funding beyond the first installation year',
+      },
+      // Evaluation Panel: assesses procedure and evidence, never positions.
+      {
+        id: 'seat_parl_eval_sunita',
+        name: 'Sunita Rege',
+        role: 'Procedure Assessor',
+        sideOrBench: 'Evaluation Panel',
+        status: 'active',
+        isCameraOff: true,
+        institution: 'Apex Parliamentary Secretariat, New Delhi',
+        currentActivity:
+          'Noting whether motions were tabled, seconded and put in the order the standing rules set out',
+      },
+      {
+        id: 'seat_parl_eval_farhan',
+        name: 'Farhan Ali',
+        role: 'Evidence Assessor',
+        sideOrBench: 'Evaluation Panel',
+        status: 'active',
+        institution: 'Apex Parliamentary Secretariat, New Delhi',
+        currentActivity:
+          'Checking that figures cited on the floor carry a traceable source in the evidence dock',
+      },
+      {
+        id: 'seat_parl_eval_leela',
+        name: 'Leela Menon',
+        role: 'Participation Assessor',
+        sideOrBench: 'Evaluation Panel',
+        status: 'active',
+        isMuted: true,
+        institution: 'Apex Parliamentary Secretariat, New Delhi',
+        currentActivity:
+          'Recording who sought the floor and who was recognised, so quieter delegates are not overlooked',
       },
     ];
   }, [delegationScenario]);

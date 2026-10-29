@@ -103,12 +103,16 @@ npx playwright test e2e/debate-room-reservation-allocation.spec.ts
 npx playwright test e2e/parliament-preview-reservation.spec.ts
 ```
 
-**Before trusting any browser run, check for a stale preview server.** `playwright.config.ts`
-sets `reuseExistingServer: !process.env.CI`, so if anything is already listening on port
-4173 Playwright attaches to it and tests whatever bundle that process started with. A run
-against a stale server can report a full pass on code it never loaded, and it can also
-fail on routes that do exist. Check with `ss -ltnp | grep 4173`, and stop that process or
-run on another port before relying on the result.
+**Playwright no longer reuses an existing server.** `playwright.config.ts` runs its own
+`vite preview` on port 4273 with `reuseExistingServer: false` and `--strictPort`, so a run
+can no longer attach to someone else's process and report a pass on a bundle it never
+loaded. If that port is taken the run aborts with "already used" and exits non-zero rather
+than testing it. Set `E2E_PORT` to run elsewhere, which parallel worktrees need so their
+runs do not collide.
+
+**A browser run still proves only what is in `dist/`.** `vite preview` serves the existing
+build and never produces one, so editing `src` and running the suite tests the previous
+bundle. Run `npm run build` first when the result is meant to reflect current source.
 
 **Browser runs rewrite tracked audit screenshots.** `e2e/phase0-browser-route-evidence.spec.ts`
 overwrites the twenty dated PNGs in `docs/audits/phase0-screenshots/`, which are historical

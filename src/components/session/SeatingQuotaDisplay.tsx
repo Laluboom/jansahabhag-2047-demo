@@ -163,7 +163,7 @@ export const SeatingQuotaDisplay: React.FC<SeatingQuotaDisplayProps> = ({
           <Shield className="w-4 h-4 text-civic-indigo-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5 leading-relaxed">
             <span className="font-bold text-[11px] block text-civic-indigo-900">
-              Small-Cohort Privacy Protection Applied (Policy OD.17)
+              Small-Cohort Privacy Protection Applied
             </span>
             <p className="text-[11px] text-slate-600">
               Exact filled and vacancy counts are withheld for cohorts with small capacity or occupancy (1–3 places)

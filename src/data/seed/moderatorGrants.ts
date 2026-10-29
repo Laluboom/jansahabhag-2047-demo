@@ -220,7 +220,7 @@ export const seedModeratorAudits: ScopedModeratorAuditRecord[] = [
     targetId: 'alloc_rajkot_chair_01',
     details: 'Attempted 33% women\'s reservation exception approval strictly blocked for scoped moderator.',
     outcome: 'denied',
-    denialReason: 'Rule boundary: Under OD.17 and Change Plan v2 §12, scoped moderators cannot approve 33% reservation exceptions.',
+    denialReason: 'Rule boundary: scoped moderators cannot approve 33% reservation exceptions.',
     timestamp: '2026-10-21T15:45:00Z',
     schemaVersion: 1,
   },
